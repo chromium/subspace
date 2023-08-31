@@ -44,32 +44,25 @@ std::string namespace_display_name(
     const Options& options) noexcept {
   std::ostringstream out;
 
-  if (element.namespace_name == Namespace::Tag::Global) {
-    for (auto e : generate_cpp_path_for_namespace(element, ancestors, options)
-                      .into_iter())
-      out << e.name;
-  } else {
-    std::string project_name;
+  if (element.namespace_name != Namespace::Tag::Global) {
     for (auto [i, e] :
          generate_cpp_path_for_namespace(element, ancestors, options)
              .into_iter()
              .enumerate()) {
-      if (i == 0u)
-        project_name = sus::move(e.name);
-      else {
+      if (i > 0u) {  // First element is the project name.
         if (i > 1u) out << "::";
         out << sus::move(e.name);
       }
     }
-    out << " - " << sus::move(project_name);
   }
   return sus::move(out).str();
 }
 
-sus::Result<void, MarkdownToHtmlError> generate_namespace_overview(
-    HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
-    sus::Slice<const NamespaceElement*> ancestors,
-    ParseMarkdownPageState& page_state, const Options& options) {
+void generate_namespace_overview(HtmlWriter::OpenDiv& namespace_div,
+                                 const NamespaceElement& element,
+                                 sus::Slice<const NamespaceElement*> ancestors,
+                                 const MarkdownToHtml& comment_html,
+                                 const Options& options) {
   auto section_div = namespace_div.open_div();
   section_div.add_class("section");
   section_div.add_class("overview");
@@ -116,18 +109,8 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace_overview(
     auto desc_div = section_div.open_div();
     desc_div.add_class("description");
     desc_div.add_class("long");
-    if (element.has_comment()) {
-      if (auto comment_html =
-              markdown_to_html_full(element.comment, page_state);
-          comment_html.is_err()) {
-        return sus::err(sus::move(comment_html).unwrap_err());
-      } else {
-        desc_div.write_html(sus::move(comment_html).unwrap());
-      }
-    }
+    desc_div.write_html(comment_html.full_html);
   }
-
-  return sus::ok();
 }
 
 sus::Result<void, MarkdownToHtmlError> generate_namespace_references(
@@ -319,23 +302,27 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
 
   ParseMarkdownPageState page_state(db, options);
 
+  MarkdownToHtml md_html;
+  if (auto try_comment = element.get_comment(); try_comment.is_some()) {
+    auto try_md_html = markdown_to_html(try_comment.as_value(), page_state);
+    if (try_md_html.is_err())
+      return sus::err(sus::move(try_md_html).unwrap_err());
+    md_html = sus::move(try_md_html).unwrap();
+  }
+
   const std::filesystem::path path =
       construct_html_file_path_for_namespace(options.output_root, element);
   std::filesystem::create_directories(path.parent_path());
-
   auto html = HtmlWriter(open_file_for_writing(path).unwrap());
   generate_head(html, namespace_display_name(element, ancestors, options),
-                options);
+                md_html.summary_text, options);
 
   auto body = html.open_body();
 
   auto namespace_div = body.open_div();
   namespace_div.add_class("namespace");
-  if (auto result = generate_namespace_overview(namespace_div, element,
-                                                ancestors, page_state, options);
-      result.is_err()) {
-    return sus::err(sus::move(result).unwrap_err());
-  }
+  generate_namespace_overview(namespace_div, element, ancestors, md_html,
+                              options);
 
   {
     sus::Vec<SortedNamespaceByName> sorted;
@@ -520,13 +507,12 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace_reference(
     auto desc_div = open_li.open_div();
     desc_div.add_class("description");
     desc_div.add_class("short");
-    if (element.has_comment()) {
-      if (auto comment_html =
-              markdown_to_html_summary(element.comment, page_state);
-          comment_html.is_err()) {
-        return sus::err(sus::move(comment_html).unwrap_err());
+    if (auto comment = element.get_comment(); comment.is_some()) {
+      if (auto md_html = markdown_to_html(comment.as_value(), page_state);
+          md_html.is_err()) {
+        return sus::err(sus::move(md_html).unwrap_err());
       } else {
-        desc_div.write_html(sus::move(comment_html).unwrap());
+        desc_div.write_html(sus::move(md_html).unwrap().summary_html);
       }
     }
   }

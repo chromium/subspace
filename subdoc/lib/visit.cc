@@ -608,11 +608,11 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       db_map.emplace(key, std::move(db_element));
       // The overload is added with the `db_element` as a whole.
       add_overload = false;
-    } else if (!it->second.has_comment() && db_element.has_comment()) {
+    } else if (!it->second.has_found_comment() && db_element.has_found_comment()) {
       // Steal the comment.
       sus::mem::swap(db_map.at(key).comment, db_element.comment);
       add_overload = true;
-    } else if (!db_element.has_comment()) {
+    } else if (!db_element.has_found_comment()) {
       // Leave the existing comment in place.
       add_overload = true;
     } else if (db_element.comment.begin_loc == it->second.comment.begin_loc) {
@@ -649,10 +649,10 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     auto it = db_map.find(key);
     if (it == db_map.end()) {
       db_map.emplace(key, std::move(db_element));
-    } else if (!it->second.has_comment() && db_element.has_comment()) {
+    } else if (!it->second.has_found_comment() && db_element.has_found_comment()) {
       // Steal the comment.
       sus::mem::swap(db_map.at(key).comment, db_element.comment);
-    } else if (!db_element.has_comment()) {
+    } else if (!db_element.has_found_comment()) {
       // Leave the existing comment in place, do nothing.
     } else if (db_element.comment.begin_loc == it->second.comment.begin_loc) {
       // We already visited this thing, from another translation unit.
@@ -673,10 +673,10 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     auto it = db_map.find(key);
     if (it == db_map.end()) {
       db_map.emplace(key, std::move(db_element));
-    } else if (!it->second.has_comment() && db_element.has_comment()) {
+    } else if (!it->second.has_found_comment() && db_element.has_found_comment()) {
       // Steal the comment.
       sus::mem::swap(db_map.at(key).comment, db_element.comment);
-    } else if (!db_element.has_comment()) {
+    } else if (!db_element.has_found_comment()) {
       // Leave the existing comment in place, do nothing.
     } else if (db_element.comment.begin_loc == it->second.comment.begin_loc) {
       // We already visited this thing, from another translation unit.
@@ -698,10 +698,10 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     auto it = db_map.find(key);
     if (it == db_map.end()) {
       db_map.emplace(key, std::move(db_element));
-    } else if (!it->second.has_comment() && db_element.has_comment()) {
+    } else if (!it->second.has_found_comment() && db_element.has_found_comment()) {
       // Steal the comment.
       sus::mem::swap(db_map.at(key).comment, db_element.comment);
-    } else if (!db_element.has_comment()) {
+    } else if (!db_element.has_found_comment()) {
       // Leave the existing comment in place, do nothing.
     } else if (db_element.comment.begin_loc == it->second.comment.begin_loc) {
       // We already visited this thing, from another translation unit.
@@ -722,10 +722,10 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     auto it = db_map.find(uniq);
     if (it == db_map.end()) {
       db_map.emplace(uniq, std::move(db_element));
-    } else if (!it->second.has_comment() && db_element.has_comment()) {
+    } else if (!it->second.has_found_comment() && db_element.has_found_comment()) {
       // Steal the comment.
       sus::mem::swap(db_map.at(uniq).comment, db_element.comment);
-    } else if (!db_element.has_comment()) {
+    } else if (!db_element.has_found_comment()) {
       // Leave the existing comment in place, do nothing.
     } else if (db_element.comment.begin_loc == it->second.comment.begin_loc) {
       // We already visited this thing, from another translation unit.

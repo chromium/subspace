@@ -127,6 +127,51 @@ class HtmlWriter {
     }
   };
 
+  class [[nodiscard]] OpenMeta : public Html {
+   public:
+    ~OpenMeta() noexcept {
+      write_open();
+      writer_.write_close("meta", inside_has_newlines_, has_newlines_);
+    }
+
+    void add_property(std::string_view value) {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("property"),
+          .value = std::string(value),
+      });
+    }
+
+    void add_content(std::string_view value) {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("content"),
+          .value = std::string(value),
+      });
+    }
+
+    void add_name(std::string_view value) {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("name"),
+          .value = std::string(value),
+      });
+    }
+
+   private:
+    friend HtmlWriter;
+    OpenMeta(HtmlWriter& writer, bool inside_has_newlines) noexcept
+        : Html(writer) {
+      has_newlines_ = false;
+      inside_has_newlines_ = inside_has_newlines;
+    }
+
+    void write_open() noexcept override {
+      if (!wrote_open_) {
+        writer_.write_open("meta", classes_.iter(), attributes_.iter(),
+                           inside_has_newlines_, has_newlines_);
+        wrote_open_ = true;
+      }
+    }
+  };
+
   class [[nodiscard]] OpenDiv : public Html {
    public:
     ~OpenDiv() noexcept {
@@ -299,6 +344,7 @@ class HtmlWriter {
     friend HtmlWriter;
     OpenTitle(HtmlWriter& writer, bool inside_has_newlines) noexcept
         : Html(writer) {
+      has_newlines_ = false;
       inside_has_newlines_ = inside_has_newlines;
     }
 
@@ -366,6 +412,10 @@ class HtmlWriter {
       write_open();
       return writer_.open_link(has_newlines_);
     }
+    auto open_meta() noexcept {
+      write_open();
+      return writer_.open_meta(has_newlines_);
+    }
 
    private:
     friend HtmlWriter;
@@ -422,6 +472,9 @@ class HtmlWriter {
   }
   OpenLink open_link(bool inside_has_newlines) noexcept {
     return OpenLink(*this, inside_has_newlines);
+  }
+  OpenMeta open_meta(bool inside_has_newlines) noexcept {
+    return OpenMeta(*this, inside_has_newlines);
   }
 
   // Quote any <>.
