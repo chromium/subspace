@@ -74,7 +74,29 @@ std::string summarize_html(std::string_view html) noexcept {
 
 /// Removes html tags, leaving behind the text content.
 std::string drop_tags(std::string_view html) noexcept {
-  return std::string(html);  // TODO
+  if (html.empty()) return std::string(html);
+
+  std::ostringstream s;
+
+  bool inside_tag = false;
+  sus::Option<usize> text_start;
+  for (auto i : sus::ops::range<usize>(0u, html.size())) {
+    if (inside_tag) {
+      if (html[i] == '>') {
+        inside_tag = false;
+        text_start.insert(i + 1u);
+      }
+    } else {
+      if (html.substr(i).starts_with("<")) {
+        inside_tag = true;
+        if (text_start.is_some()) {
+          s << html.substr(*text_start, i - *text_start);
+          text_start = sus::none();
+        }
+      }
+    }
+  }
+  return sus::move(s).str();
 }
 
 }  // namespace
