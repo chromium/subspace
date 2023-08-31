@@ -33,10 +33,13 @@ struct MarkdownToHtmlError {
   std::string message;
 };
 
-sus::Result<std::string, MarkdownToHtmlError> markdown_to_html_full(
-    const Comment& comment, ParseMarkdownPageState& page_state) noexcept;
+struct MarkdownToHtml {
+  std::string full_html;
+  std::string summary_html;
+  std::string summary_text;
+};
 
-sus::Result<std::string, MarkdownToHtmlError> markdown_to_html_summary(
+sus::Result<MarkdownToHtml, MarkdownToHtmlError> markdown_to_html(
     const Comment& comment, ParseMarkdownPageState& page_state) noexcept;
 
 }  // namespace subdoc::gen

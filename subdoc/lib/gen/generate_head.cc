@@ -16,13 +16,33 @@
 
 namespace subdoc::gen {
 
-void generate_head(HtmlWriter& html, std::string_view title_html,
+void generate_head(HtmlWriter& html, std::string_view title,
+                   std::string_view description,
                    const Options& options) noexcept {
   {
     auto head = html.open_head();
     {
-      auto title = head.open_title();
-      title.write_html(title_html);
+      auto meta = head.open_meta();
+      meta.add_name("generator");
+      meta.add_content("subdoc");
+    }
+    {
+      auto meta = head.open_meta();
+      meta.add_name("viewport");
+      meta.add_content("width=device-width, initial-scale=1");
+    }
+    {
+      auto title_tag = head.open_title();
+      if (!title.empty()) {
+        title_tag.write_text(title);
+        title_tag.write_text(" - ");
+      }
+      title_tag.write_text(options.project_name);
+    }
+    {
+      auto meta = head.open_meta();
+      meta.add_name("description");
+      meta.add_content(description);
     }
     for (const std::string& path : options.stylesheets) {
       auto default_stylesheet_link = head.open_link();

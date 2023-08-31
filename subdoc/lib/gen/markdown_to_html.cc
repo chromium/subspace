@@ -72,9 +72,14 @@ std::string summarize_html(std::string_view html) noexcept {
   return std::string(html);
 }
 
+/// Removes html tags, leaving behind the text content.
+std::string drop_tags(std::string_view html) noexcept {
+  return std::string(html);  // TODO
+}
+
 }  // namespace
 
-sus::Result<std::string, MarkdownToHtmlError> markdown_to_html_full(
+sus::Result<MarkdownToHtml, MarkdownToHtmlError> markdown_to_html(
     const Comment& comment, ParseMarkdownPageState& page_state) noexcept {
   std::ostringstream parsed;
 
@@ -220,16 +225,12 @@ sus::Result<std::string, MarkdownToHtmlError> markdown_to_html_full(
           .message = fmt::format("unknown parsing error '{}'", result)});
     }
   }
-  return sus::ok(sus::move(parsed).str());
-}
-
-sus::Result<std::string, MarkdownToHtmlError> markdown_to_html_summary(
-    const Comment& comment, ParseMarkdownPageState& page_state) noexcept {
-  return markdown_to_html_full(comment, page_state)
-      .and_then(
-          [](std::string s) -> sus::Result<std::string, MarkdownToHtmlError> {
-            return sus::ok(summarize_html(sus::move(s)));
-          });
+  std::string str = sus::move(parsed).str();
+  return sus::ok(MarkdownToHtml{
+      .full_html = sus::clone(str),
+      .summary_html = summarize_html(str),
+      .summary_text = drop_tags(summarize_html(str)),
+  });
 }
 
 }  // namespace subdoc::gen

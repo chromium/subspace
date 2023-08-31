@@ -128,8 +128,8 @@ class SubDocTest : public testing::Test {
         .options = options,
         .self_link_counts = self_link_counts.take().unwrap(),
     };
-    sus::Result<std::string, subdoc::gen::MarkdownToHtmlError> html_result =
-        markdown_to_html_full(element->comment, page_state);
+    sus::Result<subdoc::gen::MarkdownToHtml, subdoc::gen::MarkdownToHtmlError>
+        html_result = markdown_to_html(element->comment, page_state);
     self_link_counts = sus::some(sus::move(page_state).self_link_counts);
 
     if (html_result.is_err()) {
@@ -138,7 +138,7 @@ class SubDocTest : public testing::Test {
                    << sus::move(html_result).unwrap_err().message;
       return false;
     } else {
-      std::string html = sus::move(html_result).unwrap();
+      std::string html = sus::move(html_result).unwrap().full_html;
       if (!html.starts_with(comment_start)) {
         llvm::errs() << type << " comment at " << comment_loc
                      << " does not match text. Found:\n"

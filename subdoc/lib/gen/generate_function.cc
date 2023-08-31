@@ -219,6 +219,14 @@ sus::Result<void, MarkdownToHtmlError> generate_function(
 
   ParseMarkdownPageState page_state(db, options);
 
+  MarkdownToHtml md_html;
+  if (auto try_comment = element.get_comment(); try_comment.is_some()) {
+    auto try_md_html = markdown_to_html(try_comment.as_value(), page_state);
+    if (try_md_html.is_err())
+      return sus::err(sus::move(try_md_html).unwrap_err());
+    md_html = sus::move(try_md_html).unwrap();
+  }
+
   const std::filesystem::path path =
       construct_html_file_path_for_function(options.output_root, element);
   std::filesystem::create_directories(path.parent_path());
@@ -240,7 +248,7 @@ sus::Result<void, MarkdownToHtmlError> generate_function(
       }
     }
     title << element.name;
-    generate_head(html, sus::move(title).str(), options);
+    generate_head(html, sus::move(title).str(), md_html.summary_text, options);
   }
 
   auto body = html.open_body();
@@ -337,15 +345,7 @@ sus::Result<void, MarkdownToHtmlError> generate_function(
     auto desc_div = section_div.open_div();
     desc_div.add_class("description");
     desc_div.add_class("long");
-    if (element.has_comment()) {
-      if (auto comment_html =
-              markdown_to_html_full(element.comment, page_state);
-          comment_html.is_err()) {
-        return sus::err(sus::move(comment_html).unwrap_err());
-      } else {
-        desc_div.write_html(sus::move(comment_html).unwrap());
-      }
-    }
+    desc_div.write_html(md_html.full_html);
   }
 
   return sus::ok();
@@ -371,13 +371,12 @@ sus::Result<void, MarkdownToHtmlError> generate_function_reference(
     auto desc_div = item_li.open_div();
     desc_div.add_class("description");
     desc_div.add_class("short");
-    if (element.has_comment()) {
-      if (auto comment_html =
-              markdown_to_html_summary(element.comment, page_state);
-          comment_html.is_err()) {
-        return sus::err(sus::move(comment_html).unwrap_err());
+    if (auto comment = element.get_comment(); comment.is_some()) {
+      if (auto md_html = markdown_to_html(comment.as_value(), page_state);
+          md_html.is_err()) {
+        return sus::err(sus::move(md_html).unwrap_err());
       } else {
-        desc_div.write_html(sus::move(comment_html).unwrap());
+        desc_div.write_html(sus::move(md_html).unwrap().summary_html);
       }
     }
   }
@@ -401,13 +400,12 @@ sus::Result<void, MarkdownToHtmlError> generate_function_method_reference(
     auto desc_div = item_div.open_div();
     desc_div.add_class("description");
     desc_div.add_class("long");
-    if (element.has_comment()) {
-      if (auto comment_html =
-              markdown_to_html_full(element.comment, page_state);
-          comment_html.is_err()) {
-        return sus::err(sus::move(comment_html).unwrap_err());
+    if (auto comment = element.get_comment(); comment.is_some()) {
+      if (auto md_html = markdown_to_html(comment.as_value(), page_state);
+          md_html.is_err()) {
+        return sus::err(sus::move(md_html).unwrap_err());
       } else {
-        desc_div.write_html(sus::move(comment_html).unwrap());
+        desc_div.write_html(sus::move(md_html).unwrap().full_html);
       }
     }
   }

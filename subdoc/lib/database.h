@@ -89,9 +89,18 @@ struct CommentElement {
   std::string name;
   u32 sort_key;
 
-  bool has_comment() const {
+  /// Used during visit to determine if a comment has already been found and
+  /// applied to the element.
+  bool has_found_comment() const {
     return !comment.text.empty() || comment.attrs.inherit.is_some() ||
            comment.attrs.hidden;
+  }
+  // Used during generation to get the comment for an element, if any.
+  sus::Option<const Comment&> get_comment() const noexcept sus_lifetimebound {
+    if (!comment.text.empty())
+      return sus::some(comment);
+    else
+      return sus::none();
   }
   bool hidden() const { return comment.attrs.hidden; }
 };
@@ -156,9 +165,8 @@ struct FunctionOverload {
 
 struct FunctionElement : public CommentElement {
   explicit FunctionElement(sus::Vec<Namespace> containing_namespaces,
-                           Comment comment, std::string name, 
-                           std::string signature,
-                           bool is_operator,
+                           Comment comment, std::string name,
+                           std::string signature, bool is_operator,
                            clang::QualType return_qual_type,
                            sus::Option<RequiresConstraints> constraints,
                            sus::Vec<std::string> template_params,
@@ -190,7 +198,7 @@ struct FunctionElement : public CommentElement {
   // outer records it's nested within.
   sus::Vec<std::string> record_path;
 
-  bool has_any_comments() const noexcept { return has_comment(); }
+  bool has_any_comments() const noexcept { return has_found_comment(); }
 
   sus::Option<const CommentElement&> find_comment(
       std::string_view comment_loc) const noexcept {
@@ -237,7 +245,7 @@ struct ConceptElement : public CommentElement {
   sus::Vec<std::string> template_params;
   RequiresConstraints constraints;
 
-  bool has_any_comments() const noexcept { return has_comment(); }
+  bool has_any_comments() const noexcept { return has_found_comment(); }
 
   sus::Option<const CommentElement&> find_comment(
       std::string_view comment_loc) const noexcept {
@@ -291,7 +299,7 @@ struct FieldElement : public CommentElement {
   StaticType is_static;
   sus::Vec<std::string> template_params;
 
-  bool has_any_comments() const noexcept { return has_comment(); }
+  bool has_any_comments() const noexcept { return has_found_comment(); }
 
   sus::Option<const CommentElement&> find_comment(
       std::string_view comment_loc) const noexcept {
@@ -413,7 +421,7 @@ struct RecordElement : public TypeElement {
   std::unordered_map<FunctionId, FunctionElement, FunctionId::Hash> methods;
 
   bool has_any_comments() const noexcept {
-    if (has_comment()) return true;
+    if (has_found_comment()) return true;
     for (const auto& [u, e] : records) {
       if (e.has_any_comments()) return true;
     }
@@ -574,7 +582,7 @@ struct NamespaceElement : public CommentElement {
   }
 
   bool has_any_comments() const noexcept {
-    if (has_comment()) return true;
+    if (has_found_comment()) return true;
     for (const auto& [u, e] : concepts) {
       if (e.has_any_comments()) return true;
     }
