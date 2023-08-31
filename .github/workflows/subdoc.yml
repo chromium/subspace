@@ -137,7 +137,7 @@ jobs:
 
       - name: Checkout docs
         run: |
-          git clone git@github.com:danakj/subspace-docs.git docs
+          git clone git@github.com:subspace-cpp/docs.git docs
           cd docs
           git rm -r *
 
