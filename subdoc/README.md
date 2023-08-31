@@ -4,7 +4,8 @@
 in the spirit of
 [Rustdoc](https://doc.rust-lang.org/rustdoc/what-is-rustdoc.html).
 
-To see it live, the Subspace docs are generated with Subdoc here: https://danakj.github.io/subspace-docs/global-namespace.html. The tool is still under development with lots to do.
+To see it live, the Subspace docs are generated with Subdoc here:
+https://suslib.cc. The tool is still under development with lots to do.
 [Want to help?](https://github.com/chromium/subspace/issues/321)
 
 Subdoc collects and parses doc comments in source code and generates a

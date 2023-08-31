@@ -47,10 +47,11 @@ inline std::filesystem::path construct_html_file_path(
     switch (n) {
       case Namespace::Tag::Global: break;
       case Namespace::Tag::Anonymous:
-        fname << "anonymous";
+        fname << "namespace.anonymous";
         fname << "-";
         break;
       case Namespace::Tag::Named:
+        fname << "namespace.";
         fname << n.as<Namespace::Tag::Named>();
         fname << "-";
         break;
@@ -212,13 +213,13 @@ inline std::filesystem::path construct_html_file_path_for_namespace(
 
   std::string file_name = [&]() {
     if (element.namespace_name.which() == Namespace::Tag::Global) {
-      // We're generating the global namespace, which will go in
-      // `global-ns.html`. Namespaces can't be named `namespace` so this can't
-      // collide with a real namespace `global::namespace`.
-      return std::string("global-namespace");
+      // We're generating the global namespace, which will go in `index.html`.
+      return std::string("index");
     } else {
-      // Otherwise, just use the local name of the namespace.
-      return element.name;
+      // Otherwise, use `namespace.${name}` for the file name of the namespace,
+      // which prevents collisions with other html files that have the same name
+      // as a top level namespace, such as a top level namespace named "index".
+      return fmt::format("namespace.{}", element.name);
     }
   }();
 

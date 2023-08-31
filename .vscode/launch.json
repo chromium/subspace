@@ -22,8 +22,6 @@
                 "subdoc/gen_tests/subdoc-test-style.css",
                 "--css",
                 "subdoc-test-style.css",
-                "--copy-file",
-                "sus/index.html",
                 "--project-md",
                 "sus/project.md",
                 "subspace/sus/lib"
