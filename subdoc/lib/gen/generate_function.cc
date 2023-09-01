@@ -21,6 +21,7 @@
 #include "subdoc/lib/gen/generate_cpp_path.h"
 #include "subdoc/lib/gen/generate_head.h"
 #include "subdoc/lib/gen/generate_requires.h"
+#include "subdoc/lib/gen/generate_sidebar.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/gen/options.h"
@@ -252,6 +253,9 @@ sus::Result<void, MarkdownToHtmlError> generate_function(
   }
 
   auto body = html.open_body();
+  generate_sidebar(body, db, "function", element.name, "",
+                   // TODO: links to what?
+                   sus::vec(), options);
 
   auto function_div = body.open_div();
   function_div.add_class("function");
