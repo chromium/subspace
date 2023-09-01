@@ -161,6 +161,7 @@ concept relocate_by_memcpy = (... && __private::relocate_by_memcpy_impl<T>);
                                const ::sus::marker::UnsafeFnMarker>); \
   template <class SusOuterClassTypeForTriviallyReloc>                 \
   friend struct ::sus::mem::__private::relocatable_tag;               \
+  /** #[doc.hidden] */                                                \
   static constexpr bool SusUnsafeTrivialRelocate =                    \
       ::sus::mem::relocate_by_memcpy<__VA_ARGS__>
 
