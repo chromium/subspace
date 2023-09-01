@@ -27,9 +27,9 @@ concept IsConstLvalueReference = std::is_lvalue_reference_v<T> &&
 
 }  // namespace __private
 
-/// Returns if a type `From` is safely constructible from a reference of type
-/// `To`. This is useful for marker types which hold a reference internally and
-/// are used to construct another type.
+/// Returns whether a type `From` is safely constructible from a reference of
+/// type `To`. This is useful for marker types which hold a reference internally
+/// and are used to construct another type.
 ///
 /// If `To` is a const reference, then they types must match, as a conversion
 /// would create a reference to a temporary.
