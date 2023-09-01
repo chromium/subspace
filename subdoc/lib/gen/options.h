@@ -18,14 +18,45 @@
 #include <string>
 
 #include "sus/collections/vec.h"
+#include "sus/prelude.h"
+#include "sus/result/result.h"
 
 namespace subdoc::gen {
+
+struct FavIcon {
+  /// Expects a string of form 'path;mimetype'.
+  static sus::Result<FavIcon, std::string> from_string(
+      std::string_view s) noexcept {
+    usize pos = s.find(';');
+    if (pos == std::string::npos) {
+      return sus::err("invalid favicon string, use 'path;mimetype'");
+    }
+    auto path = std::string_view(s).substr(0u, pos);
+    auto mime = std::string_view(s).substr(pos + 1u);
+    return sus::ok(FavIcon(std::string(path), std::string(mime)));
+  }
+
+  FavIcon(FavIcon&&) = default;
+  FavIcon& operator=(FavIcon&&) = default;
+
+  FavIcon clone() const noexcept {
+    return FavIcon(sus::clone(path), sus::clone(mime));
+  }
+
+  std::string path;
+  std::string mime;
+
+ private:
+  FavIcon(std::string path, std::string mime)
+      : path(sus::move(path)), mime(sus::move(mime)) {}
+};
 
 struct Options {
   std::string project_name = "PROJECT NAME";
   // TODO: sus::PathBuf type would be real nice.
   std::filesystem::path output_root;
   sus::Vec<std::string> stylesheets;
+  sus::Vec<FavIcon> favicons;
   sus::Vec<std::string> copy_files;
   bool ignore_bad_code_links = false;
 };

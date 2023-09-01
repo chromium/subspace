@@ -45,9 +45,18 @@ void generate_head(HtmlWriter& html, std::string_view title,
       meta.add_content(description);
     }
     for (const std::string& path : options.stylesheets) {
-      auto default_stylesheet_link = head.open_link();
-      default_stylesheet_link.add_rel("stylesheet");
-      default_stylesheet_link.add_href(path);
+      auto stylesheet_link = head.open_link();
+      stylesheet_link.add_rel("stylesheet");
+      stylesheet_link.add_href(path);
+    }
+    for (const auto& [i, favicon] : options.favicons.iter().enumerate()) {
+      auto favicon_link = head.open_link();
+      if (i == 0u)
+        favicon_link.add_rel("icon");
+      else
+        favicon_link.add_rel("alternate icon");
+      favicon_link.add_type(favicon.mime);
+      favicon_link.add_href(favicon.path);
     }
   }
   html.write_empty_line();

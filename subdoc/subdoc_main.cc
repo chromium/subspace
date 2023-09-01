@@ -58,6 +58,19 @@ int main(int argc, const char** argv) {
           "example: \"../main.css,other.css,/top.css\"."),
       llvm::cl::cat(option_category));
 
+  llvm::cl::list<std::string> option_favicon(
+      "favicon",
+      llvm::cl::desc(
+          "The path (on the website) to an icon to act as the favicon and its "
+          "mime type, separated by a semicolon."
+          "May be specified multiple times for multiple files in which case "
+          "the first is used as the primary and the others as alternates.\n"
+          "\n"
+          "When rendering the HTML, a <link> tag will be added\n"
+          "with each path to an icon file that is specified. For\n"
+          "example: \"favicon.png;image/png,favicon-vec.svg;image/svg+xml\"."),
+      llvm::cl::cat(option_category));
+
   llvm::cl::list<std::string> option_copy_files(
       "copy-file",
       llvm::cl::desc("A file to be copied into the output directory. May be "
@@ -184,8 +197,9 @@ int main(int argc, const char** argv) {
   auto gen_options = subdoc::gen::Options{
       .output_root = std::filesystem::path(option_out.getValue()),
       .stylesheets = sus::vec(),
+      .favicons = sus::vec(),
       .copy_files = sus::vec(),
-      .ignore_bad_code_links = option_ignore_bad_code_links.getValue()
+      .ignore_bad_code_links = option_ignore_bad_code_links.getValue(),
   };
   if (option_project_name.getNumOccurrences() > 0) {
     gen_options.project_name = option_project_name.getValue();
@@ -200,6 +214,14 @@ int main(int argc, const char** argv) {
       gen_options.stylesheets.push(sus::move(s));
     for (std::string s : sus::move(option_copy_files))
       gen_options.copy_files.push(sus::move(s));
+  }
+  for (std::string s : sus::move(option_favicon)) {
+    auto favicon_result = subdoc::gen::FavIcon::from_string(s);
+    if (favicon_result.is_err()) {
+      fmt::println(stderr, "ERROR: {}", favicon_result.as_err());
+      return 1;
+    }
+    gen_options.favicons.push(sus::move(favicon_result).unwrap());
   }
 
   fmt::println("Generating into '{}'", gen_options.output_root.string());
