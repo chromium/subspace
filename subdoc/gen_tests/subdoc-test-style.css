@@ -8,6 +8,7 @@ body {
     flex-direction: row;
     flex-wrap: nowrap;
     overflow-wrap: anywhere;
+    position: relative;
 }
 @media (max-width: 700px) {
     body {
@@ -169,7 +170,6 @@ main {
     flex-grow: 1;
     min-width: 0;
     position: relative;
-    display: block;
     padding-left: 48px;
     padding-right: 24px;
     padding-top: 12px;
@@ -177,9 +177,11 @@ main {
 }
 @media (max-width: 700px) {
     main {
-        padding-top: 0;
         padding-left: 24px;
         padding-right: 24px;
+    }
+    html {
+        scroll-padding-top: 45px;
     }
 }
 
