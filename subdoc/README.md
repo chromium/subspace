@@ -171,7 +171,8 @@ This can be the name of a file included in the output with `--copy-file`.
 ```
 --favicon WEB_PATH
 ```
-The path (on the website) to an icon to act as the favicon and its mime type,
+The `WEB_PATH` is a path on the server to an icon to act as the favicon and its
+mime type,
 separated by a semicolon. May be specified multiple times for multiple files in
 which case the first is used as the primary and the others as alternates.
 This can be the name of a file included in the output with `--copy-file`.
