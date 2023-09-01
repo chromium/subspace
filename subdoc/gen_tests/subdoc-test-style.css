@@ -124,6 +124,9 @@ nav.sidebar .sidebar-title a {
     color: inherit;
     text-decoration: none;
 }
+nav.sidebar .sidebar-title a:hover {
+    text-decoration: underline;
+}
 nav.sidebar .sidebar-pretitle {
     font-size: 0.8rem;
     font-weight: bold;
@@ -142,13 +145,25 @@ nav.sidebar .sidebar-links li {
     list-style-type: none;
     padding: 0.25rem;
 }
-nav.sidebar .sidebar-links a {
+nav.sidebar .sidebar-links li > a {
     display: block;
-    color: rgb(250, 199, 121);
+    color: inherit;
     text-decoration: none;
 }
-nav.sidebar .sidebar-links a:hover {
+nav.sidebar .sidebar-links li > a:hover {
     text-decoration: underline;
+}
+nav.sidebar .sidebar-links li > .sidebar-parent {
+    margin-top: 1rem;
+    font-size: 1.2em;
+}
+nav.sidebar .sidebar-links li > .sidebar-header {
+    margin-top: 0.5rem;
+    font-size: 1.1em;
+}
+nav.sidebar .sidebar-links li > .sidebar-item {
+    color: rgb(250, 199, 121);
+    font-size: 1.0em;
 }
 @media (max-width: 700px) {
     nav.sidebar {

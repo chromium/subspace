@@ -21,8 +21,8 @@
 #include "subdoc/lib/gen/generate_cpp_path.h"
 #include "subdoc/lib/gen/generate_function.h"
 #include "subdoc/lib/gen/generate_head.h"
-#include "subdoc/lib/gen/generate_record.h"
 #include "subdoc/lib/gen/generate_nav.h"
+#include "subdoc/lib/gen/generate_record.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/parse_comment.h"
@@ -430,26 +430,38 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
       });
 
   sus::Vec<SidebarLink> sidebar_links;
-  if (!sorted_namespaces.is_empty())
-    sidebar_links.push(SidebarLink("Namespaces", "#namespaces"));
-  if (!sorted_classes.is_empty())
-    sidebar_links.push(SidebarLink("Classes", "#classes"));
-  if (!sorted_unions.is_empty())
-    sidebar_links.push(SidebarLink("Unions", "#unions"));
-  if (!sorted_functions.is_empty())
-    sidebar_links.push(SidebarLink("Functions", "#functions"));
-  if (!sorted_operators.is_empty())
-    sidebar_links.push(SidebarLink("Operators", "#operators"));
-  if (!sorted_concepts.is_empty())
-    sidebar_links.push(SidebarLink("Concepts", "#concepts"));
+  if (!sorted_namespaces.is_empty()) {
+    sidebar_links.push(SidebarLink(SidebarLinkStyle::GroupHeader, "Namespaces",
+                                   "#namespaces"));
+  }
+  if (!sorted_classes.is_empty()) {
+    sidebar_links.push(
+        SidebarLink(SidebarLinkStyle::GroupHeader, "Classes", "#classes"));
+  }
+  if (!sorted_unions.is_empty()) {
+    sidebar_links.push(
+        SidebarLink(SidebarLinkStyle::GroupHeader, "Unions", "#unions"));
+  }
+  if (!sorted_functions.is_empty()) {
+    sidebar_links.push(
+        SidebarLink(SidebarLinkStyle::GroupHeader, "Functions", "#functions"));
+  }
+  if (!sorted_operators.is_empty()) {
+    sidebar_links.push(
+        SidebarLink(SidebarLinkStyle::GroupHeader, "Operators", "#operators"));
+  }
+  if (!sorted_concepts.is_empty()) {
+    sidebar_links.push(
+        SidebarLink(SidebarLinkStyle::GroupHeader, "Concepts", "#concepts"));
+  }
 
   auto body = html.open_body();
   if (element.namespace_name == Namespace::Tag::Global)
     generate_nav(body, db, "", options.project_name, "TODO: version",
-                     sus::move(sidebar_links), options);
+                 sus::move(sidebar_links), options);
   else
     generate_nav(body, db, "namespace", element.name, "",
-                     sus::move(sidebar_links), options);
+                 sus::move(sidebar_links), options);
 
   auto main = body.open_main();
   auto namespace_div = main.open_div();

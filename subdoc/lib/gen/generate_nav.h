@@ -22,7 +22,14 @@
 
 namespace subdoc::gen {
 
+enum class SidebarLinkStyle {
+  Parent,
+  GroupHeader,
+  Item,
+};
+
 struct SidebarLink {
+  SidebarLinkStyle style;
   std::string text;
   std::string href;
 };

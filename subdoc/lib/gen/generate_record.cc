@@ -21,8 +21,8 @@
 #include "subdoc/lib/gen/generate_cpp_path.h"
 #include "subdoc/lib/gen/generate_function.h"
 #include "subdoc/lib/gen/generate_head.h"
-#include "subdoc/lib/gen/generate_requires.h"
 #include "subdoc/lib/gen/generate_nav.h"
+#include "subdoc/lib/gen/generate_requires.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/gen/options.h"
@@ -36,6 +36,28 @@ namespace {
 
 using SortedFunctionByName = sus::Tuple<std::string_view, u32, u32, FunctionId>;
 using SortedFieldByName = sus::Tuple<std::string_view, u32, UniqueSymbol>;
+
+enum class MethodType {
+  StaticMethods,
+  NonStaticMethods,
+  Conversions,
+  NonStaticOperators,
+};
+
+const FunctionElement& function_element_from_sorted(
+    const RecordElement& element, MethodType type,
+    const SortedFunctionByName& s) noexcept {
+  switch (type) {
+    case MethodType::StaticMethods: {
+      if (element.ctors.count(s.at<3>())) return element.ctors.at(s.at<3>());
+      return element.methods.at(s.at<3>());
+    }
+    case MethodType::NonStaticMethods: return element.methods.at(s.at<3>());
+    case MethodType::NonStaticOperators: return element.methods.at(s.at<3>());
+    case MethodType::Conversions: return element.conversions.at(s.at<3>());
+  }
+  sus::unreachable();
+}
 
 /// Compares two `SortedFunctionByName` for ordering. It compares by ignoring
 /// the `FunctionId` (which is not `Ord`).
@@ -241,11 +263,8 @@ sus::Result<void, MarkdownToHtmlError> generate_record_fields(
         }
         {
           auto field_name_anchor = name_div.open_a();
-          std::ostringstream anchor;
-          anchor << "field.";
-          anchor << fe.name;
-          field_name_anchor.add_name(anchor.str());
-          field_name_anchor.add_href(std::string("#") + anchor.str());
+          field_name_anchor.add_name(construct_html_url_anchor_for_field(fe));
+          field_name_anchor.add_href(construct_html_url_for_field(fe));
           field_name_anchor.add_class("field-name");
           field_name_anchor.write_text(fe.name);
         }
@@ -269,13 +288,6 @@ sus::Result<void, MarkdownToHtmlError> generate_record_fields(
   return sus::ok();
 }
 
-enum MethodType {
-  StaticMethods,
-  NonStaticMethods,
-  Conversions,
-  NonStaticOperators,
-};
-
 sus::Result<void, MarkdownToHtmlError> generate_record_methods(
     HtmlWriter::OpenDiv& record_div, const RecordElement& element,
     MethodType type, sus::Slice<SortedFunctionByName> methods,
@@ -284,38 +296,42 @@ sus::Result<void, MarkdownToHtmlError> generate_record_methods(
   section_div.add_class("section");
   section_div.add_class("methods");
   switch (type) {
-    case Conversions: section_div.add_class("conversion"); break;
-    case StaticMethods: section_div.add_class("static"); break;
-    case NonStaticMethods: section_div.add_class("nonstatic"); break;
-    case NonStaticOperators: section_div.add_class("nonstatic"); break;
+    case MethodType::Conversions: section_div.add_class("conversion"); break;
+    case MethodType::StaticMethods: section_div.add_class("static"); break;
+    case MethodType::NonStaticMethods:
+      section_div.add_class("nonstatic");
+      break;
+    case MethodType::NonStaticOperators:
+      section_div.add_class("nonstatic");
+      break;
   }
 
   {
     auto methods_header_div = section_div.open_div();
     methods_header_div.add_class("section-header");
     switch (type) {
-      case StaticMethods: {
+      case MethodType::StaticMethods: {
         auto header_name = methods_header_div.open_a();
         header_name.add_name("static-methods");
         header_name.add_href("#static-methods");
         header_name.write_text("Static Methods");
         break;
       }
-      case NonStaticMethods: {
+      case MethodType::NonStaticMethods: {
         auto header_name = methods_header_div.open_a();
         header_name.add_name("methods");
         header_name.add_href("#methods");
         header_name.write_text("Methods");
         break;
       }
-      case Conversions: {
+      case MethodType::Conversions: {
         auto header_name = methods_header_div.open_a();
         header_name.add_name("conversions");
         header_name.add_href("#conversions");
         header_name.write_text("Conversions");
         break;
       }
-      case NonStaticOperators: {
+      case MethodType::NonStaticOperators: {
         auto header_name = methods_header_div.open_a();
         header_name.add_name("operators");
         header_name.add_href("#operators");
@@ -328,20 +344,9 @@ sus::Result<void, MarkdownToHtmlError> generate_record_methods(
     auto items_div = section_div.open_div();
     items_div.add_class("section-items");
 
-    for (auto&& [name, sort_key1, sort_key2, function_id] : methods) {
-      const FunctionElement& func = [&]() -> decltype(auto) {
-        switch (type) {
-          case StaticMethods: {
-            if (element.ctors.count(function_id))
-              return element.ctors.at(function_id);
-            return element.methods.at(function_id);
-          }
-          case NonStaticMethods: return element.methods.at(function_id);
-          case NonStaticOperators: return element.methods.at(function_id);
-          case Conversions: return element.conversions.at(function_id);
-        }
-        sus::unreachable();
-      }();
+    for (const SortedFunctionByName& sorted_fn : methods) {
+      const FunctionElement& func =
+          function_element_from_sorted(element, type, sorted_fn);
       if (auto result = generate_function_method_reference(
               items_div, func,
               /*with constraints=*/false, page_state);
@@ -460,24 +465,72 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
 
   sus::Vec<SidebarLink> sidebar_links;
   if (!sorted_static_fields.is_empty()) {
-    sidebar_links.push(
-        SidebarLink("Static Data Members", "#static-data-members"));
+    sidebar_links.push(SidebarLink(SidebarLinkStyle::GroupHeader,
+                                   "Static Data Members",
+                                   "#static-data-members"));
+    for (auto&& [name, sort_key, field_unique_symbol] : sorted_static_fields) {
+      const FieldElement& fe = element.fields.at(field_unique_symbol);
+      sidebar_links.push(SidebarLink(SidebarLinkStyle::Item, std::string(name),
+                                     construct_html_url_for_field(fe)));
+    }
   }
-  if (!sorted_static_methods.is_empty())
-    sidebar_links.push(SidebarLink("Static Methods", "#static-methods"));
-  if (!sorted_methods.is_empty())
-    sidebar_links.push(SidebarLink("Methods", "#methods"));
-  if (!sorted_conversions.is_empty())
-    sidebar_links.push(SidebarLink("Conversions", "#conversions"));
-  if (!sorted_operators.is_empty())
-    sidebar_links.push(SidebarLink("Operators", "#operators"));
-  if (!sorted_fields.is_empty())
-    sidebar_links.push(SidebarLink("Data Members", "#data-members"));
+  if (!sorted_static_methods.is_empty()) {
+    sidebar_links.push(SidebarLink(SidebarLinkStyle::GroupHeader,
+                                   "Static Methods", "#static-methods"));
+    for (const SortedFunctionByName& sorted_fn : sorted_static_methods) {
+      const FunctionElement& fe = function_element_from_sorted(
+          element, MethodType::StaticMethods, sorted_fn);
+      sidebar_links.push(SidebarLink(SidebarLinkStyle::Item,
+                                     sus::clone(fe.name),
+                                     construct_html_url_for_function(fe)));
+    }
+  }
+  if (!sorted_methods.is_empty()) {
+    sidebar_links.push(
+        SidebarLink(SidebarLinkStyle::GroupHeader, "Methods", "#methods"));
+    for (const SortedFunctionByName& sorted_fn : sorted_methods) {
+      const FunctionElement& fe = function_element_from_sorted(
+          element, MethodType::NonStaticMethods, sorted_fn);
+      sidebar_links.push(SidebarLink(SidebarLinkStyle::Item,
+                                     sus::clone(fe.name),
+                                     construct_html_url_for_function(fe)));
+    }
+  }
+  if (!sorted_conversions.is_empty()) {
+    sidebar_links.push(SidebarLink(SidebarLinkStyle::GroupHeader, "Conversions",
+                                   "#conversions"));
+    for (const SortedFunctionByName& sorted_fn : sorted_conversions) {
+      const FunctionElement& fe = function_element_from_sorted(
+          element, MethodType::Conversions, sorted_fn);
+      sidebar_links.push(SidebarLink(SidebarLinkStyle::Item,
+                                     sus::clone(fe.name),
+                                     construct_html_url_for_function(fe)));
+    }
+  }
+  if (!sorted_operators.is_empty()) {
+    sidebar_links.push(
+        SidebarLink(SidebarLinkStyle::GroupHeader, "Operators", "#operators"));
+    for (const SortedFunctionByName& sorted_fn : sorted_operators) {
+      const FunctionElement& fe = function_element_from_sorted(
+          element, MethodType::NonStaticOperators, sorted_fn);
+      sidebar_links.push(SidebarLink(SidebarLinkStyle::Item,
+                                     sus::clone(fe.name),
+                                     construct_html_url_for_function(fe)));
+    }
+  }
+  if (!sorted_fields.is_empty()) {
+    sidebar_links.push(SidebarLink(SidebarLinkStyle::GroupHeader,
+                                   "Data Members", "#data-members"));
+    for (auto&& [name, sort_key, field_unique_symbol] : sorted_fields) {
+      const FieldElement& fe = element.fields.at(field_unique_symbol);
+      sidebar_links.push(SidebarLink(SidebarLinkStyle::Item, std::string(name),
+                                     construct_html_url_for_field(fe)));
+    }
+  }
 
   auto body = html.open_body();
-  generate_nav(body, db,
-                   friendly_record_type_name(element.record_type, false),
-                   element.name, "", sus::move(sidebar_links), options);
+  generate_nav(body, db, friendly_record_type_name(element.record_type, false),
+               element.name, "", sus::move(sidebar_links), options);
 
   auto main = body.open_main();
   auto record_div = main.open_div();
@@ -498,32 +551,32 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
 
   if (!sorted_static_methods.is_empty()) {
     if (auto result = generate_record_methods(
-            record_div, element, StaticMethods,
+            record_div, element, MethodType::StaticMethods,
             sorted_static_methods.as_slice(), page_state);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }
   }
   if (!sorted_methods.is_empty()) {
-    if (auto result =
-            generate_record_methods(record_div, element, NonStaticMethods,
-                                    sorted_methods.as_slice(), page_state);
+    if (auto result = generate_record_methods(
+            record_div, element, MethodType::NonStaticMethods,
+            sorted_methods.as_slice(), page_state);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }
   }
   if (!sorted_conversions.is_empty()) {
-    if (auto result =
-            generate_record_methods(record_div, element, Conversions,
-                                    sorted_conversions.as_slice(), page_state);
+    if (auto result = generate_record_methods(
+            record_div, element, MethodType::Conversions,
+            sorted_conversions.as_slice(), page_state);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }
   }
   if (!sorted_operators.is_empty()) {
-    if (auto result =
-            generate_record_methods(record_div, element, NonStaticOperators,
-                                    sorted_operators.as_slice(), page_state);
+    if (auto result = generate_record_methods(
+            record_div, element, MethodType::NonStaticOperators,
+            sorted_operators.as_slice(), page_state);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }
