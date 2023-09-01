@@ -40,7 +40,7 @@ nav.topbar {
     font-size: 24px;
     flex-wrap: nowrap;
 }
-nav.topbar .menu-button {
+nav.topbar .sidebar-menu-button {
     width: 45px;
     font-size: 32px;
     border: none;
@@ -84,28 +84,29 @@ nav.topbar .topbar-title > a {
 nav.sidebar {
     position: sticky;
     height: 100vh;
-    flex: 0 0 180px;
+    width: 200px;
+    flex: 0 0 200px;
     top: 0;
     left: 0;
     overflow-y: scroll;
     overscroll-behavior: contain;
     padding-top: 12px;
+    z-index: 20;
 }
 nav.sidebar::-webkit-scrollbar {
     width: 6px;
 }
 nav.sidebar .sidebar-logo-link {
-    text-align: center;
-    display: block;
+    display: flex;
+    justify-content: center;
     margin-top: 10px;
     margin-bottom: 10px;
 }
 nav.sidebar .sidebar-logo-border {
     width: 100px;
     height: 100px;
-    margin-left: /* (180px - 100px) / 2 */ 40px;
     border-radius: 20%;
-    overflow:hidden;
+    overflow: hidden;
 }
 nav.sidebar .sidebar-logo {
     width: 100px;
@@ -151,6 +152,12 @@ nav.sidebar .sidebar-links a:hover {
 @media (max-width: 700px) {
     nav.sidebar {
         display: none;
+    }
+    nav.sidebar.shown {
+        display: block;
+        top: 45px;
+        height: calc(100vh - 45px);
+        position: fixed;
     }
     nav.sidebar .sidebar-logo-link {
         display: none;

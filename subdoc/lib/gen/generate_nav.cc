@@ -29,7 +29,10 @@ void generate_nav(HtmlWriter::OpenBody& body, const Database& db,
 
     {
       auto menu = nav.open_button();
-      menu.add_class("menu-button");
+      menu.add_class("sidebar-menu-button");
+      menu.add_onclick(
+          "let e = document.getElementsByClassName('sidebar')[0];"
+          "e.classList.toggle('shown');");
       menu.write_text("☰");
     }
     {
