@@ -300,9 +300,9 @@ sus::Result<void, MarkdownToHtmlError> generate_record_references(
     items_list.add_class("section-items");
     items_list.add_class("item-table");
 
-    for (auto&& [name, sort_key, key] : records) {
-      if (auto result = generate_record_reference(
-              items_list, element.records.at(key), page_state);
+    for (const SortedRecordByName& sorted_rec : records) {
+      const RecordElement& re = record_element_from_sorted(element, sorted_rec);
+      if (auto result = generate_record_reference(items_list, re, page_state);
           result.is_err()) {
         return sus::err(sus::move(result).unwrap_err());
       }
@@ -459,10 +459,20 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
   if (!sorted_classes.is_empty()) {
     sidebar_links.push(
         SidebarLink(SidebarLinkStyle::GroupHeader, "Classes", "#classes"));
+    for (const SortedRecordByName& sorted_rec : sorted_classes) {
+      const RecordElement& re = record_element_from_sorted(element, sorted_rec);
+      sidebar_links.push(SidebarLink(SidebarLinkStyle::Item, re.name,
+                                     construct_html_url_for_type(re)));
+    }
   }
   if (!sorted_unions.is_empty()) {
     sidebar_links.push(
         SidebarLink(SidebarLinkStyle::GroupHeader, "Unions", "#unions"));
+    for (const SortedRecordByName& sorted_rec : sorted_unions) {
+      const RecordElement& re = record_element_from_sorted(element, sorted_rec);
+      sidebar_links.push(SidebarLink(SidebarLinkStyle::Item, re.name,
+                                     construct_html_url_for_type(re)));
+    }
   }
   if (!sorted_functions.is_empty()) {
     sidebar_links.push(
