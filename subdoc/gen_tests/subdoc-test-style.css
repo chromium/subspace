@@ -137,6 +137,7 @@ nav.sidebar .sidebar-subtitle {
 }
 nav.sidebar .sidebar-links {
     font-size: 90%;
+    padding-bottom: 2rem;
 }
 nav.sidebar .sidebar-links ul {
     padding-inline-start: 0;
@@ -188,7 +189,7 @@ main {
     padding-left: 48px;
     padding-right: 24px;
     padding-top: 12px;
-    padding-bottom: 48px;
+    padding-bottom: 2rem;
 }
 @media (max-width: 700px) {
     main {
