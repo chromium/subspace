@@ -1,4 +1,4 @@
-name: subdoc
+name: docs
 
 on:
   push:
