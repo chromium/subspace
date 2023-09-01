@@ -49,7 +49,9 @@ void generate_sidebar(HtmlWriter::OpenBody& body, const Database& db,
     auto title_div = nav.open_div();
     title_div.add_class("sidebar-title");
     title_div.add_class("sidebar-text");
-    title_div.write_text(title);
+    auto title_a = title_div.open_a();
+    title_a.add_href("#");
+    title_a.write_text(title);
   }
   {
     auto subtitle_div = nav.open_div();
