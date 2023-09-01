@@ -64,6 +64,10 @@ class HtmlWriter {
       write_open();
       return writer_.open_span(has_newlines_, newlines);
     }
+    auto open_button() noexcept {
+      write_open();
+      return writer_.open_button(has_newlines_);
+    }
     auto open_ul() noexcept {
       write_open();
       return writer_.open_ul(has_newlines_);
@@ -343,6 +347,29 @@ class HtmlWriter {
     }
   };
 
+  class [[nodiscard]] OpenButton : public Html {
+   public:
+    ~OpenButton() noexcept {
+      write_open();
+      writer_.write_close("button", inside_has_newlines_, has_newlines_);
+    }
+
+   private:
+    friend HtmlWriter;
+    OpenButton(HtmlWriter& writer, bool inside_has_newlines) noexcept
+        : Html(writer) {
+      inside_has_newlines_ = inside_has_newlines;
+    }
+
+    void write_open() noexcept override {
+      if (!wrote_open_) {
+        writer_.write_open("button", classes_.iter(), attributes_.iter(),
+                           inside_has_newlines_, has_newlines_);
+        wrote_open_ = true;
+      }
+    }
+  };
+
   class [[nodiscard]] OpenUl : public Html {
    public:
     ~OpenUl() noexcept {
@@ -576,6 +603,9 @@ class HtmlWriter {
   OpenSpan open_span(bool inside_has_newlines,
                      NewlineStrategy newlines) noexcept {
     return OpenSpan(*this, inside_has_newlines, newlines);
+  }
+  OpenButton open_button(bool inside_has_newlines) noexcept {
+    return OpenButton(*this, inside_has_newlines);
   }
   OpenUl open_ul(bool inside_has_newlines) noexcept {
     return OpenUl(*this, inside_has_newlines);
