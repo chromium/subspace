@@ -257,7 +257,8 @@ sus::Result<void, MarkdownToHtmlError> generate_function(
                    // TODO: links to what?
                    sus::vec(), options);
 
-  auto function_div = body.open_div();
+  auto main = body.open_main();
+  auto function_div = main.open_div();
   function_div.add_class("function");
 
   auto section_div = function_div.open_div();
