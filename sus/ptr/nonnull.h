@@ -89,10 +89,10 @@ class [[sus_trivial_abi]] NonNull {
   template <class U, size_t N>
   static constexpr inline NonNull from(U (&t)[N]) = delete;
 
-  /// NonNull<T> is `Copy`, so this is the copy constructor.
+  /// `NonNull<T>` is `Copy`, so this is the copy constructor.
   /// #[doc.overloads=ctor.copy]
   NonNull(const NonNull&) = default;
-  /// NonNull<T> is `Copy`, so this is the copy assignment operator.
+  /// `NonNull<T>` is `Copy`, so this is the copy assignment operator.
   /// #[doc.overloads=assign.copy]
   NonNull& operator=(const NonNull&) = default;
 
@@ -131,7 +131,7 @@ class [[sus_trivial_abi]] NonNull {
     return ptr_;
   }
 
-  /// Cast the pointer of type `T` in NonNull<T> to a pointer of type `U` and
+  /// Cast the pointer of type `T` in `NonNull<T>` to a pointer of type `U` and
   /// return a `NonNull<U>`.
   ///
   /// This requires that `T*` is a subclass of `U*`. To perform a
@@ -143,7 +143,7 @@ class [[sus_trivial_abi]] NonNull {
                                           static_cast<U*>(ptr_));
   }
 
-  /// Cast the pointer of type `T` in NonNull<T> to a pointer of type `U` and
+  /// Cast the pointer of type `T` in `NonNull<T>` to a pointer of type `U` and
   /// return a `NonNull<U>`.
   ///
   /// # Safety

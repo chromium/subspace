@@ -124,7 +124,7 @@ class Vec final {
     (..., push_with_capacity_internal(::sus::forward<Ts>(values)));
   }
 
-  /// Creates a Vec<T> with at least the specified capacity.
+  /// Creates a `Vec` with at least the specified capacity.
   ///
   /// The vector will be able to hold at least `capacity` elements without
   /// reallocating. This method is allowed to allocate for more elements than
@@ -136,12 +136,6 @@ class Vec final {
   /// A `Vec<T>` can be implicitly converted to a `Slice<T>`. If it is not
   /// const, it can also be converted to a `SliceMut<T>`.
   ///
-  /// Unlike `std::vector` and `std::span`, `Vec<T>` can also convert to a
-  /// `const Slice<T>&` or `Slice<T>&` (or `const SliceMut<T>` or
-  /// `SliceMut<T>&`) without generating any constructor or destructor, which
-  /// means smaller and faster binaries when slices are received in function
-  /// parameters as const references.
-  ///
   /// # Panics
   /// Panics if the capacity exceeds `isize::MAX` bytes.
   sus_pure static constexpr Vec with_capacity(usize capacity) noexcept {
@@ -149,7 +143,7 @@ class Vec final {
     return Vec(WITH_CAPACITY, std::allocator<T>(), capacity);
   }
 
-  /// Creates a Vec<T> directly from a pointer, a capacity, and a length.
+  /// Creates a `Vec` directly from a pointer, a capacity, and a length.
   ///
   /// # Safety
   ///
@@ -198,7 +192,8 @@ class Vec final {
     return v;
   }
 
-  /// Allocate a `Vec<u8>` and fill it with a string from a char array.
+  /// Allocate a [`Vec<u8>`]($sus::collections::Vec) and fill it with a string
+  /// from a `char` array.
   ///
   /// # Panics
   /// This function expects the input string to be null-terminated, and it will
@@ -222,7 +217,7 @@ class Vec final {
     if (is_alloced()) free_storage();
   }
 
-  /// sus::mem::Move trait.
+  /// Satisifes the [`Move`]($sus::mem::Move) concept.
   /// #[doc.overloads=vec.move]
   constexpr Vec(Vec&& o) noexcept
       : allocator_(::sus::move(o).allocator_),
@@ -232,7 +227,7 @@ class Vec final {
         len_(::sus::mem::replace(o.len_, kMovedFromLen)) {
     check(!is_moved_from() && !has_iterators());
   }
-  /// sus::mem::Move trait.
+  /// Satisifes the [`Move`]($sus::mem::Move) concept.
   /// #[doc.overloads=vec.move]
   constexpr Vec& operator=(Vec&& o) noexcept {
     check(!o.is_moved_from());
@@ -247,7 +242,7 @@ class Vec final {
     return *this;
   }
 
-  /// Satisfies [`Clone`]($sus::mem::Clone) for Vec.
+  /// Satisfies the [`Clone`]($sus::mem::Clone) concept.
   constexpr Vec clone() const& noexcept
     requires(::sus::mem::Clone<T>)
   {
@@ -270,8 +265,8 @@ class Vec final {
   /// An optimization to reuse the existing storage for
   /// [`Clone`]($sus::mem::Clone).
   ///
-  /// When `propagate_on_container_copy_assignment` is true, the allocation may
-  /// not be able to be reused when the allocators are not equal.
+  // When `propagate_on_container_copy_assignment` is true, the allocation may
+  // not be able to be reused when the allocators are not equal.
   constexpr void clone_from(const Vec& source) noexcept
     requires(!std::allocator_traits<
              A>::propagate_on_container_copy_assignment::value)
@@ -294,9 +289,11 @@ class Vec final {
   /// removed elements as an iterator. If the iterator is dropped before
   /// being fully consumed, it drops the remaining removed elements.
   ///
-  /// The Vec becomes moved-from and will panic on use while the Drain iterator
-  /// is in use, and will be usable again once Drain is destroyed or
-  /// `Drain::keep_remain()` is called.
+  /// The `Vec` becomes moved-from and will panic on use while the
+  /// [`Drain`]($sus::collections::Drain)
+  /// iterator is in use, and will be usable again once
+  /// [`Drain`]($sus::collections::Drain) is destroyed or
+  /// [`Drain::keep_rest`]($sus::collections::Drain::keep_rest) is called.
   ///
   /// # Panics
   ///
@@ -310,18 +307,18 @@ class Vec final {
     return Drain<T>(::sus::move(*this), bounded_range);
   }
 
-  /// Decomposes a `Vec<T>` into its raw components.
+  /// Decomposes a `Vec` into its raw components.
   ///
   /// Returns the raw pointer to the underlying data, the length of the vector
   /// (in elements), and the allocated capacity of the data (in elements). These
   /// are the same arguments in the same order as the arguments to
-  /// `from_raw_parts()`.
+  /// [`from_raw_parts`]($sus::collections::Vec::from_raw_parts).
   ///
   /// After calling this function, the caller is responsible for the memory
   /// previously managed by the `Vec`. The only way to do this is to convert the
   /// raw pointer, length, and capacity back into a `Vec` with the
-  /// `from_raw_parts()` function, allowing the destructor to perform the
-  /// cleanup.
+  /// [`from_raw_parts`]($sus::collections::Vec::from_raw_parts) function,
+  /// allowing the destructor to perform the cleanup.
   constexpr ::sus::Tuple<T*, usize, usize> into_raw_parts() && noexcept {
     check(!is_moved_from() && !has_iterators());
     return sus::tuple(::sus::mem::replace(data_, nullptr),
@@ -332,7 +329,7 @@ class Vec final {
   /// Returns the number of elements there is space allocated for in the vector.
   ///
   /// This may be larger than the number of elements present, which is returned
-  /// by `len()`.
+  /// by [`len`]($sus::collections::Vec::len).
   sus_pure constexpr inline usize capacity() const& noexcept {
     check(!is_moved_from());
     return capacity_;
@@ -348,13 +345,17 @@ class Vec final {
     len_ = 0u;
   }
 
-  /// Extends the `Vec` with the contents of an iterator.
+  /// Extends the `Vec` with the contents of an iterator, copying from the
+  /// elements.
   ///
-  /// [`Extend<const T&>`]($sus::iter::Extend) trait.
+  /// Satisfies the [`Extend<const T&>`]($sus::iter::Extend) concept for
+  /// `Vec<T>`.
   ///
-  /// If `T` is `Clone` but not `Copy`, then the elements should be cloned
-  /// explicitly by the caller (possibly through `Iterator::cloned()`). Then use
-  /// the `Extend<T>` concept method instead, moving the elements into the Vec.
+  /// If `T` is [`Clone`]($sus::mem::Clone) but not [`Copy`]($sus::mem::Copy),
+  ///  then the elements should be cloned explicitly by the caller (possibly
+  /// through [`Iterator::cloned`]($sus::iter::IteratorBase::cloned)). Then use
+  /// the [`extend`]($sus::collections::Vec::extend!vec.extend.val) (non-copy)
+  /// method instead, moving the elements into the `Vec`.
   ///
   /// #[doc.overloads=vec.extend.const]
   constexpr void extend(sus::iter::IntoIterator<const T&> auto&& ii) noexcept
@@ -414,7 +415,7 @@ class Vec final {
 
   /// Extends the `Vec` with the contents of an iterator.
   ///
-  /// [`Extend<T>`]($sus::iter::Extend) trait.
+  /// Satisfies the [`Extend<T>`]($sus::iter::Extend) concept for `Vec<T>`.
   ///
   /// #[doc.overloads=vec.extend.val]
   constexpr void extend(sus::iter::IntoIterator<T> auto&& ii) noexcept
@@ -543,11 +544,13 @@ class Vec final {
   ///
   /// # Panics
   ///
-  /// Panics if the new capacity exceeds `isize::MAX` bytes.
-  //
-  // Avoids use of a reference, and receives by value, to sidestep the whole
-  // issue of the reference being to something inside the vector which
-  // reserve() then invalidates.
+  /// Panics if the new capacity exceeds [`isize::MAX`]($sus::num::isize::MAX)
+  /// bytes.
+  ///
+  /// # Implementation note
+  /// Avoids use of a reference, and receives by value, to sidestep the whole
+  /// issue of the reference being to something inside the vector which
+  /// `reserve` then invalidates.
   constexpr void push(T t) noexcept
     requires(::sus::mem::Move<T>)
   {
@@ -557,7 +560,8 @@ class Vec final {
   }
 
   /// Reserves capacity for at least `additional` more elements to be inserted
-  /// in the given Vec<T>. The collection may reserve more space to
+  /// in the given [`Vec<T>`]($sus::collections::Vec). The collection may
+  /// reserve more space to
   /// speculatively avoid frequent reallocations. After calling reserve,
   /// capacity will be greater than or equal to self.len() + additional. Does
   /// nothing if capacity is already sufficient.
@@ -573,7 +577,8 @@ class Vec final {
   }
 
   /// Reserves the minimum capacity for at least `additional` more elements to
-  /// be inserted in the given Vec<T>. Unlike reserve, this will not
+  /// be inserted in the given [`Vec<T>`]($sus::collections::Vec). Unlike
+  /// reserve, this will not
   /// deliberately over-allocate to speculatively avoid frequent allocations.
   /// After calling `reserve_exact`, capacity will be greater than or equal to
   /// `len() + additional`. Does nothing if the capacity is already sufficient.
