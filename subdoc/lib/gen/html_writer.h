@@ -354,6 +354,13 @@ class HtmlWriter {
       writer_.write_close("button", inside_has_newlines_, has_newlines_);
     }
 
+    void add_onclick(std::string_view script) {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("onclick"),
+          .value = std::string(script),
+      });
+    }
+
    private:
     friend HtmlWriter;
     OpenButton(HtmlWriter& writer, bool inside_has_newlines) noexcept
