@@ -163,8 +163,6 @@ sus::Result<void, MarkdownToHtmlError> generate_record_fields(
     HtmlWriter::OpenDiv& record_div, const RecordElement& element,
     bool static_fields, sus::Slice<SortedFieldByName> fields,
     ParseMarkdownPageState& page_state) {
-  if (fields.is_empty()) return sus::ok();
-
   auto section_div = record_div.open_div();
   section_div.add_class("section");
   section_div.add_class("fields");
@@ -282,8 +280,6 @@ sus::Result<void, MarkdownToHtmlError> generate_record_methods(
     HtmlWriter::OpenDiv& record_div, const RecordElement& element,
     MethodType type, sus::Slice<SortedFunctionByName> methods,
     ParseMarkdownPageState& page_state) {
-  if (methods.is_empty()) return sus::ok();
-
   auto section_div = record_div.open_div();
   section_div.add_class("section");
   section_div.add_class("methods");
@@ -406,19 +402,6 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
     generate_head(html, sus::move(title).str(), md_html.summary_text, options);
   }
 
-  auto body = html.open_body();
-  generate_sidebar(body, db,
-                   friendly_record_type_name(element.record_type, false),
-                   element.name, "", sus::vec(), options);
-
-  auto main = body.open_main();
-  auto record_div = main.open_div();
-  record_div.add_class("type");
-  record_div.add_class("record");
-  record_div.add_class(friendly_record_type_name(element.record_type, false));
-  generate_record_overview(record_div, element, namespaces, type_ancestors,
-                           md_html, options);
-
   sus::Vec<SortedFieldByName> sorted_static_fields;
   sus::Vec<SortedFieldByName> sorted_fields;
   for (const auto& [symbol, field_element] : element.fields) {
@@ -437,13 +420,6 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
   }
   sorted_static_fields.sort_unstable_by(cmp_fields_by_name);
   sorted_fields.sort_unstable_by(cmp_fields_by_name);
-
-  if (auto result =
-          generate_record_fields(record_div, element, true,
-                                 sorted_static_fields.as_slice(), page_state);
-      result.is_err()) {
-    return sus::err(sus::move(result).unwrap_err());
-  }
 
   sus::Vec<SortedFunctionByName> sorted_static_methods;
   sus::Vec<SortedFunctionByName> sorted_methods;
@@ -482,35 +458,83 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
   sorted_conversions.sort_unstable_by(cmp_functions_by_name);
   sorted_operators.sort_unstable_by(cmp_functions_by_name);
 
-  if (auto result =
-          generate_record_methods(record_div, element, StaticMethods,
-                                  sorted_static_methods.as_slice(), page_state);
-      result.is_err()) {
-    return sus::err(sus::move(result).unwrap_err());
+  sus::Vec<SidebarLink> sidebar_links;
+  if (!sorted_static_fields.is_empty()) {
+    sidebar_links.push(
+        SidebarLink("Static Data Members", "#static-data-members"));
   }
-  if (auto result =
-          generate_record_methods(record_div, element, NonStaticMethods,
-                                  sorted_methods.as_slice(), page_state);
-      result.is_err()) {
-    return sus::err(sus::move(result).unwrap_err());
-  }
-  if (auto result =
-          generate_record_methods(record_div, element, Conversions,
-                                  sorted_conversions.as_slice(), page_state);
-      result.is_err()) {
-    return sus::err(sus::move(result).unwrap_err());
-  }
-  if (auto result =
-          generate_record_methods(record_div, element, NonStaticOperators,
-                                  sorted_operators.as_slice(), page_state);
-      result.is_err()) {
-    return sus::err(sus::move(result).unwrap_err());
+  if (!sorted_static_methods.is_empty())
+    sidebar_links.push(SidebarLink("Static Methods", "#static-methods"));
+  if (!sorted_methods.is_empty())
+    sidebar_links.push(SidebarLink("Methods", "#methods"));
+  if (!sorted_conversions.is_empty())
+    sidebar_links.push(SidebarLink("Conversions", "#conversions"));
+  if (!sorted_operators.is_empty())
+    sidebar_links.push(SidebarLink("Operators", "#operators"));
+  if (!sorted_fields.is_empty())
+    sidebar_links.push(SidebarLink("Data Members", "#data-members"));
+
+  auto body = html.open_body();
+  generate_sidebar(body, db,
+                   friendly_record_type_name(element.record_type, false),
+                   element.name, "", sus::move(sidebar_links), options);
+
+  auto main = body.open_main();
+  auto record_div = main.open_div();
+  record_div.add_class("type");
+  record_div.add_class("record");
+  record_div.add_class(friendly_record_type_name(element.record_type, false));
+  generate_record_overview(record_div, element, namespaces, type_ancestors,
+                           md_html, options);
+
+  if (!sorted_static_fields.is_empty()) {
+    if (auto result =
+            generate_record_fields(record_div, element, true,
+                                   sorted_static_fields.as_slice(), page_state);
+        result.is_err()) {
+      return sus::err(sus::move(result).unwrap_err());
+    }
   }
 
-  if (auto result = generate_record_fields(
-          record_div, element, false, sorted_fields.as_slice(), page_state);
-      result.is_err()) {
-    return sus::err(sus::move(result).unwrap_err());
+  if (!sorted_static_methods.is_empty()) {
+    if (auto result = generate_record_methods(
+            record_div, element, StaticMethods,
+            sorted_static_methods.as_slice(), page_state);
+        result.is_err()) {
+      return sus::err(sus::move(result).unwrap_err());
+    }
+  }
+  if (!sorted_methods.is_empty()) {
+    if (auto result =
+            generate_record_methods(record_div, element, NonStaticMethods,
+                                    sorted_methods.as_slice(), page_state);
+        result.is_err()) {
+      return sus::err(sus::move(result).unwrap_err());
+    }
+  }
+  if (!sorted_conversions.is_empty()) {
+    if (auto result =
+            generate_record_methods(record_div, element, Conversions,
+                                    sorted_conversions.as_slice(), page_state);
+        result.is_err()) {
+      return sus::err(sus::move(result).unwrap_err());
+    }
+  }
+  if (!sorted_operators.is_empty()) {
+    if (auto result =
+            generate_record_methods(record_div, element, NonStaticOperators,
+                                    sorted_operators.as_slice(), page_state);
+        result.is_err()) {
+      return sus::err(sus::move(result).unwrap_err());
+    }
+  }
+
+  if (!sorted_fields.is_empty()) {
+    if (auto result = generate_record_fields(
+            record_div, element, false, sorted_fields.as_slice(), page_state);
+        result.is_err()) {
+      return sus::err(sus::move(result).unwrap_err());
+    }
   }
 
   type_ancestors.push(&element);
