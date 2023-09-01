@@ -20,8 +20,8 @@
 #include "subdoc/lib/gen/files.h"
 #include "subdoc/lib/gen/generate_cpp_path.h"
 #include "subdoc/lib/gen/generate_head.h"
-#include "subdoc/lib/gen/generate_requires.h"
 #include "subdoc/lib/gen/generate_nav.h"
+#include "subdoc/lib/gen/generate_requires.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/gen/options.h"
@@ -144,6 +144,13 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
     {
       auto signature_div = overload_div.open_div(HtmlWriter::SingleLine);
       signature_div.add_class("function-signature");
+      if (!link_to_page) {
+        // Only methods are not given their own page, and are just a named
+        // anchor on the Record's page.
+        sus::check(overload.method.is_some());
+        auto name_anchor = signature_div.open_a();
+        name_anchor.add_name(construct_html_url_anchor_for_method(element));
+      }
       if (style == StyleLong || style == StyleLongWithConstraints) {
         if (!overload.template_params.is_empty()) {
           auto template_div = signature_div.open_div(HtmlWriter::SingleLine);
@@ -168,10 +175,10 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
         }
       }
       {
-        auto name_anchor = signature_div.open_a();
+        auto link_anchor = signature_div.open_a();
         if (link_to_page) {
           if (!element.hidden()) {
-            name_anchor.add_href(construct_html_url_for_function(element));
+            link_anchor.add_href(construct_html_url_for_function(element));
           } else {
             llvm::errs() << "WARNING: Reference to hidden FunctionElement "
                          << element.name << " in namespace "
@@ -181,11 +188,10 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
           // Only methods are not given their own page, and are just a named
           // anchor on the Record's page.
           sus::check(overload.method.is_some());
-          name_anchor.add_name(construct_html_url_anchor_for_method(element));
-          name_anchor.add_href(construct_html_url_for_function(element));
+          link_anchor.add_href(construct_html_url_for_function(element));
         }
-        name_anchor.add_class("function-name");
-        name_anchor.write_text(element.name);
+        link_anchor.add_class("function-name");
+        link_anchor.write_text(element.name);
       }
       if (style == StyleLong || style == StyleLongWithConstraints) {
         generate_function_params(signature_div, overload);
@@ -254,8 +260,8 @@ sus::Result<void, MarkdownToHtmlError> generate_function(
 
   auto body = html.open_body();
   generate_nav(body, db, "function", element.name, "",
-                   // TODO: links to what?
-                   sus::vec(), options);
+               // TODO: links to what?
+               sus::vec(), options);
 
   auto main = body.open_main();
   auto function_div = main.open_div();
