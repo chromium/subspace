@@ -47,7 +47,7 @@ namespace sus::collections {
 /// d1 = sus::move(d2);  // Points at v2, is destroyed after v2.
 /// ```
 ///
-/// While Drain is satisfies [`Move`](sus-mem-Move.html) in order to be
+/// While Drain is satisfies [`Move`]($sus::mem::Move) in order to be
 /// move-constructed, it will panic on move-assignment.
 template <class ItemT>
 struct [[nodiscard]] Drain final

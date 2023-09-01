@@ -20,7 +20,7 @@ namespace sus {
 ///
 /// The Subspace library provides implementations of common general purpose
 /// programming data structures, with rich APIs that allow for interactions with
-/// [Iterators](sus-iter.html), and with APIs that provide safe defaults.
+/// [Iterators]($sus::iter), and with APIs that provide safe defaults.
 ///
 /// The collections offer similar functionality to the [C++ standard containers
 /// library](https://en.cppreference.com/w/cpp/container) but differ in some

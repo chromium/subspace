@@ -43,8 +43,8 @@
 #include "sus/tuple/__private/storage.h"
 
 namespace sus {
-/// The [`Tuple`](sus-tuple_type-Tuple.html) type, and the
-/// [`tuple`](sus-tuple_type-fn.tuple.html) type-deduction function.
+/// The [`Tuple`]($sus::tuple_type::Tuple) type, and the
+/// [`tuple`]($sus::tuple_type::tuple) type-deduction function.
 namespace tuple_type {}
 }  // namespace sus
 
@@ -57,11 +57,11 @@ namespace sus::tuple_type {
 /// differences:
 /// * It allows storing reference types.
 /// * It interacts with iterators through satisfying
-///   [`Extend`](sus-iter-Extend.html), allowing an iterator to `unzip()` into
+///   [`Extend`]($sus::iter::Extend), allowing an iterator to `unzip()` into
 ///   a Tuple of collections that satisfy Extend.
 /// * It provides explicit methods for const, mutable or rvalue access to
 ///   its values.
-/// * It satisfies [`Clone`](sus-mem-Clone.html) if its elements all satisfy
+/// * It satisfies [`Clone`]($sus::mem::Clone) if its elements all satisfy
 ///   `Clone`.
 ///
 /// Tuple elements can also be accessed through `get()` for code that wants to

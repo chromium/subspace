@@ -47,7 +47,7 @@ namespace sus::num {
 
 /// A 32-bit unsigned integer.
 ///
-/// See the [namespace level documentation](sus-num.html) for more.
+/// See the [namespace level documentation]($sus::num) for more.
 struct [[sus_trivial_abi]] u32 final {
 #define _self u32
 #define _pointer false
@@ -63,7 +63,7 @@ struct [[sus_trivial_abi]] u32 final {
 
 /// An 8-bit unsigned integer.
 ///
-/// See the [namespace level documentation](sus-num.html) for more.
+/// See the [namespace level documentation]($sus::num) for more.
 struct [[sus_trivial_abi]] u8 final {
 #define _self u8
 #define _pointer false
@@ -79,7 +79,7 @@ struct [[sus_trivial_abi]] u8 final {
 
 /// A 16-bit unsigned integer.
 ///
-/// See the [namespace level documentation](sus-num.html) for more.
+/// See the [namespace level documentation]($sus::num) for more.
 struct [[sus_trivial_abi]] u16 final {
 #define _self u16
 #define _pointer false
@@ -95,7 +95,7 @@ struct [[sus_trivial_abi]] u16 final {
 
 /// A 64-bit unsigned integer.
 ///
-/// See the [namespace level documentation](sus-num.html) for more.
+/// See the [namespace level documentation]($sus::num) for more.
 struct [[sus_trivial_abi]] u64 final {
 #define _self u64
 #define _pointer false
@@ -113,7 +113,7 @@ struct [[sus_trivial_abi]] u64 final {
 ///
 /// This type is capable of holding any offset or (positive) distance in a
 /// single memory allocation, as allocations are bounded at
-/// [`isize::MAX`](sus-num-isize.html#field.MAX). It can represent any absolute
+/// [`isize::MAX`]($sus::num::isize::MAX). It can represent any absolute
 /// address in a linear address system.
 ///
 /// Note that it is possible for a pointer to be larger than an address under
@@ -125,7 +125,7 @@ struct [[sus_trivial_abi]] u64 final {
 /// of the pointer.
 ///
 ///
-/// See the [namespace level documentation](sus-num.html) for more.
+/// See the [namespace level documentation]($sus::num) for more.
 struct [[sus_trivial_abi]] usize final {
 #define _self usize
 #define _pointer false
@@ -142,27 +142,27 @@ struct [[sus_trivial_abi]] usize final {
 /// A pointer-sized unsigned integer.
 ///
 /// This type is capable of holding a pointer, and is convertible to and from
-/// pointers. It is typically the same size as [`usize`](sus-num-usize.html) but it can be larger when
+/// pointers. It is typically the same size as [`usize`]($sus::num::usize) but it can be larger when
 /// pointers include additional bits that the address.
 ///
-/// # Constructing a [`uptr`](sus-num-uptr.html)
+/// # Constructing a [`uptr`]($sus::num::uptr)
 ///
 /// See [`with_addr`](#method.with_addr) for constructing
-/// [`uptr`](sus-num-uptr.html) with an address from another
-/// [`uptr`](sus-num-uptr.html).
+/// [`uptr`]($sus::num::uptr) with an address from another
+/// [`uptr`]($sus::num::uptr).
 ///
 /// If pointers contain additional metadata beyond an address, the
 /// [`with_addr`](#method.with_addr) method copies the metadata from the
 /// original `uptr` to the newly produced
-/// [`uptr`](sus-num-uptr.html). Otherwise, constructing a
-/// [`uptr`](sus-num-uptr.html) from an integer can produce a pointer with
+/// [`uptr`]($sus::num::uptr). Otherwise, constructing a
+/// [`uptr`]($sus::num::uptr) from an integer can produce a pointer with
 /// invalid (empty) metadata and dereferencing such a pointer would be invalid.
 ///
-/// To explicitly construct a [`uptr`](sus-num-uptr.html) with empty metadata,
+/// To explicitly construct a [`uptr`]($sus::num::uptr) with empty metadata,
 /// use `uptr().with_addr(address)`.
 ///
 ///
-/// See the [namespace level documentation](sus-num.html) for more.
+/// See the [namespace level documentation]($sus::num) for more.
 struct [[sus_trivial_abi]] uptr final {
 #define _self uptr
 #define _pointer true
@@ -177,7 +177,7 @@ struct [[sus_trivial_abi]] uptr final {
 
 /// sus::num::Add<T*, usize> trait.
 ///
-/// Adds a [`usize`](sus-num-usize.html) to a pointer, returning the resulting pointer.
+/// Adds a [`usize`]($sus::num::usize) to a pointer, returning the resulting pointer.
 ///
 /// #[doc.overloads=ptr.add.usize]
 template <class T, Unsigned U>
@@ -188,7 +188,7 @@ sus_pure_const constexpr inline T* operator+(T* t, U offset) {
 
 /// sus::num::AddAssign<T*, usize> trait.
 ///
-/// Adds a [`usize`](sus-num-usize.html) to a referenced pointer, and returns the input reference.
+/// Adds a [`usize`]($sus::num::usize) to a referenced pointer, and returns the input reference.
 ///
 /// #[doc.overloads=ptr.add.usize]
 template <class T>
@@ -199,7 +199,7 @@ constexpr inline T*& operator+=(T*& t, usize offset) {
 
 /// sus::num::Sub<T*, usize> trait.
 ///
-/// Subtracts a [`usize`](sus-num-usize.html) from a pointer, returning the resulting pointer.
+/// Subtracts a  from a pointer, returning the resulting pointer.
 ///
 /// #[doc.overloads=ptr.sub.usize]
 template <class T>
@@ -209,7 +209,7 @@ sus_pure_const constexpr inline T* operator-(T* t, usize offset) {
 
 /// sus::num::SubAssign<T*, usize> trait.
 ///
-/// Subtracts a [`usize`](sus-num-usize.html) from a referenced pointer, and returns the input
+/// Subtracts a [`usize`]($sus::num::usize) from a referenced pointer, and returns the input
 /// reference.
 ///
 /// #[doc.overloads=ptr.sub.usize]
@@ -247,15 +247,15 @@ constexpr inline P operator>>(P l, U r) noexcept = delete;
 
 }  // namespace sus::num
 
-/// For writing [`u8`](sus-num-u8.html) literals.
+/// For writing [`u8`]($sus::num::u8) literals.
 _sus__integer_literal(u8, ::sus::num::u8);
-/// For writing [`u16`](sus-num-u16.html) literals.
+/// For writing [`u16`]($sus::num::u16) literals.
 _sus__integer_literal(u16, ::sus::num::u16);
-/// For writing [`u32`](sus-num-u32.html) literals.
+/// For writing [`u32`]($sus::num::u32) literals.
 _sus__integer_literal(u32, ::sus::num::u32);
-/// For writing [`u64`](sus-num-u64.html) literals.
+/// For writing [`u64`]($sus::num::u64) literals.
 _sus__integer_literal(u64, ::sus::num::u64);
-/// For writing [`usize`](sus-num-usize.html) literals.
+/// For writing [`usize`]($sus::num::usize) literals.
 _sus__integer_literal(usize, ::sus::num::usize);
 
 // Promote unsigned integer types into the `sus` namespace.

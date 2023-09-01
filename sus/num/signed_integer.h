@@ -52,7 +52,7 @@ namespace sus::num {
 
 /// A 32-bit signed integer.
 ///
-/// See the [namespace level documentation](sus-num.html) for more.
+/// See the [namespace level documentation]($sus::num) for more.
 struct [[sus_trivial_abi]] i32 final {
 #define _self i32
 #define _primitive int32_t
@@ -65,7 +65,7 @@ struct [[sus_trivial_abi]] i32 final {
 
 /// An 8-bit signed integer.
 ///
-/// See the [namespace level documentation](sus-num.html) for more.
+/// See the [namespace level documentation]($sus::num) for more.
 struct [[sus_trivial_abi]] i8 final {
 #define _self i8
 #define _primitive int8_t
@@ -78,7 +78,7 @@ struct [[sus_trivial_abi]] i8 final {
 
 /// A 16-bit signed integer.
 ///
-/// See the [namespace level documentation](sus-num.html) for more.
+/// See the [namespace level documentation]($sus::num) for more.
 struct [[sus_trivial_abi]] i16 final {
 #define _self i16
 #define _primitive int16_t
@@ -91,7 +91,7 @@ struct [[sus_trivial_abi]] i16 final {
 
 /// A 64-bit signed integer.
 ///
-/// See the [namespace level documentation](sus-num.html) for more.
+/// See the [namespace level documentation]($sus::num) for more.
 struct [[sus_trivial_abi]] i64 final {
 #define _self i64
 #define _primitive int64_t
@@ -106,7 +106,7 @@ struct [[sus_trivial_abi]] i64 final {
 ///
 /// This type is capable of holding any offset or distance in a single memory
 /// allocation, since memory allocations are bounded at
-/// [`isize::MAX`](sus-num-isize.html#field.MAX).
+/// [`isize::MAX`]($sus::num::isize::MAX).
 ///
 /// Note that it is possible for a pointer to be larger than an address under
 /// some architectures, with a pointer holding additional data such as
@@ -115,7 +115,7 @@ struct [[sus_trivial_abi]] i64 final {
 /// this type is not always the same size as a pointer.
 ///
 ///
-/// See the [namespace level documentation](sus-num.html) for more.
+/// See the [namespace level documentation]($sus::num) for more.
 struct [[sus_trivial_abi]] isize final {
 #define _self isize
 #define _primitive ::sus::num::__private::addr_type<>::signed_type
@@ -128,7 +128,7 @@ struct [[sus_trivial_abi]] isize final {
 
 /// sus::num::Add<T*, isize> trait.
 ///
-/// Adds a [`isize`](sus-num-isize.html) to a pointer, returning the resulting
+/// Adds a [`isize`]($sus::num::isize) to a pointer, returning the resulting
 /// pointer.
 ///
 /// #[doc.overloads=ptr.add.isize]
@@ -140,7 +140,7 @@ sus_pure_const constexpr inline T* operator+(T* t, S offset) {
 
 /// sus::num::AddAssign<T*, isize> trait.
 ///
-/// Adds a [`isize`](sus-num-isize.html) to a referenced pointer, and returns
+/// Adds a [`isize`]($sus::num::isize) to a referenced pointer, and returns
 /// the input reference.
 ///
 /// #[doc.overloads=ptr.add.isize]
@@ -152,7 +152,7 @@ constexpr inline T*& operator+=(T*& t, isize offset) {
 
 /// sus::num::Sub<T*, isize> trait.
 ///
-/// Subtracts a [`isize`](sus-num-isize.html) from a pointer, returning the
+/// Subtracts a [`isize`]($sus::num::isize) from a pointer, returning the
 /// resulting pointer.
 ///
 /// #[doc.overloads=ptr.sub.isize]
@@ -163,7 +163,7 @@ sus_pure_const constexpr inline T* operator-(T* t, isize offset) {
 
 /// sus::num::SubAssign<T*, isize> trait.
 ///
-/// Subtracts a [`isize`](sus-num-isize.html) from a referenced pointer, and
+/// Subtracts a [`isize`]($sus::num::isize) from a referenced pointer, and
 /// returns the input reference.
 ///
 /// #[doc.overloads=ptr.sub.isize]
@@ -201,15 +201,15 @@ constexpr inline P operator>>(P l, U r) noexcept = delete;
 
 }  // namespace sus::num
 
-/// For writing [`i8`](sus-num-i8.html) literals.
+/// For writing [`i8`]($sus::num::i8) literals.
 _sus__integer_literal(i8, ::sus::num::i8);
-/// For writing [`i16`](sus-num-i16.html) literals.
+/// For writing [`i16`]($sus::num::i16) literals.
 _sus__integer_literal(i16, ::sus::num::i16);
-/// For writing [`i32`](sus-num-i32.html) literals.
+/// For writing [`i32`]($sus::num::i32) literals.
 _sus__integer_literal(i32, ::sus::num::i32);
-/// For writing [`i64`](sus-num-i64.html) literals.
+/// For writing [`i64`]($sus::num::i64) literals.
 _sus__integer_literal(i64, ::sus::num::i64);
-/// For writing [`isize`](sus-num-isize.html) literals.
+/// For writing [`isize`]($sus::num::isize) literals.
 _sus__integer_literal(isize, ::sus::num::isize);
 
 // Promote signed integer types into the `sus` namespace.

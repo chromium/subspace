@@ -45,8 +45,8 @@
 #include "sus/string/__private/format_to_stream.h"
 
 namespace sus {
-/// The [`Result`](sus-result-Result.html) type, and the
-/// [`ok`](sus-result-fn.ok.html) and [`err`](sus-result-fn.err.html)
+/// The [`Result`]($sus::result::Result) type, and the
+/// [`ok`]($sus::result::ok) and [`err`]($sus::result::err)
 /// type-deduction functions.
 namespace result {}
 }  // namespace sus

@@ -33,23 +33,23 @@
 _primitive primitive_value{0};
 
 /// The smallest value that can be represented by an
-/// [`@doc.self`](sus-num-@doc.self.html), as a native C++ primitive.
+/// [`@doc.self`]($sus::num::@doc.self), as a native C++ primitive.
 static constexpr auto MIN_PRIMITIVE = __private::min_value<_primitive>();
 /// The largest value that can be represented by an
-/// [`@doc.self`](sus-num-@doc.self.html), as a native C++ primitive.
+/// [`@doc.self`]($sus::num::@doc.self), as a native C++ primitive.
 static constexpr auto MAX_PRIMITIVE = __private::max_value<_primitive>();
 /// The smallest value that can be represented by an
-/// [`@doc.self`](sus-num-@doc.self.html).
+/// [`@doc.self`]($sus::num::@doc.self).
 static const _self MIN;
 /// The largest value that can be represented by an
-/// [`@doc.self`](sus-num-@doc.self.html).
+/// [`@doc.self`]($sus::num::@doc.self).
 static const _self MAX;
-/// The size of and [`@doc.self`](sus-num-@doc.self.html) in bits.
+/// The size of and [`@doc.self`]($sus::num::@doc.self) in bits.
 static const u32 BITS;
 
 /// Default constructor, which sets the integer to 0.
 ///
-/// Satisfies the [`Default`](sus-construct-Default.html) concept.
+/// Satisfies the [`Default`]($sus::construct::Default) concept.
 ///
 /// The trivial copy and move constructors are implicitly declared, as is the
 /// trivial destructor.
@@ -59,8 +59,8 @@ constexpr inline _self() noexcept = default;
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`](sus-construct-Transmogrify.html) concept with
-/// [`sus::mog<@doc.self>()`](sus-construct-fn.mog.html).
+/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
+/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=signedint.ctor.signedint.typed]
 template <Signed S>
@@ -71,8 +71,8 @@ constexpr inline _self(S v) noexcept : primitive_value(v.primitive_value) {}
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`](sus-construct-Transmogrify.html) concept with
-/// [`sus::mog<@doc.self>()`](sus-construct-fn.mog.html).
+/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
+/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=signedint.ctor.signedint.primitive]
 template <SignedPrimitiveInteger P>
@@ -83,8 +83,8 @@ constexpr inline _self(P v) noexcept : primitive_value(v) {}
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`](sus-construct-Transmogrify.html) concept with
-/// [`sus::mog<@doc.self>()`](sus-construct-fn.mog.html).
+/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
+/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=signedint.ctor.signedenum]
 template <SignedPrimitiveEnum P>
@@ -95,8 +95,8 @@ constexpr inline _self(P v) noexcept : primitive_value(v) {}
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`](sus-construct-Transmogrify.html) concept with
-/// [`sus::mog<@doc.self>()`](sus-construct-fn.mog.html).
+/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
+/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=signedint.ctor.signedenumclass]
 template <SignedPrimitiveEnumClass P>
@@ -108,8 +108,8 @@ explicit constexpr inline _self(P v) noexcept
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`](sus-construct-Transmogrify.html) concept with
-/// [`sus::mog<@doc.self>()`](sus-construct-fn.mog.html).
+/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
+/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=signedint.ctor.unsignedint.typed]
 template <Unsigned U>
@@ -120,8 +120,8 @@ constexpr inline _self(U v) noexcept : primitive_value(v.primitive_value) {}
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`](sus-construct-Transmogrify.html) concept with
-/// [`sus::mog<@doc.self>()`](sus-construct-fn.mog.html).
+/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
+/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=signedint.ctor.unsignedint.primitive]
 template <UnsignedPrimitiveInteger P>
@@ -132,8 +132,8 @@ constexpr inline _self(P v) noexcept : primitive_value(v) {}
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`](sus-construct-Transmogrify.html) concept with
-/// [`sus::mog<@doc.self>()`](sus-construct-fn.mog.html).
+/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
+/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=signedint.ctor.unsignedenum]
 template <UnsignedPrimitiveEnum P>
@@ -144,8 +144,8 @@ constexpr inline _self(P v) noexcept : primitive_value(v) {}
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`](sus-construct-Transmogrify.html) concept with
-/// [`sus::mog<@doc.self>()`](sus-construct-fn.mog.html).
+/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
+/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=signedint.ctor.unsignedenumclass]
 template <UnsignedPrimitiveEnumClass P>
@@ -157,8 +157,8 @@ explicit constexpr inline _self(P v) noexcept
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`](sus-construct-Transmogrify.html) concept with
-/// [`sus::mog<@doc.self>()`](sus-construct-fn.mog.html).
+/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
+/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=signedint.assign.signedint.typed]
 template <Signed S>
@@ -172,8 +172,8 @@ constexpr inline _self& operator=(S v) noexcept {
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`](sus-construct-Transmogrify.html) concept with
-/// [`sus::mog<@doc.self>()`](sus-construct-fn.mog.html).
+/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
+/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=signedint.assign.signedint.primitive]
 template <SignedPrimitiveInteger P>
@@ -187,8 +187,8 @@ constexpr inline _self& operator=(P v) noexcept {
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`](sus-construct-Transmogrify.html) concept with
-/// [`sus::mog<@doc.self>()`](sus-construct-fn.mog.html).
+/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
+/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=signedint.assign.signedenum]
 template <SignedPrimitiveEnum P>
@@ -203,8 +203,8 @@ constexpr inline _self& operator=(P v) noexcept {
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`](sus-construct-Transmogrify.html) concept with
-/// [`sus::mog<@doc.self>()`](sus-construct-fn.mog.html).
+/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
+/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=from.signed]
 template <Signed S>
@@ -241,8 +241,8 @@ try_from(S s) noexcept {
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`](sus-construct-Transmogrify.html) concept with
-/// [`sus::mog<@doc.self>()`](sus-construct-fn.mog.html).
+/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
+/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=from.unsigned]
 template <Unsigned S>
@@ -276,8 +276,8 @@ try_from(U u) noexcept {
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`](sus-construct-Transmogrify.html) concept with
-/// [`sus::mog<@doc.self>()`](sus-construct-fn.mog.html).
+/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
+/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=from.signed.prim]
 template <SignedPrimitiveInteger S>
@@ -315,8 +315,8 @@ try_from(S s) noexcept {
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`](sus-construct-Transmogrify.html) concept with
-/// [`sus::mog<@doc.self>()`](sus-construct-fn.mog.html).
+/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
+/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=signedint.from.signedenum]
 template <class S>
@@ -357,8 +357,8 @@ try_from(S s) noexcept {
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`](sus-construct-Transmogrify.html) concept with
-/// [`sus::mog<@doc.self>()`](sus-construct-fn.mog.html).
+/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
+/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=from.unsigned.prim]
 template <UnsignedPrimitiveInteger S>
@@ -392,8 +392,8 @@ try_from(U u) noexcept {
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`](sus-construct-Transmogrify.html) concept with
-/// [`sus::mog<@doc.self>()`](sus-construct-fn.mog.html).
+/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
+/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=signedint.from.unsignedenum]
 template <class S>
@@ -429,8 +429,8 @@ try_from(U u) noexcept {
 /// elements in the itertor.
 ///
 /// This method should rarely be called directly, as it is used to satisfy the
-/// [`Product`](sus-iter-Product.html) concept so that
-/// [`Iterator::product()`](sus-iter-IteratorBase.html#method.product) can be
+/// [`Product`]($sus::iter::Product) concept so that
+/// [`Iterator::product`]($sus::iter::IteratorBase::product) can be
 /// called for iterators over @doc.self.
 ///
 /// To handle overflow without panicing, instead of `iter.product()`, use
@@ -451,8 +451,8 @@ static constexpr _self from_product(
 /// elements in the itertor.
 ///
 /// This method should rarely be called directly, as it is used to satisfy the
-/// [`Sum`](sus-iter-Sum.html) concept so that
-/// [`Iterator::sum()`](sus-iter-IteratorBase.html#method.sum) can be called for
+/// [`Sum`]($sus::iter::Sum) concept so that
+/// [`Iterator::sum`]($sus::iter::IteratorBase::sum) can be called for
 /// iterators over @doc.self.
 ///
 /// To handle overflow without panicing, instead of `iter.sum()`, use
@@ -471,7 +471,7 @@ static constexpr _self from_sum(::sus::iter::Iterator<_self> auto&& it) noexcept
 /// Conversion from the numeric type to a C++ primitive type.
 ///
 /// This converts to signed primitives which are at least as large as the
-/// [`@doc.self`](sus-num-@doc.self.html).
+/// [`@doc.self`]($sus::num::@doc.self).
 ///
 /// ```
 /// auto d = int32_t{3_i32};  // Compiles.
@@ -484,7 +484,7 @@ static constexpr _self from_sum(::sus::iter::Iterator<_self> auto&& it) noexcept
 /// ```
 ///
 /// Potentially-lossy type conversions can be forced through the
-/// [`Transmogrify`](sus-construct-Transmogrify.html) concept, such as
+/// [`Transmogrify`]($sus::construct::Transmogrify) concept, such as
 /// `sus::mog<uint32_t>(3_i32)` or `sus::mog<int16_t>(3_i32)`, or even
 /// `sus::mog<u32>(3_i32)`.
 template <SignedPrimitiveInteger U>
@@ -548,19 +548,19 @@ sus_pure constexpr _self signum() const& noexcept {
   return l.primitive_value <=> r;
 }
 
-/// Satisfies the [`Neg<@doc.self>`](sus-num-Neg.html) concept.
+/// Satisfies the [`Neg<@doc.self>`]($sus::num::Neg) concept.
 sus_pure constexpr inline _self operator-() const& noexcept {
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(primitive_value != MIN_PRIMITIVE);
   return __private::unchecked_neg(primitive_value);
 }
-/// Satisfies the [`BitNot<@doc.self>`](sus-num-BitNot.html) concept.
+/// Satisfies the [`BitNot<@doc.self>`]($sus::num::BitNot) concept.
 sus_pure constexpr inline _self operator~() const& noexcept {
   return __private::into_signed(
       __private::unchecked_not(__private::into_unsigned(primitive_value)));
 }
 
-/// Satisfies the [`Add<@doc.self>`](sus-num-Add.html) concept.
+/// Satisfies the [`Add<@doc.self>`]($sus::num::Add) concept.
 ///
 /// This operation supports working with primitive signed or unsigned integers
 /// that convert to `@doc.self`, as well as enums. However enum class is
@@ -599,7 +599,7 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
            !std::convertible_to<U, _self>)
 friend constexpr inline _self operator+(U l, _self r) noexcept = delete;
-/// Satisfies the [`Sub<@doc.self>`](sus-num-Sub.html) concept.
+/// Satisfies the [`Sub<@doc.self>`]($sus::num::Sub) concept.
 ///
 /// This operation supports working with primitive signed or unsigned integers
 /// that convert to `@doc.self`, as well as enums. However enum class is
@@ -638,7 +638,7 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
            !std::convertible_to<U, _self>)
 friend constexpr inline _self operator-(U l, _self r) noexcept = delete;
-/// Satisfies the [`Mul<@doc.self>`](sus-num-Mul.html) concept.
+/// Satisfies the [`Mul<@doc.self>`]($sus::num::Mul) concept.
 ///
 /// This operation supports working with primitive signed or unsigned integers
 /// that convert to `@doc.self`, as well as enums. However enum class is
@@ -677,7 +677,7 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
            !std::convertible_to<U, _self>)
 friend constexpr inline _self operator*(U l, _self r) noexcept = delete;
-/// Satisfies the [`Div<@doc.self>`](sus-num-Div.html) concept.
+/// Satisfies the [`Div<@doc.self>`]($sus::num::Div) concept.
 ///
 /// This operation supports working with primitive signed or unsigned integers
 /// that convert to `@doc.self`, as well as enums. However enum class is
@@ -716,7 +716,7 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
            !std::convertible_to<U, _self>)
 friend constexpr inline _self operator/(U l, _self r) noexcept = delete;
-/// Satisfies the [`Rem<@doc.self>`](sus-num-Rem.html) concept.
+/// Satisfies the [`Rem<@doc.self>`]($sus::num::Rem) concept.
 ///
 /// This operation supports working with primitive signed or unsigned integers
 /// that convert to `@doc.self`, as well as enums. However enum class is
@@ -756,7 +756,7 @@ template <class U>
            !std::convertible_to<U, _self>)
 friend constexpr inline _self operator%(U l, _self r) noexcept = delete;
 
-/// Satisfies the [`BitAnd<@doc.self>`](sus-num-BitAnd.html) concept.
+/// Satisfies the [`BitAnd<@doc.self>`]($sus::num::BitAnd) concept.
 ///
 /// This operation supports working with primitive signed or unsigned integers
 /// that convert to `@doc.self`, as well as enums. However enum class is
@@ -791,7 +791,7 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
            !std::convertible_to<U, _self>)
 friend constexpr inline _self operator&(U l, _self r) noexcept = delete;
-/// Satisfies the [`BitOr<@doc.self>`](sus-num-BitOr.html) concept.
+/// Satisfies the [`BitOr<@doc.self>`]($sus::num::BitOr) concept.
 ///
 /// This operation supports working with primitive signed or unsigned integers
 /// that convert to `@doc.self`, as well as enums. However enum class is
@@ -826,7 +826,7 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
            !std::convertible_to<U, _self>)
 friend constexpr inline _self operator|(U l, _self r) noexcept = delete;
-/// Satisfies the [`BitXor<@doc.self>`](sus-num-BitXor.html) concept.
+/// Satisfies the [`BitXor<@doc.self>`]($sus::num::BitXor) concept.
 ///
 /// This operation supports working with primitive signed or unsigned integers
 /// that convert to `@doc.self`, as well as enums. However enum class is
@@ -861,7 +861,7 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
            !std::convertible_to<U, _self>)
 friend constexpr inline _self operator^(U l, _self r) noexcept = delete;
-/// Satisfies the [`Shl<@doc.self>`](sus-num-Shl.html) concept.
+/// Satisfies the [`Shl<@doc.self>`]($sus::num::Shl) concept.
 ///
 /// This operation supports shifting with primitive signed or unsigned integers
 /// that convert to `u32`, as well as enums. However enum class is excluded
@@ -883,7 +883,7 @@ template <class U>
   requires(!std::convertible_to<U, u32>)
 [[nodiscard]] sus_pure friend constexpr inline _self operator<<(
     _self l, U r) noexcept = delete;
-/// Satisfies the [`Shr<@doc.self>`](sus-num-Shr.html) concept.
+/// Satisfies the [`Shr<@doc.self>`]($sus::num::Shr) concept.
 ///
 /// #[doc.overloads=signedint.>>]
 [[nodiscard]] sus_pure friend constexpr inline _self operator>>(
@@ -900,7 +900,7 @@ template <class U>
 [[nodiscard]] sus_pure friend constexpr inline _self operator>>(
     _self l, U r) noexcept = delete;
 
-/// Satisfies the [`AddAssign<@doc.self>`](sus-num-AddAssign.html) concept.
+/// Satisfies the [`AddAssign<@doc.self>`]($sus::num::AddAssign) concept.
 constexpr inline void operator+=(_self r) & noexcept {
   const auto out =
       __private::add_with_overflow(primitive_value, r.primitive_value);
@@ -908,7 +908,7 @@ constexpr inline void operator+=(_self r) & noexcept {
   ::sus::check(!out.overflow);
   primitive_value = out.value;
 }
-/// Satisfies the [`SubAssign<@doc.self>`](sus-num-SubAssign.html) concept.
+/// Satisfies the [`SubAssign<@doc.self>`]($sus::num::SubAssign) concept.
 constexpr inline void operator-=(_self r) & noexcept {
   const auto out =
       __private::sub_with_overflow(primitive_value, r.primitive_value);
@@ -916,7 +916,7 @@ constexpr inline void operator-=(_self r) & noexcept {
   ::sus::check(!out.overflow);
   primitive_value = out.value;
 }
-/// Satisfies the [`MulAssign<@doc.self>`](sus-num-MulAssign.html) concept.
+/// Satisfies the [`MulAssign<@doc.self>`]($sus::num::MulAssign) concept.
 constexpr inline void operator*=(_self r) & noexcept {
   const auto out =
       __private::mul_with_overflow(primitive_value, r.primitive_value);
@@ -924,7 +924,7 @@ constexpr inline void operator*=(_self r) & noexcept {
   ::sus::check(!out.overflow);
   primitive_value = out.value;
 }
-/// Satisfies the [`DivAssign<@doc.self>`](sus-num-DivAssign.html) concept.
+/// Satisfies the [`DivAssign<@doc.self>`]($sus::num::DivAssign) concept.
 constexpr inline void operator/=(_self r) & noexcept {
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(r.primitive_value != 0);
@@ -932,7 +932,7 @@ constexpr inline void operator/=(_self r) & noexcept {
   ::sus::check(primitive_value != MIN_PRIMITIVE || r.primitive_value != -1);
   primitive_value /= r.primitive_value;
 }
-/// Satisfies the [`RemAssign<@doc.self>`](sus-num-RemAssign.html) concept.
+/// Satisfies the [`RemAssign<@doc.self>`]($sus::num::RemAssign) concept.
 constexpr inline void operator%=(_self r) & noexcept {
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(r.primitive_value != 0);
@@ -941,21 +941,21 @@ constexpr inline void operator%=(_self r) & noexcept {
   primitive_value %= r.primitive_value;
 }
 
-/// Satisfies the [`BitAndAssign<@doc.self>`](sus-num-BitAndAssign.html)
+/// Satisfies the [`BitAndAssign<@doc.self>`]($sus::num::BitAndAssign)
 /// concept.
 constexpr inline void operator&=(_self r) & noexcept {
   primitive_value &= r.primitive_value;
 }
-/// Satisfies the [`BitOrAssign<@doc.self>`](sus-num-BitOrAssign.html) concept.
+/// Satisfies the [`BitOrAssign<@doc.self>`]($sus::num::BitOrAssign) concept.
 constexpr inline void operator|=(_self r) & noexcept {
   primitive_value |= r.primitive_value;
 }
-/// Satisfies the [`BitXorAssign<@doc.self>`](sus-num-BitXorAssign.html)
+/// Satisfies the [`BitXorAssign<@doc.self>`]($sus::num::BitXorAssign)
 /// concept.
 constexpr inline void operator^=(_self r) & noexcept {
   primitive_value ^= r.primitive_value;
 }
-/// Satisfies the [`ShlAssign<@doc.self>`](sus-num-ShlAssign.html) concept.
+/// Satisfies the [`ShlAssign<@doc.self>`]($sus::num::ShlAssign) concept.
 constexpr inline void operator<<=(u32 r) & noexcept {
   const auto out =
       __private::shl_with_overflow(primitive_value, r.primitive_value);
@@ -963,7 +963,7 @@ constexpr inline void operator<<=(u32 r) & noexcept {
   ::sus::check(!out.overflow);
   primitive_value = out.value;
 }
-/// Satisfies the [`ShrAssign<@doc.self>`](sus-num-ShrAssign.html) concept.
+/// Satisfies the [`ShrAssign<@doc.self>`]($sus::num::ShrAssign) concept.
 constexpr inline void operator>>=(u32 r) & noexcept {
   const auto out =
       __private::shr_with_overflow(primitive_value, r.primitive_value);
