@@ -108,6 +108,13 @@ void generate_nav(HtmlWriter::OpenBody& body, const Database& db,
       for (const SidebarLink& link : links) {
         auto li = ul.open_li();
         auto a = li.open_a();
+        switch (link.style) {
+          case SidebarLinkStyle::Parent: a.add_class("sidebar-parent"); break;
+          case SidebarLinkStyle::GroupHeader:
+            a.add_class("sidebar-header");
+            break;
+          case SidebarLinkStyle::Item: a.add_class("sidebar-item"); break;
+        }
         a.add_href(link.href);
         a.write_text(link.text);
       }

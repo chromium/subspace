@@ -103,6 +103,15 @@ inline std::string construct_html_url_for_field(
   return sus::move(p).str();
 }
 
+inline std::string construct_html_url_anchor_for_field(
+    const FieldElement& element) noexcept {
+  sus::check(!element.record_path.is_empty());
+  std::ostringstream url;
+  url << "field.";
+  url << element.name;
+  return sus::move(url).str();
+}
+
 inline std::filesystem::path construct_html_file_path_for_function(
     std::filesystem::path root, const FunctionElement& element) noexcept {
   std::ostringstream s;
