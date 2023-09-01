@@ -2,13 +2,17 @@ body {
     font-size: 12pt;
     color: white;
     background-color: rgb(36, 36, 36);
-    margin: 1.2rem;
     font-family: Arial, Verdana, sans-serif;
     margin: 0;
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
     overflow-wrap: anywhere;
+}
+@media (max-width: 700px) {
+    body {
+        display: block;
+    }
 }
 
 ::-webkit-scrollbar {
@@ -19,6 +23,62 @@ body {
 }
 ::-webkit-scrollbar-track {
     background-color: rgb(96, 96, 100);
+}
+
+nav {
+    background-color:rgb(42, 42, 42)
+}
+
+nav.topbar {
+    display: none;
+    position: sticky;
+    top: 0;
+    left: 0;
+    z-index: 10;
+    height: 45px;
+    width: 100%;
+    font-size: 24px;
+    flex-wrap: nowrap;
+}
+nav.topbar .menu-button {
+    width: 45px;
+    font-size: 32px;
+    border: none;
+    color: inherit;
+    background-color:rgb(42, 42, 42)
+}
+nav.topbar .topbar-logo-border {
+    width: 36px;
+    height: 36px;
+    flex: 0 0 0;
+    margin-left: 10px;
+    margin-top: /* (45px - 36px) / 2 */ 4px;
+    border-radius: 20%;
+    overflow:hidden;
+}
+nav.topbar .topbar-logo {
+    width: 36px;
+}
+nav.topbar .topbar-text-area {
+    display: flex;
+    flex-grow: 2;
+    justify-content: flex-end;
+    padding-right: 24px;
+    overflow-wrap: break-word;
+}
+nav.topbar .topbar-title {
+    align-self: center;
+    align-content: flex-end;
+}
+nav.topbar .topbar-title > a {
+    color: inherit;
+    text-decoration: none;
+}
+@media (max-width: 700px) {
+    nav.topbar {
+        display: flex;
+        flex-direction: row;
+    }
 }
 
 nav.sidebar {
@@ -54,7 +114,7 @@ nav.sidebar .sidebar-text {
     padding-left: 12px;
 }
 nav.sidebar .sidebar-title {
-    font-size: 120%;
+    font-size: 1.2rem;
     font-weight: bold;
 }
 nav.sidebar .sidebar-title a {
@@ -63,7 +123,7 @@ nav.sidebar .sidebar-title a {
     text-decoration: none;
 }
 nav.sidebar .sidebar-pretitle {
-    font-size: 80%;
+    font-size: 0.8rem;
     font-weight: bold;
 }
 nav.sidebar .sidebar-subtitle {
@@ -88,6 +148,15 @@ nav.sidebar .sidebar-links a {
 nav.sidebar .sidebar-links a:hover {
     text-decoration: underline;
 }
+@media (max-width: 700px) {
+    nav.sidebar {
+        display: none;
+    }
+    nav.sidebar .sidebar-logo-link {
+        display: none;
+    }
+}
+
 
 main {
     flex-grow: 1;
@@ -99,10 +168,18 @@ main {
     padding-top: 12px;
     padding-bottom: 48px;
 }
+@media (max-width: 700px) {
+    main {
+        padding-top: 0;
+        padding-left: 24px;
+        padding-right: 24px;
+    }
+}
 
 .description pre, .description pre > code {
     background-color: rgb(32, 26, 34);
     color:rgb(230, 230, 230);
+    overflow-x: auto;
 }
 
 .section-header {
@@ -138,6 +215,11 @@ main {
     margin-bottom: 0.5rem;
     margin-left: 24px;
     line-height: 1.4;
+}
+@media (max-width: 700px) {
+    .description.long {
+        margin-left: 0.5rem;
+    }
 }
 .overview .description :is(h1, h2, h3, h4, h5, h6) {
     border-bottom: 1px solid rgb(184, 184, 184);
@@ -191,6 +273,10 @@ code {
     background-color: rgba(43, 43, 43, 1.0);
     margin-bottom: 0.2rem;
     padding: 0.5rem;
+    overflow-x: auto;
+}
+.overview :is(.type-signature, .function-signature) pre {
+    margin: 0;
 }
 .overview .type-signature :is(.struct, .class, .union, .final) {
     color: rgb(125, 231, 235);
@@ -236,9 +322,15 @@ code {
 }
 
 .type .overload-set {
-    padding: 0.5em;
-    margin-top: 0.5em;
-    margin-bottom: 0.5em;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+@media (max-width: 700px) {
+    .type .overload-set {
+        padding-left: 0;
+        padding-right: 0;
+    }    
 }
 
 a.function-name {
@@ -271,7 +363,7 @@ a.field-name:hover {
 }
 
 :is(.type-signature, .overload) :is(.requires, .deleted, .virtual) {
-    margin-left: 36px;
+    padding-left: 36px;
 }
 :is(.type-signature, .overload) .requires .requires-keyword {
     color: rgb(84, 194, 238)
@@ -283,9 +375,6 @@ a.field-name:hover {
     margin-left: 36px;
     color: rgb(87, 218, 218)
 }
-.requires-constaint-line {
-    margin: 0px;
-}
 .overload .deleted {
     color: rgb(238, 84, 110)
 }
@@ -293,21 +382,42 @@ a.field-name:hover {
     color: rgb(84, 238, 117)
 }
 
-.item-table {
+ul.item-table {
     display: table;
     overflow-wrap: break-word;
+    padding-inline-start: 0;
 }
-.item-table > li {
+ul.item-table > li {
     display: table-row;
 }
-.item-table > li > div {
+ul.item-table > li > div {
     display: table-cell;
     padding-top: 0.2rem;
     padding-bottom: 0.2rem;
 }
-.item-table > li.nested > div:first-child {
+ul.item-table > li.nested > div:first-child {
     padding-left: 1.5rem;
 }
-.item-table .item-name {
+ul.item-table .item-name {
     padding-right: 1.25rem;
+}
+@media (max-width: 700px) {
+    ul.item-table {
+        display: block;
+    }
+    ul.item-table > li {
+        display: block;
+    }
+    ul.item-table > li > div {
+        display: block;
+    }
+    ul.item-table > li > div.description {
+        padding-left: 1rem;
+    }
+    ul.item-table > li.nested > div:first-child {
+        padding-left: 1rem;
+    }
+    ul.item-table > li.nested > div.description {
+        padding-left: 2rem;
+    }
 }

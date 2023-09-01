@@ -27,9 +27,9 @@ struct SidebarLink {
   std::string href;
 };
 
-void generate_sidebar(HtmlWriter::OpenBody& body, const Database& db,
-                      std::string_view pretitle, std::string_view title,
-                      std::string_view subtitle, sus::Vec<SidebarLink> links,
-                      const Options& options) noexcept;
+void generate_nav(HtmlWriter::OpenBody& body, const Database& db,
+                  std::string_view pretitle, std::string_view title,
+                  std::string_view subtitle, sus::Vec<SidebarLink> links,
+                  const Options& options) noexcept;
 
 }  // namespace subdoc::gen

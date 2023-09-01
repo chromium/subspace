@@ -22,7 +22,7 @@
 #include "subdoc/lib/gen/generate_function.h"
 #include "subdoc/lib/gen/generate_head.h"
 #include "subdoc/lib/gen/generate_requires.h"
-#include "subdoc/lib/gen/generate_sidebar.h"
+#include "subdoc/lib/gen/generate_nav.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/gen/options.h"
@@ -115,14 +115,14 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
     auto type_sig_div = section_div.open_div();
     type_sig_div.add_class("type-signature");
     if (!element.template_params.is_empty()) {
-      auto template_div = type_sig_div.open_div(HtmlWriter::SingleLine);
-      template_div.add_class("template");
-      template_div.write_text("template <");
+      auto template_pre = type_sig_div.open_pre();
+      template_pre.add_class("template");
+      template_pre.write_text("template <");
       for (const auto& [i, s] : element.template_params.iter().enumerate()) {
-        if (i > 0u) template_div.write_text(", ");
-        template_div.write_text(s);
+        if (i > 0u) template_pre.write_text(", ");
+        template_pre.write_text(s);
       }
-      template_div.write_text(">");
+      template_pre.write_text(">");
     }
     {
       auto record_type_span = type_sig_div.open_span();
@@ -475,7 +475,7 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
     sidebar_links.push(SidebarLink("Data Members", "#data-members"));
 
   auto body = html.open_body();
-  generate_sidebar(body, db,
+  generate_nav(body, db,
                    friendly_record_type_name(element.record_type, false),
                    element.name, "", sus::move(sidebar_links), options);
 

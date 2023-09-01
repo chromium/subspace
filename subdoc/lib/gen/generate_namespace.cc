@@ -22,7 +22,7 @@
 #include "subdoc/lib/gen/generate_function.h"
 #include "subdoc/lib/gen/generate_head.h"
 #include "subdoc/lib/gen/generate_record.h"
-#include "subdoc/lib/gen/generate_sidebar.h"
+#include "subdoc/lib/gen/generate_nav.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/parse_comment.h"
@@ -445,10 +445,10 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
 
   auto body = html.open_body();
   if (element.namespace_name == Namespace::Tag::Global)
-    generate_sidebar(body, db, "", options.project_name, "TODO: version",
+    generate_nav(body, db, "", options.project_name, "TODO: version",
                      sus::move(sidebar_links), options);
   else
-    generate_sidebar(body, db, "namespace", element.name, "",
+    generate_nav(body, db, "namespace", element.name, "",
                      sus::move(sidebar_links), options);
 
   auto main = body.open_main();
