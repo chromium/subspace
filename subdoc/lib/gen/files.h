@@ -47,11 +47,10 @@ inline std::filesystem::path construct_html_file_path(
     switch (n) {
       case Namespace::Tag::Global: break;
       case Namespace::Tag::Anonymous:
-        fname << "namespace.anonymous";
+        fname << "anonymous";
         fname << "-";
         break;
       case Namespace::Tag::Named:
-        fname << "namespace.";
         fname << n.as<Namespace::Tag::Named>();
         fname << "-";
         break;
