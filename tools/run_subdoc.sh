@@ -8,6 +8,7 @@ out/subdoc/subdoc -p out --out docs \
     --copy-file web/logo.png \
     --favicon "logo.png;image/png" \
     --project-md sus/project.md \
+    --project-logo logo.png \
     --project-name Subspace \
     --ignore-bad-code-links \
    i32_unittest compat_range boxed choice_unit

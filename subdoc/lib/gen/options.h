@@ -53,6 +53,7 @@ struct FavIcon {
 
 struct Options {
   std::string project_name = "PROJECT NAME";
+  std::string project_logo = "PROJECT LOGO.png";
   // TODO: sus::PathBuf type would be real nice.
   std::filesystem::path output_root;
   sus::Vec<std::string> stylesheets;

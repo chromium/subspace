@@ -22,6 +22,7 @@
 #include "subdoc/lib/gen/generate_function.h"
 #include "subdoc/lib/gen/generate_head.h"
 #include "subdoc/lib/gen/generate_requires.h"
+#include "subdoc/lib/gen/generate_sidebar.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/gen/options.h"
@@ -172,8 +173,17 @@ sus::Result<void, MarkdownToHtmlError> generate_record_fields(
   {
     auto fields_header_div = section_div.open_div();
     fields_header_div.add_class("section-header");
-    fields_header_div.write_text(static_fields ? "Static Data Members"
-                                               : "Data Members");
+    if (static_fields) {
+      auto header_name = fields_header_div.open_a();
+      header_name.add_name("static-data-members");
+      header_name.add_href("#static-data-members");
+      header_name.write_text("Static Data Members");
+    } else {
+      auto header_name = fields_header_div.open_a();
+      header_name.add_name("data-members");
+      header_name.add_href("#data-members");
+      header_name.write_text("Data Members");
+    }
   }
   {
     auto items_div = section_div.open_div();
@@ -288,14 +298,34 @@ sus::Result<void, MarkdownToHtmlError> generate_record_methods(
     auto methods_header_div = section_div.open_div();
     methods_header_div.add_class("section-header");
     switch (type) {
-      case StaticMethods:
-        methods_header_div.write_text("Static Methods");
+      case StaticMethods: {
+        auto header_name = methods_header_div.open_a();
+        header_name.add_name("static-methods");
+        header_name.add_href("#static-methods");
+        header_name.write_text("Static Methods");
         break;
-      case NonStaticMethods: methods_header_div.write_text("Methods"); break;
-      case Conversions: methods_header_div.write_text("Conversions"); break;
-      case NonStaticOperators:
-        methods_header_div.write_text("Operators");
+      }
+      case NonStaticMethods: {
+        auto header_name = methods_header_div.open_a();
+        header_name.add_name("methods");
+        header_name.add_href("#methods");
+        header_name.write_text("Methods");
         break;
+      }
+      case Conversions: {
+        auto header_name = methods_header_div.open_a();
+        header_name.add_name("conversions");
+        header_name.add_href("#conversions");
+        header_name.write_text("Conversions");
+        break;
+      }
+      case NonStaticOperators: {
+        auto header_name = methods_header_div.open_a();
+        header_name.add_name("operators");
+        header_name.add_href("#operators");
+        header_name.write_text("Operators");
+        break;
+      }
     }
   }
   {
@@ -377,8 +407,12 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
   }
 
   auto body = html.open_body();
+  generate_sidebar(body, db,
+                   friendly_record_type_name(element.record_type, false),
+                   element.name, "", sus::vec(), options);
 
-  auto record_div = body.open_div();
+  auto main = body.open_main();
+  auto record_div = main.open_div();
   record_div.add_class("type");
   record_div.add_class("record");
   record_div.add_class(friendly_record_type_name(element.record_type, false));

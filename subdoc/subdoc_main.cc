@@ -58,6 +58,11 @@ int main(int argc, const char** argv) {
           "example: \"../main.css,other.css,/top.css\"."),
       llvm::cl::cat(option_category));
 
+  llvm::cl::opt<std::string> option_project_logo(
+      "project-logo",
+      llvm::cl::desc("The path (on the website) to the project logo image."),
+      llvm::cl::cat(option_category));
+
   llvm::cl::list<std::string> option_favicon(
       "favicon",
       llvm::cl::desc(
@@ -203,6 +208,9 @@ int main(int argc, const char** argv) {
   };
   if (option_project_name.getNumOccurrences() > 0) {
     gen_options.project_name = option_project_name.getValue();
+  }
+  if (option_project_logo.getNumOccurrences() > 0) {
+    gen_options.project_logo = option_project_logo.getValue();
   }
   if (option_css.empty() && option_copy_files.empty()) {
     // Defaults to pull the test stylesheet, assuming subdoc is being run from

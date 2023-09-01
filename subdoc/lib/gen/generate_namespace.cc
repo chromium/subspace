@@ -22,6 +22,7 @@
 #include "subdoc/lib/gen/generate_function.h"
 #include "subdoc/lib/gen/generate_head.h"
 #include "subdoc/lib/gen/generate_record.h"
+#include "subdoc/lib/gen/generate_sidebar.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/parse_comment.h"
@@ -117,8 +118,6 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace_references(
     HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
     sus::Slice<SortedNamespaceByName> namespaces,
     ParseMarkdownPageState& page_state) {
-  if (namespaces.is_empty()) return sus::ok();
-
   auto section_div = namespace_div.open_div();
   section_div.add_class("section");
   section_div.add_class("namespaces");
@@ -126,7 +125,10 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace_references(
   {
     auto header_div = section_div.open_div();
     header_div.add_class("section-header");
-    header_div.write_text("Namespaces");
+    auto header_name = header_div.open_a();
+    header_name.add_name("namespaces");
+    header_name.add_href("#namespaces");
+    header_name.write_text("Namespaces");
   }
   {
     auto items_list = section_div.open_ul();
@@ -192,7 +194,10 @@ sus::Result<void, MarkdownToHtmlError> generate_concept_references(
   {
     auto header_div = section_div.open_div();
     header_div.add_class("section-header");
-    header_div.write_text("Concepts");
+    auto header_name = header_div.open_a();
+    header_name.add_name("concepts");
+    header_name.add_href("#concepts");
+    header_name.write_text("Concepts");
   }
   {
     auto items_list = section_div.open_ul();
@@ -215,8 +220,6 @@ sus::Result<void, MarkdownToHtmlError> generate_record_references(
     HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
     sus::Slice<SortedRecordByName> records, RecordType record_type,
     ParseMarkdownPageState& page_state) {
-  if (records.is_empty()) return sus::ok();
-
   auto section_div = namespace_div.open_div();
   section_div.add_class("section");
   section_div.add_class("records");
@@ -231,8 +234,20 @@ sus::Result<void, MarkdownToHtmlError> generate_record_references(
     header_div.add_class("section-header");
     switch (record_type) {
       case RecordType::Class: [[fallthrough]];
-      case RecordType::Struct: header_div.write_text("Classes"); break;
-      case RecordType::Union: header_div.write_text("Unions"); break;
+      case RecordType::Struct: {
+        auto header_name = header_div.open_a();
+        header_name.add_name("classes");
+        header_name.add_href("#classes");
+        header_name.write_text("Classes");
+        break;
+      }
+      case RecordType::Union: {
+        auto header_name = header_div.open_a();
+        header_name.add_name("unions");
+        header_name.add_href("#unions");
+        header_name.write_text("Unions");
+        break;
+      }
     }
   }
   {
@@ -271,8 +286,20 @@ sus::Result<void, MarkdownToHtmlError> generate_function_references(
     auto header_div = section_div.open_div();
     header_div.add_class("section-header");
     switch (type) {
-      case GenerateFunctions: header_div.write_text("Functions"); break;
-      case GenerateOperators: header_div.write_text("Operators"); break;
+      case GenerateFunctions: {
+        auto header_name = header_div.open_a();
+        header_name.add_name("functions");
+        header_name.add_href("#functions");
+        header_name.write_text("Functions");
+        break;
+      }
+      case GenerateOperators: {
+        auto header_name = header_div.open_a();
+        header_name.add_name("operators");
+        header_name.add_href("#operators");
+        header_name.write_text("Operators");
+        break;
+      }
     }
   }
   {
@@ -317,110 +344,153 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
   generate_head(html, namespace_display_name(element, ancestors, options),
                 md_html.summary_text, options);
 
-  auto body = html.open_body();
+  sus::Vec<SortedNamespaceByName> sorted_namespaces;
+  for (const auto& [key, sub_element] : element.namespaces) {
+    if (sub_element.hidden()) continue;
+    if (sub_element.is_empty()) continue;
 
-  auto namespace_div = body.open_div();
+    sorted_namespaces.push(
+        sus::tuple(sub_element.name, sub_element.sort_key, key));
+  }
+  sorted_namespaces.sort_unstable_by(
+      [](const SortedNamespaceByName& a, const SortedNamespaceByName& b) {
+        auto ord = a.at<0>() <=> b.at<0>();
+        if (ord != 0) return ord;
+        return a.at<1>() <=> b.at<1>();
+      });
+
+  sus::Vec<SortedRecordByName> sorted_classes;
+  sus::Vec<SortedRecordByName> sorted_unions;
+  for (const auto& [key, sub_element] : element.records) {
+    if (sub_element.hidden()) continue;
+
+    switch (sub_element.record_type) {
+      case RecordType::Class: [[fallthrough]];
+      case RecordType::Struct:
+        sorted_classes.push(
+            sus::tuple(sub_element.name, sub_element.sort_key, key));
+        break;
+      case RecordType::Union:
+        sorted_unions.push(
+            sus::tuple(sub_element.name, sub_element.sort_key, key));
+        break;
+    }
+  }
+  sorted_classes.sort_unstable_by(
+      [](const SortedRecordByName& a, const SortedRecordByName& b) {
+        auto ord = a.at<0>() <=> b.at<0>();
+        if (ord != 0) return ord;
+        return a.at<1>() <=> b.at<1>();
+      });
+  sorted_unions.sort_unstable_by(
+      [](const SortedRecordByName& a, const SortedRecordByName& b) {
+        auto ord = a.at<0>() <=> b.at<0>();
+        if (ord != 0) return ord;
+        return a.at<1>() <=> b.at<1>();
+      });
+
+  sus::Vec<SortedFunctionByName> sorted_functions;
+  sus::Vec<SortedFunctionByName> sorted_operators;
+  for (const auto& [function_id, sub_element] : element.functions) {
+    if (sub_element.hidden()) continue;
+
+    if (!sub_element.is_operator) {
+      sorted_functions.push(
+          sus::tuple(sub_element.name, sub_element.sort_key, function_id));
+    } else {
+      sorted_operators.push(
+          sus::tuple(sub_element.name, sub_element.sort_key, function_id));
+    }
+  }
+  sorted_functions.sort_unstable_by(
+      [](const SortedFunctionByName& a, const SortedFunctionByName& b) {
+        auto ord = a.at<0>() <=> b.at<0>();
+        if (ord != 0) return ord;
+        return a.at<1>() <=> b.at<1>();
+      });
+  sorted_operators.sort_unstable_by(
+      [](const SortedFunctionByName& a, const SortedFunctionByName& b) {
+        auto ord = a.at<0>() <=> b.at<0>();
+        if (ord != 0) return ord;
+        return a.at<1>() <=> b.at<1>();
+      });
+
+  sus::Vec<SortedConceptByName> sorted_concepts;
+  for (const auto& [key, sub_element] : element.concepts) {
+    if (sub_element.hidden()) continue;
+
+    sorted_concepts.push(
+        sus::tuple(sub_element.name, sub_element.sort_key, key));
+  }
+  sorted_concepts.sort_unstable_by(
+      [](const SortedConceptByName& a, const SortedConceptByName& b) {
+        auto ord = a.at<0>() <=> b.at<0>();
+        if (ord != 0) return ord;
+        return a.at<1>() <=> b.at<1>();
+      });
+
+  sus::Vec<SidebarLink> sidebar_links;
+  if (!sorted_namespaces.is_empty())
+    sidebar_links.push(SidebarLink("Namespaces", "#namespaces"));
+  if (!sorted_classes.is_empty())
+    sidebar_links.push(SidebarLink("Classes", "#classes"));
+  if (!sorted_unions.is_empty())
+    sidebar_links.push(SidebarLink("Unions", "#unions"));
+  if (!sorted_functions.is_empty())
+    sidebar_links.push(SidebarLink("Functions", "#functions"));
+  if (!sorted_operators.is_empty())
+    sidebar_links.push(SidebarLink("Operators", "#operators"));
+  if (!sorted_concepts.is_empty())
+    sidebar_links.push(SidebarLink("Concepts", "#concepts"));
+
+  auto body = html.open_body();
+  if (element.namespace_name == Namespace::Tag::Global)
+    generate_sidebar(body, db, "", options.project_name, "TODO: version",
+                     sus::move(sidebar_links), options);
+  else
+    generate_sidebar(body, db, "namespace", element.name, "",
+                     sus::move(sidebar_links), options);
+
+  auto main = body.open_main();
+  auto namespace_div = main.open_div();
   namespace_div.add_class("namespace");
   generate_namespace_overview(namespace_div, element, ancestors, md_html,
                               options);
 
-  {
-    sus::Vec<SortedNamespaceByName> sorted;
-    for (const auto& [key, sub_element] : element.namespaces) {
-      if (sub_element.hidden()) continue;
-      if (sub_element.is_empty()) continue;
-
-      sorted.push(sus::tuple(sub_element.name, sub_element.sort_key, key));
-    }
-    sorted.sort_unstable_by(
-        [](const SortedNamespaceByName& a, const SortedNamespaceByName& b) {
-          auto ord = a.at<0>() <=> b.at<0>();
-          if (ord != 0) return ord;
-          return a.at<1>() <=> b.at<1>();
-        });
-
+  if (!sorted_namespaces.is_empty()) {
     if (auto result = generate_namespace_references(
-            namespace_div, element, sorted.as_slice(), page_state);
+            namespace_div, element, sorted_namespaces.as_slice(), page_state);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }
   }
 
-  {
-    sus::Vec<SortedRecordByName> classes;
-    sus::Vec<SortedRecordByName> unions;
-    for (const auto& [key, sub_element] : element.records) {
-      if (sub_element.hidden()) continue;
-
-      switch (sub_element.record_type) {
-        case RecordType::Class: [[fallthrough]];
-        case RecordType::Struct:
-          classes.push(sus::tuple(sub_element.name, sub_element.sort_key, key));
-          break;
-        case RecordType::Union:
-          unions.push(sus::tuple(sub_element.name, sub_element.sort_key, key));
-          break;
-      }
-    }
-    classes.sort_unstable_by(
-        [](const SortedRecordByName& a, const SortedRecordByName& b) {
-          auto ord = a.at<0>() <=> b.at<0>();
-          if (ord != 0) return ord;
-          return a.at<1>() <=> b.at<1>();
-        });
-    unions.sort_unstable_by(
-        [](const SortedRecordByName& a, const SortedRecordByName& b) {
-          auto ord = a.at<0>() <=> b.at<0>();
-          if (ord != 0) return ord;
-          return a.at<1>() <=> b.at<1>();
-        });
-
+  if (!sorted_classes.is_empty()) {
     if (auto result = generate_record_references(namespace_div, element,
-                                                 classes.as_slice(),
+                                                 sorted_classes.as_slice(),
                                                  RecordType::Class, page_state);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }
+  }
+  if (!sorted_unions.is_empty()) {
     if (auto result = generate_record_references(namespace_div, element,
-                                                 unions.as_slice(),
+                                                 sorted_unions.as_slice(),
                                                  RecordType::Union, page_state);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }
   }
 
-  {
-    sus::Vec<SortedFunctionByName> sorted_functions;
-    sus::Vec<SortedFunctionByName> sorted_operators;
-    for (const auto& [function_id, sub_element] : element.functions) {
-      if (sub_element.hidden()) continue;
-
-      if (!sub_element.is_operator) {
-        sorted_functions.push(
-            sus::tuple(sub_element.name, sub_element.sort_key, function_id));
-      } else {
-        sorted_operators.push(
-            sus::tuple(sub_element.name, sub_element.sort_key, function_id));
-      }
-    }
-    sorted_functions.sort_unstable_by(
-        [](const SortedFunctionByName& a, const SortedFunctionByName& b) {
-          auto ord = a.at<0>() <=> b.at<0>();
-          if (ord != 0) return ord;
-          return a.at<1>() <=> b.at<1>();
-        });
-    sorted_operators.sort_unstable_by(
-        [](const SortedFunctionByName& a, const SortedFunctionByName& b) {
-          auto ord = a.at<0>() <=> b.at<0>();
-          if (ord != 0) return ord;
-          return a.at<1>() <=> b.at<1>();
-        });
+  if (!sorted_functions.is_empty()) {
     if (auto result = generate_function_references(
             namespace_div, element, sorted_functions, GenerateFunctions,
             page_state);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }
+  }
+  if (!sorted_operators.is_empty()) {
     if (auto result = generate_function_references(
             namespace_div, element, sorted_operators, GenerateOperators,
             page_state);
@@ -429,21 +499,9 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
     }
   }
 
-  {
-    sus::Vec<SortedConceptByName> concepts;
-    for (const auto& [key, sub_element] : element.concepts) {
-      if (sub_element.hidden()) continue;
-
-      concepts.push(sus::tuple(sub_element.name, sub_element.sort_key, key));
-    }
-    concepts.sort_unstable_by(
-        [](const SortedConceptByName& a, const SortedConceptByName& b) {
-          auto ord = a.at<0>() <=> b.at<0>();
-          if (ord != 0) return ord;
-          return a.at<1>() <=> b.at<1>();
-        });
+  if (!sorted_concepts.is_empty()) {
     if (auto result = generate_concept_references(
-            namespace_div, element, concepts.as_slice(), page_state);
+            namespace_div, element, sorted_concepts.as_slice(), page_state);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }
