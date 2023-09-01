@@ -167,3 +167,11 @@ links to various parts of the project's documentation.
 See the
 [subdoc.yml](https://github.com/chromium/subspace/blob/8be259f818684490e161eb1e4cb0420d362e18ca/.github/workflows/subdoc.yml#L152-L162)
 file for an example of how the Subspace C++ Library documentation is generated.
+
+There are scripts in
+[`tools`](https://github.com/chromium/subspace/tree/main/tools)
+to quickly run Subdoc over a few Subspace files, which you can use to try it out
+as well, for
+[Mac/Linux](https://github.com/chromium/subspace/blob/main/tools/run_subdoc.sh)
+and
+[Windows](https://github.com/chromium/subspace/blob/main/tools/run_subdoc.bat).
