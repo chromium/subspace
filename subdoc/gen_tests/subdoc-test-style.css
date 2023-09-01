@@ -419,7 +419,7 @@ ul.item-table .item-name {
         display: block;
     }
     ul.item-table > li > div.description {
-        padding-left: 1rem;
+        padding-left: 2rem;
     }
     ul.item-table > li.nested > div:first-child {
         padding-left: 1rem;
