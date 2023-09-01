@@ -96,7 +96,15 @@ std::string drop_tags(std::string_view html) noexcept {
       }
     }
   }
-  return sus::move(s).str();
+  std::string without_tags = sus::move(s).str();
+  usize pos;
+  while (true) {
+    pos = without_tags.find('\n', pos);
+    if (pos == std::string::npos) break;
+    without_tags.replace(pos, 1u, " ");
+    pos += 1u;
+  }
+  return without_tags;
 }
 
 }  // namespace

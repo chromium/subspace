@@ -3,3 +3,8 @@
 
 /// The <code>summary</code> has <b>html tags</b> in it.
 struct S {};
+
+/// The summary has
+/// newlines in
+/// it.
+struct N {};
