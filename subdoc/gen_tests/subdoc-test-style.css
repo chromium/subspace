@@ -30,7 +30,6 @@ nav.sidebar {
     overflow-y: scroll;
     overscroll-behavior: contain;
     padding-top: 12px;
-    font-size: 90%;
 }
 nav.sidebar::-webkit-scrollbar {
     width: 6px;
@@ -70,6 +69,9 @@ nav.sidebar .sidebar-pretitle {
 nav.sidebar .sidebar-subtitle {
     font-size: 90%;
     font-weight: bold;
+}
+nav.sidebar .sidebar-links {
+    font-size: 90%;
 }
 nav.sidebar .sidebar-links ul {
     padding-inline-start: 0;
