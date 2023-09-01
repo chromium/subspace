@@ -21,6 +21,7 @@
 #include "subdoc/lib/gen/generate_cpp_path.h"
 #include "subdoc/lib/gen/generate_head.h"
 #include "subdoc/lib/gen/generate_requires.h"
+#include "subdoc/lib/gen/generate_sidebar.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/gen/options.h"
@@ -158,8 +159,12 @@ sus::Result<void, MarkdownToHtmlError> generate_concept(
   }
 
   auto body = html.open_body();
+  generate_sidebar(body, db, "concept", element.name, "",
+                   // TODO: links to what?
+                   sus::vec(), options);
 
-  auto record_div = body.open_div();
+  auto main = body.open_main();
+  auto record_div = main.open_div();
   record_div.add_class("concept");
   generate_concept_overview(record_div, element, namespaces, md_html, options);
   return sus::ok();
