@@ -334,6 +334,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         FieldElement::Static, sus::move(template_params),
         decl->getASTContext().getSourceManager().getFileOffset(
             decl->getLocation()));
+    // TODO: Save the qualifiers/pointers like we do for parameters.
     fe.type_element = docs_db_.find_type(decl->getType());
 
     if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
@@ -468,122 +469,141 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     if (map_and_self_name.is_some()) {
       auto&& [map, self_name] = sus::move(map_and_self_name).unwrap();
 
-      auto add_function_with_comment =
-          [&](const clang::RawComment* raw_comment) {
-            Comment comment =
-                make_db_comment(decl->getASTContext(), raw_comment, self_name);
+      auto add_function_with_comment = [&](const clang::RawComment*
+                                               raw_comment) {
+        Comment comment =
+            make_db_comment(decl->getASTContext(), raw_comment, self_name);
 
-            auto params = sus::Vec<FunctionParameter>::with_capacity(
-                decl->parameters().size());
-            for (const clang::ParmVarDecl* v : decl->parameters()) {
-              params.emplace(docs_db_.find_type(v->getOriginalType()),
-                             sus::none(),  // TODO: `v->getDefaultArg()`
-                             friendly_type_name(v->getOriginalType()),
-                             friendly_short_type_name(v->getOriginalType()),
-                             v->getNameAsString());
-            }
+        auto params = sus::Vec<FunctionParameter>::with_capacity(
+            decl->parameters().size());
+        for (const clang::ParmVarDecl* v : decl->parameters()) {
+          sus::Vec<Qualifiers> pointers;
+          for (clang::QualType ptr = v->getType(); ptr->isPointerType();
+               ptr = ptr->getPointeeType()) {
+            pointers.push(Qualifiers{
+                .is_const = ptr.isConstQualified(),
+                .is_volatile = ptr.isVolatileQualified(),
+            });
+          }
+          params.emplace(
+              docs_db_.find_type(v->getType()),
+              sus::none(),  // TODO: `v->getDefaultArg()`
+              friendly_type_name(v->getType()),
+              friendly_short_type_name(v->getType()), v->getNameAsString(),
+              Qualifiers{
+                  .is_const =
+                      v->getType()->isReferenceType()
+                          ? v->getType()->getPointeeType().isConstQualified()
+                          : v->getType().isConstQualified(),
+                  .is_volatile =
+                      v->getType()->isReferenceType()
+                          ? v->getType()->getPointeeType().isVolatileQualified()
+                          : v->getType().isVolatileQualified(),
+              },
+              v->getType()->isLValueReferenceType(),
+              v->getType()->isRValueReferenceType(), sus::move(pointers));
+        }
 
-            sus::Vec<std::string> template_params;
-            sus::Option<RequiresConstraints> constraints;
-            if (clang::FunctionTemplateDecl* tmpl =
-                    decl->getDescribedFunctionTemplate()) {
-              template_params = collect_template_params(tmpl, preprocessor_);
-              constraints = collect_template_constraints(tmpl, preprocessor_);
-            } else {
-              constraints = collect_function_constraints(decl, preprocessor_);
-            }
+        sus::Vec<std::string> template_params;
+        sus::Option<RequiresConstraints> constraints;
+        if (clang::FunctionTemplateDecl* tmpl =
+                decl->getDescribedFunctionTemplate()) {
+          template_params = collect_template_params(tmpl, preprocessor_);
+          constraints = collect_template_constraints(tmpl, preprocessor_);
+        } else {
+          constraints = collect_function_constraints(decl, preprocessor_);
+        }
 
-            std::string function_name = [&] {
-              if (auto* mdecl =
-                      clang::dyn_cast<clang::CXXConstructorDecl>(decl)) {
-                return mdecl->getThisObjectType()
-                    ->getAsRecordDecl()
-                    ->getNameAsString();
-              }
-              if (auto* convdecl =
-                      clang::dyn_cast<clang::CXXConversionDecl>(decl)) {
-                return std::string("operator ") +
-                       friendly_short_type_name(convdecl->getReturnType());
-              }
-              return decl->getNameAsString();
-            }();
+        std::string function_name = [&] {
+          if (auto* mdecl = clang::dyn_cast<clang::CXXConstructorDecl>(decl)) {
+            return mdecl->getThisObjectType()
+                ->getAsRecordDecl()
+                ->getNameAsString();
+          }
+          if (auto* convdecl =
+                  clang::dyn_cast<clang::CXXConversionDecl>(decl)) {
+            return std::string("operator ") +
+                   friendly_short_type_name(convdecl->getReturnType());
+          }
+          return decl->getNameAsString();
+        }();
 
-            sus::Vec<std::string> record_path;
-            if (clang::isa<clang::CXXMethodDecl>(decl)) {
-              record_path =
-                  iter_record_path(clang::cast<clang::RecordDecl>(context))
-                      .map([](std::string_view&& v) { return std::string(v); })
-                      .collect_vec();
-            }
+        sus::Vec<std::string> record_path;
+        if (clang::isa<clang::CXXMethodDecl>(decl)) {
+          record_path =
+              iter_record_path(clang::cast<clang::RecordDecl>(context))
+                  .map([](std::string_view&& v) { return std::string(v); })
+                  .collect_vec();
+        }
 
-            // Make a copy before moving `comment` to the contructor argument.
-            sus::Option<std::string> overload_set =
-                sus::clone(comment.attrs.overload_set);
+        // Make a copy before moving `comment` to the contructor argument.
+        sus::Option<std::string> overload_set =
+            sus::clone(comment.attrs.overload_set);
 
-            std::string signature;
-            for (clang::ParmVarDecl* p : decl->parameters()) {
-              signature += p->getOriginalType().getAsString();
-            }
+        std::string signature;
+        for (clang::ParmVarDecl* p : decl->parameters()) {
+          signature += p->getOriginalType().getAsString();
+        }
 
-            auto fe = FunctionElement(
-                iter_namespace_path(decl).collect_vec(), sus::move(comment),
-                sus::move(function_name), sus::move(signature),
-                decl->isOverloadedOperator() ||
-                    decl->getLiteralIdentifier() != nullptr,
-                decl->getReturnType(), sus::move(constraints),
-                sus::move(template_params), decl->isDeleted(),
-                sus::move(params), sus::move(overload_set),
-                sus::move(record_path),
-                decl->getASTContext().getSourceManager().getFileOffset(
-                    decl->getLocation()));
-            fe.overloads[0u].return_type_element =
-                docs_db_.find_type(decl->getReturnType());
+        auto fe = FunctionElement(
+            iter_namespace_path(decl).collect_vec(), sus::move(comment),
+            sus::move(function_name), sus::move(signature),
+            decl->isOverloadedOperator() ||
+                decl->getLiteralIdentifier() != nullptr,
+            decl->getReturnType(), sus::move(constraints),
+            sus::move(template_params), decl->isDeleted(), sus::move(params),
+            sus::move(overload_set), sus::move(record_path),
+            decl->getASTContext().getSourceManager().getFileOffset(
+                decl->getLocation()));
+        // TODO: Save the qualifiers/pointers like we do for parameters.
+        fe.overloads[0u].return_type_element =
+            docs_db_.find_type(decl->getReturnType());
 
-            if (clang::isa<clang::CXXMethodDecl>(decl)) {
-              sus::check(clang::isa<clang::RecordDecl>(context));
+        if (clang::isa<clang::CXXMethodDecl>(decl)) {
+          sus::check(clang::isa<clang::RecordDecl>(context));
 
-              // TODO: It's possible to overload a method in a base class. What
-              // should we show then? Let's show protected virtual methods just
-              // in the classes where they are public, so we need to include
-              // them in subclasses.
+          // TODO: It's possible to overload a method in a base class. What
+          // should we show then? Let's show protected virtual methods just
+          // in the classes where they are public, so we need to include
+          // them in subclasses.
 
-              if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
-                      clang::cast<clang::RecordDecl>(context));
-                  parent.is_some()) {
-                auto* mdecl = clang::cast<clang::CXXMethodDecl>(decl);
-                fe.overloads[0u].method = sus::some(MethodSpecific{
-                    .is_static = mdecl->isStatic(),
-                    .is_volatile = mdecl->isVolatile(),
-                    .is_virtual = mdecl->isVirtual(),
-                    .is_ctor = clang::isa<clang::CXXConstructorDecl>(decl),
-                    .is_dtor = clang::isa<clang::CXXDestructorDecl>(decl),
-                    .is_conversion = clang::isa<clang::CXXConversionDecl>(decl),
-                    .qualifier =
-                        [mdecl]() {
-                          switch (mdecl->getRefQualifier()) {
-                            case clang::RQ_None:
-                              if (mdecl->isConst())
-                                return MethodQualifier::Const;
-                              else
-                                return MethodQualifier::Mutable;
-                            case clang::RQ_LValue:
-                              if (mdecl->isConst())
-                                return MethodQualifier::ConstLValue;
-                              else
-                                return MethodQualifier::MutableLValue;
-                            case clang::RQ_RValue:
-                              if (mdecl->isConst())
-                                return MethodQualifier::ConstRValue;
-                              else
-                                return MethodQualifier::MutableRValue;
-                          }
-                          sus::unreachable();
-                        }(),
-                });
-              }
-            }
-            add_function_overload_to_db(decl, sus::move(fe), map);
-          };
+          if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
+                  clang::cast<clang::RecordDecl>(context));
+              parent.is_some()) {
+            auto* mdecl = clang::cast<clang::CXXMethodDecl>(decl);
+            fe.overloads[0u].method = sus::some(MethodSpecific{
+                .is_static = mdecl->isStatic(),
+                .is_volatile = mdecl->isVolatile(),
+                .is_virtual = mdecl->isVirtual(),
+                .is_ctor = clang::isa<clang::CXXConstructorDecl>(decl),
+                .is_dtor = clang::isa<clang::CXXDestructorDecl>(decl),
+                .is_conversion = clang::isa<clang::CXXConversionDecl>(decl),
+                .qualifier =
+                    [mdecl]() {
+                      switch (mdecl->getRefQualifier()) {
+                        case clang::RQ_None:
+                          if (mdecl->isConst())
+                            return MethodQualifier::Const;
+                          else
+                            return MethodQualifier::Mutable;
+                        case clang::RQ_LValue:
+                          if (mdecl->isConst())
+                            return MethodQualifier::ConstLValue;
+                          else
+                            return MethodQualifier::MutableLValue;
+                        case clang::RQ_RValue:
+                          if (mdecl->isConst())
+                            return MethodQualifier::ConstRValue;
+                          else
+                            return MethodQualifier::MutableRValue;
+                      }
+                      sus::unreachable();
+                    }(),
+            });
+          }
+        }
+        add_function_overload_to_db(decl, sus::move(fe), map);
+      };
 
       add_function_with_comment(get_raw_comment(decl));
       // We look for comments on this function and any overridden methods.

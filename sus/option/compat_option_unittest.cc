@@ -260,6 +260,8 @@ TEST(CompatOption, FromOptionalCopyWithConversion) {
   // Move.
   constexpr sus::Option<i64> o = sus::into(std::optional<i32>(101));
   EXPECT_EQ(o.as_value(), 101_i64);
+  constexpr sus::Option<i64> o2 = std::optional<i32>(101);
+  EXPECT_EQ(o2.as_value(), 101_i64);
 
   // Copy.
   constexpr auto f = std::optional<i32>(101);

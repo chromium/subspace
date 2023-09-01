@@ -63,8 +63,8 @@ inline std::string friendly_function_name(clang::FunctionDecl& decl) noexcept {
 inline std::string friendly_type_name(const clang::QualType& type) noexcept {
   clang::QualType unqualified = type.getUnqualifiedType();
   // Clang writes booleans as "_Bool".
-  if (unqualified->isBooleanType()) return "bool";
-  std::string full = unqualified.getAsString();
+  std::string full = unqualified->isBooleanType() ? std::string("bool")
+                                                  : unqualified.getAsString();
 
   // Type path component other than the last show up like `struct S` instead of
   // just `S`. So we're dropping those from each component.
@@ -118,31 +118,8 @@ inline std::string friendly_short_type_name(
     const clang::QualType& type) noexcept {
   clang::QualType unqualified = type.getUnqualifiedType();
   // Clang writes booleans as "_Bool".
-  if (unqualified->isBooleanType()) return "bool";
-  std::string full = unqualified.getAsString();
-  // TODO: This does the wrong things with templates! But it tries.
-  // `S::T<int>::V<Z::X, Y::A>` should come out as `V<Z::X, Y::A>`.
-  //
-  // TODO: Drop the namespaces if the type and function it's related to (not
-  // given as an input here yet) have the same top-level namespace.
-  auto pos = std::string::npos;
-  while (true) {
-    if (auto close_pos = full.rfind(">", pos); close_pos != std::string::npos) {
-      pos = close_pos - 1u;
-      continue;
-    }
-    if (auto open_pos = full.rfind("<", pos); open_pos != std::string::npos) {
-      pos = open_pos - 1u;
-      continue;
-    }
-    break;
-  }
-  pos = full.rfind("::", pos);
-  if (pos != std::string::npos) {
-    pos += strlen("::");
-    full = full.substr(pos);
-  }
-  return full;
+  return unqualified->isBooleanType() ? std::string("bool")
+                                      : unqualified.getAsString();
 }
 
 inline std::string friendly_record_type_name(RecordType t,

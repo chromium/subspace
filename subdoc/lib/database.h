@@ -136,12 +136,22 @@ struct MethodSpecific {
   MethodQualifier qualifier;
 };
 
+struct Qualifiers {
+  bool is_const;
+  bool is_volatile;
+};
+
 struct FunctionParameter {
   sus::Option<const TypeElement&> type_element;
   sus::Option<std::string> default_value;
   std::string type_name;
   std::string short_type_name;
   std::string parameter_name;
+  Qualifiers qualifiers;
+  bool is_lvalue_reference;
+  bool is_rvalue_reference;
+  // Counts how many `*` are part of the type and their qualifiers.
+  sus::Vec<Qualifiers> pointers;
 };
 
 struct FunctionOverload {
@@ -930,6 +940,9 @@ struct Database {
       return find_type(base_type->getPointeeType());
     }
 
+    // TODO: Templates are not TagDecl so this does not find incomplete
+    // templates in our database. But see above, we need the full set of types
+    // that make up the overall type, templates can have inner types.
     auto* decl = [&]() -> clang::Decl* {
       if (clang::TagDecl* tdecl = base_type->getAsTagDecl()) return tdecl;
       if (const clang::TypedefType* type =
