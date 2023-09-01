@@ -39,6 +39,54 @@ using SortedConceptByName = sus::Tuple<std::string_view, u32, ConceptId>;
 using SortedFunctionByName = sus::Tuple<std::string_view, u32, FunctionId>;
 using SortedRecordByName = sus::Tuple<std::string_view, u32, RecordId>;
 
+const NamespaceElement& namespace_element_from_sorted(
+    const NamespaceElement& element, const SortedNamespaceByName& s) noexcept {
+  return element.namespaces.at(s.at<2>());
+}
+
+const ConceptElement& concept_element_from_sorted(
+    const NamespaceElement& element, const SortedConceptByName& s) noexcept {
+  return element.concepts.at(s.at<2>());
+}
+
+const FunctionElement& function_element_from_sorted(
+    const NamespaceElement& element, const SortedFunctionByName& s) noexcept {
+  return element.functions.at(s.at<2>());
+}
+
+const RecordElement& record_element_from_sorted(
+    const NamespaceElement& element, const SortedRecordByName& s) noexcept {
+  return element.records.at(s.at<2>());
+}
+
+constexpr inline std::weak_ordering cmp_namespaces_by_name(
+    const SortedNamespaceByName& a, const SortedNamespaceByName& b) noexcept {
+  auto ord = a.at<0>() <=> b.at<0>();
+  if (ord != 0) return ord;
+  return a.at<1>() <=> b.at<1>();
+}
+
+constexpr inline std::weak_ordering cmp_concepts_by_name(
+    const SortedConceptByName& a, const SortedConceptByName& b) noexcept {
+  auto ord = a.at<0>() <=> b.at<0>();
+  if (ord != 0) return ord;
+  return a.at<1>() <=> b.at<1>();
+}
+
+constexpr inline std::weak_ordering cmp_functions_by_name(
+    const SortedFunctionByName& a, const SortedFunctionByName& b) noexcept {
+  auto ord = a.at<0>() <=> b.at<0>();
+  if (ord != 0) return ord;
+  return a.at<1>() <=> b.at<1>();
+}
+
+constexpr inline std::weak_ordering cmp_records_by_name(
+    const SortedRecordByName& a, const SortedRecordByName& b) noexcept {
+  auto ord = a.at<0>() <=> b.at<0>();
+  if (ord != 0) return ord;
+  return a.at<1>() <=> b.at<1>();
+}
+
 std::string namespace_display_name(
     const NamespaceElement& element,
     sus::Slice<const NamespaceElement*> ancestors,
@@ -135,13 +183,14 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace_references(
     items_list.add_class("section-items");
     items_list.add_class("item-table");
 
-    for (auto&& [name, sort_key, id] : namespaces) {
+    for (const SortedNamespaceByName& sorted_ns : namespaces) {
+      const NamespaceElement& ne =
+          namespace_element_from_sorted(element, sorted_ns);
       {
         auto item_li = items_list.open_li();
         item_li.add_class("section-item");
 
-        if (auto result = generate_namespace_reference(
-                item_li, element.namespaces.at(id), page_state);
+        if (auto result = generate_namespace_reference(item_li, ne, page_state);
             result.is_err()) {
           return sus::err(sus::move(result).unwrap_err());
         }
@@ -149,27 +198,22 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace_references(
 
       {
         sus::Vec<SortedNamespaceByName> sorted;
-        for (const auto& [key, sub_element] :
-             element.namespaces.at(id).namespaces) {
+        for (const auto& [key, sub_element] : ne.namespaces) {
           if (sub_element.hidden()) continue;
           if (sub_element.is_empty()) continue;
 
           sorted.push(sus::tuple(sub_element.name, sub_element.sort_key, key));
         }
-        sorted.sort_unstable_by(
-            [](const SortedNamespaceByName& a, const SortedNamespaceByName& b) {
-              auto ord = a.at<0>() <=> b.at<0>();
-              if (ord != 0) return ord;
-              return a.at<1>() <=> b.at<1>();
-            });
+        sorted.sort_unstable_by(cmp_namespaces_by_name);
 
-        for (auto&& [sub_name, sub_sort_key, sub_id] : sorted) {
+        for (const SortedNamespaceByName& sub_sorted_ns : sorted) {
+          const NamespaceElement& sub_ne =
+              namespace_element_from_sorted(ne, sub_sorted_ns);
           auto item_li = items_list.open_li();
           item_li.add_class("nested");
           item_li.add_class("section-item");
-          if (auto result = generate_namespace_reference(
-                  item_li, element.namespaces.at(id).namespaces.at(sub_id),
-                  page_state);
+          if (auto result =
+                  generate_namespace_reference(item_li, sub_ne, page_state);
               result.is_err()) {
             return sus::err(sus::move(result).unwrap_err());
           }
@@ -204,9 +248,10 @@ sus::Result<void, MarkdownToHtmlError> generate_concept_references(
     items_list.add_class("section-items");
     items_list.add_class("item-table");
 
-    for (auto&& [name, sort_key, key] : concepts) {
-      if (auto result = generate_concept_reference(
-              items_list, element.concepts.at(key), page_state);
+    for (const SortedConceptByName& sorted_concept : concepts) {
+      const ConceptElement& ce =
+          concept_element_from_sorted(element, sorted_concept);
+      if (auto result = generate_concept_reference(items_list, ce, page_state);
           result.is_err()) {
         return sus::err(sus::move(result).unwrap_err());
       }
@@ -307,9 +352,10 @@ sus::Result<void, MarkdownToHtmlError> generate_function_references(
     items_list.add_class("section-items");
     items_list.add_class("item-table");
 
-    for (auto&& [name, sort_key, function_id] : functions) {
-      if (auto result = generate_function_reference(
-              items_list, element.functions.at(function_id), page_state);
+    for (const SortedFunctionByName& sorted_fn : functions) {
+      const FunctionElement& fe =
+          function_element_from_sorted(element, sorted_fn);
+      if (auto result = generate_function_reference(items_list, fe, page_state);
           result.is_err()) {
         return sus::err(sus::move(result).unwrap_err());
       }
@@ -352,12 +398,7 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
     sorted_namespaces.push(
         sus::tuple(sub_element.name, sub_element.sort_key, key));
   }
-  sorted_namespaces.sort_unstable_by(
-      [](const SortedNamespaceByName& a, const SortedNamespaceByName& b) {
-        auto ord = a.at<0>() <=> b.at<0>();
-        if (ord != 0) return ord;
-        return a.at<1>() <=> b.at<1>();
-      });
+  sorted_namespaces.sort_unstable_by(cmp_namespaces_by_name);
 
   sus::Vec<SortedRecordByName> sorted_classes;
   sus::Vec<SortedRecordByName> sorted_unions;
@@ -376,18 +417,8 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
         break;
     }
   }
-  sorted_classes.sort_unstable_by(
-      [](const SortedRecordByName& a, const SortedRecordByName& b) {
-        auto ord = a.at<0>() <=> b.at<0>();
-        if (ord != 0) return ord;
-        return a.at<1>() <=> b.at<1>();
-      });
-  sorted_unions.sort_unstable_by(
-      [](const SortedRecordByName& a, const SortedRecordByName& b) {
-        auto ord = a.at<0>() <=> b.at<0>();
-        if (ord != 0) return ord;
-        return a.at<1>() <=> b.at<1>();
-      });
+  sorted_classes.sort_unstable_by(cmp_records_by_name);
+  sorted_unions.sort_unstable_by(cmp_records_by_name);
 
   sus::Vec<SortedFunctionByName> sorted_functions;
   sus::Vec<SortedFunctionByName> sorted_operators;
@@ -402,18 +433,8 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
           sus::tuple(sub_element.name, sub_element.sort_key, function_id));
     }
   }
-  sorted_functions.sort_unstable_by(
-      [](const SortedFunctionByName& a, const SortedFunctionByName& b) {
-        auto ord = a.at<0>() <=> b.at<0>();
-        if (ord != 0) return ord;
-        return a.at<1>() <=> b.at<1>();
-      });
-  sorted_operators.sort_unstable_by(
-      [](const SortedFunctionByName& a, const SortedFunctionByName& b) {
-        auto ord = a.at<0>() <=> b.at<0>();
-        if (ord != 0) return ord;
-        return a.at<1>() <=> b.at<1>();
-      });
+  sorted_functions.sort_unstable_by(cmp_functions_by_name);
+  sorted_operators.sort_unstable_by(cmp_functions_by_name);
 
   sus::Vec<SortedConceptByName> sorted_concepts;
   for (const auto& [key, sub_element] : element.concepts) {
@@ -422,17 +443,18 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
     sorted_concepts.push(
         sus::tuple(sub_element.name, sub_element.sort_key, key));
   }
-  sorted_concepts.sort_unstable_by(
-      [](const SortedConceptByName& a, const SortedConceptByName& b) {
-        auto ord = a.at<0>() <=> b.at<0>();
-        if (ord != 0) return ord;
-        return a.at<1>() <=> b.at<1>();
-      });
+  sorted_concepts.sort_unstable_by(cmp_concepts_by_name);
 
   sus::Vec<SidebarLink> sidebar_links;
   if (!sorted_namespaces.is_empty()) {
     sidebar_links.push(SidebarLink(SidebarLinkStyle::GroupHeader, "Namespaces",
                                    "#namespaces"));
+    for (const SortedNamespaceByName& sorted_ns : sorted_namespaces) {
+      const NamespaceElement& ne =
+          namespace_element_from_sorted(element, sorted_ns);
+      sidebar_links.push(SidebarLink(SidebarLinkStyle::Item, ne.name,
+                                     construct_html_url_for_namespace(ne)));
+    }
   }
   if (!sorted_classes.is_empty()) {
     sidebar_links.push(
@@ -445,14 +467,32 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
   if (!sorted_functions.is_empty()) {
     sidebar_links.push(
         SidebarLink(SidebarLinkStyle::GroupHeader, "Functions", "#functions"));
+    for (const SortedFunctionByName& sorted_fn : sorted_functions) {
+      const FunctionElement& fe =
+          function_element_from_sorted(element, sorted_fn);
+      sidebar_links.push(SidebarLink(SidebarLinkStyle::Item, fe.name,
+                                     construct_html_url_for_function(fe)));
+    }
   }
   if (!sorted_operators.is_empty()) {
     sidebar_links.push(
         SidebarLink(SidebarLinkStyle::GroupHeader, "Operators", "#operators"));
+    for (const SortedFunctionByName& sorted_fn : sorted_operators) {
+      const FunctionElement& fe =
+          function_element_from_sorted(element, sorted_fn);
+      sidebar_links.push(SidebarLink(SidebarLinkStyle::Item, fe.name,
+                                     construct_html_url_for_function(fe)));
+    }
   }
   if (!sorted_concepts.is_empty()) {
     sidebar_links.push(
         SidebarLink(SidebarLinkStyle::GroupHeader, "Concepts", "#concepts"));
+    for (const SortedConceptByName& sorted_concept : sorted_concepts) {
+      const ConceptElement& ce =
+          concept_element_from_sorted(element, sorted_concept);
+      sidebar_links.push(SidebarLink(SidebarLinkStyle::Item, ce.name,
+                                     construct_html_url_for_concept(ce)));
+    }
   }
 
   auto body = html.open_body();
