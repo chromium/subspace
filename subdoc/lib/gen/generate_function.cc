@@ -77,7 +77,16 @@ void generate_function_params(HtmlWriter::OpenDiv& div,
                        << p.type_element->name << " in namespace "
                        << p.type_element->namespace_path;
         }
-        one_param_link.write_text(p.short_type_name);
+        one_param_link.write_text(p.type_element.as_value().name);
+        for (Qualifiers q : p.pointers) {
+          if (q.is_const) one_param_link.write_text(" const");
+          if (q.is_volatile) one_param_link.write_text(" volatile");
+          one_param_link.write_text("*");
+        }
+        if (p.qualifiers.is_const) one_param_link.write_text(" const");
+        if (p.qualifiers.is_volatile) one_param_link.write_text(" volatile");
+        if (p.is_lvalue_reference) one_param_link.write_text("&");
+        if (p.is_rvalue_reference) one_param_link.write_text("&&");
       } else {
         div.write_text(p.short_type_name);
       }

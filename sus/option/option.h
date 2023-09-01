@@ -491,7 +491,7 @@ class Option final {
              sus::construct::SafelyConstructibleFromReference<T, U &&>)
       : Option(WITH_SOME, move_to_storage(t)) {}
 
-  /// Moves `val` into a new option holding `Some(val)`.
+  /// Moves or copies `val` into a new option holding `Some(val)`.
   ///
   /// Implements [`From<Option<T>, T>`]($sus::construct::From).
   ///
@@ -501,7 +501,7 @@ class Option final {
   static constexpr Option from(U&& val) noexcept
     requires(!std::is_reference_v<T>)
   {
-    return Option(val);
+    return Option(sus::forward<U>(val));
   }
   /// #[doc.overloads=from.t]
   template <class U>
@@ -1813,91 +1813,51 @@ class Option final {
   friend constexpr inline auto operator<=>(
       const Option<T>& l, const Option<U>& r) noexcept = delete;
 
-  /// Implements [`From<std::optional>`]($sus::construct::From).
-  ///
-  /// This also allows `sus::into()` to convert with type deduction from
-  /// [`std::optional`](https://en.cppreference.com/w/cpp/utility/optional)
-  /// to [`sus::Option`]($sus::option::Option).
-  ///
-  /// #[doc.overloads=from.optional]
-  constexpr static Option from(
-      const std::optional<std::remove_reference_t<T>>& s) noexcept
-    requires(::sus::mem::Copy<T> && !std::is_reference_v<T>)
-  {
-    if (s.has_value())
-      return Option(s.value());
-    else
-      return Option();
-  }
-  /// #[doc.overloads=from.optional]
-  constexpr static Option from(
-      std::optional<std::remove_reference_t<T>>&& s) noexcept
-    requires(::sus::mem::Move<T> && !std::is_reference_v<T>)
-  {
-    if (s.has_value())
-      return Option(::sus::move(s).value());
-    else
-      return Option();
-  }
-  /// Implements [`From<std::optional<U>>`]($sus::construct::From) when `U`
-  /// can be converted to `T`, i.e. [`Into<U, T>`]($sus::construct::Into).
-  ///
-  /// #[doc.overloads=from.optional.u]
-  template <::sus::construct::Into<T> U>
-  static inline constexpr Option from(const std::optional<U>& s) noexcept
-    requires(!std::is_reference_v<T>)
-  {
-    if (s.has_value())
-      return Option(::sus::into(s.value()));
-    else
-      return Option();
-  }
-  /// #[doc.overloads=from.optional.u]
-  template <::sus::construct::Into<T> U>
-  static inline constexpr Option from(std::optional<U>&& s) noexcept
-    requires(!std::is_reference_v<T>)
-  {
-    if (s.has_value())
-      return Option(::sus::into(::sus::move(s).value()));
-    else
-      return Option();
-  }
   /// Implicit conversion from [`std::optional`](
   /// https://en.cppreference.com/w/cpp/utility/optional).
   ///
-  /// Prevents conversions from `U` to `optional<T>` when constructing
-  /// `Option<optional<T>>`.
+  /// May convert from `U` in `optional<U>` to `T` in `Option<T>`.
   ///
   /// #[doc.overloads=ctor.optional]
-  constexpr Option(
-      std::same_as<std::optional<std::remove_reference_t<T>>> auto s) noexcept
-    requires(!std::is_reference_v<T> &&  //
-             ::sus::mem::Move<T>)
+  template <class U>
+    requires(std::convertible_to<U &&, T>)
+  constexpr Option(std::optional<U>&& s) noexcept
+    requires(!std::is_reference_v<T>)
       : Option() {
-    if (s.has_value()) insert(::sus::move(s).value());
+    if (s.has_value()) t_.set_some(move_to_storage(::sus::move(s).value()));
+  }
+  /// #[doc.overloads=ctor.optional]
+  template <class U>
+    requires(std::convertible_to<const U&, T>)
+  constexpr Option(const std::optional<U>& s) noexcept
+    requires(!std::is_reference_v<T>)
+      : Option() {
+    if (s.has_value()) t_.set_some(copy_to_storage(s.value()));
   }
   /// Implicit conversion to [`std::optional`](
   /// https://en.cppreference.com/w/cpp/utility/optional).
   ///
+  /// May convert from `T` in `Option<T>` to `U` in `optional<U>`.
+  ///
   /// #[doc.overloads=convert.optional]
-  constexpr operator std::optional<
-      std::remove_const_t<std::remove_reference_t<T>>>() const& noexcept
-    requires(::sus::mem::Copy<T> && !std::is_reference_v<T>)
-  {
+  template <class U>
+    requires(std::convertible_to<const std::remove_reference_t<T>&, U>)
+  constexpr operator std::optional<U>() const& noexcept {
     if (is_some()) {
-      return std::optional<std::remove_reference_t<T>>(std::in_place,
-                                                       as_value());
+      return std::optional<U>(std::in_place,
+                              as_value_unchecked(::sus::marker::unsafe_fn));
     } else {
       return std::nullopt;
     }
   }
   /// #[doc.overloads=convert.optional]
-  constexpr operator std::optional<std::remove_reference_t<T>>() && noexcept
-    requires(::sus::mem::Move<T> && !std::is_reference_v<T>)
-  {
+  template <class U>
+    requires(std::convertible_to<T, U>)
+  constexpr operator std::optional<U>() && noexcept {
     if (is_some()) {
-      return std::optional<std::remove_reference_t<T>>(
-          std::in_place, ::sus::move(*this).unwrap());
+      return std::optional<U>(
+          std::in_place,
+          ::sus::move(*this).unwrap_unchecked(::sus::marker::unsafe_fn));
     } else {
       return std::nullopt;
     }
