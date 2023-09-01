@@ -385,6 +385,12 @@ jobs:
             --include-file-pattern /sus/ \
             --exclude-file-pattern /third_party/ \
             --copy-file subdoc/gen_tests/subdoc-test-style.css \
+            --copy-file web/logo.png \
+            --copy-file web/logo32.png \
+            --copy-file web/logo16.png \
+            --favicon "logo.png;image/png" \
+            --favicon "logo32.png;image/png" \
+            --favicon "logo16.png;image/png" \
             --css subdoc-test-style.css \
             --project-md sus/project.md \
             --project-name Subspace \
