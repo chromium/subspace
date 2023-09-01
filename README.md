@@ -1,8 +1,8 @@
 [![CI](https://github.com/chromium/subspace/actions/workflows/ci.yml/badge.svg)](https://github.com/chromium/subspace/actions/workflows/ci.yml)
+[![docs](https://github.com/chromium/subspace/actions/workflows/subdoc.yml/badge.svg)](https://suslib.cc)
 <!---
 [![hdoc](https://github.com/chromium/subspace/actions/workflows/hdoc.yml/badge.svg)](https://docs.hdoc.io/danakj/subspace/)
 -->
-[![docs](https://github.com/chromium/subspace/actions/workflows/subdoc.yml/badge.svg)](https://suslib.cc)
 <!---
 [![clang-doc](https://github.com/chromium/subspace/actions/workflows/clang-doc.yml/badge.svg)](https://danakj.github.io/subspace-docs/sus/#Namespaces)
 -->
