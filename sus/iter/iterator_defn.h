@@ -46,12 +46,13 @@ namespace sus::iter {
 using ::sus::construct::Into;
 using ::sus::option::Option;
 
-/// The base class for all Iterator types.
+/// The base class for all [`Iterator`]($sus::iter::Iterator) types.
 ///
-/// The `sus::iter::Iterator` concept requires that a type subclasses from
-/// IteratorBase and is `final` in order to be considered an Iterator. No
-/// code should refer to `IteratorBase` except for defining the base class
-/// of an iterator, and it should be treated as an implementation detail only.
+/// The [`Iterator`]($sus::iter::Iterator) concept requires that a type
+/// subclasses from `IteratorBase` and is `final` in order to be considered an
+/// [`Iterator`]($sus::iter::Iterator). No code should refer to `IteratorBase`
+/// except for defining the base class of an iterator, and it should be treated
+/// as an implementation detail only.
 template <class Iter, class ItemT>
 class IteratorBase {
  protected:
