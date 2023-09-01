@@ -77,39 +77,39 @@ constexpr auto end(const T& t) noexcept;
 
 namespace sus {
 // clang-format off
-/// The [`Option`](sus-option-Option.html) type, and the
-/// [`some`](sus-option-fn.some.html) and [`none`](sus-option-fn.none.html)
+/// The [`Option`]($sus::option::Option) type, and the
+/// [`some`]($sus::option::some) and [`none`]($sus::option::none)
 /// type-deduction constructor functions.
 ///
-/// The [`Option`](sus-option-Option.html) type represents an optional value:
-/// every [`Option`](sus-option-Option.html) is either Some and contains a
+/// The [`Option`]($sus::option::Option) type represents an optional value:
+/// every [`Option`]($sus::option::Option) is either Some and contains a
 /// value, or None, and does not. It is similar to
 /// [`std::optional`](https://en.cppreference.com/w/cpp/utility/optional) but
 /// with some differences:
-/// * Extensive vocabulary for combining [`Option`](sus-option-Option.html)s
+/// * Extensive vocabulary for combining [`Option`]($sus::option::Option)s
 ///   together.
 /// * Safe defined behaviour (a panic) when unwrapping an empty
-///   [`Option`](sus-option-Option.html), with an
+///   [`Option`]($sus::option::Option), with an
 ///   explicit unsafe backdoor
-///   ([`unwrap_unchecked`](sus-option-Option.html#method.unwrap_unchecked))
+///   ([`unwrap_unchecked`]($sus::option::Option::unwrap_unchecked))
 ///   for when it is needed.
-/// * Avoid accidental expensive copies. Supports [`Copy`](sus-mem-Copy.html) if
+/// * Avoid accidental expensive copies. Supports [`Copy`]($sus::mem::Copy) if
 ///   the inner type is
-///   [`Copy`](sus-mem-Copy.html) and [`Clone`](sus-mem-Clone.html) if the inner
-///   type is [`Clone`](sus-mem-Clone.html).
-/// * Provides [`take()`](sus-option-Option.html#method.take) to move a value
-///   out of an lvalue [`Option`](sus-option-Option.html), which mark the
+///   [`Copy`]($sus::mem::Copy) and [`Clone`]($sus::mem::Clone) if the inner
+///   type is [`Clone`]($sus::mem::Clone).
+/// * Provides [`take()`]($sus::option::Option::take) to move a value
+///   out of an lvalue [`Option`]($sus::option::Option), which mark the
 ///   lvalue as empty instead of leaving a moved-from value behind as with
 ///   `std::move(optional).value()`.
 /// * A custom message can be printed when trying to unwrap an empty
-///   [`Option`](sus-option-Option.html).
-/// * Subspace [Iterator](sus-iter.html) integration.
-///   [`Option`](sus-option-Option.html) can be iterated
-///   over, acting like a single-element [collection](sus-collections.html),
+///   [`Option`]($sus::option::Option).
+/// * Subspace [Iterator]($sus::iter) integration.
+///   [`Option`]($sus::option::Option) can be iterated
+///   over, acting like a single-element [collection]($sus::collections),
 ///   which allows it to be chained together with other iterators, filtered,
 ///   etc.
 ///
-/// [`Option`](sus-option-Option.html) types are very common, as they have a
+/// [`Option`]($sus::option::Option) types are very common, as they have a
 /// number of uses:
 ///
 /// * Initial values
@@ -123,13 +123,13 @@ namespace sus {
 ///
 /// # Quick start
 /// When the type is known to the compiler, you can construct an
-/// [`Option`](sus-option-Option.html) from a value without writing the full
+/// [`Option`]($sus::option::Option) from a value without writing the full
 /// type again, by using
-/// [`sus::some(x)`](sus-option-fn.some.html) to make an
-/// [`Option`](sus-option-Option.html) holding `x` or
-/// [`sus::none()`](sus-option-fn.none.html) to make an empty
-/// [`Option`](sus-option-Option.html). If returning an
-/// [`Option`](sus-option-Option.html) from a lambda, be sure to specify the
+/// [`sus::some(x)`]($sus::option::some) to make an
+/// [`Option`]($sus::option::Option) holding `x` or
+/// [`sus::none()`]($sus::option::none) to make an empty
+/// [`Option`]($sus::option::Option). If returning an
+/// [`Option`]($sus::option::Option) from a lambda, be sure to specify the
 /// return type on the lambda to allow successful type deduction.
 /// ```
 /// // Returns Some("power!") if the input is over 9000, or None otherwise.
@@ -139,22 +139,22 @@ namespace sus {
 /// };
 /// ```
 ///
-/// Use [`is_some`](sus-option-Option.html#method.is_some) and
-/// [`is_none`](sus-option-Option.html#method.is_none) to see if the
-/// [`Option`](sus-option-Option.html) is holding a value.
+/// Use [`is_some`]($sus::option::Option::is_some) and
+/// [`is_none`]($sus::option::Option::is_none) to see if the
+/// [`Option`]($sus::option::Option) is holding a value.
 ///
 /// To immediately pull the inner value out of an
-/// [`Option`](sus-option-Option.html) an an rvalue, use
-/// [`unwrap`](sus-option-Option.html#method.unwrap). If the
-/// [`Option`](sus-option-Option.html) is an lvalue, use
-/// [`as_value`](sus-option-Option.html#method.as_value) and
-/// [`as_value_mut`](sus-option-Option.html#method.as_value_mut) to access the
+/// [`Option`]($sus::option::Option) an an rvalue, use
+/// [`unwrap`]($sus::option::Option::unwrap). If the
+/// [`Option`]($sus::option::Option) is an lvalue, use
+/// [`as_value`]($sus::option::Option::as_value) and
+/// [`as_value_mut`]($sus::option::Option::as_value_mut) to access the
 /// inner value. Like
 /// [`std::optional`](https://en.cppreference.com/w/cpp/utility/optional),
-/// [`operator*`](sus-option-Option.html#method.operator*) and
-/// [`operator->`](sus-option-Option.html#method.operator->) are also
+/// [`operator*`]($sus::option::Option::operator*) and
+/// [`operator->`]($sus::option::Option::operator->) are also
 /// available if preferred. However if doing this many times, consider doing
-/// [`unwrap`](sus-option-Option.html#method.unwrap) a single time up front.
+/// [`unwrap`]($sus::option::Option::unwrap) a single time up front.
 /// ```
 /// sus::check(is_power(9001).unwrap() == "power!");
 ///
@@ -164,83 +164,83 @@ namespace sus {
 /// sus::check(is_power(9000).unwrap_or("unlucky") == "unlucky");
 /// ```
 ///
-/// [`Option<const T>`](sus-option-Option.html) for non-reference-type `T`
-///  is disallowed, as the [`Option`](sus-option-Option.html)
+/// [`Option<const T>`]($sus::option::Option) for non-reference-type `T`
+///  is disallowed, as the [`Option`]($sus::option::Option)
 /// owns the `T` in that case and it ensures the
-/// [`Option`](sus-option-Option.html) and the `T` are both
+/// [`Option`]($sus::option::Option) and the `T` are both
 /// accessed with the same constness.
 ///
 /// # Representation
 ///
 /// If a type `T` is a reference or satisties
-/// [`NeverValueField`](sus-mem-NeverValueField.html), then
-/// [`Option<T>`](sus-option-Option.html) will have the same size as T and
+/// [`NeverValueField`]($sus::mem::NeverValueField), then
+/// [`Option<T>`]($sus::option::Option) will have the same size as T and
 /// will be internally represented as just a `T` (or `T*` in the case of
 /// a reference `T&`).
 ///
 /// The following types `T`, when stored in an
-/// [`Option<T>`](sus-option-Option.html), will have the same
+/// [`Option<T>`]($sus::option::Option), will have the same
 /// size as the original type `T`:
 ///
 /// * `const T&` or `T&` (have the same size as `const T*` or `T*`)
-/// * [`ptr::NonNull<U>`](sus-ptr-NonNull.html)
+/// * [`ptr::NonNull<U>`]($sus::ptr::NonNull)
 ///
 /// This is called the "NeverValueField optimization", but is also called the
 /// ["null pointer optimization" or NPO in Rust](
 /// https://doc.rust-lang.org/stable/std/option/index.html#representation).
 ///
 /// # Querying the variant
-/// The [`is_some`](sus-option-Option.html#method.is_some) and
-/// [`is_none`](sus-option-Option.html#method.is_none) methods return
-/// `true` if the [`Option`](sus-option-Option.html) is
+/// The [`is_some`]($sus::option::Option::is_some) and
+/// [`is_none`]($sus::option::Option::is_none) methods return
+/// `true` if the [`Option`]($sus::option::Option) is
 /// holding a value or not, respectively.
 ///
 /// # Adapters for working with lvalues
 /// The following methods allow you to create an
-/// [`Option`](sus-option-Option.html) that refers to the value
+/// [`Option`]($sus::option::Option) that refers to the value
 /// held in an lvalue, without copying or moving from the lvalue:
-/// * [`as_ref`](sus-option-Option.html#method.as_ref) converts from a const
-///   lvalue [`Option<T>`](sus-option-Option.html) to an rvalue
-///   [`Option<const T&>`](sus-option-Option.html)`.
-/// * [`as_mut`](sus-option-Option.html#method.as_mut) converts from a mutable
-///   lvalue [`Option<T>`](sus-option-Option.html) to an rvalue
-///   [`Option<T&>`](sus-option-Option.html).
-/// * [`take`](sus-option-Option.html#method.take) moves the element out of
-///   the lvalue [`Option<T>`](sus-option-Option.html) into an rvalue
-///   [`Option<T>`](sus-option-Option.html), leaving the lvalue empty.
+/// * [`as_ref`]($sus::option::Option::as_ref) converts from a const
+///   lvalue [`Option<T>`]($sus::option::Option) to an rvalue
+///   [`Option<const T&>`]($sus::option::Option)`.
+/// * [`as_mut`]($sus::option::Option::as_mut) converts from a mutable
+///   lvalue [`Option<T>`]($sus::option::Option) to an rvalue
+///   [`Option<T&>`]($sus::option::Option).
+/// * [`take`]($sus::option::Option::take) moves the element out of
+///   the lvalue [`Option<T>`]($sus::option::Option) into an rvalue
+///   [`Option<T>`]($sus::option::Option), leaving the lvalue empty.
 ///
 /// # Extracting the contained value
-/// These methods extract the contained value in an [`Option<T>`](sus-option-Option.html) when it is
+/// These methods extract the contained value in an [`Option<T>`]($sus::option::Option) when it is
 /// holding a value.
 ///
 /// For working with the option as an lvalue:
-/// * [`as_value`](sus-option-Option.html#method.as_value) returns const
+/// * [`as_value`]($sus::option::Option::as_value) returns const
 ///   reference access to the inner value. It will panic with a generic
 ///   message when empty.
-/// * [`as_value_mut`](sus-option-Option.html#method.as_value_mut) returns
+/// * [`as_value_mut`]($sus::option::Option::as_value_mut) returns
 ///   mutable reference access to the inner value. It will panic with a
 ///   generic message when empty.
-/// * [`operator*`](sus-option-Option.html#method.operator*) returns mutable
+/// * [`operator*`]($sus::option::Option::operator*) returns mutable
 ///   reference access to the inner value. It will panic with a generic message
 ///   when empty.
-/// * [`operator->`](sus-option-Option.html#method.operator->) returns mutable
+/// * [`operator->`]($sus::option::Option::operator->) returns mutable
 ///   pointer access to the inner value. It will panic with a generic message
 ///   when empty.
 ///
 /// For working with the option as an rvalue (when it returned from a function
 /// call):
-/// * [`expect`](sus-option-Option.html#method.expect) moves and returns the
+/// * [`expect`]($sus::option::Option::expect) moves and returns the
 ///   inner value. It will panic with a provided custom message when empty.
-/// * [`unwrap`](sus-option-Option.html#method.unwrap) moves and returns the
+/// * [`unwrap`]($sus::option::Option::unwrap) moves and returns the
 ///   inner value. It will panic with a generic message with empty.
-/// * [`unwrap_or`](sus-option-Option.html#method.unwrap_or) moves and returns
+/// * [`unwrap_or`]($sus::option::Option::unwrap_or) moves and returns
 ///   the inner value. It will returns the provided default value instead when
 ///   empty.
-/// * [`unwrap_or_default`](sus-option-Option.html#method.unwrap_or_default)
+/// * [`unwrap_or_default`]($sus::option::Option::unwrap_or_default)
 ///   moves and returns the inner value. It will return the default value of
-///   the type `T` (which must satisfy [`Default`](sus-construct-Default.html))
+///   the type `T` (which must satisfy [`Default`]($sus::construct::Default))
 ///   when empty.
-/// * [`unwrap_or_else`](sus-option-Option.html#method.unwrap_or_else) moves
+/// * [`unwrap_or_else`]($sus::option::Option::unwrap_or_else) moves
 ///   and returns the inner value. It will return the result of evaluating
 ///   the provided function when empty.
 ///
@@ -249,120 +249,122 @@ namespace sus {
 /// it into a new Option with a new value. This ensures that the value inside an
 /// Option is moved while transforming it.
 ///
-/// However, if [`Option`](sus-option-Option.html) is
-/// [`Copy`](sus-mem-Copy.html), then the majority of methods offer an
+/// However, if [`Option`]($sus::option::Option) is
+/// [`Copy`]($sus::mem::Copy), then the majority of methods offer an
 /// overload to be called as an lvalue, in which case the
-/// [`Option`](sus-option-Option.html) will copy
+/// [`Option`]($sus::option::Option) will copy
 /// itself, and its contained value, and perform the intended method on the copy
 /// instead. This can have performance implications!
 ///
 /// The unwrapping methods are excluded from this, and are only available on an
-/// rvalue [`Option`](sus-option-Option.html) to avoid copying just to access
+/// rvalue [`Option`]($sus::option::Option) to avoid copying just to access
 /// the inner value. To do that, access the inner value as a reference through
-/// [`as_value`](sus-option-Option.html#method.as_value) and
-/// [`as_value_mut`](sus-option-Option.html#method.as_value_mut) or through
-/// [`operator*`](sus-option-Option.html#method.operator*) and
-/// [`operator->`](sus-option-Option.html#method.operator->).
+/// [`as_value`]($sus::option::Option::as_value) and
+/// [`as_value_mut`]($sus::option::Option::as_value_mut) or through
+/// [`operator*`]($sus::option::Option::operator*) and
+/// [`operator->`]($sus::option::Option::operator->).
 ///
 /// # Transforming contained values
-/// These methods transform [`Option`](sus-option-Option.html) to
-/// [`Result`](sus-result-Result.html):
+/// These methods transform [`Option`]($sus::option::Option) to
+/// [`Result`]($sus::result::Result):
 ///
-/// * [`ok_or`](sus-option-Option.html#method.ok_or) transforms `Some(v)`
+/// * [`ok_or`]($sus::option::Option::ok_or) transforms `Some(v)`
 ///   to `Ok(v)`, and `None` to `Err(err)` using the provided default err value.
-/// * [`ok_or_else`](sus-option-Option.html#method.ok_or_else) transforms
+/// * [`ok_or_else`]($sus::option::Option::ok_or_else) transforms
 ///   `Some(v)` to `Ok(v)`, and `None` to a value of `Err` using the
 ///   provided function.
-/// * [`transpose`](sus-option-Option.html#method.transpose) transposes an
-///   [`Option`](sus-option-Option.html) of a [`Result`](sus-result-Result.html)
-///   into a [`Result`](sus-result-Result.html) of an
-///   [`Option`](sus-option-Option.html).
+/// * [`transpose`]($sus::option::Option::transpose) transposes an
+///   [`Option`]($sus::option::Option) of a [`Result`]($sus::result::Result)
+///   into a [`Result`]($sus::result::Result) of an
+///   [`Option`]($sus::option::Option).
 ///
 /// These methods transform an option holding a value:
 ///
-/// * [`filter`](sus-option-Option.html#method.filter) calls the provided
+/// * [`filter`]($sus::option::Option::filter) calls the provided
 ///   predicate function on the contained value `t` if the
-///   [`Option`](sus-option-Option.html) is `Some(t)`, and returns `Some(t)`
+///   [`Option`]($sus::option::Option) is `Some(t)`, and returns `Some(t)`
 ///   if the function returns `true`; otherwise, returns `None`.
-/// * [`flatten`](sus-option-Option.html#method.flatten) removes one level
+/// * [`flatten`]($sus::option::Option::flatten) removes one level
 ///   of nesting from an `Option<Option<T>>`.
-/// * [`map`](sus-option-Option.html#method.map) transforms
-///   [`Option<T>`](sus-option-Option.html) to
-///   [`Option<U>`](sus-option-Option.html) by applying the provided
+/// * [`map`]($sus::option::Option::map) transforms
+///   [`Option<T>`]($sus::option::Option) to
+///   [`Option<U>`]($sus::option::Option) by applying the provided
 ///   function to the contained value of `Some` and leaving `None` values
 ///   unchanged.
 ///
-/// These methods transform [`Option<T>`](sus-option-Option.html) to a value
+/// These methods transform [`Option<T>`]($sus::option::Option) to a value
 /// of a possibly different type `U`:
 ///
-/// * [`map_or`](sus-option-Option.html#method.map_or) applies the provided
+/// * [`map_or`]($sus::option::Option::map_or) applies the provided
 ///   function to the contained value of `Some`, or returns the provided
 ///   default value if the
-///   [`Option`](sus-option-Option.html) is `None`.
-/// * [`map_or_else`](sus-option-Option.html#method.map_or_else) applies the
+///   [`Option`]($sus::option::Option) is `None`.
+/// * [`map_or_else`]($sus::option::Option::map_or_else) applies the
 ///   provided function to the contained value of `Some`, or returns the result
 ///   of evaluating the provided fallback function if the
-///   [`Option`](sus-option-Option.html) is `None`.
+///   [`Option`]($sus::option::Option) is `None`.
 ///
 /// These methods combine the Some variants of two Option values:
 ///
-/// * [`zip`](sus-option-Option.html#method.zip) returns `Some(Tuple<S, O>(s, o)))` if the
-///   [`Option`](sus-option-Option.html) is `Some(s)`
-///   and the method is called with an [`Option`](sus-option-Option.html) value of `Some(o)`; otherwise,
-///   returns `None`
-/// * TODO: [`zip_with`](sus-option-Option.html#method.zip_with) calls the provided function `f` and returns
-///   `Some(f(s, o))` if the [`Option`](sus-option-Option.html) is Some(s)
-///   and the method is called with an [`Option`](sus-option-Option.html)
+/// * [`zip`]($sus::option::Option::zip) returns `Some(Tuple<S, O>(s, o)))` if the
+///   [`Option`]($sus::option::Option) is `Some(s)`
+///   and the method is called with an [`Option`]($sus::option::Option) value
+///   of `Some(o)`; otherwise, returns `None`
+/// * TODO: [`zip_with`](https://github.com/chromium/subspace/issues/341) calls
+///   the provided
+///   function `f` and returns `Some(f(s, o))` if the
+///   [`Option`]($sus::option::Option) is `Some(s)`
+///   and the method is called with an [`Option`]($sus::option::Option)
 ///   value of `Some(o)`; otherwise, returns `None`.
 ///
 /// # Boolean operators
-/// These methods treat the [`Option`](sus-option-Option.html) as a boolean value,
+/// These methods treat the [`Option`]($sus::option::Option) as a boolean value,
 /// where `Some` acts like `true` and `None` acts like `false`. There are two
 /// categories of these methods: ones that take an
-/// [`Option`](sus-option-Option.html) as input, and ones
+/// [`Option`]($sus::option::Option) as input, and ones
 /// that take a function as input (to be lazily evaluated).
 ///
-/// The [`and_that`](sus-option-Option.html#method.and_that),
-/// [`or_that`](sus-option-Option.html#method.or_that),
-/// and [`xor_that`](sus-option-Option.html#method.xor_that) methods take
-/// another [`Option`](sus-option-Option.html) as input, and produce an
-/// [`Option`](sus-option-Option.html) as output.
-/// Only the [`and_that`](sus-option-Option.html#method.and_that)
-/// method can produce an [`Option<U>`](sus-option-Option.html) value having a different inner type `U`
-/// than [`Option<T>`](sus-option-Option.html).
+/// The [`and_that`]($sus::option::Option::and_that),
+/// [`or_that`]($sus::option::Option::or_that),
+/// and [`xor_that`]($sus::option::Option::xor_that) methods take
+/// another [`Option`]($sus::option::Option) as input, and produce an
+/// [`Option`]($sus::option::Option) as output.
+/// Only the [`and_that`]($sus::option::Option::and_that)
+/// method can produce an [`Option<U>`]($sus::option::Option) value having a 
+/// different inner type `U` than [`Option<T>`]($sus::option::Option).
 ///
 /// | method                                               | self    | input     | output  |
 /// | ---------------------------------------------------- | ------- | --------- | ------- |
-/// | [`and_that`](sus-option-Option.html#method.and_that) | None    | (ignored) | None    |
-/// | [`and_that`](sus-option-Option.html#method.and_that) | Some(x) | None      | None    |
-/// | [`and_that`](sus-option-Option.html#method.and_that) | Some(x) | Some(y)   | Some(y) |
-/// | [`or_that`](sus-option-Option.html#method.or_that)   | None    | None      | None    |
-/// | [`or_that`](sus-option-Option.html#method.or_that)   | None    | Some(y)   | Some(y) |
-/// | [`or_that`](sus-option-Option.html#method.or_that)   | Some(x) | (ignored) | Some(x) |
-/// | [`xor_that`](sus-option-Option.html#method.xor_that) | None    | None      | None    |
-/// | [`xor_that`](sus-option-Option.html#method.xor_that) | None    | Some(y)   | Some(y) |
-/// | [`xor_that`](sus-option-Option.html#method.xor_that) | Some(x) | None      | Some(x) |
-/// | [`xor_that`](sus-option-Option.html#method.xor_that) | Some(x) | Some(y)   | None    |
+/// | [`and_that`]($sus::option::Option::and_that) | None    | (ignored) | None    |
+/// | [`and_that`]($sus::option::Option::and_that) | Some(x) | None      | None    |
+/// | [`and_that`]($sus::option::Option::and_that) | Some(x) | Some(y)   | Some(y) |
+/// | [`or_that`]($sus::option::Option::or_that)   | None    | None      | None    |
+/// | [`or_that`]($sus::option::Option::or_that)   | None    | Some(y)   | Some(y) |
+/// | [`or_that`]($sus::option::Option::or_that)   | Some(x) | (ignored) | Some(x) |
+/// | [`xor_that`]($sus::option::Option::xor_that) | None    | None      | None    |
+/// | [`xor_that`]($sus::option::Option::xor_that) | None    | Some(y)   | Some(y) |
+/// | [`xor_that`]($sus::option::Option::xor_that) | Some(x) | None      | Some(x) |
+/// | [`xor_that`]($sus::option::Option::xor_that) | Some(x) | Some(y)   | None    |
 ///
-/// The [`and_then`](sus-option-Option.html#method.and_then) and
-/// [`or_else`](sus-option-Option.html#method.or_else) methods take a function
+/// The [`and_then`]($sus::option::Option::and_then) and
+/// [`or_else`]($sus::option::Option::or_else) methods take a function
 /// as input, and only evaluate the function when they need to produce a new
-/// value. Only the [`and_then`](sus-option-Option.html#method.and_then) method
-/// can produce an [`Option<U>`](sus-option-Option.html) value having a
-/// different inner type `U` than [`Option<T>`](sus-option-Option.html).
+/// value. Only the [`and_then`]($sus::option::Option::and_then) method
+/// can produce an [`Option<U>`]($sus::option::Option) value having a
+/// different inner type `U` than [`Option<T>`]($sus::option::Option).
 ///
 /// | method                                               | self    | function input | function result | output  |
 /// | ---------------------------------------------------- | ------- | -------------- | --------------- | ------- |
-/// | [`and_then`](sus-option-Option.html#method.and_then) | None	   | (not provided) |	(not evaluated) | None    |
-/// | [`and_then`](sus-option-Option.html#method.and_then) | Some(x) | x              | None            | None    |
-/// | [`and_then`](sus-option-Option.html#method.and_then) | Some(x) | x              | Some(y)         | Some(y) |
-/// | [`or_else`](sus-option-Option.html#method.or_else)   | None    | (not provided) | None            | None    |
-/// | [`or_else`](sus-option-Option.html#method.or_else)   | None    | (not provided) | Some(y)         | Some(y) |
-/// | [`or_else`](sus-option-Option.html#method.or_else)   | Some(x) | (not provided) | (not evaluated) | Some(x) |
+/// | [`and_then`]($sus::option::Option::and_then) | None	   | (not provided) |	(not evaluated) | None    |
+/// | [`and_then`]($sus::option::Option::and_then) | Some(x) | x              | None            | None    |
+/// | [`and_then`]($sus::option::Option::and_then) | Some(x) | x              | Some(y)         | Some(y) |
+/// | [`or_else`]($sus::option::Option::or_else)   | None    | (not provided) | None            | None    |
+/// | [`or_else`]($sus::option::Option::or_else)   | None    | (not provided) | Some(y)         | Some(y) |
+/// | [`or_else`]($sus::option::Option::or_else)   | Some(x) | (not provided) | (not evaluated) | Some(x) |
 ///
 /// This is an example of using methods like
-/// [`and_then`](sus-option-Option.html#method.and_then) and
-/// [`or_that`](sus-option-Option.html#method.or_that) in a pipeline of
+/// [`and_then`]($sus::option::Option::and_then) and
+/// [`or_that`]($sus::option::Option::or_that) in a pipeline of
 /// method calls. Early stages of the pipeline pass failure values (`None`)
 /// through unchanged, and continue processing on success values (`Some`).
 /// Toward the end, or substitutes an error message if it receives `None`.
@@ -397,11 +399,11 @@ namespace sus {
 /// # Restrictions on returning references
 ///
 /// Methods that return references are only callable on an rvalue
-/// [`Option`](sus-option-Option.html) if the
-/// [`Option`](sus-option-Option.html) is holding a reference. If the
-/// [`Option`](sus-option-Option.html) is holding a non-reference
+/// [`Option`]($sus::option::Option) if the
+/// [`Option`]($sus::option::Option) is holding a reference. If the
+/// [`Option`]($sus::option::Option) is holding a non-reference
 /// type, returning a reference from an rvalue
-/// [`Option`](sus-option-Option.html) would be giving a reference to a
+/// [`Option`]($sus::option::Option) would be giving a reference to a
 /// short-lived object which is a bugprone pattern in C++ leading to
 /// memory-safety bugs.
 namespace option {}
@@ -430,9 +432,9 @@ template <class T, ::sus::iter::Iterator<Option<T>> Iter>
 constexpr Option<T> from_sum_impl(Iter&& it) noexcept;
 }  // namespace __private
 
-/// The [`Option`](sus-option-Option.html) type.
+/// The [`Option`]($sus::option::Option) type.
 ///
-/// See the [namespace level documentation](sus-option.html) for more.
+/// See the [namespace level documentation]($sus::option) for more.
 template <class T>
 class Option final {
   // Note that `const T&` is allowed (so we don't `std::remove_reference_t<T>`)
@@ -448,8 +450,8 @@ class Option final {
  public:
   /// Default-construct an option that is holding no value.
   ///
-  /// This satisfies [`Default`](sus-construct-Default.html) for
-  /// [`Option`](sus-option-Option.html).
+  /// This satisfies [`Default`]($sus::construct::Default) for
+  /// [`Option`]($sus::option::Option).
   /// #[doc.overloads=ctor.none]
   inline constexpr Option() noexcept = default;
 
@@ -457,11 +459,11 @@ class Option final {
   ///
   /// # Const References
   ///
-  /// For [`Option<const T&>`](sus-option-Option.html) it is possible to bind to
+  /// For [`Option<const T&>`]($sus::option::Option) it is possible to bind to
   /// a temporary which would create a memory safety bug. The
   /// `[[clang::lifetimebound]]` attribute is used to prevent this via Clang.
   /// But additionally, the incoming type is required to match with
-  /// [`SafelyConstructibleFromReference`](sus-construct-SafelyConstructibleFromReference.html)
+  /// [`SafelyConstructibleFromReference`]($sus::construct::SafelyConstructibleFromReference)
   /// to prevent conversions that would construct a temporary.
   ///
   /// To force accepting a const reference anyway in cases where a type can
@@ -491,7 +493,7 @@ class Option final {
 
   /// Moves `val` into a new option holding `Some(val)`.
   ///
-  /// Implements [`From<Option<T>, T>`](sus-construct-From.html).
+  /// Implements [`From<Option<T>, T>`]($sus::construct::From).
   ///
   /// #[doc.overloads=from.t]
   template <class U>
@@ -511,33 +513,33 @@ class Option final {
   }
 
   /// Computes the product of an iterator over
-  /// [`Option<T>`](sus-option-Option.html) as long as there is no `None` found.
+  /// [`Option<T>`]($sus::option::Option) as long as there is no `None` found.
   /// If a `None` is found, the function returns `None`.
   ///
   /// Prefer to call `product()` on the iterator rather than calling
   /// `from_product()` directly.
   ///
-  /// Implements [`sus::iter::Product<Option<T>>`](sus-iter-Product.html).
+  /// Implements [`sus::iter::Product<Option<T>>`]($sus::iter::Product).
   ///
   /// The product is computed using the implementation of the inner type `T`
-  /// which also satisfies [`sus::iter::Product<T>`](sus-iter-Product.html).
+  /// which also satisfies [`sus::iter::Product<T>`]($sus::iter::Product).
   template <::sus::iter::Iterator<Option<T>> Iter>
     requires ::sus::iter::Product<T>
   static constexpr Option from_product(Iter&& it) noexcept {
     return __private::from_product_impl<T>(::sus::move(it));
   }
 
-  /// Computes the sum of an iterator over [`Option<T>`](sus-option-Option.html)
+  /// Computes the sum of an iterator over [`Option<T>`]($sus::option::Option)
   /// as long as there is no `None` found. If a `None` is found, the function
   /// returns `None`.
   ///
   /// Prefer to call `sum()` on the iterator rather than calling `from_sum()`
   /// directly.
   ///
-  /// Implements [`sus::iter::Sum<Option<T>>`](sus-iter-Sum.html).
+  /// Implements [`sus::iter::Sum<Option<T>>`]($sus::iter::Sum).
   ///
   /// The sum is computed using the implementation of the inner type `T`
-  /// which also satisfies [`sus::iter::Sum<T>`](sus-iter-Sum.html).
+  /// which also satisfies [`sus::iter::Sum<T>`]($sus::iter::Sum).
   template <::sus::iter::Iterator<Option<T>> Iter>
     requires ::sus::iter::Sum<T>
   static constexpr Option from_sum(Iter&& it) noexcept {
@@ -550,7 +552,7 @@ class Option final {
   ///
   /// If `T` can be trivially destroyed, we don't need to explicitly destroy it,
   /// so we can use the default destructor, which allows
-  /// [`Option<T>`](sus-option-Option.html) to also be trivially destroyed.
+  /// [`Option<T>`]($sus::option::Option) to also be trivially destroyed.
   constexpr ~Option() noexcept
     requires(IsTrivialDtorOrRef<T>)
   = default;
@@ -561,9 +563,9 @@ class Option final {
     if (t_.state() == Some) t_.destroy();
   }
 
-  /// Copy constructor for [`Option<T>`](sus-option-Option.html) which will
-  /// satisfy [`Copy<Option<T>>`](sus-mem-Copy.html) if
-  /// [`Copy<T>`](sus-mem-Copy.html) is satisfied.
+  /// Copy constructor for [`Option<T>`]($sus::option::Option) which will
+  /// satisfy [`Copy<Option<T>>`]($sus::mem::Copy) if
+  /// [`Copy<T>`]($sus::mem::Copy) is satisfied.
   ///
   /// If `T` can be trivially copy-constructed, then `Option<T>` can also be
   /// trivially copy-constructed.
@@ -586,9 +588,9 @@ class Option final {
     requires(!::sus::mem::CopyOrRef<T>)
   = delete;
 
-  /// Move constructor for [`Option<T>`](sus-option-Option.html) which will
-  /// satisfy [`Move<Option<T>>`](sus-mem-Move.html) if
-  /// [`Move<T>`](sus-mem-Move.html) is satisfied.
+  /// Move constructor for [`Option<T>`]($sus::option::Option) which will
+  /// satisfy [`Move<Option<T>>`]($sus::mem::Move) if
+  /// [`Move<T>`]($sus::mem::Move) is satisfied.
   ///
   /// If `T` can be trivially move-constructed, then `Option<T>` can also be
   /// trivially move-constructed. When trivially-moved, the option is copied on
@@ -613,12 +615,12 @@ class Option final {
     requires(!::sus::mem::MoveOrRef<T>)
   = delete;
 
-  /// Copy assignment for [`Option<T>`](sus-option-Option.html) which will
-  /// satisfy [`Copy<Option<T>>`](sus-mem-Copy.html) if
-  /// [`Copy<T>`](sus-mem-Copy.html) is satisfied.
+  /// Copy assignment for [`Option<T>`]($sus::option::Option) which will
+  /// satisfy [`Copy<Option<T>>`]($sus::mem::Copy) if
+  /// [`Copy<T>`]($sus::mem::Copy) is satisfied.
   ///
   /// If `T` can be trivially copy-assigned, then
-  /// [`Option<T>`](sus-option-Option.html) can also be
+  /// [`Option<T>`]($sus::option::Option) can also be
   /// trivially copy-assigned.
   ///
   /// #[doc.overloads=copy]
@@ -642,12 +644,12 @@ class Option final {
     requires(!::sus::mem::CopyOrRef<T>)
   = delete;
 
-  /// Move assignment for [`Option<T>`](sus-option-Option.html) which will
-  /// satisfy [`Move<Option<T>>`](sus-mem-Move.html) if
-  /// [`Move<T>`](sus-mem-Move.html) is satisfied.
+  /// Move assignment for [`Option<T>`]($sus::option::Option) which will
+  /// satisfy [`Move<Option<T>>`]($sus::mem::Move) if
+  /// [`Move<T>`]($sus::mem::Move) is satisfied.
   ///
   /// If `T` can be trivially move-assigned, then
-  /// [`Option<T>`](sus-option-Option.html) can also be trivially move-assigned.
+  /// [`Option<T>`]($sus::option::Option) can also be trivially move-assigned.
   /// When trivially-moved, the option is copied on move, and the moved-from
   /// option is unchanged but should still not be used thereafter without
   /// reinitializing it. Use `take()` instead to move the value out of the
@@ -701,14 +703,14 @@ class Option final {
   /// Returns whether the option currently contains a value.
   ///
   /// If there is a value present, it can be extracted with
-  /// [`unwrap`](sus-option-Option.html#method.unwrap) or
-  /// [`expect`](sus-option-Option.html#method.expect). For lvalues, it can be
+  /// [`unwrap`]($sus::option::Option::unwrap) or
+  /// [`expect`]($sus::option::Option::expect). For lvalues, it can be
   /// accessed as a reference through
-  /// [`as_value`](sus-option-Option.html#method.as_value) and
-  /// [`as_value_mut`](sus-option-Option.html#method.as_value_mut) for explicit
+  /// [`as_value`]($sus::option::Option::as_value) and
+  /// [`as_value_mut`]($sus::option::Option::as_value_mut) for explicit
   /// const/mutable access, or through
-  /// [`operator*`](sus-option-Option.html#method.operator*)
-  /// and [`operator->`](sus-option-Option.html#method.operator->).
+  /// [`operator*`]($sus::option::Option::operator*)
+  /// and [`operator->`]($sus::option::Option::operator->).
   sus_pure constexpr bool is_some() const noexcept {
     return t_.state() == Some;
   }
@@ -760,7 +762,7 @@ class Option final {
   /// returns `default_result`.
   ///
   /// Note that if it is non-trivial to construct a `default_result`, that
-  /// [`unwrap_or_else`](sus-option-Option.html#method.unwrap_or_else) should be
+  /// [`unwrap_or_else`]($sus::option::Option::unwrap_or_else) should be
   /// used instead, as it will only construct the default value if required.
   constexpr T unwrap_or(T default_result) && noexcept {
     if (t_.state() == Some) {
@@ -784,7 +786,7 @@ class Option final {
   /// Otherwise, constructs a default value for the type and returns that.
   ///
   /// The option's contained type `T` must be
-  /// [`Default`](sus-construct-Default.html) in order to be constructed with a
+  /// [`Default`]($sus::construct::Default) in order to be constructed with a
   /// default value.
   constexpr T unwrap_or_default() && noexcept
     requires(!std::is_reference_v<T> && ::sus::construct::Default<T>)
@@ -802,8 +804,8 @@ class Option final {
   ///
   /// It is Undefined Behaviour to call this function when the option's state is
   /// `None`. The caller is responsible for ensuring the option contains a value
-  /// beforehand, and the safer [`unwrap`](sus-option-Option.html#method.unwrap)
-  /// or [`expect`](sus-option-Option.html#method.expect) should almost always
+  /// beforehand, and the safer [`unwrap`]($sus::option::Option::unwrap)
+  /// or [`expect`]($sus::option::Option::expect) should almost always
   /// be preferred. The compiler will typically elide the checks if they program
   /// verified the value appropriately before use in order to not panic.
   constexpr inline T unwrap_unchecked(
@@ -814,8 +816,8 @@ class Option final {
   /// Returns a const reference to the contained value inside the option.
   ///
   /// To extract the value inside an option, use
-  /// [`unwrap`](sus-option-Option.html#method.unwrap) on
-  /// an rvalue, and [`take`](sus-option-Option.html#method.take) to move the
+  /// [`unwrap`]($sus::option::Option::unwrap) on
+  /// an rvalue, and [`take`]($sus::option::Option::take) to move the
   /// contents of an lvalue option to an rvalue.
   ///
   /// # Panics
@@ -842,8 +844,8 @@ class Option final {
   /// Returns a mutable reference to the contained value inside the option.
   ///
   /// To extract the value inside an option, use
-  /// [`unwrap`](sus-option-Option.html#method.unwrap) on
-  /// an rvalue, and [`take`](sus-option-Option.html#method.take) to move the
+  /// [`unwrap`]($sus::option::Option::unwrap) on
+  /// an rvalue, and [`take`]($sus::option::Option::take) to move the
   /// contents of an lvalue option to an rvalue.
   ///
   /// # Panics
@@ -875,8 +877,8 @@ class Option final {
   /// Returns a const reference to the contained value inside the option.
   ///
   /// To extract the value inside an option, use
-  /// [`unwrap_unchecked`](sus-option-Option.html#method.unwrap_unchecked) on
-  /// an rvalue, and [`take`](sus-option-Option.html#method.take) to move the
+  /// [`unwrap_unchecked`]($sus::option::Option::unwrap_unchecked) on
+  /// an rvalue, and [`take`]($sus::option::Option::take) to move the
   /// contents of an lvalue option to an rvalue.
   ///
   /// # Safety
@@ -900,8 +902,8 @@ class Option final {
   /// Returns a mutable reference to the contained value inside the option.
   ///
   /// To extract the value inside an option, use
-  /// [`unwrap_unchecked`](sus-option-Option.html#method.unwrap_unchecked) on
-  /// an rvalue, and [`take`](sus-option-Option.html#method.take) to move the
+  /// [`unwrap_unchecked`]($sus::option::Option::unwrap_unchecked) on
+  /// an rvalue, and [`take`]($sus::option::Option::take) to move the
   /// contents of an lvalue option to an rvalue.
   ///
   /// # Safety
@@ -936,8 +938,8 @@ class Option final {
   /// without unwrapping.
   ///
   /// To extract the value inside an option, use
-  /// [`unwrap`](sus-option-Option.html#method.unwrap) on
-  /// an rvalue, and [`take`](sus-option-Option.html#method.take) to move the
+  /// [`unwrap`]($sus::option::Option::unwrap) on
+  /// an rvalue, and [`take`]($sus::option::Option::take) to move the
   /// contents of an lvalue option to an rvalue.
   ///
   /// # Panics
@@ -954,17 +956,17 @@ class Option final {
   /// Implementation note: This method is added in addition to the Rust option
   /// API because:
   /// * C++ moving is verbose, making
-  ///   [`unwrap`](sus-option-Option.html#method.unwrap) on lvalues loud.
+  ///   [`unwrap`]($sus::option::Option::unwrap) on lvalues loud.
   /// * Unwrapping requires a new lvalue name since C++ doesn't allow name
   ///   reuse, making variable names bad.
-  /// * We also provide [`as_value`](sus-option-Option.html#method.as_value) and
-  ///   [`as_value_mut`](sus-option-Option.html#method.as_value_mut) for
+  /// * We also provide [`as_value`]($sus::option::Option::as_value) and
+  ///   [`as_value_mut`]($sus::option::Option::as_value_mut) for
   ///   explicit const/mutable lvalue access but...
   /// * It's expected in C++ ecosystems, due to
   ///   [`std::optional`](https://en.cppreference.com/w/cpp/utility/optional)
   ///   and other pre-existing collection-of-one things to provide access
-  ///   through [`operator*`](sus-option-Option.html#method.operator*) and
-  ///   [`operator->`](sus-option-Option.html#method.operator->).
+  ///   through [`operator*`]($sus::option::Option::operator*) and
+  ///   [`operator->`]($sus::option::Option::operator->).
   sus_pure constexpr const std::remove_reference_t<T>& operator*()
       const& noexcept {
     ::sus::check(t_.state() == Some);
@@ -988,8 +990,8 @@ class Option final {
   /// without unwrapping.
   ///
   /// To extract the value inside an option, use
-  /// [`unwrap`](sus-option-Option.html#method.unwrap) on
-  /// an rvalue, and [`take`](sus-option-Option.html#method.take) to move the
+  /// [`unwrap`]($sus::option::Option::unwrap) on
+  /// an rvalue, and [`take`]($sus::option::Option::take) to move the
   /// contents of an lvalue option to an rvalue.
   ///
   /// # Panics
@@ -1006,17 +1008,17 @@ class Option final {
   /// Implementation note: This method is added in addition to the Rust Option
   /// API because:
   /// * C++ moving is verbose, making
-  ///   [`unwrap`](sus-option-Option.html#method.unwrap) on lvalues loud.
+  ///   [`unwrap`]($sus::option::Option::unwrap) on lvalues loud.
   /// * Unwrapping requires a new lvalue name since C++ doesn't allow name
   ///   reuse, making variable names bad.
-  /// * We also provide [`as_value`](sus-option-Option.html#method.as_value) and
-  /// [`as_value_mut`](sus-option-Option.html#method.as_value_mut) for explicit
+  /// * We also provide [`as_value`]($sus::option::Option::as_value) and
+  /// [`as_value_mut`]($sus::option::Option::as_value_mut) for explicit
   ///   const/mutable lvalue access but...
   /// * It's expected in C++ ecosystems, due to
   ///   [`std::optional`](https://en.cppreference.com/w/cpp/utility/optional)
   ///   and other pre-existing collection-of-one things to provide access
-  ///   through [`operator*`](sus-option-Option.html#method.operator*) and
-  ///   [`operator->`](sus-option-Option.html#method.operator->).
+  ///   through [`operator*`]($sus::option::Option::operator*) and
+  ///   [`operator->`]($sus::option::Option::operator->).
   sus_pure constexpr const std::remove_reference_t<T>* operator->()
       const& noexcept {
     ::sus::check(t_.state() == Some);
@@ -1041,7 +1043,7 @@ class Option final {
   /// If the option already contains a value, the old value is dropped.
   ///
   /// See also
-  /// [`Option::get_or_insert`](sus-option-Option.html#method.get_or_insert),
+  /// [`Option::get_or_insert`]($sus::option::Option::get_or_insert),
   /// which doesn’t update the value if the option already contains `Some`.
   constexpr T& insert(T value) & noexcept
     requires(sus::mem::MoveOrRef<T>)
@@ -1054,7 +1056,7 @@ class Option final {
   /// stores `value` inside the Option and returns a mutable reference to it.
   ///
   /// If it is non-trivial to construct `T`, the
-  /// [`Option::get_or_insert_with`](sus-option-Option.html#method.get_or_insert_with)
+  /// [`Option::get_or_insert_with`]($sus::option::Option::get_or_insert_with)
   /// method would be preferable, as it only constructs a `T` if needed.
   constexpr T& get_or_insert(T value) & noexcept sus_lifetimebound
     requires(sus::mem::MoveOrRef<T>)
@@ -1070,7 +1072,7 @@ class Option final {
   /// mutable reference to the new value.
   ///
   /// This method differs from
-  /// [`unwrap_or_default`](sus-option-Option.html#method.unwrap_or_default)
+  /// [`unwrap_or_default`]($sus::option::Option::unwrap_or_default)
   /// in that it does not consume the option, and instead it can not be called
   /// on rvalues.
   ///
@@ -1078,7 +1080,7 @@ class Option final {
   /// `Option<T>::get_or_insert_with([] { return T(); })`.
   ///
   /// The option's contained type `T` must satisfy
-  /// [`Default`](sus-construct-Default.html) so it can be constructed with its
+  /// [`Default`]($sus::construct::Default) so it can be constructed with its
   /// default value.
   constexpr T& get_or_insert_default() & noexcept sus_lifetimebound
     requires(::sus::construct::Default<T>)
@@ -1092,7 +1094,7 @@ class Option final {
   /// mutable reference to the new value.
   ///
   /// This method differs from
-  /// [`unwrap_or_else`](sus-option-Option.html#method.unwrap_or_else) in that
+  /// [`unwrap_or_else`]($sus::option::Option::unwrap_or_else) in that
   /// it does not consume the option, and instead it can not be called on
   /// rvalues.
   constexpr T& get_or_insert_with(::sus::fn::FnOnce<T()> auto&& f) & noexcept {
@@ -1120,10 +1122,10 @@ class Option final {
   ///
   /// When called on an rvalue, it consumes the option, passing the value
   /// through the map function, and returning an
-  /// [`Option<R>`](sus-option-Option.html) where `R` is the
+  /// [`Option<R>`]($sus::option::Option) where `R` is the
   /// return type of the map function.
   ///
-  /// Returns an [`Option<R>`](sus-option-Option.html) in state `None`
+  /// Returns an [`Option<R>`]($sus::option::Option) in state `None`
   /// if the current option is in state `None`.
   template <::sus::fn::FnOnce<::sus::fn::NonVoid(T&&)> MapFn, int&...,
             class R = std::invoke_result_t<MapFn&&, T&&>>
@@ -1150,7 +1152,7 @@ class Option final {
   ///
   /// Arguments passed to `map_or` are eagerly evaluated; if you are passing the
   /// result of a function call, it is recommended to use
-  /// [`map_or_else`](sus-option-Option.html#method.map_or_else), which is
+  /// [`map_or_else`]($sus::option::Option::map_or_else), which is
   /// lazily evaluated.
   template <::sus::fn::FnOnce<::sus::fn::NonVoid(T&&)> MapFn, int&...,
             class R = std::invoke_result_t<MapFn&&, T&&>>
@@ -1253,7 +1255,7 @@ class Option final {
   /// result.
   ///
   /// The function `f` receives the option's inner `T` and can return any
-  /// [`Option<U>`](sus-option-Option.html).
+  /// [`Option<U>`]($sus::option::Option).
   ///
   /// Some languages call this operation flatmap.
   template <::sus::fn::FnOnce<::sus::fn::NonVoid(T&&)> AndFn, int&...,
@@ -1333,13 +1335,13 @@ class Option final {
     return ::sus::clone(*this).xor_that(::sus::move(that));
   }
 
-  /// Transforms the [`Option<T>`](sus-option-Option.html) into a
-  /// [`Result<T, E>`](sus-result-Result.html), mapping `Some(v)` to `Ok(v)` and
+  /// Transforms the [`Option<T>`]($sus::option::Option) into a
+  /// [`Result<T, E>`]($sus::result::Result), mapping `Some(v)` to `Ok(v)` and
   /// `None` to `Err(e)`.
   ///
   /// Arguments passed to `ok_or` are eagerly evaluated; if you are passing the
   /// result of a function call, it is recommended to use
-  /// [`ok_or_else`](sus-option-Option.html#method.ok_or_else), which is
+  /// [`ok_or_else`]($sus::option::Option::ok_or_else), which is
   /// lazily evaluated.
   //
   // TODO: No refs in Result: https://github.com/chromium/subspace/issues/133
@@ -1360,8 +1362,8 @@ class Option final {
     return ::sus::clone(*this).ok_or(::sus::move(e));
   }
 
-  /// Transforms the [`Option<T>`](sus-option-Option.html) into a
-  /// [`Result<T, E>`](sus-result-Result.html), mapping `Some(v)` to `Ok(v)` and
+  /// Transforms the [`Option<T>`]($sus::option::Option) into a
+  /// [`Result<T, E>`]($sus::result::Result), mapping `Some(v)` to `Ok(v)` and
   /// `None` to `Err(f())`.
   //
   // TODO: No refs in Result: https://github.com/chromium/subspace/issues/133
@@ -1386,10 +1388,10 @@ class Option final {
     return ::sus::clone(*this).ok_or_else(::sus::move(f));
   }
 
-  /// Transposes an [`Option`](sus-option-Option.html) of a
-  /// [`Result`](sus-result-Result.html) into a
-  /// [`Result`](sus-result-Result.html) of an
-  /// [`Option`](sus-option-Option.html).
+  /// Transposes an [`Option`]($sus::option::Option) of a
+  /// [`Result`]($sus::result::Result) into a
+  /// [`Result`]($sus::result::Result) of an
+  /// [`Option`]($sus::option::Option).
   ///
   /// `None` will be mapped to `Ok(None)`. `Some(Ok(_))` and `Some(Err(_))` will
   /// be mapped to `Ok(Some(_))` and `Err(_)`.
@@ -1453,12 +1455,12 @@ class Option final {
     return ::sus::clone(*this).zip(::sus::move(o));
   }
 
-  /// Unzips an option holding a [`Tuple`](sus-tuple_type-Tuple.html) of two
-  /// values into a [`Tuple`](sus-tuple_type-Tuple.html) of two
-  /// [`Option`](sus-option-Option.html)s.
+  /// Unzips an option holding a [`Tuple`]($sus::tuple_type::Tuple) of two
+  /// values into a [`Tuple`]($sus::tuple_type::Tuple) of two
+  /// [`Option`]($sus::option::Option)s.
   ///
-  /// [`Option<Tuple<i32, u32>>`](sus-option-Option.html) is unzipped to
-  /// [`Tuple<Option<i32>, Option<u32>>`](sus-tuple_type-Tuple.html).
+  /// [`Option<Tuple<i32, u32>>`]($sus::option::Option) is unzipped to
+  /// [`Tuple<Option<i32>, Option<u32>>`]($sus::tuple_type::Tuple).
   ///
   /// If self is `Some`, the result is a tuple with both options holding the
   /// values from self. Otherwise, the result is a tuple of two options set to
@@ -1497,8 +1499,8 @@ class Option final {
     }
   }
 
-  /// Maps an [`Option<T&>`](sus-option-Option.html) to an
-  /// [`Option<T>`](sus-option-Option.html) by copying the referenced `T`.
+  /// Maps an [`Option<T&>`]($sus::option::Option) to an
+  /// [`Option<T>`]($sus::option::Option) by copying the referenced `T`.
   constexpr Option<std::remove_const_t<std::remove_reference_t<T>>> copied()
       const& noexcept
     requires(std::is_reference_v<T> && ::sus::mem::Copy<T>)
@@ -1512,8 +1514,8 @@ class Option final {
     }
   }
 
-  /// Maps an [`Option<T&>`](sus-option-Option.html) to an
-  /// [`Option<T>`](sus-option-Option.html) by cloning the referenced `T`.
+  /// Maps an [`Option<T&>`]($sus::option::Option) to an
+  /// [`Option<T>`]($sus::option::Option) by cloning the referenced `T`.
   constexpr Option<std::remove_const_t<std::remove_reference_t<T>>> cloned()
       const& noexcept
     requires(std::is_reference_v<T> && ::sus::mem::Clone<T>)
@@ -1532,8 +1534,8 @@ class Option final {
     }
   }
 
-  /// Maps an [`Option<Option<T>>`](sus-option-Option.html) to an
-  /// [`Option<T>`](sus-option-Option.html).
+  /// Maps an [`Option<Option<T>>`]($sus::option::Option) to an
+  /// [`Option<T>`]($sus::option::Option).
   constexpr T flatten() && noexcept
     requires(::sus::option::__private::IsOptionType<T>::value)
   {
@@ -1549,8 +1551,8 @@ class Option final {
     return ::sus::clone(*this).flatten();
   }
 
-  /// Returns an [`Option<const T&>`](sus-option-Option.html) from this
-  /// [`Option<T>`](sus-option-Option.html), that either holds `None` or a
+  /// Returns an [`Option<const T&>`]($sus::option::Option) from this
+  /// [`Option<T>`]($sus::option::Option), that either holds `None` or a
   /// reference to the value in this option.
   ///
   /// # Implementation Notes
@@ -1578,8 +1580,8 @@ class Option final {
           t_.take_and_set_none());
   }
 
-  /// Returns an [`Option<T&>`](sus-option-Option.html) from this
-  /// [`Option<T>`](sus-option-Option.html), that either holds `None` or a
+  /// Returns an [`Option<T&>`]($sus::option::Option) from this
+  /// [`Option<T>`]($sus::option::Option), that either holds `None` or a
   /// reference to the value in this option.
   sus_pure constexpr Option<T&> as_mut() & noexcept {
     if (t_.state() == None)
@@ -1643,7 +1645,7 @@ class Option final {
     return ::sus::clone(*this).into_iter();
   }
 
-  /// Satisfies the [`Eq<Option<U>>`](sus-ops-Eq.html) concept.
+  /// Satisfies the [`Eq<Option<U>>`]($sus::ops::Eq) concept.
   ///
   /// The non-template overload allows some/none marker types to convert to
   /// Option for comparison.
@@ -1679,12 +1681,12 @@ class Option final {
 
   /// Compares two options.
   ///
-  /// * Satisfies [`StrongOrd<Option<T>>`](sus-ops-StrongOrd.html) if
-  ///   [`StrongOrd<T>`](sus-ops-StrongOrd.html).
-  /// * Satisfies [`Ord<Option<T>>`](sus-ops-Ord.html) if
-  ///   [`Ord<T>`](sus-ops-Ord.html).
-  /// * Satisfies [`PartialOrd<Option<T>>`](sus-ops-PartialOrd.html) if
-  ///   [`PartialOrd<T>`](sus-ops-PartialOrd.html).
+  /// * Satisfies [`StrongOrd<Option<T>>`]($sus::ops::StrongOrd) if
+  ///   [`StrongOrd<T>`]($sus::ops::StrongOrd).
+  /// * Satisfies [`Ord<Option<T>>`]($sus::ops::Ord) if
+  ///   [`Ord<T>`]($sus::ops::Ord).
+  /// * Satisfies [`PartialOrd<Option<T>>`]($sus::ops::PartialOrd) if
+  ///   [`PartialOrd<T>`]($sus::ops::PartialOrd).
   ///
   /// The non-template overloads allow some/none marker types to convert to
   /// an option for comparison.
@@ -1820,11 +1822,11 @@ class Option final {
   friend constexpr inline auto operator<=>(
       const Option<T>& l, const Option<U>& r) noexcept = delete;
 
-  /// Implements [`From<std::optional>`](sus-construct-From.html).
+  /// Implements [`From<std::optional>`]($sus::construct::From).
   ///
   /// This also allows `sus::into()` to convert with type deduction from
   /// [`std::optional`](https://en.cppreference.com/w/cpp/utility/optional)
-  /// to [`sus::Option`](sus-option-Option.html).
+  /// to [`sus::Option`]($sus::option::Option).
   ///
   /// #[doc.overloads=from.optional]
   constexpr static Option from(
@@ -1846,8 +1848,8 @@ class Option final {
     else
       return Option();
   }
-  /// Implements [`From<std::optional<U>>`](sus-construct-From.html) when `U`
-  /// can be converted to `T`, i.e. [`Into<U, T>`](sus-construct-Into.html).
+  /// Implements [`From<std::optional<U>>`]($sus::construct::From) when `U`
+  /// can be converted to `T`, i.e. [`Into<U, T>`]($sus::construct::Into).
   ///
   /// #[doc.overloads=from.optional.u]
   template <::sus::construct::Into<T> U>
@@ -1983,18 +1985,18 @@ class Option final {
 };
 
 /// Implicit for-ranged loop iteration via
-/// [`Option::iter`](sus-option-Option.html#method.iter).
+/// [`Option::iter`]($sus::option::Option::iter).
 using ::sus::iter::__private::begin;
 /// Implicit for-ranged loop iteration via
-/// [`Option::iter`](sus-option-Option.html#method.iter).
+/// [`Option::iter`]($sus::option::Option::iter).
 using ::sus::iter::__private::end;
 
 /// Used to construct an option with a Some(t) value.
 ///
 /// Calling some() produces a hint to make an option but does not actually
 /// construct option. This is to allow constructing an
-/// [`Option<T>`](sus-option-Option.html) or
-/// [`Option<T&>`](sus-option-Option.html) correctly.
+/// [`Option<T>`]($sus::option::Option) or
+/// [`Option<T&>`]($sus::option::Option) correctly.
 template <class T>
 [[nodiscard]] inline constexpr __private::SomeMarker<T&&> some(
     T&& t sus_lifetimebound) noexcept {
@@ -2012,7 +2014,7 @@ sus_pure_const inline constexpr auto none() noexcept {
 
 }  // namespace sus::option
 
-// Implements [Try](sus-ops-Try.html) for [Option](sus-option-Option.html).
+// Implements [Try](sus-ops-Try.html) for [Option]($sus::option::Option).
 template <class T>
 struct sus::ops::TryImpl<::sus::option::Option<T>> {
   using Output = T;
@@ -2039,8 +2041,8 @@ struct sus::ops::TryImpl<::sus::option::Option<T>> {
   }
 
   // Implements [`TryDefault`](sus-ops-TryDefault.html) for
-  // [`Option<T>`](sus-option-Option.html) if `T` satisfies
-  // [`Default`](sus-construct-Default.html).
+  // [`Option<T>`]($sus::option::Option) if `T` satisfies
+  // [`Default`]($sus::construct::Default).
   constexpr static ::sus::option::Option<T> from_default() noexcept
     requires(sus::construct::Default<T>)
   {

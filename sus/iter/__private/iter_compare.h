@@ -21,9 +21,9 @@ namespace sus::iter::__private {
 
 /// Compares two iterators element-wise using the given function.
 ///
-/// Isolates the logic shared by [`cmp_by`](sus-iter-IteratorBase.html#method.cmp_by),
-/// [`partial_cmp_by`](sus-iter-IteratorBase.html#method.partial_cmp_by), and
-/// [`weak_cmp_by`](sus-iter-IteratorBase.html#method.weak_cmp_by).
+/// Isolates the logic shared by [`cmp_by`]($sus::iter::IteratorBase::cmp_by),
+/// [`partial_cmp_by`]($sus::iter::IteratorBase::partial_cmp_by), and
+/// [`weak_cmp_by`]($sus::iter::IteratorBase::weak_cmp_by).
 template <class Ordering, class ItemA, class ItemB>
 constexpr inline Ordering iter_compare(
     ::sus::iter::Iterator<ItemA> auto&& a,

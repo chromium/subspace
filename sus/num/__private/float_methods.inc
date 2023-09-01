@@ -36,23 +36,23 @@ _primitive primitive_value = _primitive{0.0};
 static const _primitive MIN_PRIMITIVE;
 /// Largest finite primitive value.
 static const _primitive MAX_PRIMITIVE;
-/// Smallest finite [`@doc.self`](sus-num-@doc.self.html).
+/// Smallest finite [`@doc.self`]($sus::num::@doc.self).
 static const _self MIN;
-/// Largest finite [`@doc.self`](sus-num-@doc.self.html).
+/// Largest finite [`@doc.self`]($sus::num::@doc.self).
 static const _self MAX;
 /// The radix or base of the internal representation of
-/// [`@doc.self`](sus-num-@doc.self.html).
+/// [`@doc.self`]($sus::num::@doc.self).
 static const u32 RADIX;
 /// Approximate number of significant digits in base 2.
 static const u32 MANTISSA_DIGITS;
 /// Approximate number of significant digits in base 10.
 static const u32 DIGITS;
-/// Machine epsilon value for [`@doc.self`](sus-num-@doc.self.html).
+/// Machine epsilon value for [`@doc.self`]($sus::num::@doc.self).
 ///
 /// This is the difference between 1.0 and the next larger representable
 /// number.
 static const _self EPSILON;
-/// Smallest positive normal [`@doc.self`](sus-num-@doc.self.html) value.
+/// Smallest positive normal [`@doc.self`]($sus::num::@doc.self) value.
 static const _self MIN_POSITIVE;
 /// One greater than the minimum possible normal power of 2 exponent.
 static const i32 MIN_EXP;
@@ -123,7 +123,7 @@ struct consts {
 
 /// Default constructor, which sets the value to 0.
 ///
-/// Satisfies the [`Default`](sus-construct-Default.html) concept.
+/// Satisfies the [`Default`]($sus::construct::Default) concept.
 ///
 /// #[doc.overloads=ctor.default]
 constexpr inline _self() noexcept = default;
@@ -180,14 +180,14 @@ constexpr inline _self& operator=(P v) noexcept {
   return *this;
 }
 
-/// Constructs a [`@doc.self `](sus-num-@doc.self.html) from an
-/// [`Iterator`](sus-iter-Iterator.html) by computing the sum of all elements in
+/// Constructs a [`@doc.self `]($sus::num::@doc.self) from an
+/// [`Iterator`]($sus::iter::Iterator) by computing the sum of all elements in
 /// the iterator.
 ///
 /// This method should rarely be called directly, as it is used to satisfy the
-/// [`Sum`](sus-iter-Sum.html) concept so that
-/// [`Iterator::sum()`](sus-iter-IteratorBase.html#method.sum) can be called for
-/// iterators over [`@doc.self `](sus-num-@doc.self.html).
+/// [`Sum`]($sus::iter::Sum) concept so that
+/// [`Iterator::sum()`]($sus::iter::IteratorBase#sum) can be called for
+/// iterators over [`@doc.self `]($sus::num::@doc.self).
 static constexpr _self from_sum(::sus::iter::Iterator<_self> auto&& it) noexcept
   requires(::sus::mem::IsMoveRef<decltype(it)>)
 {
@@ -196,13 +196,13 @@ static constexpr _self from_sum(::sus::iter::Iterator<_self> auto&& it) noexcept
   return p;
 }
 
-/// Constructs a [`@doc.self `](sus-num-@doc.self.html) from an `Iterator` by
+/// Constructs a [`@doc.self `]($sus::num::@doc.self) from an `Iterator` by
 /// computing the product of all elements in the iterator.
 ///
 /// This method should rarely be called directly, as it is used to satisfy the
-/// [`Product`](sus-iter-Product.html) concept so that
-/// [`Iterator::product()`](sus-iter-IteratorBase.html#method.product) can be
-/// called for iterators over [`@doc.self `](sus-num-@doc.self.html).
+/// [`Product`]($sus::iter::Product) concept so that
+/// [`Iterator::product()`]($sus::iter::IteratorBase#product) can be
+/// called for iterators over [`@doc.self `]($sus::num::@doc.self).
 static constexpr _self from_product(
     ::sus::iter::Iterator<_self> auto&& it) noexcept
   requires(::sus::mem::IsMoveRef<decltype(it)>)
@@ -215,7 +215,7 @@ static constexpr _self from_product(
 /// Conversion from the numeric type to a C++ primitive type.
 ///
 /// This converts to floating point primitives which are at least as large as
-/// the [`@doc.self`](sus-num-@doc.self.html).
+/// the [`@doc.self`]($sus::num::@doc.self).
 ///
 /// ```
 /// auto d = double{3_f64};  // Compiles.
@@ -228,7 +228,7 @@ static constexpr _self from_product(
 /// ```
 ///
 /// Potentially-lossy type conversions can be forced through the
-/// [`Transmogrify`](sus-construct-Transmogrify.html) concept, such as
+/// [`Transmogrify`]($sus::construct::Transmogrify) concept, such as
 /// `sus::mog<float>(3_f64)` or `sus::mog<f32>(3_f64)`.
 template <PrimitiveFloat U>
   requires(::sus::mem::size_of<U>() >= ::sus::mem::size_of<_primitive>())
@@ -292,8 +292,8 @@ operator<=>(_self l, PrimitiveFloat auto r) noexcept {
 /// positive quiet NaN.
 ///
 /// The ordering established by this function does not always agree with the
-/// [`PartialOrd`](sus-ops-PartialOrd.html) and [`Eq`](sus-ops-Eq.html)
-/// implementations of [`@doc.self`](sus-num-@doc.self.html). For example, they
+/// [`PartialOrd`]($sus::ops::PartialOrd) and [`Eq`]($sus::ops::Eq)
+/// implementations of [`@doc.self`]($sus::num::@doc.self). For example, they
 /// consider negative and positive zero equal, while
 /// [`total_cmp`](#method.total_cmp) doesn't.
 ///
@@ -305,19 +305,19 @@ operator<=>(_self l, PrimitiveFloat auto r) noexcept {
 ///
 /// This method returns
 /// [`std::weak_ordering`](https://en.cppreference.com/w/cpp/utility/compare/weak_ordering)
-/// which can be used in situations that require [`Ord`](sus-ops-Ord.html)
+/// which can be used in situations that require [`Ord`]($sus::ops::Ord)
 /// because different NaNs will be ordered equivalently.
 sus_pure constexpr std::weak_ordering total_cmp(_self other) const& noexcept {
   return __private::float_strong_ordering(primitive_value,
                                           other.primitive_value);
 }
 
-/// Satisfies the [`Neg<@doc.self>`](sus-num-Neg.html) concept.
+/// Satisfies the [`Neg<@doc.self>`]($sus::num::Neg) concept.
 sus_pure constexpr inline _self operator-() const {
   return _self(-primitive_value);
 }
 
-/// Satisfies the [`Add<@doc.self>`](sus-num-Add.html) concept.
+/// Satisfies the [`Add<@doc.self>`]($sus::num::Add) concept.
 /// #[doc.overloads=float.+]
 [[nodiscard]] sus_pure friend constexpr inline _self operator+(
     _self l, _self r) noexcept {
@@ -345,7 +345,7 @@ friend constexpr inline _self operator+(_self l, U r) noexcept = delete;
 template <PrimitiveFloat U>
   requires(!std::convertible_to<U, _self>)
 friend constexpr inline _self operator+(U l, _self r) noexcept = delete;
-/// Satisfies the [`Sub<@doc.self>`](sus-num-Sub.html) concept.
+/// Satisfies the [`Sub<@doc.self>`]($sus::num::Sub) concept.
 /// #[doc.overloads=float.-]
 [[nodiscard]] sus_pure friend constexpr inline _self operator-(
     _self l, _self r) noexcept {
@@ -373,7 +373,7 @@ friend constexpr inline _self operator-(_self l, U r) noexcept = delete;
 template <PrimitiveFloat U>
   requires(!std::convertible_to<U, _self>)
 friend constexpr inline _self operator-(U l, _self r) noexcept = delete;
-/// Satisfies the [`Mul<@doc.self>`](sus-num-Mul.html) concept.
+/// Satisfies the [`Mul<@doc.self>`]($sus::num::Mul) concept.
 /// #[doc.overloads=float.*]
 [[nodiscard]] sus_pure friend constexpr inline _self operator*(
     _self l, _self r) noexcept {
@@ -401,7 +401,7 @@ friend constexpr inline _self operator*(_self l, U r) noexcept = delete;
 template <PrimitiveFloat U>
   requires(!std::convertible_to<U, _self>)
 friend constexpr inline _self operator*(U l, _self r) noexcept = delete;
-/// Satisfies the [`Div<@doc.self>`](sus-num-Div.html) concept.
+/// Satisfies the [`Div<@doc.self>`]($sus::num::Div) concept.
 /// #[doc.overloads=float./]
 [[nodiscard]] sus_pure friend constexpr inline _self operator/(
     _self l, _self r) noexcept {
@@ -429,7 +429,7 @@ friend constexpr inline _self operator/(_self l, U r) noexcept = delete;
 template <PrimitiveFloat U>
   requires(!std::convertible_to<U, _self>)
 friend constexpr inline _self operator/(U l, _self r) noexcept = delete;
-/// Satisfies the [`Rem<@doc.self>`](sus-num-Rem.html) concept.
+/// Satisfies the [`Rem<@doc.self>`]($sus::num::Rem) concept.
 ///
 /// The remainder from the division of two floats.
 ///
@@ -466,23 +466,23 @@ template <PrimitiveFloat U>
   requires(!std::convertible_to<U, _self>)
 friend constexpr inline _self operator%(U l, _self r) noexcept = delete;
 
-/// Satisfies the [`AddAssign<@doc.self>`](sus-num-AddAssign.html) concept.
+/// Satisfies the [`AddAssign<@doc.self>`]($sus::num::AddAssign) concept.
 constexpr inline void operator+=(_self r) & noexcept {
   primitive_value += r.primitive_value;
 }
-/// Satisfies the [`SubAssign<@doc.self>`](sus-num-SubAssign.html) concept.
+/// Satisfies the [`SubAssign<@doc.self>`]($sus::num::SubAssign) concept.
 constexpr inline void operator-=(_self r) & noexcept {
   primitive_value -= r.primitive_value;
 }
-/// Satisfies the [`MulAssign<@doc.self>`](sus-num-MulAssign.html) concept.
+/// Satisfies the [`MulAssign<@doc.self>`]($sus::num::MulAssign) concept.
 constexpr inline void operator*=(_self r) & noexcept {
   primitive_value *= r.primitive_value;
 }
-/// Satisfies the [`DivAssign<@doc.self>`](sus-num-DivAssign.html) concept.
+/// Satisfies the [`DivAssign<@doc.self>`]($sus::num::DivAssign) concept.
 constexpr inline void operator/=(_self r) & noexcept {
   primitive_value /= r.primitive_value;
 }
-/// Satisfies the [`RemAssign<@doc.self>`](sus-num-RemAssign.html) concept.
+/// Satisfies the [`RemAssign<@doc.self>`]($sus::num::RemAssign) concept.
 ///
 /// Assigns the remainder from the division of two floats.
 ///

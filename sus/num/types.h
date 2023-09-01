@@ -29,20 +29,20 @@ namespace sus {
 /// # Conversions
 ///
 /// To convert to and from integer values, use
-/// [`sus::into`](sus-construct-fn.into.html) when
-/// [`Into<From, To>`](sus-construct-Into.html) is satisfied between the two
+/// [`sus::into`]($sus::construct::into) when
+/// [`Into<From, To>`]($sus::construct::Into) is satisfied between the two
 /// types for lossless conversion. Otherwise use
-/// [`sus::try_into`](sus-construct-fn.try_into.html) when
-/// [`TryInto<From, To>`](sus-construct-TryInto.html) is satisfied to convert
+/// [`sus::try_into`]($sus::construct::try_into) when
+/// [`TryInto<From, To>`]($sus::construct::TryInto) is satisfied to convert
 /// and handle cases where the value can not be represented in the target type.
 ///
 /// To convert between floating point types, use
-/// [`sus::into(x)`](sus-construct-fn.into.html) to losslessly promote `x` to a
-/// larger type ([`f32`](sus-num-f32.html) to [`f64`](sus-num-f32.html)) or
+/// [`sus::into(x)`]($sus::construct::into) to losslessly promote `x` to a
+/// larger type ([`f32`]($sus::num::f32) to [`f64`]($sus::num::f64)) or
 /// `sus::try_into(x)` to convert `x` to a smaller type
-/// ([`f64`](sus-num-f32.html) to [`f32`](sus-num-f32.html)).
+/// ([`f64`]($sus::num::f64) to [`f32`]($sus::num::f32)).
 ///
-/// Use [`sus::mog<T>()`](sus-construct-fn.mog.html) to do a lossy type coercion
+/// Use [`sus::mog<T>()`]($sus::construct::mog) to do a lossy type coercion
 /// (like `static_cast<T>()`) between integer and floating point types, or C++
 /// primitive integers, floating point, or enums. When converting to a larger
 /// signed integer type, the value will be sign-extended.

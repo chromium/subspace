@@ -38,17 +38,17 @@ concept Ordering = (std::same_as<T, std::strong_ordering> ||
 /// Objects that sort the same for ordering must also compare as equal.
 ///
 /// # StrongOrd and Eq interations
-/// While [`StrongOrd`](sus-ops-StrongOrd.html) can report equality, it does not
-/// imply that the type satisfies [`Eq`](sus-ops-Eq.html), and a separate
+/// While [`StrongOrd`]($sus::ops::StrongOrd) can report equality, it does not
+/// imply that the type satisfies [`Eq`]($sus::ops::Eq), and a separate
 /// `operator==` is required for that concept. For correctness, types that
 /// satisfy
-/// [`StrongOrd`](sus-ops-StrongOrd.html) and [`Eq`](sus-ops-Eq.html) must have
+/// [`StrongOrd`]($sus::ops::StrongOrd) and [`Eq`]($sus::ops::Eq) must have
 /// object which compare as equivalent for ording also compare as equal with
 /// `operator==`.
 ///
 /// Generic code that requires a type to be
-/// [`StrongOrd`](sus-ops-StrongOrd.html) should take care to use `operator<=>`
-/// and not `operator==` unless also requiring [`Eq`](sus-ops-Eq.html).
+/// [`StrongOrd`]($sus::ops::StrongOrd) should take care to use `operator<=>`
+/// and not `operator==` unless also requiring [`Eq`]($sus::ops::Eq).
 template <class Lhs, class Rhs = Lhs>
 concept StrongOrd = requires(const std::remove_reference_t<Lhs>& lhs,
                              const std::remove_reference_t<Rhs>& rhs) {
@@ -58,21 +58,21 @@ concept StrongOrd = requires(const std::remove_reference_t<Lhs>& lhs,
 /// Concept for types that form a total ordering (aka
 /// [`std::weak_ordering`](https://en.cppreference.com/w/cpp/utility/compare/weak_ordering)).
 ///
-/// Types that satisfy [`Ord`](sus-ops-Ord.html) can be sorted or compared and
+/// Types that satisfy [`Ord`]($sus::ops::Ord) can be sorted or compared and
 /// always return a consistent result as all possible values are comparable.
 /// Objects that compare as equivalent for ordering may still be different
 /// internally and compare as different through `operator==`. If unique identity
-/// is required, use [`StrongOrd`](sus-ops-StrongOrd.html). Otherwise, typically
-/// use [`Ord`](sus-ops-Ord.html) for constraining types that will be ordered.
+/// is required, use [`StrongOrd`]($sus::ops::StrongOrd). Otherwise, typically
+/// use [`Ord`]($sus::ops::Ord) for constraining types that will be ordered.
 ///
 /// # How can I implement Ord?
-/// [`Ord`](sus-ops-Ord.html) requires that the type has `operator<=>` which
+/// [`Ord`]($sus::ops::Ord) requires that the type has `operator<=>` which
 /// returns
 /// [`std::weak_ordering`](https://en.cppreference.com/w/cpp/utility/compare/weak_ordering)
 /// (or
 /// [`std::strong_ordering`](https://en.cppreference.com/w/cpp/utility/compare/strong_ordering)).
-/// It will implicitly also be [`Ord`](sus-ops-Ord.html) and
-/// [`PartialOrd`](sus-ops-PartialOrd.html) as a result.
+/// It will implicitly also be [`Ord`]($sus::ops::Ord) and
+/// [`PartialOrd`]($sus::ops::PartialOrd) as a result.
 ///
 /// # Lexicographical comparison
 /// Lexicographical comparison is an operation with the following properties:
@@ -87,23 +87,23 @@ concept StrongOrd = requires(const std::remove_reference_t<Lhs>& lhs,
 /// * Two empty sequences are lexicographically equal.
 ///
 /// # Ord and Eq interations
-/// While [`Ord`](sus-ops-Ord.html) can report equality, it does not imply that
-/// the type satisfies [`Eq`](sus-ops-Eq.html), and a separate `operator==` is
+/// While [`Ord`]($sus::ops::Ord) can report equality, it does not imply that
+/// the type satisfies [`Eq`]($sus::ops::Eq), and a separate `operator==` is
 /// required for that concept. Unlike
-/// [`StrongOrd`](sus-ops-StrongOrd.html), it is not required that objects which
+/// [`StrongOrd`]($sus::ops::StrongOrd), it is not required that objects which
 /// are ordered as equivalent also compare as equal with `operator==`.
 ///
-/// Generic code that requires a type to be [`Ord`](sus-ops-Ord.html) should
+/// Generic code that requires a type to be [`Ord`]($sus::ops::Ord) should
 /// take care to use `operator<=>` and not `operator==` unless also requiring
-/// [`Eq`](sus-ops-Eq.html), in which case consider requiring
-/// [`StrongOrd`](sus-ops-StrongOrd.html) in place of both
-/// [`Ord`](sus-ops-Ord.html) and [`Eq`](sus-ops-Eq.html).
+/// [`Eq`]($sus::ops::Eq), in which case consider requiring
+/// [`StrongOrd`]($sus::ops::StrongOrd) in place of both
+/// [`Ord`]($sus::ops::Ord) and [`Eq`]($sus::ops::Eq).
 ///
 /// # Determining Ord strictly
-/// [`Ord`](sus-ops-Ord.html) will be also satisfied if the types satisfy
-/// [`StrongOrd`](sus-ops-StrongOrd.html). To determine if a
-/// [`Ord`](sus-ops-Ord.html) is the strongest type of ordering between the
-/// types, use [`ExclusiveOrd`](sus-ops-ExclusiveOrd.html).
+/// [`Ord`]($sus::ops::Ord) will be also satisfied if the types satisfy
+/// [`StrongOrd`]($sus::ops::StrongOrd). To determine if a
+/// [`Ord`]($sus::ops::Ord) is the strongest type of ordering between the
+/// types, use [`ExclusiveOrd`]($sus::ops::ExclusiveOrd).
 template <class Lhs, class Rhs = Lhs>
 concept Ord =
     StrongOrd<Lhs, Rhs> || requires(const std::remove_reference_t<Lhs>& lhs,
@@ -115,10 +115,10 @@ concept Ord =
 /// [`std::partial_ordering`](https://en.cppreference.com/w/cpp/utility/compare/partial_ordering)).
 ///
 /// # Determining PartialOrd strictly
-/// [`PartialOrd`](sus-ops-PartialOrd.html) will be satisfied if the types
-/// satisfy [`StrongOrd`](sus-ops-StrongOrd.html) or [`Ord`](sus-ops-Ord.html).
+/// [`PartialOrd`]($sus::ops::PartialOrd) will be satisfied if the types
+/// satisfy [`StrongOrd`]($sus::ops::StrongOrd) or [`Ord`]($sus::ops::Ord).
 /// To determine if a partial ordering is the strongest type of ordering between
-/// the types, use [`ExclusivePartialOrd`](sus-ops-ExclusivePartialOrd.html).
+/// the types, use [`ExclusivePartialOrd`]($sus::ops::ExclusivePartialOrd).
 template <class Lhs, class Rhs = Lhs>
 concept PartialOrd =
     Ord<Lhs, Rhs> || StrongOrd<Lhs, Rhs> ||
@@ -130,8 +130,8 @@ concept PartialOrd =
 /// [`std::strong_ordering`](https://en.cppreference.com/w/cpp/utility/compare/strong_ordering)).
 ///
 /// This is an alias for StrongOrd, but exists as a set with
-/// [`ExclusiveOrd`](sus-ops-ExclusiveOrd.html) and
-/// [`ExclusivePartialOrd`](sus-ops-ExclusivePartialOrd.html).
+/// [`ExclusiveOrd`]($sus::ops::ExclusiveOrd) and
+/// [`ExclusivePartialOrd`]($sus::ops::ExclusivePartialOrd).
 template <class Lhs, class Rhs = Lhs>
 concept ExclusiveStrongOrd = StrongOrd<Lhs, Rhs>;
 

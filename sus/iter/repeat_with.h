@@ -32,12 +32,12 @@ class RepeatWith;
 /// The `repeat_with()` function calls the repeater over and over again.
 ///
 /// Infinite iterators like `repeat_with()` are often used with adapters like
-/// [`Iterator::take()`](sus-iter-IteratorBase.html#method.take), in order to make them
+/// [`Iterator::take()`]($sus::iter::IteratorBase::take), in order to make them
 /// finite.
 ///
 /// If the element type of the iterator you need implements `Clone`, and it is
 /// OK to keep the source element in memory, you should instead use the
-/// [`repeat()`](sus-iter-fn.repeat.html) function.
+/// [`repeat()`]($sus::iter::repeat) function.
 ///
 /// # Exampler
 /// ```

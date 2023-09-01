@@ -31,7 +31,7 @@ class Repeat;
 /// The `repeat()` function repeats a single value over and over again.
 ///
 /// Infinite iterators like `repeat()` are often used with adapters like
-/// [`Iterator::take()`](sus-iter-IteratorBase.html#method.take), in order to make them
+/// [`Iterator::take()`]($sus::iter::IteratorBase::take), in order to make them
 /// finite.
 ///
 /// If the element type of the iterator you need does not implement `Clone`, or

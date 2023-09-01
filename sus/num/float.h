@@ -47,7 +47,7 @@ namespace sus::num {
 /// -113.75, 0.0078125, 34359738368, 0, -1. So unlike integer types (such as
 /// `i32`), floating point types can represent non-integer numbers, too.
 ///
-/// See the [namespace level documentation](sus-num.html) for more.
+/// See the [namespace level documentation]($sus::num) for more.
 struct [[sus_trivial_abi]] f32 final {
 #define _self f32
 #define _primitive float
@@ -62,10 +62,10 @@ struct [[sus_trivial_abi]] f32 final {
 /// A 64-bit floating point type (specifically, this type holds the same values
 /// as the `double` type specified by the C++ standard).
 ///
-/// This type is very similar to [`f32`](sus-num-f32.html), but has increased precision by using
+/// This type is very similar to [`f32`]($sus::num::f32), but has increased precision by using
 /// twice as many bits.
 ///
-/// See the [namespace level documentation](sus-num.html) for more.
+/// See the [namespace level documentation]($sus::num) for more.
 struct [[sus_trivial_abi]] f64 final {
 #define _self f64
 #define _primitive double
@@ -79,9 +79,9 @@ struct [[sus_trivial_abi]] f64 final {
 
 }  // namespace sus::num
 
-/// For writing [[`f32`](sus-num-f32.html)](sus-num-f32.html) literals.
+/// For writing [`f32`]($sus::num::f32) literals.
 _sus__float_literal(f32, ::sus::num::f32);
-/// For writing [[`f64`](sus-num-f32.html)](sus-num-f64.html) literals.
+/// For writing [`f64`]($sus::num::f64) literals.
 _sus__float_literal(f64, ::sus::num::f64);
 
 // Promote floating point types into the `sus` namespace.
