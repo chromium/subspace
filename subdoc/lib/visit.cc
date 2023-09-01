@@ -116,8 +116,8 @@ static sus::Vec<std::string> collect_template_params(
         }
         template_params.push(sus::move(s).str());
       } else {
-        llvm::errs() << "WARNING: Unknown TemplateParameterList member "
-                        "on Record:\n";
+        fmt::println(
+            stderr, "WARNING: Unknown TemplateParameterList member on Record:");
         n->dumpColor();
       }
     }
@@ -528,9 +528,11 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             auto fe = FunctionElement(
                 iter_namespace_path(decl).collect_vec(), sus::move(comment),
                 sus::move(function_name), sus::move(signature),
-                decl->isOverloadedOperator(), decl->getReturnType(),
-                sus::move(constraints), sus::move(template_params),
-                decl->isDeleted(), sus::move(params), sus::move(overload_set),
+                decl->isOverloadedOperator() ||
+                    decl->getLiteralIdentifier() != nullptr,
+                decl->getReturnType(), sus::move(constraints),
+                sus::move(template_params), decl->isDeleted(),
+                sus::move(params), sus::move(overload_set),
                 sus::move(record_path),
                 decl->getASTContext().getSourceManager().getFileOffset(
                     decl->getLocation()));
@@ -608,7 +610,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       db_map.emplace(key, std::move(db_element));
       // The overload is added with the `db_element` as a whole.
       add_overload = false;
-    } else if (!it->second.has_found_comment() && db_element.has_found_comment()) {
+    } else if (!it->second.has_found_comment() &&
+               db_element.has_found_comment()) {
       // Steal the comment.
       sus::mem::swap(db_map.at(key).comment, db_element.comment);
       add_overload = true;
@@ -649,7 +652,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     auto it = db_map.find(key);
     if (it == db_map.end()) {
       db_map.emplace(key, std::move(db_element));
-    } else if (!it->second.has_found_comment() && db_element.has_found_comment()) {
+    } else if (!it->second.has_found_comment() &&
+               db_element.has_found_comment()) {
       // Steal the comment.
       sus::mem::swap(db_map.at(key).comment, db_element.comment);
     } else if (!db_element.has_found_comment()) {
@@ -673,7 +677,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     auto it = db_map.find(key);
     if (it == db_map.end()) {
       db_map.emplace(key, std::move(db_element));
-    } else if (!it->second.has_found_comment() && db_element.has_found_comment()) {
+    } else if (!it->second.has_found_comment() &&
+               db_element.has_found_comment()) {
       // Steal the comment.
       sus::mem::swap(db_map.at(key).comment, db_element.comment);
     } else if (!db_element.has_found_comment()) {
@@ -698,7 +703,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     auto it = db_map.find(key);
     if (it == db_map.end()) {
       db_map.emplace(key, std::move(db_element));
-    } else if (!it->second.has_found_comment() && db_element.has_found_comment()) {
+    } else if (!it->second.has_found_comment() &&
+               db_element.has_found_comment()) {
       // Steal the comment.
       sus::mem::swap(db_map.at(key).comment, db_element.comment);
     } else if (!db_element.has_found_comment()) {
@@ -722,7 +728,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     auto it = db_map.find(uniq);
     if (it == db_map.end()) {
       db_map.emplace(uniq, std::move(db_element));
-    } else if (!it->second.has_found_comment() && db_element.has_found_comment()) {
+    } else if (!it->second.has_found_comment() &&
+               db_element.has_found_comment()) {
       // Steal the comment.
       sus::mem::swap(db_map.at(uniq).comment, db_element.comment);
     } else if (!db_element.has_found_comment()) {
@@ -815,8 +822,8 @@ std::unique_ptr<clang::ASTConsumer> VisitorAction::CreateASTConsumer(
     clang::CompilerInstance& compiler, llvm::StringRef file) noexcept {
   if (cx.options.show_progress) {
     if (std::string_view(file) != line_stats.cur_file_name) {
-      llvm::outs() << "[" << line_stats.cur_file << "/" << line_stats.num_files
-                   << "] " << file << "\n";
+      fmt::println(stderr, "[{}/{}] {}", line_stats.cur_file,
+                   line_stats.num_files, std::string_view(file));
       line_stats.cur_file += 1u;
       line_stats.cur_file_name = std::string(file);
     }
