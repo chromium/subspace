@@ -32,16 +32,39 @@ void generate_head(HtmlWriter& html, std::string_view title,
       meta.add_content("width=device-width, initial-scale=1");
     }
     {
+      auto meta = head.open_meta();
+      meta.add_property("og:type");
+      meta.add_content("website");
+    }
+    {
+      auto meta = head.open_meta();
+      meta.add_property("og:site_name");
+      meta.add_content(options.project_name);
+    }
+
+    auto page_title = std::string(title);
+    if (!page_title.empty()) {
+      page_title += " - ";
+    }
+    page_title += options.project_name;
+
+    {
       auto title_tag = head.open_title();
-      if (!title.empty()) {
-        title_tag.write_text(title);
-        title_tag.write_text(" - ");
-      }
-      title_tag.write_text(options.project_name);
+      title_tag.write_text(page_title);
+    }
+    {
+      auto meta = head.open_meta();
+      meta.add_property("og:title");
+      meta.add_content(page_title);
     }
     {
       auto meta = head.open_meta();
       meta.add_name("description");
+      meta.add_content(description);
+    }
+    {
+      auto meta = head.open_meta();
+      meta.add_property("og:description");
       meta.add_content(description);
     }
     for (const std::string& path : options.stylesheets) {
@@ -57,6 +80,12 @@ void generate_head(HtmlWriter& html, std::string_view title,
         favicon_link.add_rel("alternate icon");
       favicon_link.add_type(favicon.mime);
       favicon_link.add_href(favicon.path);
+    }
+    if (sus::Option<const FavIcon&> icon = options.favicons.first();
+        icon.is_some()) {
+      auto meta = head.open_meta();
+      meta.add_property("og:image");
+      meta.add_content(icon.as_value().path);
     }
   }
   html.write_empty_line();
