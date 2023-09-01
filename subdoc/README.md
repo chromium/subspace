@@ -142,11 +142,11 @@ A number of other flags allow including or using files with the generated
 output.
 
 ```
---css PATH
+--css WEB_PATH
 ```
-The `PATH` is used as a path to a css file on the server, and an HTML reference
-is added to it within every page. This can be the name of a file included in the
-output with `--copy-file`.
+The `WEB_PATH` is used as a path to a css file on the server, and an HTML
+reference is added to it within every page. This can be the name of a file
+included in the output with `--copy-file`.
 
 ```
 --copy-file PATH
@@ -161,6 +161,25 @@ comment.
 Inserts the markdown text in the file named by `PATH` as the description of the
 global namespace. This provides a good place to write a project overview that
 links to various parts of the project's documentation.
+
+```
+--project-logo WEB_PATH
+```
+Points the logo image to the given `WEB_PATH` in the generated HTML pages.
+This can be the name of a file included in the output with `--copy-file`.
+
+```
+--favicon WEB_PATH
+```
+The path (on the website) to an icon to act as the favicon and its mime type,
+separated by a semicolon. May be specified multiple times for multiple files in
+which case the first is used as the primary and the others as alternates.
+This can be the name of a file included in the output with `--copy-file`.
+
+When rendering the HTML, a `<link>`` tag will be added
+with each path to an icon file that is specified. For
+example:
+`--favicon favicon.png;image/png --favicon favicon-vec.svg;image/svg+xml`.
 
 ## Example execution
 
