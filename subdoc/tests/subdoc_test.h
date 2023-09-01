@@ -46,7 +46,7 @@ class SubDocTest : public testing::Test {
                                  sus::move(content));
   }
 
-  /// Returns if a record was found whose comment location ends with
+  /// Returns whether a record was found whose comment location ends with
   /// `comment_loc` and whose comment begins with `comment_start`.
   bool has_namespace_comment(const subdoc::Database& db,
                              std::string_view comment_loc,
@@ -56,7 +56,7 @@ class SubDocTest : public testing::Test {
                           comment_start);
   }
 
-  /// Returns if a record was found whose comment location ends with
+  /// Returns whether a record was found whose comment location ends with
   /// `comment_loc` and whose comment begins with `comment_start`.
   bool has_record_comment(const subdoc::Database& db,
                           std::string_view comment_loc,
@@ -65,7 +65,7 @@ class SubDocTest : public testing::Test {
                           comment_loc, comment_start);
   }
 
-  /// Returns if a comment was found with a location that ends with the
+  /// Returns whether a comment was found with a location that ends with the
   /// `comment_loc` suffix, and for which the comment's text begins with
   /// `comment_start` prefix.
   bool has_function_comment(const subdoc::Database& db,
@@ -75,7 +75,7 @@ class SubDocTest : public testing::Test {
                           comment_loc, comment_start);
   }
 
-  /// Returns if a ctor was found whose comment location ends with
+  /// Returns whether a ctor was found whose comment location ends with
   /// `comment_loc` and whose comment begins with `comment_start`.
   bool has_ctor_comment(const subdoc::Database& db,
                         std::string_view comment_loc,
@@ -84,7 +84,7 @@ class SubDocTest : public testing::Test {
                           comment_loc, comment_start);
   }
 
-  /// Returns if a ctor was found whose comment location ends with
+  /// Returns whether a ctor was found whose comment location ends with
   /// `comment_loc` and whose comment begins with `comment_start`.
   bool has_dtor_comment(const subdoc::Database& db,
                         std::string_view comment_loc,
@@ -93,7 +93,7 @@ class SubDocTest : public testing::Test {
                           comment_loc, comment_start);
   }
 
-  /// Returns if a method was found whose comment location ends with
+  /// Returns whether a method was found whose comment location ends with
   /// `comment_loc` and whose comment begins with `comment_start`.
   bool has_method_comment(const subdoc::Database& db,
                           std::string_view comment_loc,
@@ -102,7 +102,7 @@ class SubDocTest : public testing::Test {
                           comment_loc, comment_start);
   }
 
-  /// Returns if a field was found whose comment location ends with
+  /// Returns whether a field was found whose comment location ends with
   /// `comment_loc` and whose comment begins with `comment_start`.
   bool has_field_comment(const subdoc::Database& db,
                          std::string_view comment_loc,
