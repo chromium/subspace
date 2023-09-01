@@ -392,6 +392,7 @@ jobs:
             --favicon "logo32.png;image/png" \
             --favicon "logo16.png;image/png" \
             --css subdoc-test-style.css \
+            --project-logo logo.png \
             --project-md sus/project.md \
             --project-name Subspace \
             /home/runner/work/subspace/subspace/sus

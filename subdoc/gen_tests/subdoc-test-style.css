@@ -4,8 +4,93 @@ body {
     background-color: rgb(36, 36, 36);
     margin: 1.2rem;
     font-family: Arial, Verdana, sans-serif;
-    margin-left: 8rem;
-    margin-right: 8rem;
+    margin: 0;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-wrap: anywhere;
+}
+
+::-webkit-scrollbar {
+    width: 12px;
+}
+::-webkit-scrollbar-thumb {
+    background-color: rgb(161, 160, 160);
+}
+::-webkit-scrollbar-track {
+    background-color: rgb(96, 96, 100);
+}
+
+nav.sidebar {
+    position: sticky;
+    height: 100vh;
+    flex: 0 0 180px;
+    top: 0;
+    left: 0;
+    overflow-y: scroll;
+    overscroll-behavior: contain;
+    padding-top: 12px;
+    font-size: 90%;
+}
+nav.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+nav.sidebar .sidebar-logo-link {
+    text-align: center;
+    display: block;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+nav.sidebar .sidebar-logo-border {
+    width: 100px;
+    height: 100px;
+    margin-left: /* (180px - 100px) / 2 */ 40px;
+    border-radius: 20%;
+    overflow:hidden;
+}
+nav.sidebar .sidebar-logo {
+    width: 100px;
+}
+nav.sidebar .sidebar-text {
+    padding-left: 12px;
+}
+nav.sidebar .sidebar-title {
+    font-size: 120%;
+    font-weight: bold;
+}
+nav.sidebar .sidebar-pretitle {
+    font-size: 80%;
+    font-weight: bold;
+}
+nav.sidebar .sidebar-subtitle {
+    font-size: 90%;
+    font-weight: bold;
+}
+nav.sidebar .sidebar-links ul {
+    padding-inline-start: 0;
+}
+nav.sidebar .sidebar-links li {
+    list-style-type: none;
+    padding: 0.25rem;
+}
+nav.sidebar .sidebar-links a {
+    display: block;
+    color: rgb(250, 199, 121);
+    text-decoration: none;
+}
+nav.sidebar .sidebar-links a:hover {
+    text-decoration: underline;
+}
+
+main {
+    flex-grow: 1;
+    min-width: 0;
+    position: relative;
+    display: block;
+    padding-left: 48px;
+    padding-right: 24px;
+    padding-top: 12px;
+    padding-bottom: 48px;
 }
 
 .description pre, .description pre > code {
@@ -23,6 +108,11 @@ body {
     padding-bottom: 0.2em;
     border-bottom: 1px solid;
 }
+:is(.fields, .functions, .methods, .records, .concepts, .namespaces) .section-header > a {
+    text-decoration: none;
+    color: inherit;
+}
+
 
 .overload .function-signature span {
     margin-right: 0.4em;  /* Put back the space after other elements */

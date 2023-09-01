@@ -48,9 +48,17 @@ class HtmlWriter {
       writer_.write_html(text, /*has_newlines=*/has_newlines_);
     }
 
+    auto open_main(NewlineStrategy newlines = MultiLine) noexcept {
+      write_open();
+      return writer_.open_main(has_newlines_, newlines);
+    }
     auto open_div(NewlineStrategy newlines = MultiLine) noexcept {
       write_open();
       return writer_.open_div(has_newlines_, newlines);
+    }
+    auto open_nav(NewlineStrategy newlines = MultiLine) noexcept {
+      write_open();
+      return writer_.open_nav(has_newlines_, newlines);
     }
     auto open_span(NewlineStrategy newlines = MultiLine) noexcept {
       write_open();
@@ -67,6 +75,10 @@ class HtmlWriter {
     auto open_a() noexcept {
       write_open();
       return writer_.open_a(has_newlines_);
+    }
+    auto open_img() noexcept {
+      write_open();
+      return writer_.open_img(has_newlines_);
     }
 
    protected:
@@ -127,6 +139,37 @@ class HtmlWriter {
     }
   };
 
+  class [[nodiscard]] OpenImg : public Html {
+   public:
+    ~OpenImg() noexcept {
+      write_open();
+      writer_.write_close("img", inside_has_newlines_, has_newlines_);
+    }
+
+    void add_src(std::string_view href) {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("src"),
+          .value = std::string(href),
+      });
+    }
+
+   private:
+    friend HtmlWriter;
+    OpenImg(HtmlWriter& writer, bool inside_has_newlines) noexcept
+        : Html(writer) {
+      has_newlines_ = false;
+      inside_has_newlines_ = inside_has_newlines;
+    }
+
+    void write_open() noexcept override {
+      if (!wrote_open_) {
+        writer_.write_open("img", classes_.iter(), attributes_.iter(),
+                           inside_has_newlines_, has_newlines_);
+        wrote_open_ = true;
+      }
+    }
+  };
+
   class [[nodiscard]] OpenMeta : public Html {
    public:
     ~OpenMeta() noexcept {
@@ -172,6 +215,38 @@ class HtmlWriter {
     }
   };
 
+  class [[nodiscard]] OpenMain : public Html {
+   public:
+    ~OpenMain() noexcept {
+      write_open();
+      writer_.write_close("main", inside_has_newlines_, has_newlines_);
+    }
+
+    void add_title(std::string_view title) {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("title"),
+          .value = std::string(title),
+      });
+    }
+
+   private:
+    friend HtmlWriter;
+    OpenMain(HtmlWriter& writer, bool inside_has_newlines,
+             NewlineStrategy newlines) noexcept
+        : Html(writer) {
+      has_newlines_ = newlines == MultiLine;
+      inside_has_newlines_ = inside_has_newlines;
+    }
+
+    void write_open() noexcept override {
+      if (!wrote_open_) {
+        writer_.write_open("main", classes_.iter(), attributes_.iter(),
+                           inside_has_newlines_, has_newlines_);
+        wrote_open_ = true;
+      }
+    }
+  };
+
   class [[nodiscard]] OpenDiv : public Html {
    public:
     ~OpenDiv() noexcept {
@@ -198,6 +273,38 @@ class HtmlWriter {
     void write_open() noexcept override {
       if (!wrote_open_) {
         writer_.write_open("div", classes_.iter(), attributes_.iter(),
+                           inside_has_newlines_, has_newlines_);
+        wrote_open_ = true;
+      }
+    }
+  };
+
+  class [[nodiscard]] OpenNav : public Html {
+   public:
+    ~OpenNav() noexcept {
+      write_open();
+      writer_.write_close("nav", inside_has_newlines_, has_newlines_);
+    }
+
+    void add_title(std::string_view title) {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("title"),
+          .value = std::string(title),
+      });
+    }
+
+   private:
+    friend HtmlWriter;
+    OpenNav(HtmlWriter& writer, bool inside_has_newlines,
+            NewlineStrategy newlines) noexcept
+        : Html(writer) {
+      has_newlines_ = newlines == MultiLine;
+      inside_has_newlines_ = inside_has_newlines;
+    }
+
+    void write_open() noexcept override {
+      if (!wrote_open_) {
+        writer_.write_open("nav", classes_.iter(), attributes_.iter(),
                            inside_has_newlines_, has_newlines_);
         wrote_open_ = true;
       }
@@ -454,9 +561,17 @@ class HtmlWriter {
   friend class OpenUl;
   friend class OpenLi;
 
+  OpenMain open_main(bool inside_has_newlines,
+                     NewlineStrategy newlines) noexcept {
+    return OpenMain(*this, inside_has_newlines, newlines);
+  }
   OpenDiv open_div(bool inside_has_newlines,
                    NewlineStrategy newlines) noexcept {
     return OpenDiv(*this, inside_has_newlines, newlines);
+  }
+  OpenNav open_nav(bool inside_has_newlines,
+                   NewlineStrategy newlines) noexcept {
+    return OpenNav(*this, inside_has_newlines, newlines);
   }
   OpenSpan open_span(bool inside_has_newlines,
                      NewlineStrategy newlines) noexcept {
@@ -473,6 +588,9 @@ class HtmlWriter {
   }
   OpenA open_a(bool inside_has_newlines) noexcept {
     return OpenA(*this, inside_has_newlines);
+  }
+  OpenImg open_img(bool inside_has_newlines) noexcept {
+    return OpenImg(*this, inside_has_newlines);
   }
   OpenTitle open_title(bool inside_has_newlines) noexcept {
     return OpenTitle(*this, inside_has_newlines);
