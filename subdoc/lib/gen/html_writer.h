@@ -372,6 +372,13 @@ class HtmlWriter {
       });
     }
 
+    void add_type(std::string_view type) {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("type"),
+          .value = std::string(type),
+      });
+    }
+
     void add_href(std::string_view href) {
       attributes_.push(HtmlAttribute{
           .name = std::string("href"),

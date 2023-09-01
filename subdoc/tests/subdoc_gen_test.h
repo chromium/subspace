@@ -49,6 +49,7 @@ class SubDocGenTest : public testing::Test {
                                    sus::move(run_options));
     if (!result.is_ok()) return false;
 
+    using subdoc::gen::FavIcon;
     auto options = subdoc::gen::Options{
         .output_root =
             [&]() {
@@ -57,6 +58,9 @@ class SubDocGenTest : public testing::Test {
               return test_root;
             }(),
         .stylesheets = sus::vec("../subdoc-test-style.css"),
+        .favicons =
+            sus::vec(FavIcon::from_string("../icon.svg;image/svg+xml").unwrap(),
+                     FavIcon::from_string("../icon.png;image/png").unwrap()),
         .copy_files = sus::vec(),
         .ignore_bad_code_links = false,
     };
