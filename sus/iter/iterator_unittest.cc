@@ -57,9 +57,7 @@ struct CollectRefs {
 template <class T>
 struct sus::iter::FromIteratorImpl<sus::test::iter::CollectSum<T>> {
   static constexpr sus::test::iter::CollectSum<T> from_iter(
-      sus::iter::IntoIterator<T> auto&& into_iter) noexcept
-    requires(sus::mem::IsMoveRef<decltype(into_iter)>)
-  {
+      sus::iter::IntoIterator<T> auto&& into_iter) noexcept {
     T sum = T();
     for (T t : sus::move(into_iter).into_iter()) sum += t;
     return sus::test::iter::CollectSum<T>(sum);
@@ -69,9 +67,7 @@ struct sus::iter::FromIteratorImpl<sus::test::iter::CollectSum<T>> {
 template <>
 struct sus::iter::FromIteratorImpl<sus::test::iter::CollectRefs> {
   static sus::test::iter::CollectRefs from_iter(
-      sus::iter::IntoIterator<const NoCopyMove&> auto into_iter) noexcept
-    requires(sus::mem::IsMoveRef<decltype(into_iter)>)
-  {
+      sus::iter::IntoIterator<const NoCopyMove&> auto into_iter) noexcept {
     auto v = sus::Vec<const NoCopyMove*>();
     for (const NoCopyMove& t : sus::move(into_iter).into_iter()) v.push(&t);
     return sus::test::iter::CollectRefs(sus::move(v));

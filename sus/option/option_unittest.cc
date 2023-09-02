@@ -57,7 +57,7 @@ struct CollectRefs {
 template <class T>
 struct sus::iter::FromIteratorImpl<sus::test::option::CollectSum<T>> {
   static constexpr ::sus::test::option::CollectSum<T> from_iter(
-      sus::iter::IntoIterator<T> auto&& iter) noexcept {
+      sus::iter::IntoIterator<T> auto iter) noexcept {
     T sum = T();
     for (T t : sus::move(iter).into_iter()) sum += t;
     return ::sus::test::option::CollectSum<T>(sum);
@@ -859,7 +859,7 @@ TEST(Option, Map) {
     called = true;
     return Mapped(i + 1);
   });
-  static_assert(std::is_same_v<decltype(x), Option<Mapped>>);
+  static_assert(std::same_as<decltype(x), Option<Mapped>>);
   EXPECT_EQ(sus::move(x).unwrap().i, 3);
   EXPECT_TRUE(called);
 
@@ -868,7 +868,7 @@ TEST(Option, Map) {
     called = true;
     return Mapped(i + 1);
   });
-  static_assert(std::is_same_v<decltype(y), Option<Mapped>>);
+  static_assert(std::same_as<decltype(y), Option<Mapped>>);
   IS_NONE(y);
   EXPECT_FALSE(called);
 
@@ -880,7 +880,7 @@ TEST(Option, Map) {
     called = true;
     return Mapped(i + 1);
   });
-  static_assert(std::is_same_v<decltype(lx), Option<Mapped>>);
+  static_assert(std::same_as<decltype(lx), Option<Mapped>>);
   EXPECT_EQ(sus::move(lx).unwrap().i, 3);
   EXPECT_TRUE(called);
 
@@ -891,7 +891,7 @@ TEST(Option, Map) {
     called = true;
     return Mapped(i + 1);
   });
-  static_assert(std::is_same_v<decltype(ly), Option<Mapped>>);
+  static_assert(std::same_as<decltype(ly), Option<Mapped>>);
   IS_NONE(ly);
   EXPECT_FALSE(called);
 
@@ -902,7 +902,7 @@ TEST(Option, Map) {
     called = true;
     return Mapped(2);
   });
-  static_assert(std::is_same_v<decltype(ix), Option<Mapped>>);
+  static_assert(std::same_as<decltype(ix), Option<Mapped>>);
   EXPECT_EQ(ix->i, 2);
   EXPECT_TRUE(called);
 
@@ -911,7 +911,7 @@ TEST(Option, Map) {
     called = true;
     return Mapped(2);
   });
-  static_assert(std::is_same_v<decltype(iy), Option<Mapped>>);
+  static_assert(std::same_as<decltype(iy), Option<Mapped>>);
   IS_NONE(iy);
   EXPECT_FALSE(called);
 
@@ -936,12 +936,12 @@ TEST(Option, MapOr) {
   // Rvalue.
   auto x = Option<int>(2).map_or(
       Mapped(4), [](int&& i) { return static_cast<Mapped>(i + 1); });
-  static_assert(std::is_same_v<decltype(x), Mapped>);
+  static_assert(std::same_as<decltype(x), Mapped>);
   EXPECT_EQ(x.i, 3);
 
   auto y =
       Option<int>().map_or(Mapped(4), [](int&& i) { return Mapped(i + 1); });
-  static_assert(std::is_same_v<decltype(y), Mapped>);
+  static_assert(std::same_as<decltype(y), Mapped>);
   EXPECT_EQ(y.i, 4);
 
   // Lvalue.
@@ -950,7 +950,7 @@ TEST(Option, MapOr) {
     EXPECT_NE(&i, &o.as_value_mut());  // It was copied.
     return static_cast<Mapped>(i + 1);
   });
-  static_assert(std::is_same_v<decltype(lx), Mapped>);
+  static_assert(std::same_as<decltype(lx), Mapped>);
   EXPECT_EQ(lx.i, 3);
 
   o = Option<int>();
@@ -958,19 +958,19 @@ TEST(Option, MapOr) {
     EXPECT_NE(&i, &o.as_value_mut());  // It was copied.
     return Mapped(i + 1);
   });
-  static_assert(std::is_same_v<decltype(ly), Mapped>);
+  static_assert(std::same_as<decltype(ly), Mapped>);
   EXPECT_EQ(ly.i, 4);
 
   // Reference.
   auto i = NoCopyMove();
   auto ix = Option<NoCopyMove&>(i).map_or(
       Mapped(1), [](NoCopyMove&) { return Mapped(2); });
-  static_assert(std::is_same_v<decltype(ix), Mapped>);
+  static_assert(std::same_as<decltype(ix), Mapped>);
   EXPECT_EQ(ix.i, 2);
 
   auto iy = Option<NoCopyMove&>().map_or(Mapped(1),
                                          [](NoCopyMove&) { return Mapped(2); });
-  static_assert(std::is_same_v<decltype(ix), Mapped>);
+  static_assert(std::same_as<decltype(ix), Mapped>);
   EXPECT_EQ(iy.i, 1);
 
   static_assert(Option<int>(2).map_or(4, [](int&&) { return 1; }) == 1);
@@ -995,7 +995,7 @@ TEST(Option, MapOrElse) {
         map_called = true;
         return Mapped(i + 1);
       });
-  static_assert(std::is_same_v<decltype(x), Mapped>);
+  static_assert(std::same_as<decltype(x), Mapped>);
   EXPECT_EQ(x.i, 3);
   EXPECT_TRUE(map_called);
   EXPECT_FALSE(else_called);
@@ -1010,7 +1010,7 @@ TEST(Option, MapOrElse) {
         map_called = true;
         return Mapped(i + 1);
       });
-  static_assert(std::is_same_v<decltype(y), Mapped>);
+  static_assert(std::same_as<decltype(y), Mapped>);
   EXPECT_EQ(y.i, 4);
   EXPECT_FALSE(map_called);
   EXPECT_TRUE(else_called);
@@ -1028,7 +1028,7 @@ TEST(Option, MapOrElse) {
         map_called = true;
         return Mapped(i + 1);
       });
-  static_assert(std::is_same_v<decltype(lx), Mapped>);
+  static_assert(std::same_as<decltype(lx), Mapped>);
   EXPECT_EQ(lx.i, 3);
   EXPECT_TRUE(map_called);
   EXPECT_FALSE(else_called);
@@ -1044,7 +1044,7 @@ TEST(Option, MapOrElse) {
         map_called = true;
         return Mapped(i + 1);
       });
-  static_assert(std::is_same_v<decltype(ly), Mapped>);
+  static_assert(std::same_as<decltype(ly), Mapped>);
   EXPECT_EQ(ly.i, 4);
   EXPECT_FALSE(map_called);
   EXPECT_TRUE(else_called);
@@ -1061,7 +1061,7 @@ TEST(Option, MapOrElse) {
         map_called = true;
         return Mapped(2);
       });
-  static_assert(std::is_same_v<decltype(ix), Mapped>);
+  static_assert(std::same_as<decltype(ix), Mapped>);
   EXPECT_EQ(ix.i, 2);
   EXPECT_TRUE(map_called);
   EXPECT_FALSE(else_called);
@@ -1076,7 +1076,7 @@ TEST(Option, MapOrElse) {
         map_called = true;
         return Mapped(2);
       });
-  static_assert(std::is_same_v<decltype(iy), Mapped>);
+  static_assert(std::same_as<decltype(iy), Mapped>);
   EXPECT_EQ(iy.i, 1);
   EXPECT_FALSE(map_called);
   EXPECT_TRUE(else_called);
@@ -1103,60 +1103,60 @@ TEST(Option, MapOrElse) {
 TEST(Option, Filter) {
   // Rvalue.
   auto x = Option<int>(2).filter([](const int&) { return true; });
-  static_assert(std::is_same_v<decltype(x), Option<int>>);
+  static_assert(std::same_as<decltype(x), Option<int>>);
   IS_SOME(x);
 
   auto y = Option<int>(2).filter([](const int&) { return false; });
-  static_assert(std::is_same_v<decltype(y), Option<int>>);
+  static_assert(std::same_as<decltype(y), Option<int>>);
   IS_NONE(y);
 
   auto nx = Option<int>().filter([](const int&) { return true; });
-  static_assert(std::is_same_v<decltype(nx), Option<int>>);
+  static_assert(std::same_as<decltype(nx), Option<int>>);
   IS_NONE(nx);
 
   auto ny = Option<int>().filter([](const int&) { return false; });
-  static_assert(std::is_same_v<decltype(ny), Option<int>>);
+  static_assert(std::same_as<decltype(ny), Option<int>>);
   IS_NONE(ny);
 
   // Lvalue.
   auto o = Option<int>(2);
   auto lx = o.filter([](const int&) { return true; });
-  static_assert(std::is_same_v<decltype(lx), Option<int>>);
+  static_assert(std::same_as<decltype(lx), Option<int>>);
   IS_SOME(lx);
 
   auto ly = o.filter([](const int&) { return false; });
-  static_assert(std::is_same_v<decltype(ly), Option<int>>);
+  static_assert(std::same_as<decltype(ly), Option<int>>);
   IS_NONE(ly);
 
   o = Option<int>();
   auto lnx = o.filter([](const int&) { return true; });
-  static_assert(std::is_same_v<decltype(lnx), Option<int>>);
+  static_assert(std::same_as<decltype(lnx), Option<int>>);
   IS_NONE(lnx);
 
   auto lny = o.filter([](const int&) { return false; });
-  static_assert(std::is_same_v<decltype(lny), Option<int>>);
+  static_assert(std::same_as<decltype(lny), Option<int>>);
   IS_NONE(lny);
 
   // Reference.
   auto i = NoCopyMove();
   auto ix =
       Option<NoCopyMove&>(i).filter([](const NoCopyMove&) { return true; });
-  static_assert(std::is_same_v<decltype(ix), Option<NoCopyMove&>>);
+  static_assert(std::same_as<decltype(ix), Option<NoCopyMove&>>);
   IS_SOME(ix);
 
   auto iy =
       Option<NoCopyMove&>(i).filter([](const NoCopyMove&) { return false; });
-  static_assert(std::is_same_v<decltype(iy), Option<NoCopyMove&>>);
+  static_assert(std::same_as<decltype(iy), Option<NoCopyMove&>>);
   IS_NONE(iy);
 
   auto inx =
       Option<NoCopyMove&>().filter([](const NoCopyMove&) { return true; });
-  static_assert(std::is_same_v<decltype(inx), Option<NoCopyMove&>>);
+  static_assert(std::same_as<decltype(inx), Option<NoCopyMove&>>);
   IS_NONE(inx);
 
   auto iny =
       Option<NoCopyMove&>().filter([](const NoCopyMove&) { return false; });
-  static_assert(std::is_same_v<decltype(iny), Option<NoCopyMove&>>);
+  static_assert(std::same_as<decltype(iny), Option<NoCopyMove&>>);
   IS_NONE(iny);
 
   static_assert(
@@ -1277,7 +1277,7 @@ TEST(Option, AndThen) {
     called = true;
     return Option<And>(And(3));
   });
-  static_assert(std::is_same_v<decltype(x), Option<And>>);
+  static_assert(std::same_as<decltype(x), Option<And>>);
   EXPECT_EQ(sus::move(x).unwrap().i, 3);
   EXPECT_TRUE(called);
 
@@ -1286,7 +1286,7 @@ TEST(Option, AndThen) {
     called = true;
     return Option<And>();
   });
-  static_assert(std::is_same_v<decltype(y), Option<And>>);
+  static_assert(std::same_as<decltype(y), Option<And>>);
   IS_NONE(y);
   EXPECT_TRUE(called);
 
@@ -1295,7 +1295,7 @@ TEST(Option, AndThen) {
     called = true;
     return Option<And>(And(3));
   });
-  static_assert(std::is_same_v<decltype(nx), Option<And>>);
+  static_assert(std::same_as<decltype(nx), Option<And>>);
   IS_NONE(nx);
   EXPECT_FALSE(called);
 
@@ -1304,7 +1304,7 @@ TEST(Option, AndThen) {
     called = true;
     return Option<And>();
   });
-  static_assert(std::is_same_v<decltype(ny), Option<And>>);
+  static_assert(std::same_as<decltype(ny), Option<And>>);
   IS_NONE(ny);
   EXPECT_FALSE(called);
 
@@ -1315,7 +1315,7 @@ TEST(Option, AndThen) {
     called = true;
     return Option<And>(And(3));
   });
-  static_assert(std::is_same_v<decltype(lx), Option<And>>);
+  static_assert(std::same_as<decltype(lx), Option<And>>);
   EXPECT_EQ(sus::move(lx).unwrap().i, 3);
   EXPECT_TRUE(called);
 
@@ -1324,7 +1324,7 @@ TEST(Option, AndThen) {
     called = true;
     return Option<And>();
   });
-  static_assert(std::is_same_v<decltype(ly), Option<And>>);
+  static_assert(std::same_as<decltype(ly), Option<And>>);
   IS_NONE(ly);
   EXPECT_TRUE(called);
 
@@ -1334,7 +1334,7 @@ TEST(Option, AndThen) {
     called = true;
     return Option<And>(And(3));
   });
-  static_assert(std::is_same_v<decltype(lnx), Option<And>>);
+  static_assert(std::same_as<decltype(lnx), Option<And>>);
   IS_NONE(lnx);
   EXPECT_FALSE(called);
 
@@ -1343,7 +1343,7 @@ TEST(Option, AndThen) {
     called = true;
     return Option<And>();
   });
-  static_assert(std::is_same_v<decltype(lny), Option<And>>);
+  static_assert(std::same_as<decltype(lny), Option<And>>);
   IS_NONE(lny);
   EXPECT_FALSE(called);
 
@@ -1355,7 +1355,7 @@ TEST(Option, AndThen) {
     called = true;
     return Option<And>(And(3));
   });
-  static_assert(std::is_same_v<decltype(ix), Option<And>>);
+  static_assert(std::same_as<decltype(ix), Option<And>>);
   EXPECT_EQ(ix->i, 3);
   EXPECT_TRUE(called);
 
@@ -1364,7 +1364,7 @@ TEST(Option, AndThen) {
     called = true;
     return Option<And>();
   });
-  static_assert(std::is_same_v<decltype(iy), Option<And>>);
+  static_assert(std::same_as<decltype(iy), Option<And>>);
   IS_NONE(iy);
   EXPECT_TRUE(called);
 
@@ -1373,7 +1373,7 @@ TEST(Option, AndThen) {
     called = true;
     return Option<And>(And(3));
   });
-  static_assert(std::is_same_v<decltype(inx), Option<And>>);
+  static_assert(std::same_as<decltype(inx), Option<And>>);
   IS_NONE(inx);
   EXPECT_FALSE(called);
 
@@ -1382,7 +1382,7 @@ TEST(Option, AndThen) {
     called = true;
     return Option<And>();
   });
-  static_assert(std::is_same_v<decltype(iny), Option<And>>);
+  static_assert(std::same_as<decltype(iny), Option<And>>);
   IS_NONE(iny);
   EXPECT_FALSE(called);
 
@@ -1656,14 +1656,14 @@ TEST(Option, Insert) {
 TEST(Option, GetOrInsert) {
   auto x = Option<int>();
   auto& rx = x.get_or_insert(9);
-  static_assert(std::is_same_v<decltype(x.get_or_insert(9)), int&>);
+  static_assert(std::same_as<decltype(x.get_or_insert(9)), int&>);
   EXPECT_EQ(rx, 9);
   rx = 5;
   EXPECT_EQ(sus::move(x).unwrap(), 5);
 
   auto y = Option<int>(11);
   auto& ry = y.get_or_insert(7);
-  static_assert(std::is_same_v<decltype(y.get_or_insert(7)), int&>);
+  static_assert(std::same_as<decltype(y.get_or_insert(7)), int&>);
   EXPECT_EQ(ry, 11);
   EXPECT_EQ(sus::move(y).unwrap(), 11);
 
@@ -1671,13 +1671,13 @@ TEST(Option, GetOrInsert) {
 
   auto ix = Option<NoCopyMove&>();
   auto& irx = ix.get_or_insert(i3);
-  static_assert(std::is_same_v<decltype(ix.get_or_insert(i3)), NoCopyMove&>);
+  static_assert(std::same_as<decltype(ix.get_or_insert(i3)), NoCopyMove&>);
   EXPECT_EQ(&irx, &i3);
   EXPECT_EQ(&ix.as_ref().unwrap(), &i3);
 
   auto iy = Option<NoCopyMove&>(i2);
   auto& iry = iy.get_or_insert(i3);
-  static_assert(std::is_same_v<decltype(iy.get_or_insert(i3)), NoCopyMove&>);
+  static_assert(std::same_as<decltype(iy.get_or_insert(i3)), NoCopyMove&>);
   EXPECT_EQ(&iry, &i2);
   EXPECT_EQ(&iy.as_ref().unwrap(), &i2);
 
@@ -1692,7 +1692,7 @@ TEST(Option, GetOrInsert) {
 TEST(Option, GetOrInsertDefault) {
   auto x = Option<DefaultConstructible>();
   auto& rx = x.get_or_insert_default();
-  static_assert(std::is_same_v<decltype(rx), DefaultConstructible&>);
+  static_assert(std::same_as<decltype(rx), DefaultConstructible&>);
   EXPECT_EQ(rx.i, 2);
   IS_SOME(x);
   EXPECT_EQ(sus::move(x).unwrap().i, 2);
@@ -1701,7 +1701,7 @@ TEST(Option, GetOrInsertDefault) {
       sus_clang_bug_54040(DefaultConstructible{404})
           sus_clang_bug_54040_else(DefaultConstructible(404)));
   auto& ry = y.get_or_insert_default();
-  static_assert(std::is_same_v<decltype(ry), DefaultConstructible&>);
+  static_assert(std::same_as<decltype(ry), DefaultConstructible&>);
   EXPECT_EQ(ry.i, 404);
   IS_SOME(y);
   EXPECT_EQ(sus::move(y).unwrap().i, 404);
@@ -1726,7 +1726,7 @@ TEST(Option, GetOrInsertWith) {
     called = true;
     return 9;
   });
-  static_assert(std::is_same_v<decltype(rx), int&>);
+  static_assert(std::same_as<decltype(rx), int&>);
   EXPECT_EQ(rx, 9);
   rx = 12;
   EXPECT_TRUE(called);
@@ -1739,7 +1739,7 @@ TEST(Option, GetOrInsertWith) {
     called = true;
     return 7;
   });
-  static_assert(std::is_same_v<decltype(ry), int&>);
+  static_assert(std::same_as<decltype(ry), int&>);
   EXPECT_EQ(ry, 11);
   ry = 18;
   EXPECT_FALSE(called);
@@ -1754,7 +1754,7 @@ TEST(Option, GetOrInsertWith) {
     called = true;
     return i3;
   });
-  static_assert(std::is_same_v<decltype(irx), NoCopyMove&>);
+  static_assert(std::same_as<decltype(irx), NoCopyMove&>);
   EXPECT_TRUE(called);
   EXPECT_EQ(&irx, &i3);
   EXPECT_EQ(&ix.as_ref().unwrap(), &i3);
@@ -1765,7 +1765,7 @@ TEST(Option, GetOrInsertWith) {
     called = true;
     return i3;
   });
-  static_assert(std::is_same_v<decltype(iry), NoCopyMove&>);
+  static_assert(std::same_as<decltype(iry), NoCopyMove&>);
   EXPECT_FALSE(called);
   EXPECT_EQ(&iry, &i2);
   EXPECT_EQ(&iy.as_ref().unwrap(), &i2);
@@ -1782,8 +1782,8 @@ TEST(Option, GetOrInsertWith) {
 TEST(Option, AsValue) {
   const auto cx = Option<int>(11);
   auto x = Option<int>(11);
-  static_assert(std::is_same_v<decltype(cx.as_value()), const int&>);
-  static_assert(std::is_same_v<decltype(x.as_value()), const int&>);
+  static_assert(std::same_as<decltype(cx.as_value()), const int&>);
+  static_assert(std::same_as<decltype(x.as_value()), const int&>);
   EXPECT_EQ(&x.as_value(), &x.as_ref().unwrap());
 
   // Can call on rvalue for Option holding a reference.
@@ -1794,8 +1794,8 @@ TEST(Option, AsValue) {
 
   const auto cix = Option<NoCopyMove&>(i);
   auto ix = Option<NoCopyMove&>(i);
-  static_assert(std::is_same_v<decltype(cix.as_value()), const NoCopyMove&>);
-  static_assert(std::is_same_v<decltype(ix.as_value()), const NoCopyMove&>);
+  static_assert(std::same_as<decltype(cix.as_value()), const NoCopyMove&>);
+  static_assert(std::same_as<decltype(ix.as_value()), const NoCopyMove&>);
   EXPECT_EQ(&ix.as_value(), &i);
 
   // Verify constexpr.
@@ -1805,7 +1805,7 @@ TEST(Option, AsValue) {
 
 TEST(Option, AsValueMut) {
   auto x = Option<int>(11);
-  static_assert(std::is_same_v<decltype(x.as_value_mut()), int&>);
+  static_assert(std::same_as<decltype(x.as_value_mut()), int&>);
   EXPECT_EQ(&x.as_value(), &x.as_mut().unwrap());
 
   // Can call on rvalue for Option holding a reference.
@@ -1815,7 +1815,7 @@ TEST(Option, AsValueMut) {
   auto i = NoCopyMove();
 
   auto ix = Option<NoCopyMove&>(i);
-  static_assert(std::is_same_v<decltype(ix.as_value_mut()), NoCopyMove&>);
+  static_assert(std::same_as<decltype(ix.as_value_mut()), NoCopyMove&>);
   EXPECT_EQ(&ix.as_value_mut(), &i);
 
   // Verify constexpr.
@@ -1828,8 +1828,8 @@ TEST(Option, AsValueMut) {
 TEST(Option, OperatorStarSome) {
   const auto cx = Option<int>(11);
   auto x = Option<int>(11);
-  static_assert(std::is_same_v<decltype(*cx), const int&>);
-  static_assert(std::is_same_v<decltype(*x), int&>);
+  static_assert(std::same_as<decltype(*cx), const int&>);
+  static_assert(std::same_as<decltype(*x), int&>);
   EXPECT_EQ(&*x, &x.as_ref().unwrap());
 
   // Can call on rvalue for Option holding a reference.
@@ -1840,8 +1840,8 @@ TEST(Option, OperatorStarSome) {
 
   const auto cix = Option<NoCopyMove&>(i);
   auto ix = Option<NoCopyMove&>(i);
-  static_assert(std::is_same_v<decltype(*cix), const NoCopyMove&>);
-  static_assert(std::is_same_v<decltype(*ix), NoCopyMove&>);
+  static_assert(std::same_as<decltype(*cix), const NoCopyMove&>);
+  static_assert(std::same_as<decltype(*ix), NoCopyMove&>);
   EXPECT_EQ(&*ix, &i);
 
   // Verify constexpr.
@@ -1877,8 +1877,8 @@ TEST(OptionDeathTest, OperatorStarNone) {
 TEST(Option, OperatorArrowSome) {
   const auto cx = Option<int>(11);
   auto x = Option<int>(11);
-  static_assert(std::is_same_v<decltype(cx.operator->()), const int*>);
-  static_assert(std::is_same_v<decltype(x.operator->()), int*>);
+  static_assert(std::same_as<decltype(cx.operator->()), const int*>);
+  static_assert(std::same_as<decltype(x.operator->()), int*>);
   EXPECT_EQ(x.operator->(), &x.as_ref().unwrap());
 
   // Can call on rvalue for Option holding a reference.
@@ -1889,8 +1889,8 @@ TEST(Option, OperatorArrowSome) {
 
   const auto cix = Option<NoCopyMove&>(i);
   auto ix = Option<NoCopyMove&>(i);
-  static_assert(std::is_same_v<decltype(cix.operator->()), const NoCopyMove*>);
-  static_assert(std::is_same_v<decltype(ix.operator->()), NoCopyMove*>);
+  static_assert(std::same_as<decltype(cix.operator->()), const NoCopyMove*>);
+  static_assert(std::same_as<decltype(ix.operator->()), NoCopyMove*>);
   EXPECT_EQ(ix.operator->(), &ix.as_ref().unwrap());
 
   // Verify constexpr.
@@ -1931,7 +1931,7 @@ TEST(OptionDeathTest, OperatorArrowNone) {
 
 TEST(Option, AsRef) {
   auto x = Option<int>(11);
-  static_assert(std::is_same_v<decltype(x.as_ref()), Option<const int&>>);
+  static_assert(std::same_as<decltype(x.as_ref()), Option<const int&>>);
   EXPECT_EQ(&x.get_or_insert(0), &x.as_ref().unwrap());
 
   auto n = Option<int>();
@@ -1941,7 +1941,7 @@ TEST(Option, AsRef) {
 
   auto ix = Option<NoCopyMove&>(i);
   static_assert(
-      std::is_same_v<decltype(ix.as_ref()), Option<const NoCopyMove&>>);
+      std::same_as<decltype(ix.as_ref()), Option<const NoCopyMove&>>);
   EXPECT_EQ(&i, &ix.as_ref().unwrap());
 
   auto in = Option<NoCopyMove&>();
@@ -1954,7 +1954,7 @@ TEST(Option, AsRef) {
   static_assert(&icx.as_ref().unwrap() == &ci);
 
   // as_ref() on an rvalue allowed if the Option is holding a reference.
-  static_assert(std::is_same_v<decltype(Option<NoCopyMove&>(i).as_ref()),
+  static_assert(std::same_as<decltype(Option<NoCopyMove&>(i).as_ref()),
                                Option<const NoCopyMove&>>);
   EXPECT_EQ(&Option<NoCopyMove&>(i).as_ref().unwrap(), &i);
   EXPECT_TRUE(Option<NoCopyMove&>().as_ref().is_none());
@@ -1962,7 +1962,7 @@ TEST(Option, AsRef) {
 
 TEST(Option, AsMut) {
   auto x = Option<int>(11);
-  static_assert(std::is_same_v<decltype(x.as_mut()), Option<int&>>);
+  static_assert(std::same_as<decltype(x.as_mut()), Option<int&>>);
   EXPECT_EQ(&x.get_or_insert(0), &x.as_mut().unwrap());
 
   auto n = Option<int>();
@@ -1971,7 +1971,7 @@ TEST(Option, AsMut) {
   auto i = NoCopyMove();
 
   auto ix = Option<NoCopyMove&>(i);
-  static_assert(std::is_same_v<decltype(ix.as_mut()), Option<NoCopyMove&>>);
+  static_assert(std::same_as<decltype(ix.as_mut()), Option<NoCopyMove&>>);
   EXPECT_EQ(&i, &ix.as_mut().unwrap());
 
   auto in = Option<NoCopyMove&>();
@@ -1983,7 +1983,7 @@ TEST(Option, AsMut) {
   }() == 3);
 
   // as_mut() on an rvalue allowed if the Option is holding a reference.
-  static_assert(std::is_same_v<decltype(Option<NoCopyMove&>(i).as_mut()),
+  static_assert(std::same_as<decltype(Option<NoCopyMove&>(i).as_mut()),
                                Option<NoCopyMove&>>);
   EXPECT_EQ(&Option<NoCopyMove&>(i).as_mut().unwrap(), &i);
   EXPECT_TRUE(Option<NoCopyMove&>().as_mut().is_none());
@@ -2029,13 +2029,13 @@ TEST(Option, TrivialCopy) {
 
 TEST(Option, Replace) {
   auto x = Option<i32>(2);
-  static_assert(std::is_same_v<decltype(x.replace(3)), Option<i32>>);
+  static_assert(std::same_as<decltype(x.replace(3)), Option<i32>>);
   auto y = x.replace(3);
   EXPECT_EQ(x.as_ref().unwrap(), 3);
   EXPECT_EQ(y.as_ref().unwrap(), 2);
 
   auto z = Option<i32>();
-  static_assert(std::is_same_v<decltype(z.replace(3)), Option<i32>>);
+  static_assert(std::same_as<decltype(z.replace(3)), Option<i32>>);
   auto zz = z.replace(3);
   EXPECT_EQ(z.as_ref().unwrap(), 3);
   IS_NONE(zz);
@@ -2043,13 +2043,13 @@ TEST(Option, Replace) {
   NoCopyMove i2, i3;
 
   auto ix = Option<NoCopyMove&>(i2);
-  static_assert(std::is_same_v<decltype(ix.replace(i3)), Option<NoCopyMove&>>);
+  static_assert(std::same_as<decltype(ix.replace(i3)), Option<NoCopyMove&>>);
   auto iy = ix.replace(i3);
   EXPECT_EQ(&ix.as_ref().unwrap(), &i3);
   EXPECT_EQ(&iy.as_ref().unwrap(), &i2);
 
   auto iz = Option<NoCopyMove&>();
-  static_assert(std::is_same_v<decltype(iz.replace(i3)), Option<NoCopyMove&>>);
+  static_assert(std::same_as<decltype(iz.replace(i3)), Option<NoCopyMove&>>);
   auto izz = iz.replace(i3);
   EXPECT_EQ(&iz.as_ref().unwrap(), &i3);
   IS_NONE(izz);
@@ -2124,11 +2124,11 @@ TEST(Option, Cloned) {
 
 TEST(Option, Flatten) {
   static_assert(
-      std::is_same_v<decltype(Option<Option<i32>>().flatten()), Option<i32>>);
+      std::same_as<decltype(Option<Option<i32>>().flatten()), Option<i32>>);
   static_assert(
-      std::is_same_v<decltype(Option<Option<i32&>>().flatten()), Option<i32&>>);
+      std::same_as<decltype(Option<Option<i32&>>().flatten()), Option<i32&>>);
   static_assert(
-      std::is_same_v<decltype(Option<Option<Option<i32>>>().flatten()),
+      std::same_as<decltype(Option<Option<Option<i32>>>().flatten()),
                      Option<Option<i32>>>);
 
   // Rvalue.
@@ -2174,7 +2174,7 @@ TEST(Option, Iter) {
   int count = 0;
   auto y = Option<int>(2);
   for (auto& i : y.iter()) {
-    static_assert(std::is_same_v<decltype(i), const int&>);
+    static_assert(std::same_as<decltype(i), const int&>);
     EXPECT_EQ(i, 2);
     ++count;
   }
@@ -2184,7 +2184,7 @@ TEST(Option, Iter) {
   auto n = NoCopyMove();
   auto z = Option<NoCopyMove&>(n);
   for (auto& i : z.iter()) {
-    static_assert(std::is_same_v<decltype(i), const NoCopyMove&>);
+    static_assert(std::same_as<decltype(i), const NoCopyMove&>);
     EXPECT_EQ(&i, &n);
     ++count;
   }
@@ -2213,7 +2213,7 @@ TEST(Option, IterMut) {
   int count = 0;
   auto y = Option<int>(2);
   for (auto& i : y.iter_mut()) {
-    static_assert(std::is_same_v<decltype(i), int&>);
+    static_assert(std::same_as<decltype(i), int&>);
     EXPECT_EQ(i, 2);
     i += 1;
     ++count;
@@ -2224,7 +2224,7 @@ TEST(Option, IterMut) {
   auto n = NoCopyMove();
   auto z = Option<NoCopyMove&>(n);
   for (auto& i : z.iter_mut()) {
-    static_assert(std::is_same_v<decltype(i), NoCopyMove&>);
+    static_assert(std::same_as<decltype(i), NoCopyMove&>);
     EXPECT_EQ(&i, &n);
     ++count;
   }
@@ -2258,7 +2258,7 @@ TEST(Option, IntoIter) {
   int count = 0;
   auto y = Option<MoveOnly>(MoveOnly(2));
   for (auto m : sus::move(y).into_iter()) {
-    static_assert(std::is_same_v<decltype(m), MoveOnly>);
+    static_assert(std::same_as<decltype(m), MoveOnly>);
     EXPECT_EQ(m.i, 2);
     ++count;
   }
@@ -2268,7 +2268,7 @@ TEST(Option, IntoIter) {
   auto n = NoCopyMove();
   auto z = Option<NoCopyMove&>(n);
   for (auto& i : sus::move(z).into_iter()) {
-    static_assert(std::is_same_v<decltype(i), NoCopyMove&>);
+    static_assert(std::same_as<decltype(i), NoCopyMove&>);
     EXPECT_EQ(&i, &n);
     ++count;
   }
@@ -2290,7 +2290,7 @@ TEST(Option, ImplicitIter) {
   auto y = Option<MoveOnly>(MoveOnly(2));
 
   for (const auto& m : y) {
-    static_assert(std::is_same_v<decltype(m), const MoveOnly&>);
+    static_assert(std::same_as<decltype(m), const MoveOnly&>);
     EXPECT_EQ(m.i, 2);
     ++count;
   }
@@ -2300,7 +2300,7 @@ TEST(Option, ImplicitIter) {
   auto n = NoCopyMove();
   auto z = Option<NoCopyMove&>(n);
   for (auto& i : z) {
-    static_assert(std::is_same_v<decltype(i), const NoCopyMove&>);
+    static_assert(std::same_as<decltype(i), const NoCopyMove&>);
     EXPECT_EQ(&i, &n);
     ++count;
   }
