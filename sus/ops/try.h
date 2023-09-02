@@ -137,9 +137,10 @@ constexpr inline bool try_is_success(const T& t) noexcept {
 /// If the input is not in a success state (`is_success()` would return true)
 /// the function will panic.
 template <Try T>
-  requires(::sus::mem::IsMoveRef<T &&>)
 constexpr inline TryImpl<std::remove_cvref_t<T>>::Output try_into_output(
-    T&& t) noexcept {
+    T&& t) noexcept
+  requires(::sus::mem::IsMoveRef<decltype(t)>)
+{
   ::sus::check(TryImpl<std::remove_cvref_t<T>>::is_success(t));
   return TryImpl<std::remove_cvref_t<T>>::into_output(::sus::move(t));
 }
@@ -192,10 +193,11 @@ constexpr inline T try_from_default() noexcept {
 /// If the input is not in an error state (`is_success()` would return false)
 /// the function will panic.
 template <class U, TryErrorConvertibleTo<U> T>
-  requires(::sus::mem::IsMoveRef<T &&> &&  //
-           !std::is_const_v<U> &&          //
+  requires(!std::is_const_v<U> &&  //
            !std::is_reference_v<U>)
-constexpr inline U try_preserve_error(T&& t) noexcept {
+constexpr inline U try_preserve_error(T&& t) noexcept
+  requires(::sus::mem::IsMoveRef<decltype(t)>)
+{
   ::sus::check(!TryImpl<std::remove_cvref_t<T>>::is_success(t));
   return TryImpl<U>::preserve_error(::sus::move(t));
 }

@@ -35,12 +35,12 @@ struct FromIteratorImpl;
 /// the preferred way to construct from an iterator. But in generic template
 /// code especially, the `from_iter()` can be more clear.
 template <class ToType, class ItemType>
-concept FromIterator =
-    requires(__private::IntoIteratorArchetype<ItemType>&& from) {
-      {
-        FromIteratorImpl<std::remove_const_t<ToType>>::from_iter(::sus::move(from))
-      } -> std::same_as<std::remove_const_t<ToType>>;
-    };
+concept FromIterator = requires(
+    __private::IntoIteratorArchetype<ItemType>&& from) {
+  {
+    FromIteratorImpl<std::remove_const_t<ToType>>::from_iter(::sus::move(from))
+  } -> std::same_as<std::remove_const_t<ToType>>;
+};
 
 /// Constructs `ToType` from a type that can be turned into an `Iterator` over
 /// elements of type `ItemType`.
@@ -51,10 +51,11 @@ concept FromIterator =
 /// function can be preferrable for some readers, especially in generic template
 /// code.
 template <class ToType, IntoIteratorAny IntoIter>
-  requires(FromIterator<ToType,
-                        typename IntoIteratorOutputType<IntoIter>::Item> &&  //
-           ::sus::mem::IsMoveRef<IntoIter &&>)
-constexpr inline ToType from_iter(IntoIter&& into_iter) noexcept {
+  requires(
+      FromIterator<ToType, typename IntoIteratorOutputType<IntoIter>::Item>)
+constexpr inline ToType from_iter(IntoIter&& into_iter) noexcept
+  requires(::sus::mem::IsMoveRef<decltype(into_iter)>)
+{
   return FromIteratorImpl<ToType>::from_iter(
       ::sus::move(into_iter).into_iter());
 }
