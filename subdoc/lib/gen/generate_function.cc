@@ -66,27 +66,29 @@ void generate_function_params(HtmlWriter::OpenDiv& div,
       if (i > 0u) div.write_text(", ");
 
       if (p.type_element.is_some()) {
-        auto one_param_link = div.open_a();
-        one_param_link.add_class("type-name");
-        one_param_link.add_title(p.type_name);
-        if (!p.type_element->hidden()) {
-          one_param_link.add_href(
-              construct_html_url_for_type(p.type_element.as_value()));
-        } else {
-          llvm::errs() << "WARNING: Reference to hidden TypeElement "
-                       << p.type_element->name << " in namespace "
-                       << p.type_element->namespace_path;
+        {
+          auto one_param_link = div.open_a();
+          one_param_link.add_class("type-name");
+          one_param_link.add_title(p.type_name);
+          if (!p.type_element->hidden()) {
+            one_param_link.add_href(
+                construct_html_url_for_type(p.type_element.as_value()));
+          } else {
+            llvm::errs() << "WARNING: Reference to hidden TypeElement "
+                         << p.type_element->name << " in namespace "
+                         << p.type_element->namespace_path;
+          }
+          one_param_link.write_text(p.type_element.as_value().name);
         }
-        one_param_link.write_text(p.type_element.as_value().name);
         for (Qualifiers q : p.pointers) {
-          if (q.is_const) one_param_link.write_text(" const");
-          if (q.is_volatile) one_param_link.write_text(" volatile");
-          one_param_link.write_text("*");
+          if (q.is_const) div.write_text(" const");
+          if (q.is_volatile) div.write_text(" volatile");
+          div.write_text("*");
         }
-        if (p.qualifiers.is_const) one_param_link.write_text(" const");
-        if (p.qualifiers.is_volatile) one_param_link.write_text(" volatile");
-        if (p.is_lvalue_reference) one_param_link.write_text("&");
-        if (p.is_rvalue_reference) one_param_link.write_text("&&");
+        if (p.qualifiers.is_const) div.write_text(" const");
+        if (p.qualifiers.is_volatile) div.write_text(" volatile");
+        if (p.is_lvalue_reference) div.write_text("&");
+        if (p.is_rvalue_reference) div.write_text("&&");
       } else {
         div.write_text(p.short_type_name);
       }

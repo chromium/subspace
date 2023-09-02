@@ -112,7 +112,8 @@ static sus::Vec<std::string> collect_template_params(
           s << " = ";
           // TODO: There can be types in here that need to be resolved,
           // and can be linked to database entries.
-          s << stmt_to_string(*e, val->getASTContext(), preprocessor);
+          s << stmt_to_string(*e, val->getASTContext().getSourceManager(),
+                              preprocessor);
         }
         template_params.push(sus::move(s).str());
       } else {
@@ -478,8 +479,10 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             decl->parameters().size());
         for (const clang::ParmVarDecl* v : decl->parameters()) {
           sus::Vec<Qualifiers> pointers;
-          for (clang::QualType ptr = v->getType(); ptr->isPointerType();
-               ptr = ptr->getPointeeType()) {
+          for (clang::QualType ptr = v->getType()->isReferenceType()
+                                         ? v->getType()->getPointeeType()
+                                         : v->getType();
+               ptr->isPointerType(); ptr = ptr->getPointeeType()) {
             pointers.push(Qualifiers{
                 .is_const = ptr.isConstQualified(),
                 .is_volatile = ptr.isVolatileQualified(),
@@ -824,7 +827,7 @@ class AstConsumer : public clang::ASTConsumer {
 
   void HandleTranslationUnit(clang::ASTContext& ast_cx) noexcept final {
     if (cx_.options.on_tu_complete.is_some()) {
-      ::sus::fn::call(*cx_.options.on_tu_complete, ast_cx);
+      ::sus::fn::call(*cx_.options.on_tu_complete, ast_cx, preprocessor_);
     }
   }
 

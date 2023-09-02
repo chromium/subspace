@@ -64,3 +64,20 @@
 #include "llvm/Support/WithColor.h"
 
 #pragma warning(pop)
+
+namespace subdoc {
+
+inline std::string llvm_int_to_string(llvm::APSInt i) noexcept {
+  llvm::SmallString<20> smallstr;
+  i.toString(smallstr, 10u, i.isSigned());
+  return std::string(smallstr.str());
+}
+
+inline std::string llvm_int_without_sign_to_string(llvm::APInt i,
+                                                   bool is_signed) noexcept {
+  llvm::SmallString<20> smallstr;
+  i.toString(smallstr, 10u, is_signed);
+  return std::string(smallstr.str());
+}
+
+}  // namespace subdoc

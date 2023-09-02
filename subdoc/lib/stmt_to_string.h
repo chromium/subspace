@@ -22,7 +22,7 @@ namespace subdoc {
 // be stringified but also contains info on all types so that we can look them
 // up in the database.
 std::string stmt_to_string(const clang::Stmt& stmt,
-                           const clang::ASTContext& context,
+                           const clang::SourceManager& sm,
                            clang::Preprocessor& preprocessor);
 
 }  // namespace subdoc

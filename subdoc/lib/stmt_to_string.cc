@@ -20,9 +20,8 @@ namespace subdoc {
 // be stringified but also contains info on all types so that we can look them
 // up in the database.
 std::string stmt_to_string(const clang::Stmt& stmt,
-                           const clang::ASTContext& context,
+                           const clang::SourceManager& sm,
                            clang::Preprocessor& preprocessor) {
-  const clang::SourceManager& sm = context.getSourceManager();
   const char* start = sm.getCharacterData(stmt.getBeginLoc());
   const char* end =
       sm.getCharacterData(preprocessor.getLocForEndOfToken(stmt.getEndLoc()));
