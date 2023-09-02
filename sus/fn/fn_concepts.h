@@ -51,21 +51,21 @@ struct Anything {
 /// A type that satisfies `FnOnce` will return a type that can be converted to
 /// `R` when called with the arguments `Args...`. `FnOnce` is satisfied by
 /// being callable as an rvalue (which is done by providing an operator() that
-/// is not `&`-qualified). Mutable and const lambdas will satisfy
-/// `FnOnce`.
+/// is not `&`-qualified). Mutable and const lambdas will satisfy `FnOnce`.
 ///
 /// The second argument of `FnOnce<F, S>` is a function signature with the
 /// format `ReturnType(Args...)`, where `Args...` are the arguments that will
 /// be passed to the `FnOnce` and `ReturnType` is what is expected to be
 /// received back. It would appear as a matching concept as:
 /// ```
-/// void function(FnOnce<ReturnType(Args...)> auto&& f) { ... }
+/// void function(FnOnce<ReturnType(Args...)> auto f) { ... }
 /// ```
 ///
 /// # Use of `FnOnce`
-/// `FnOnce` should be received as an rvalue (universal) reference typically, to
-/// avoid an unnecessary copy or move operation, but may also be received by
-/// value.
+/// `FnOnce` should be received by value typically. If received as a rvalue
+/// (universal) reference, it should be constrained by
+/// [`IsMoveRef<decltype(f)>`]($sus::mem::IsMoveRef) to avoid moving out of
+/// an lvalue in the caller.
 ///
 /// A `FnOnce` should be called by moving it with `sus::move()` when passing it
 /// to `sus::fn::call_once()` along with any arguments. It is moved-from after
@@ -97,7 +97,7 @@ struct Anything {
 /// ```
 /// // Accepts any type that can be called once with (Option<i32>) and returns
 /// // i32.
-/// i32 do_stuff_once(sus::fn::FnOnce<i32(sus::Option<i32>)> auto&& f) {
+/// i32 do_stuff_once(sus::fn::FnOnce<i32(sus::Option<i32>)> auto f) {
 ///   return sus::fn::call_once(sus::move(f), sus::some(400));
 /// }
 ///
@@ -120,7 +120,7 @@ struct Anything {
 /// };
 ///
 /// i32 map_class_once(const Class& c,
-///                    sus::fn::FnOnce<i32(const Class&)> auto&& f) {
+///                    sus::fn::FnOnce<i32(const Class&)> auto f) {
 ///   return sus::fn::call_once(sus::move(f), c);
 /// }
 ///
@@ -174,14 +174,14 @@ concept FnOnce = requires {
 /// be passed to the `FnMut` and `ReturnType` is what is expected to be
 /// received back. It would appear as a matching concept as:
 /// ```
-/// void function(FnMut<ReturnType(Args...)> auto&& f) { ... }
+/// void function(FnMut<ReturnType(Args...)> auto f) { ... }
 /// ```
 ///
 /// # Use of `FnMut`
-/// `FnMut` should be received as an rvalue (universal) reference typically,
-/// to avoid an unnecessary copy or move operation, but may also be received by
-/// value in order to isolate any mutation that occurs to stay within the
-/// function, or to take ownership of the closure.
+/// `FnMut` should be received by value typically. If received as a rvalue
+/// (universal) reference, it should be constrained by
+/// [`IsMoveRef<decltype(f)>`]($sus::mem::IsMoveRef) to avoid moving out of
+/// an lvalue in the caller.
 ///
 /// A `FnMut` should be called by passing it to `sus::fn::call_mut()` along with
 /// any arguments. A `FnMut` may be called any number of times, unlike `FnOnce`,
@@ -208,7 +208,7 @@ concept FnOnce = requires {
 /// ```
 /// // Accepts any type that can be called once with (Option<i32>) and returns
 /// // i32.
-/// static i32 do_stuff_mut(sus::fn::FnMut<i32(sus::Option<i32>)> auto&& f) {
+/// static i32 do_stuff_mut(sus::fn::FnMut<i32(sus::Option<i32>)> auto f) {
 ///   return sus::fn::call_mut(f, sus::some(400)) +
 ///          sus::fn::call_mut(f, sus::some(100));
 /// }
@@ -232,7 +232,7 @@ concept FnOnce = requires {
 /// };
 ///
 /// i32 map_class_mut(const Class& c,
-///                   sus::fn::FnMut<i32(const Class&)> auto&& f) {
+///                   sus::fn::FnMut<i32(const Class&)> auto f) {
 ///   return sus::fn::call_mut(f, c);
 /// }
 ///
@@ -292,13 +292,13 @@ concept FnMut = requires {
 /// ```
 ///
 /// # Use of `Fn`
-/// `Fn` should be received by const reference, so that calls to it can be sure
-/// to reach the intended const overload of operator() if there is more than
-/// one.
+/// `Fn` should be received by value typically, but can also be received as a
+/// const reference.
 ///
 /// A `Fn` should be called by passing it to `std::fn::call()` along with any
-/// arguments. A `Fn` may be called any number of times, unlike `FnOnce`, and
-/// should not be moved when called.
+/// arguments. This ensures the correct overload is called on the object. A `Fn`
+/// may be called any number of times, unlike `FnOnce`, and should not be moved
+/// when called.
 ///
 /// # Compatibility
 /// Any callable type that satisfies `Fn` will also satisfy `FnMut` and
@@ -389,8 +389,9 @@ concept Fn = requires {
 /// * Verifies that the thing being invoked is being moved from so that the
 ///   correct overload will be invoked.
 template <class F, class... Args>
-  requires(::sus::mem::IsMoveRef<F &&>)
-sus_always_inline constexpr decltype(auto) call_once(F&& f, Args&&... args) {
+sus_always_inline constexpr decltype(auto) call_once(F&& f, Args&&... args)
+  requires(::sus::mem::IsMoveRef<decltype(f)>)
+{
   return std::invoke(sus::move(f), sus::forward<Args>(args)...);
 }
 
@@ -422,5 +423,23 @@ sus_always_inline constexpr decltype(auto) call(F&& f, Args&&... args) {
   return std::invoke(static_cast<const std::remove_reference_t<F>&>(f),
                      sus::forward<Args>(args)...);
 }
+
+/// Resolves to the return type of a [`FnOnce`]($sus::fn::FnOnce) object when
+/// passed `Args...`.
+template <class F, class... Args>
+  requires(FnOnce<F, Anything(Args...)>)
+using ReturnOnce =
+    decltype(call_once(std::declval<F&&>(), std::declval<Args>()...));
+/// Resolves to the return type of a [`FnMut`]($sus::fn::FnMut) object when
+/// passed `Args...`.
+template <class F, class... Args>
+  requires(FnMut<F, Anything(Args...)>)
+using ReturnMut =
+    decltype(call_mut(std::declval<F&&>(), std::declval<Args>()...));
+/// Resolves to the return type of a [`Fn`]($sus::fn::Fn) object when
+/// passed `Args...`.
+template <class F, class... Args>
+  requires(Fn<F, Anything(Args...)>)
+using Return = decltype(call(std::declval<F&&>(), std::declval<Args>()...));
 
 }  // namespace sus::fn

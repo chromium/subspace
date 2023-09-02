@@ -478,11 +478,11 @@ class Option final {
 
   /// #[doc.overloads=ctor.some]
   template <std::convertible_to<T> U>
-  explicit constexpr Option(U&& t) noexcept
+  explicit constexpr Option(U&& u) noexcept
     requires(!std::is_reference_v<T> &&  //
              ::sus::mem::Move<T> &&      //
-             ::sus::mem::IsMoveRef<U &&>)
-      : Option(WITH_SOME, move_to_storage(t)) {}
+             ::sus::mem::IsMoveRef<decltype(u)>)
+      : Option(WITH_SOME, move_to_storage(u)) {}
 
   /// #[doc.overloads=ctor.some]
   template <std::convertible_to<T> U>
@@ -774,7 +774,7 @@ class Option final {
 
   /// Returns the contained value inside the Option, if there is one.
   /// Otherwise, returns the result of the given function.
-  constexpr T unwrap_or_else(::sus::fn::FnOnce<T()> auto&& f) && noexcept {
+  constexpr T unwrap_or_else(::sus::fn::FnOnce<T()> auto f) && noexcept {
     if (t_.state() == Some) {
       return t_.take_and_set_none();
     } else {
@@ -1097,7 +1097,7 @@ class Option final {
   /// [`unwrap_or_else`]($sus::option::Option::unwrap_or_else) in that
   /// it does not consume the option, and instead it can not be called on
   /// rvalues.
-  constexpr T& get_or_insert_with(::sus::fn::FnOnce<T()> auto&& f) & noexcept {
+  constexpr T& get_or_insert_with(::sus::fn::FnOnce<T()> auto f) & noexcept {
     if (t_.state() == None) {
       t_.construct_from_none(
           move_to_storage(::sus::fn::call_once(::sus::move(f))));
@@ -1127,21 +1127,17 @@ class Option final {
   ///
   /// Returns an [`Option<R>`]($sus::option::Option) in state `None`
   /// if the current option is in state `None`.
-  template <::sus::fn::FnOnce<::sus::fn::NonVoid(T&&)> MapFn, int&...,
-            class R = std::invoke_result_t<MapFn&&, T&&>>
-  constexpr Option<R> map(MapFn&& m) && noexcept {
+  template <::sus::fn::FnOnce<::sus::fn::NonVoid(T&&)> MapFn>
+  constexpr Option<sus::fn::ReturnOnce<MapFn, T&&>> map(MapFn m) && noexcept {
     if (t_.state() == Some) {
-      return Option<R>(
-          Option<R>::WITH_SOME,
-          ::sus::fn::call_once(::sus::move(m),
-                               static_cast<T&&>(t_.take_and_set_none())));
+      return Option<sus::fn::ReturnOnce<MapFn, T&&>>(::sus::fn::call_once(
+          ::sus::move(m), ::sus::forward<T>(t_.take_and_set_none())));
     } else {
-      return Option<R>();
+      return Option<sus::fn::ReturnOnce<MapFn, T&&>>();
     }
   }
-  template <::sus::fn::FnOnce<::sus::fn::NonVoid(T&&)> MapFn, int&...,
-            class R = std::invoke_result_t<MapFn&&, T&&>>
-  constexpr Option<R> map(MapFn&& m) const& noexcept
+  template <::sus::fn::FnOnce<::sus::fn::NonVoid(T&&)> MapFn>
+  constexpr Option<sus::fn::ReturnOnce<MapFn, T&&>> map(MapFn m) const& noexcept
     requires(::sus::mem::CopyOrRef<T>)
   {
     return ::sus::clone(*this).map(::sus::move(m));
@@ -1154,46 +1150,43 @@ class Option final {
   /// result of a function call, it is recommended to use
   /// [`map_or_else`]($sus::option::Option::map_or_else), which is
   /// lazily evaluated.
-  template <::sus::fn::FnOnce<::sus::fn::NonVoid(T&&)> MapFn, int&...,
-            class R = std::invoke_result_t<MapFn&&, T&&>>
-  constexpr R map_or(R default_result, MapFn&& m) && noexcept {
+  template <::sus::fn::FnOnce<::sus::fn::NonVoid(T&&)> MapFn>
+  constexpr sus::fn::ReturnOnce<MapFn, T&&> map_or(
+      sus::fn::ReturnOnce<MapFn, T&&> default_result, MapFn m) && noexcept {
     if (t_.state() == Some) {
       return ::sus::fn::call_once(::sus::move(m),
-                                  static_cast<T&&>(t_.take_and_set_none()));
+                                  ::sus::forward<T>(t_.take_and_set_none()));
     } else {
       return default_result;
     }
   }
-  template <::sus::fn::FnOnce<::sus::fn::NonVoid(T&&)> MapFn, int&...,
-            class R = std::invoke_result_t<MapFn&&, T&&>>
-  constexpr R map_or(R default_result, MapFn&& m) const& noexcept
+  template <::sus::fn::FnOnce<::sus::fn::NonVoid(T&&)> MapFn>
+  constexpr sus::fn::ReturnOnce<MapFn, T&&> map_or(
+      sus::fn::ReturnOnce<MapFn, T&&> default_result, MapFn m) const& noexcept
     requires(::sus::mem::CopyOrRef<T>)
   {
-    return ::sus::clone(*this).map_or(::sus::move(default_result),
-                                      ::sus::move(m));
+    return ::sus::clone(*this).map_or(
+        ::sus::forward<decltype(default_result)>(default_result),
+        ::sus::move(m));
   }
 
   /// Computes a default function result (if none), or applies a different
   /// function to the contained value (if any).
   template <::sus::fn::FnOnce<::sus::fn::NonVoid()> DefaultFn,
-            ::sus::fn::FnOnce<::sus::fn::NonVoid(T&&)> MapFn, int&...,
-            class D = std::invoke_result_t<DefaultFn>,
-            class R = std::invoke_result_t<MapFn, T&&>>
-    requires(std::is_same_v<D, R>)
-  constexpr R map_or_else(DefaultFn&& default_fn, MapFn&& m) && noexcept {
+            ::sus::fn::FnOnce<::sus::fn::ReturnOnce<DefaultFn>(T&&)> MapFn>
+  constexpr sus::fn::ReturnOnce<DefaultFn> map_or_else(DefaultFn default_fn,
+                                                       MapFn m) && noexcept {
     if (t_.state() == Some) {
       return ::sus::fn::call_once(::sus::move(m),
-                                  static_cast<T&&>(t_.take_and_set_none()));
+                                  ::sus::forward<T>(t_.take_and_set_none()));
     } else {
-      return ::sus::move(default_fn)();
+      return ::sus::fn::call_once(::sus::move(default_fn));
     }
   }
   template <::sus::fn::FnOnce<::sus::fn::NonVoid()> DefaultFn,
-            ::sus::fn::FnOnce<::sus::fn::NonVoid(T&&)> MapFn, int&...,
-            class D = std::invoke_result_t<DefaultFn>,
-            class R = std::invoke_result_t<MapFn, T&&>>
-    requires(std::is_same_v<D, R>)
-  constexpr R map_or_else(DefaultFn&& default_fn, MapFn&& m) const& noexcept
+            ::sus::fn::FnOnce<::sus::fn::ReturnOnce<DefaultFn>(T&&)> MapFn>
+  constexpr sus::fn::ReturnOnce<DefaultFn> map_or_else(DefaultFn default_fn,
+                                                       MapFn m) const& noexcept
     requires(::sus::mem::CopyOrRef<T>)
   {
     return ::sus::clone(*this).map_or_else(::sus::move(default_fn),
@@ -1208,7 +1201,7 @@ class Option final {
   /// The predicate function must be able to receive `const T&` and return a
   /// value that converts to`bool`.
   constexpr Option<T> filter(
-      ::sus::fn::FnOnce<bool(const std::remove_reference_t<T>&)> auto&&
+      ::sus::fn::FnOnce<bool(const std::remove_reference_t<T>&)> auto
           p) && noexcept {
     if (t_.state() == Some) {
       if (::sus::fn::call_once(
@@ -1225,7 +1218,7 @@ class Option final {
     }
   }
   constexpr Option<T> filter(
-      ::sus::fn::FnOnce<bool(const std::remove_reference_t<T>&)> auto&& p)
+      ::sus::fn::FnOnce<bool(const std::remove_reference_t<T>&)> auto p)
       const& noexcept
     requires(::sus::mem::CopyOrRef<T>)
   {
@@ -1258,22 +1251,19 @@ class Option final {
   /// [`Option<U>`]($sus::option::Option).
   ///
   /// Some languages call this operation flatmap.
-  template <::sus::fn::FnOnce<::sus::fn::NonVoid(T&&)> AndFn, int&...,
-            class R = std::invoke_result_t<AndFn, T&&>,
-            class U = ::sus::option::__private::IsOptionType<R>::inner_type>
-    requires(::sus::option::__private::IsOptionType<R>::value)
-  constexpr Option<U> and_then(AndFn&& f) && noexcept {
-    if (t_.state() == Some)
+  template <::sus::fn::FnOnce<::sus::fn::NonVoid(T&&)> AndFn>
+    requires(__private::IsOptionType<sus::fn::ReturnOnce<AndFn, T &&>>::value)
+  constexpr sus::fn::ReturnOnce<AndFn, T&&> and_then(AndFn f) && noexcept {
+    if (t_.state() == Some) {
       return ::sus::fn::call_once(::sus::move(f),
-                                  static_cast<T&&>(t_.take_and_set_none()));
-    else
-      return Option<U>();
+                                  ::sus::forward<T>(t_.take_and_set_none()));
+    } else {
+      return sus::fn::ReturnOnce<AndFn, T&&>();
+    }
   }
-  template <::sus::fn::FnOnce<::sus::fn::NonVoid(T&&)> AndFn, int&...,
-            class R = std::invoke_result_t<AndFn, T&&>,
-            class U = ::sus::option::__private::IsOptionType<R>::inner_type>
-    requires(::sus::option::__private::IsOptionType<R>::value)
-  constexpr Option<U> and_then(AndFn&& f) const& noexcept
+  template <::sus::fn::FnOnce<::sus::fn::NonVoid(T&&)> AndFn>
+    requires(__private::IsOptionType<sus::fn::ReturnOnce<AndFn, T &&>>::value)
+  constexpr sus::fn::ReturnOnce<AndFn, T&&> and_then(AndFn f) const& noexcept
     requires(::sus::mem::CopyOrRef<T>)
   {
     return ::sus::clone(*this).and_then(::sus::move(f));
@@ -1296,14 +1286,14 @@ class Option final {
   /// Consumes and returns an option with the same value if this option contains
   /// a value, otherwise returns the option returned by `f`.
   constexpr Option<T> or_else(
-      ::sus::fn::FnOnce<Option<T>()> auto&& f) && noexcept {
+      ::sus::fn::FnOnce<Option<T>()> auto f) && noexcept {
     if (t_.state() == Some)
       return Option(WITH_SOME, t_.take_and_set_none());
     else
       return ::sus::fn::call_once(::sus::move(f));
   }
   constexpr Option<T> or_else(
-      ::sus::fn::FnOnce<Option<T>()> auto&& f) const& noexcept
+      ::sus::fn::FnOnce<Option<T>()> auto f) const& noexcept
     requires(::sus::mem::CopyOrRef<T>)
   {
     return ::sus::clone(*this).or_else(::sus::move(f));
@@ -1367,22 +1357,23 @@ class Option final {
   /// `None` to `Err(f())`.
   //
   // TODO: No refs in Result: https://github.com/chromium/subspace/issues/133
-  template <::sus::fn::FnOnce<::sus::fn::NonVoid()> ElseFn, int&...,
-            class E = std::invoke_result_t<ElseFn>,
-            class Result = ::sus::result::Result<T, E>>
-  constexpr Result ok_or_else(ElseFn&& f) && noexcept
-    requires(!std::is_reference_v<T> && !std::is_reference_v<E>)
+  template <::sus::fn::FnOnce<::sus::fn::NonVoid()> ElseFn>
+  constexpr sus::result::Result<T, sus::fn::ReturnOnce<ElseFn>> ok_or_else(
+      ElseFn f) && noexcept
+    requires(!std::is_reference_v<T> &&  //
+             !std::is_reference_v<sus::fn::ReturnOnce<ElseFn>>)
   {
+    using R = sus::result::Result<T, sus::fn::ReturnOnce<ElseFn>>;
     if (t_.state() == Some)
-      return Result(t_.take_and_set_none());
+      return R(t_.take_and_set_none());
     else
-      return Result::with_err(::sus::fn::call_once(::sus::move(f)));
+      return R::with_err(::sus::fn::call_once(::sus::move(f)));
   }
-  template <::sus::fn::FnOnce<::sus::fn::NonVoid()> ElseFn, int&...,
-            class E = std::invoke_result_t<ElseFn>,
-            class Result = ::sus::result::Result<T, E>>
-  constexpr Result ok_or_else(ElseFn&& f) const& noexcept
-    requires(!std::is_reference_v<T> && !std::is_reference_v<E> &&
+  template <::sus::fn::FnOnce<::sus::fn::NonVoid()> ElseFn>
+  constexpr sus::result::Result<T, sus::fn::ReturnOnce<ElseFn>> ok_or_else(
+      ElseFn f) const& noexcept
+    requires(!std::is_reference_v<T> &&                            //
+             !std::is_reference_v<sus::fn::ReturnOnce<ElseFn>> &&  //
              ::sus::mem::CopyOrRef<T>)
   {
     return ::sus::clone(*this).ok_or_else(::sus::move(f));

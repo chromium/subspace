@@ -625,13 +625,12 @@ class [[nodiscard]] Result final {
   /// self.
   ///
   ///  This function can be used for control flow based on `Result` values.
-  template <::sus::fn::FnOnce<::sus::fn::NonVoid(TUnlessVoid&&)> AndFn, int&...,
-            class R = std::invoke_result_t<AndFn, TUnlessVoid&&>,
-            class OkType = __private::IsResultType<R>::ok_type,
-            class ErrType = __private::IsResultType<R>::err_type>
-    requires(!std::is_void_v<T> &&  //
-             __private::IsResultType<R>::value)
-  constexpr Result<OkType, ErrType> and_then(AndFn&& op) && noexcept {
+  template <::sus::fn::FnOnce<::sus::fn::NonVoid(TUnlessVoid&&)> AndFn>
+    requires(
+        !std::is_void_v<T> &&  //
+        __private::IsResultWithErrType<sus::fn::ReturnOnce<AndFn, T &&>, E>)
+  constexpr sus::fn::ReturnOnce<AndFn, TUnlessVoid&&> and_then(
+      AndFn op) && noexcept {
     ::sus::check(state_ != ResultState::IsMoved);
     switch (::sus::mem::replace(state_, ResultState::IsMoved)) {
       case ResultState::IsOk:
@@ -639,27 +638,26 @@ class [[nodiscard]] Result final {
             ::sus::move(op), ::sus::mem::take_and_destruct(
                                  ::sus::marker::unsafe_fn, storage_.ok_));
       case ResultState::IsErr:
-        return Result<OkType, ErrType>::with_err(::sus::mem::take_and_destruct(
-            ::sus::marker::unsafe_fn, storage_.err_));
+        return sus::fn::ReturnOnce<AndFn, T&&>::with_err(
+            ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
+                                          storage_.err_));
       case ResultState::IsMoved: break;
     }
     // SAFETY: The state_ is verified to be Ok or Err at the top of the
     // function.
     sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
-  template <::sus::fn::FnOnce<::sus::fn::NonVoid()> AndFn, int&...,
-            class R = std::invoke_result_t<AndFn>,
-            class OkType = __private::IsResultType<R>::ok_type,
-            class ErrType = __private::IsResultType<R>::err_type>
+  template <::sus::fn::FnOnce<::sus::fn::NonVoid()> AndFn>
     requires(std::is_void_v<T> &&  //
-             __private::IsResultType<R>::value)
-  constexpr Result<OkType, ErrType> and_then(AndFn&& op) && noexcept {
+             __private::IsResultWithErrType<sus::fn::ReturnOnce<AndFn>, E>)
+  constexpr sus::fn::ReturnOnce<AndFn> and_then(AndFn op) && noexcept {
     ::sus::check(state_ != ResultState::IsMoved);
     switch (::sus::mem::replace(state_, ResultState::IsMoved)) {
       case ResultState::IsOk: return ::sus::fn::call_once(::sus::move(op));
       case ResultState::IsErr:
-        return Result<OkType, ErrType>::with_err(::sus::mem::take_and_destruct(
-            ::sus::marker::unsafe_fn, storage_.err_));
+        return sus::fn::ReturnOnce<AndFn>::with_err(
+            ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
+                                          storage_.err_));
       case ResultState::IsMoved: break;
     }
     // SAFETY: The state_ is verified to be Ok or Err at the top of the
@@ -1381,11 +1379,10 @@ struct sus::iter::FromIteratorImpl<::sus::result::Result<T, E>> {
   template <class IntoIter, int&...,
             class Iter =
                 std::decay_t<decltype(std::declval<IntoIter&&>().into_iter())>,
-            class R = typename Iter::Item,
-            class U = ::sus::result::__private::IsResultType<R>::ok_type,
-            class F = ::sus::result::__private::IsResultType<R>::err_type>
-    requires(::sus::result::__private::IsResultType<R>::value &&
-             std::same_as<E, F> &&
+            class Item = typename Iter::Item,
+            class U = ::sus::result::__private::IsResultType<Item>::ok_type,
+            class F = ::sus::result::__private::IsResultType<Item>::err_type>
+    requires(::sus::result::__private::IsResult<Item> && std::same_as<E, F> &&
              ::sus::iter::IntoIterator<IntoIter, ::sus::result::Result<U, E>>)
   static constexpr ::sus::result::Result<T, E> from_iter(
       IntoIter&& result_iter) noexcept

@@ -62,7 +62,7 @@ template <class ToType, class FromType>
 concept TryFrom = requires(FromType&& from) {
   {
     ToType::try_from(::sus::forward<FromType>(from))
-  } -> ::sus::result::__private::IsResultWithSuccessType<ToType>;
+  } -> ::sus::result::__private::IsResultWithOkType<ToType>;
 };
 
 }  // namespace sus::construct
