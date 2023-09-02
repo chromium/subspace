@@ -26,7 +26,9 @@ namespace sus::iter {
 namespace __private {
 template <class T, class U>
 constexpr inline Option<U> and_then_or_clear(
-    Option<T>& opt, ::sus::fn::FnOnce<Option<U>(T&)> auto&& f) {
+    Option<T>& opt, ::sus::fn::FnOnce<Option<U>(T&)> auto&& f)
+  requires(sus::mem::IsMoveRef<decltype(f)>)
+{
   if (opt.is_none()) {
     return Option<U>();
   } else {

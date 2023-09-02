@@ -17,10 +17,10 @@
 #include <unordered_map>
 #include <utility>
 
+#include "sus/collections/compat_pair_concept.h"
 #include "sus/iter/from_iterator.h"
 #include "sus/iter/iterator.h"
 #include "sus/mem/forward.h"
-#include "sus/collections/compat_pair_concept.h"
 
 template <class Key, class T, class Hash, class KeyEqual, class Allocator>
 struct sus::iter::FromIteratorImpl<
@@ -33,7 +33,9 @@ struct sus::iter::FromIteratorImpl<
       class IntoIter,
       class Item = typename sus::iter::IntoIteratorOutputType<IntoIter>::Item>
     requires(sus::collections::compat::Pair<Item, Key, T>)
-  static constexpr Self from_iter(IntoIter&& into_iter) noexcept {
+  static constexpr Self from_iter(IntoIter&& into_iter) noexcept
+    requires(sus::mem::IsMoveRef<decltype(into_iter)>)
+  {
     auto&& iter = sus::move(into_iter).into_iter();
     auto s = Self();
     for (auto&& [key, t] : iter)
@@ -53,7 +55,9 @@ struct sus::iter::FromIteratorImpl<
       class IntoIter,
       class Item = typename sus::iter::IntoIteratorOutputType<IntoIter>::Item>
     requires(sus::collections::compat::Pair<Item, Key, T>)
-  static constexpr Self from_iter(IntoIter&& into_iter) noexcept {
+  static constexpr Self from_iter(IntoIter&& into_iter) noexcept
+    requires(sus::mem::IsMoveRef<decltype(into_iter)>)
+  {
     auto&& iter = sus::move(into_iter).into_iter();
     auto s = Self();
     for (auto&& [key, t] : iter)

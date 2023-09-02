@@ -179,7 +179,9 @@ constexpr T min_by(
     T a sus_lifetimebound, T b sus_lifetimebound,
     ::sus::fn::FnOnce<std::weak_ordering(
         const std::remove_reference_t<T>&,
-        const std::remove_reference_t<T>&)> auto&& compare) noexcept {
+        const std::remove_reference_t<T>&)> auto&& compare) noexcept
+  requires(sus::mem::IsMoveRef<decltype(compare)>)
+{
   return ::sus::fn::call_once(::sus::move(compare), a, b) ==
                  std::weak_ordering::greater
              ? ::sus::forward<T>(b)
@@ -239,7 +241,9 @@ constexpr T max_by(
     T a sus_lifetimebound, T b sus_lifetimebound,
     ::sus::fn::FnOnce<std::weak_ordering(
         const std::remove_reference_t<T>&,
-        const std::remove_reference_t<T>&)> auto&& compare) noexcept {
+        const std::remove_reference_t<T>&)> auto&& compare) noexcept
+  requires(sus::mem::IsMoveRef<decltype(compare)>)
+{
   return ::sus::fn::call_once(::sus::move(compare), a, b) ==
                  std::weak_ordering::greater
              ? ::sus::forward<T>(a)

@@ -22,7 +22,9 @@
 template <class T, class Allocator>
 struct sus::iter::FromIteratorImpl<std::vector<T, Allocator>> {
   static constexpr std::vector<T, Allocator> from_iter(
-      ::sus::iter::IntoIterator<T> auto&& into_iter) noexcept {
+      ::sus::iter::IntoIterator<T> auto&& into_iter) noexcept
+    requires(sus::mem::IsMoveRef<decltype(into_iter)>)
+  {
     auto&& iter = sus::move(into_iter).into_iter();
     // TODO: In C++23, use the `std::from_range` ctor to speed up construction
     // here. Then it should match `sus::Vec` on the BenchVecMap benchmark with

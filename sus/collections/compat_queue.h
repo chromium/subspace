@@ -22,7 +22,9 @@
 template <class T, class Collection>
 struct sus::iter::FromIteratorImpl<std::queue<T, Collection>> {
   static constexpr std::queue<T, Collection> from_iter(
-      ::sus::iter::IntoIterator<T> auto&& into_iter) noexcept {
+      ::sus::iter::IntoIterator<T> auto&& into_iter) noexcept
+    requires(sus::mem::IsMoveRef<decltype(into_iter)>)
+  {
     auto&& iter = sus::move(into_iter).into_iter();
     auto v = std::queue<T, Collection>();
     for (T&& t : iter) v.push(::sus::move(t));
@@ -31,9 +33,12 @@ struct sus::iter::FromIteratorImpl<std::queue<T, Collection>> {
 };
 
 template <class T, class Collection, class Compare>
-struct sus::iter::FromIteratorImpl<std::priority_queue<T, Collection, Compare>> {
+struct sus::iter::FromIteratorImpl<
+    std::priority_queue<T, Collection, Compare>> {
   static constexpr std::priority_queue<T, Collection, Compare> from_iter(
-      ::sus::iter::IntoIterator<T> auto&& into_iter) noexcept {
+      ::sus::iter::IntoIterator<T> auto&& into_iter) noexcept
+    requires(sus::mem::IsMoveRef<decltype(into_iter)>)
+  {
     auto&& iter = sus::move(into_iter).into_iter();
     auto v = std::priority_queue<T, Collection, Compare>();
     for (T&& t : iter) v.push(::sus::move(t));

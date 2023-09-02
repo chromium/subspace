@@ -23,7 +23,9 @@
 template <class Key, class Compare, class Allocator>
 struct sus::iter::FromIteratorImpl<std::set<Key, Compare, Allocator>> {
   static constexpr std::set<Key, Compare, Allocator> from_iter(
-      ::sus::iter::IntoIterator<Key> auto&& into_iter) noexcept {
+      ::sus::iter::IntoIterator<Key> auto&& into_iter) noexcept
+    requires(sus::mem::IsMoveRef<decltype(into_iter)>)
+  {
     auto&& iter = sus::move(into_iter).into_iter();
     auto s = std::set<Key, Compare, Allocator>();
     for (Key k : iter) s.insert(k);
@@ -34,7 +36,9 @@ struct sus::iter::FromIteratorImpl<std::set<Key, Compare, Allocator>> {
 template <class Key, class Compare, class Allocator>
 struct sus::iter::FromIteratorImpl<std::multiset<Key, Compare, Allocator>> {
   static constexpr std::multiset<Key, Compare, Allocator> from_iter(
-      ::sus::iter::IntoIterator<Key> auto&& into_iter) noexcept {
+      ::sus::iter::IntoIterator<Key> auto&& into_iter) noexcept
+    requires(sus::mem::IsMoveRef<decltype(into_iter)>)
+  {
     auto&& iter = sus::move(into_iter).into_iter();
     auto s = std::multiset<Key, Compare, Allocator>();
     for (Key k : iter) s.insert(k);
