@@ -82,17 +82,17 @@ static void copy_and_multiply_ints(ankerl::nanobench::Bench& b,
 
 TEST(BenchVecMap, CopyAndMultiplyInts_1000) {
   auto data = generate_data(1'000u);
-  auto b = ankerl::nanobench::Bench().minEpochIterations(200000);
+  auto b = ankerl::nanobench::Bench();
   copy_and_multiply_ints(b, data, 1'000u);
 }
 TEST(BenchVecMap, CopyAndMultiplyInts_100_000) {
   auto data = generate_data(100'000u);
-  auto b = ankerl::nanobench::Bench().minEpochIterations(54272);
+  auto b = ankerl::nanobench::Bench();
   copy_and_multiply_ints(b, data, 100'000u);
 }
 TEST(BenchVecMap, CopyAndMultiplyInts_10_000_000) {
   auto data = generate_data(10'000'000u);
-  auto b = ankerl::nanobench::Bench().minEpochIterations(30);
+  auto b = ankerl::nanobench::Bench();
   copy_and_multiply_ints(b, data, 10'000'000u);
 }
 
@@ -132,17 +132,17 @@ static void transform_to_indicies(ankerl::nanobench::Bench& b,
 
 TEST(BenchVecMap, TransformToIndices_1000) {
   auto data = generate_key_data(1'000u);
-  auto b = ankerl::nanobench::Bench().minEpochIterations(200000);
+  auto b = ankerl::nanobench::Bench();
   transform_to_indicies(b, data, 1'000u);
 }
 TEST(BenchVecMap, TransformToIndices_100_000) {
   auto data = generate_key_data(100'000u);
-  auto b = ankerl::nanobench::Bench().minEpochIterations(54272);
+  auto b = ankerl::nanobench::Bench();
   transform_to_indicies(b, data, 100'000u);
 }
 TEST(BenchVecMap, TransformToIndices_10_000_000) {
   auto data = generate_key_data(10'000'000u);
-  auto b = ankerl::nanobench::Bench().minEpochIterations(30);
+  auto b = ankerl::nanobench::Bench();
   transform_to_indicies(b, data, 10'000'000u);
 }
 
