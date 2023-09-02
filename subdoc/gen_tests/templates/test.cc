@@ -4,12 +4,15 @@ template <class Type, auto AutoValue, class TypeWithDefault = int,
 struct TemplateStruct {};
 
 template <class T>
+concept Concept = true;
+
+template <class T>
 struct TemplateMethods {
   TemplateMethods();
 
-  T template_params(T);
+  T template_params(T) requires(Concept<T>);
 
-  template <class U>
+  template <Concept U>
   U local_template_params(T, U);
 
   template <class U>

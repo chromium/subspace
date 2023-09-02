@@ -349,7 +349,7 @@ sus::Result<void, MarkdownToHtmlError> generate_record_methods(
           function_element_from_sorted(element, type, sorted_fn);
       if (auto result = generate_function_method_reference(
               items_div, func,
-              /*with constraints=*/false, page_state);
+              /*with constraints=*/true, page_state);
           result.is_err()) {
         return sus::err(sus::move(result).unwrap_err());
       }
