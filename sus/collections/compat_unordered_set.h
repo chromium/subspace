@@ -24,7 +24,9 @@ template <class Key, class Hash, class KeyEqual, class Allocator>
 struct sus::iter::FromIteratorImpl<
     std::unordered_set<Key, Hash, KeyEqual, Allocator>> {
   static constexpr std::unordered_set<Key, Hash, KeyEqual, Allocator> from_iter(
-      ::sus::iter::IntoIterator<Key> auto&& into_iter) noexcept {
+      ::sus::iter::IntoIterator<Key> auto&& into_iter) noexcept
+    requires(sus::mem::IsMoveRef<decltype(into_iter)>)
+  {
     auto&& iter = sus::move(into_iter).into_iter();
     auto s = std::unordered_set<Key, Hash, KeyEqual, Allocator>();
     for (Key k : iter) s.insert(k);
@@ -36,7 +38,9 @@ template <class Key, class Hash, class KeyEqual, class Allocator>
 struct sus::iter::FromIteratorImpl<
     std::unordered_multiset<Key, Hash, KeyEqual, Allocator>> {
   static constexpr std::unordered_multiset<Key, Hash, KeyEqual, Allocator>
-  from_iter(::sus::iter::IntoIterator<Key> auto&& into_iter) noexcept {
+  from_iter(::sus::iter::IntoIterator<Key> auto&& into_iter) noexcept
+    requires(sus::mem::IsMoveRef<decltype(into_iter)>)
+  {
     auto&& iter = sus::move(into_iter).into_iter();
     auto s = std::unordered_multiset<Key, Hash, KeyEqual, Allocator>();
     for (Key k : iter) s.insert(k);

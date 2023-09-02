@@ -322,13 +322,14 @@ class Array final {
   ///
   /// To just walk each element and map them, consider using `iter()` and
   /// `Iterator::map`. This does not require consuming the array.
-  template <::sus::fn::FnMut<::sus::fn::NonVoid(T&&)> MapFn, int&...,
-            class R = std::invoke_result_t<MapFn&&, T&&>>
+  template <::sus::fn::FnMut<::sus::fn::NonVoid(T&&)> MapFn>
     requires(N > 0)
-  Array<R, N> map(MapFn f) && noexcept {
-    return Array<R, N>::with_initializer([this, &f, i = 0_usize]() mutable {
-      return f(::sus::move(*(storage_.data_ + ::sus::mem::replace(i, i + 1u))));
-    });
+  Array<sus::fn::ReturnOnce<MapFn, T&&>, N> map(MapFn f) && noexcept {
+    return Array<sus::fn::ReturnOnce<MapFn, T&&>, N>::with_initializer(
+        [this, &f, i = 0_usize]() mutable {
+          return f(
+              ::sus::move(*(storage_.data_ + ::sus::mem::replace(i, i + 1u))));
+        });
   }
 
   /// Satisfies the [`Eq<Array<T, N>, Array<U, N>>`]($sus::ops::Eq) concept.

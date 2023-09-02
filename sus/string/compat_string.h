@@ -22,7 +22,9 @@
 template <class Char, class Traits, class Allocator>
 struct sus::iter::FromIteratorImpl<std::basic_string<Char, Traits, Allocator>> {
   static constexpr std::basic_string<Char, Traits, Allocator> from_iter(
-      ::sus::iter::IntoIterator<Char> auto&& into_iter) noexcept {
+      ::sus::iter::IntoIterator<Char> auto&& into_iter) noexcept
+    requires(sus::mem::IsMoveRef<decltype(into_iter)>)
+  {
     auto&& iter = sus::move(into_iter).into_iter();
     auto [lower, upper] = iter.size_hint();
     auto s = std::basic_string<Char, Traits, Allocator>();

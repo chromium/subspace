@@ -22,7 +22,9 @@
 template <class T, class Allocator>
 struct sus::iter::FromIteratorImpl<std::deque<T, Allocator>> {
   static constexpr std::deque<T, Allocator> from_iter(
-      ::sus::iter::IntoIterator<T> auto&& into_iter) noexcept {
+      ::sus::iter::IntoIterator<T> auto&& into_iter) noexcept
+    requires(sus::mem::IsMoveRef<decltype(into_iter)>)
+  {
     auto&& iter = sus::move(into_iter).into_iter();
     auto [lower, upper] = iter.size_hint();
     auto v = std::deque<T, Allocator>();

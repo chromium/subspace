@@ -172,7 +172,7 @@ template <::sus::ops::StrongOrd Key>
 ::sus::result::
     Result<::sus::num::usize, ::sus::num::usize> constexpr binary_search_by_key(
         const Key& key,
-        ::sus::fn::FnMut<Key(const T&)> auto&& f) const& noexcept {
+        ::sus::fn::FnMut<Key(const T&)> auto f) const& noexcept {
   return binary_search_by([&key, &f](const T& p) -> std::strong_ordering {
     return ::sus::fn::call_mut(f, p) <=> key;
   });

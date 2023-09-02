@@ -31,7 +31,9 @@ struct sus::iter::FromIteratorImpl<std::map<Key, T, Compare, Allocator>> {
       class IntoIter,
       class Item = typename sus::iter::IntoIteratorOutputType<IntoIter>::Item>
     requires(sus::collections::compat::Pair<Item, Key, T>)
-  static constexpr Self from_iter(IntoIter&& into_iter) noexcept {
+  static constexpr Self from_iter(IntoIter&& into_iter) noexcept
+    requires(sus::mem::IsMoveRef<decltype(into_iter)>)
+  {
     auto&& iter = sus::move(into_iter).into_iter();
     auto s = Self();
     for (auto&& [key, t] : iter)
@@ -50,7 +52,9 @@ struct sus::iter::FromIteratorImpl<std::multimap<Key, T, Compare, Allocator>> {
       class IntoIter,
       class Item = typename sus::iter::IntoIteratorOutputType<IntoIter>::Item>
     requires(sus::collections::compat::Pair<Item, Key, T>)
-  static constexpr Self from_iter(IntoIter&& into_iter) noexcept {
+  static constexpr Self from_iter(IntoIter&& into_iter) noexcept
+    requires(sus::mem::IsMoveRef<decltype(into_iter)>)
+  {
     auto&& iter = sus::move(into_iter).into_iter();
     auto s = Self();
     for (auto&& [key, t] : iter)
