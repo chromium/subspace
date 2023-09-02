@@ -1067,7 +1067,7 @@ struct sus::iter::FromIteratorImpl<::sus::collections::Vec<T>> {
   static constexpr ::sus::collections::Vec<T> from_iter(
       ::sus::iter::IntoIterator<T> auto&& ii) noexcept
     requires(::sus::mem::Move<T> &&  //
-             ::sus::mem::IsMoveRef<T &&>)
+             ::sus::mem::IsMoveRef<decltype(ii)>)
   {
     auto v = ::sus::collections::Vec<T>();
     v.extend(::sus::move(ii));

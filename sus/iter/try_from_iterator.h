@@ -77,12 +77,13 @@ struct TryFromIteratorUnwrapper final
 template <class C, IntoIteratorAny IntoIter, int&...,
           class FromType = typename IntoIteratorOutputType<IntoIter>::Item,
           class ToType = ::sus::ops::TryRemapOutputType<FromType, C>>
-  requires(::sus::mem::IsMoveRef<IntoIter &&> &&  //
-           ::sus::ops::Try<FromType> &&           //
+  requires(::sus::ops::Try<FromType> &&  //
            FromIterator<C, ::sus::ops::TryOutputType<FromType>> &&
            // Void can not be collected from.
            !std::is_void_v<::sus::ops::TryOutputType<FromType>>)
-constexpr inline ToType try_from_iter(IntoIter&& into_iter) noexcept {
+constexpr inline ToType try_from_iter(IntoIter&& into_iter) noexcept
+  requires(::sus::mem::IsMoveRef<decltype(into_iter)>)
+{
   // This is supposed to be guaranteed by TryRemapOutputType.
   static_assert(::sus::ops::TryErrorConvertibleTo<FromType, ToType>);
 

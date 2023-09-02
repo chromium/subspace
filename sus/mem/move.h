@@ -83,6 +83,9 @@ sus_pure_const sus_always_inline constexpr decltype(auto) move(T&& t) noexcept {
 /// ensure the caller provides something that was moved from, akin to receiving
 /// by value. This avoids inadvertantly moving out of an lvalue in the caller.
 ///
+/// Always invoke IsMoveRef with the `decltype` of the argument being tested to
+/// ensure the correct type is tested, such as `IsMoveRef<decltype(arg)>`.
+///
 /// In the common case, when you want to receive a parameter that will be moved,
 /// it should be received by value. However, library implementors sometimes with
 /// to receive an *rvalue reference*. That is a reference to an rvalue which can
@@ -91,13 +94,13 @@ sus_pure_const sus_always_inline constexpr decltype(auto) move(T&& t) noexcept {
 /// the reference would move from the caller's lvalue.
 ///
 /// To receive an rvalue reference (and not a universal reference), constrain
-/// the input universal reference `T&&` by the `IsMoveRef` concept with
-/// `requires(IsMoveRef<T&&>)`. When this is satisfied, the input will
+/// the input universal reference `T&& t` by the `IsMoveRef` concept with
+/// `requires(IsMoveRef<decltype(t)>)`. When this is satisfied, the input will
 /// need to be an rvalue. In this case, `sus::move()` will always perform a move
 /// from an rvalue and will not move out of an lvalue in the caller.
 ///
 /// `sus::forward<T>` can also be used with universal references, but when
-/// constructing a v`alue type `T` it will implicitly copy from const
+/// constructing a value type `T` it will implicitly copy from const
 /// references.
 template <class T>
 concept IsMoveRef = std::is_rvalue_reference_v<T> &&

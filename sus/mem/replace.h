@@ -53,9 +53,10 @@ template <class T, std::convertible_to<T> U>
 template <class T, std::convertible_to<T> U>
   requires(!std::is_array_v<T> &&  //
            ::sus::mem::Move<T> &&  //
-           !std::is_const_v<T> &&  //
-           ::sus::mem::IsMoveRef<U &&>)
-[[nodiscard]] inline constexpr T replace(T& dest, U&& src) noexcept {
+           !std::is_const_v<T>)
+[[nodiscard]] inline constexpr T replace(T& dest, U&& src) noexcept
+  requires(::sus::mem::IsMoveRef<decltype(src)>)
+{
   auto old = T(::sus::move(dest));
   T&& typed_src = ::sus::move(src);  // Possibly converts from U to T.
   dest = ::sus::move(typed_src);
