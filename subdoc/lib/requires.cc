@@ -41,10 +41,7 @@ std::string template_arg_to_string(
       sus::unreachable();
     case clang::TemplateArgument::ArgKind::NullPtr: return "nullptr";
     case clang::TemplateArgument::ArgKind::Integral: {
-      llvm::APSInt i = arg.getAsIntegral();
-      llvm::SmallString<20> str;
-      i.toString(str, 10u, i.isSigned());
-      return std::string(str.str());
+      return llvm_int_to_string(arg.getAsIntegral());
     }
     case clang::TemplateArgument::ArgKind::Template:
       // How can this happen in a concept instantiation?
@@ -100,7 +97,7 @@ void requires_constraints_add_expr(RequiresConstraints& constaints,
     // * `::sus::mem::size_of<S>() <= ::sus::mem::size_of<_primitive>()`
     constaints.list.push(
         RequiresConstraint::with<RequiresConstraint::Tag::Text>(
-            stmt_to_string(*e, context, preprocessor)));
+            stmt_to_string(*e, context.getSourceManager(), preprocessor)));
   }
 }
 

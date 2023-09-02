@@ -39,7 +39,7 @@ struct RunOptions {
     return sus::move(*this);
   }
   RunOptions set_on_tu_complete(
-      sus::fn::FnBox<void(clang::ASTContext&)> fn) && {
+      sus::fn::FnBox<void(clang::ASTContext&, clang::Preprocessor&)> fn) && {
     on_tu_complete = sus::some(sus::move(fn));
     return sus::move(*this);
   }
@@ -54,7 +54,8 @@ struct RunOptions {
   ///
   /// Used for tests to observe the AST and test subdoc methods that act on
   /// things from the AST.
-  sus::Option<sus::fn::FnBox<void(clang::ASTContext&)>> on_tu_complete;
+  sus::Option<sus::fn::FnBox<void(clang::ASTContext&, clang::Preprocessor&)>>
+      on_tu_complete;
   /// The overview markdown which will be applied as the doc comment to the
   /// global namespace/project overview page. This is the raw markdown text, not
   /// parsed to html yet.
