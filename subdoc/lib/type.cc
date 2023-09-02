@@ -166,7 +166,15 @@ Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
                      &*qualtype)) {
     context =
         spec_type->getTemplateName().getAsTemplateDecl()->getDeclContext();
-  } else if (clang::isa<clang::TemplateTypeParmType>(&*qualtype)) {
+  } else if (auto* tparm_type = clang::dyn_cast<clang::TemplateTypeParmType>(&*qualtype)) {
+    qualtype->dump();
+    fmt::println("identifier name {}", std::string_view(tparm_type->getIdentifier()->getName()));
+    tparm_type->getDecl()->dump();
+    fmt::println("has type constraint {}", bool(tparm_type->getDecl()->getTypeConstraint()));
+    if (tparm_type->getDecl()->getTypeConstraint()) {
+      fmt::println("named concept {}", bool(tparm_type->getDecl()->getTypeConstraint()->getNamedConcept()));
+      fmt::println("explicit temp args {}", bool(tparm_type->getDecl()->getTypeConstraint()->hasExplicitTemplateArgs()));
+    }
     // No context.
   } else if (auto* typedef_type =
                  clang::dyn_cast<clang::TypedefType>(&*qualtype)) {

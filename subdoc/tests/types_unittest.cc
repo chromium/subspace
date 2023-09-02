@@ -23,19 +23,23 @@ using subdoc::Qualifier;
 
 sus::Option<clang::FunctionDecl&> find_function(
     std::string_view name, clang::ASTContext& cx) noexcept {
-  clang::TranslationUnitDecl* tdecl = cx.getTranslationUnitDecl();
-  for (clang::Decl* decl : tdecl->decls()) {
-    if (auto* fdecl = clang::dyn_cast<clang::FunctionDecl>(decl)) {
-      if (std::string_view(fdecl->getName()) == name) return sus::some(*fdecl);
+  class Visitor : public clang::RecursiveASTVisitor<Visitor> {
+   public:
+    Visitor(std::string_view name, sus::Option<clang::FunctionDecl&>& option)
+        : name(name), option(option) {}
+    bool VisitFunctionDecl(clang::FunctionDecl* decl) noexcept {
+      if (std::string_view(decl->getName()) == name) option = sus::some(*decl);
+      return true;
     }
-  }
-  for (clang::Decl* decl : tdecl->decls()) {
-    if (auto* tdecl = clang::dyn_cast<clang::FunctionTemplateDecl>(decl)) {
-      if (std::string_view(tdecl->getName()) == name)
-        return sus::some(*tdecl->getTemplatedDecl());
-    }
-  }
-  return sus::none();
+
+    std::string_view name;
+    sus::Option<clang::FunctionDecl&>& option;
+  };
+
+  sus::Option<clang::FunctionDecl&> option;
+  auto v = Visitor(name, option);
+  v.TraverseAST(cx);
+  return option;
 }
 
 sus::Option<clang::QualType> find_function_parm(
@@ -531,6 +535,37 @@ TEST_F(SubDocTypeTest, AutoPointer) {
 
 TEST_F(SubDocTypeTest, Concept) {
   const char test[] = R"(
+    template <class T> concept C = true;
+    void f(C auto, C auto);
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.name, "auto");
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::None);
+
+    sus::Option<clang::QualType> qual2 =
+        find_function("f", cx).map([](clang::FunctionDecl& fdecl) {
+          auto it = fdecl.parameters().begin();
+          it++;
+          return (*it)->getType();
+        });
+    subdoc::Type t2 =
+        subdoc::build_local_type(*qual2, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t2.name, "auto");
+    EXPECT_EQ(t2.qualifier.is_const, false);
+    EXPECT_EQ(t2.qualifier.is_volatile, false);
+    EXPECT_EQ(t2.refs, subdoc::Refs::None);
+  });
+}
+
+TEST_F(SubDocTypeTest, ConceptWithParam) {
+  const char test[] = R"(
     template <class T, unsigned> concept C = true;
     void f(C<5> auto);
   )";
@@ -593,7 +628,7 @@ TEST_F(SubDocTypeTest, NestedAliasTemplate) {
   });
 }
 
-TEST_F(SubDocTypeTest, DependentType) {
+TEST_F(SubDocTypeTest, DependentTypeInTemplate) {
   const char test[] = R"(
     template <class T> struct S {};
     template <class T>
@@ -629,4 +664,113 @@ TEST_F(SubDocTypeTest, NestedClassMultiple) {
     EXPECT_EQ(t.namespace_path, sus::vec("b", "a"));
   });
 }
+
+TEST_F(SubDocTypeTest, DependentTypeAsParam) {
+  const char test[] = R"(
+    struct T {};
+
+    template <class T>
+    void f(T&);
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.name, "T_");  // `T` IS WRONG CUZ IT WILL POINT TO `struct T`.
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
+    EXPECT_EQ(t.template_params.len(), 0u);
+  });
+}
+
+TEST_F(SubDocTypeTest, DependentTypeFromClassAsParam) {
+  const char test[] = R"(
+    struct T {};
+
+    template <class T>
+    struct S {
+      static void f(T&);
+    };
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.name, "T_");  // `T` IS WRONG CUZ IT WILL POINT TO `struct T`.
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
+    EXPECT_EQ(t.template_params.len(), 0u);
+  });
+}
+
+TEST_F(SubDocTypeTest, DependentTypeFromClassAsParamOnTemplateFunction) {
+  const char test[] = R"(
+    struct T {};
+
+    template <class T>
+    struct S {
+      template <class U>
+      static void f(T&);
+    };
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.name, "T_");  // `T` IS WRONG CUZ IT WILL POINT TO `struct T`.
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
+    EXPECT_EQ(t.template_params.len(), 0u);
+  });
+}
+
+TEST_F(SubDocTypeTest, DependentTypeAsParamWithRequires) {
+  const char test[] = R"(
+    struct T {};
+
+    template <class T> concept C = true;
+    template <class T>
+      requires(C<T>)
+    void f(T&);
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.name, "T_");
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
+    EXPECT_EQ(t.template_params.len(), 0u);
+  });
+}
+
+TEST_F(SubDocTypeTest, DependentTypeAsParamWithConcept) {
+  const char test[] = R"(
+    struct T {};
+
+    template <class T> concept C = true;
+    template <C T>
+    void f(T&);
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.name, "T_");
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
+    EXPECT_EQ(t.template_params.len(), 0u);
+  });
+}
+
 }  // namespace
