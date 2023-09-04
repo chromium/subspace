@@ -103,30 +103,6 @@ TEST_F(SubDocTypeTest, Primitive) {
   });
 }
 
-TEST_F(SubDocTypeTest, Nullptr) {
-  const char test[] = R"(
-    auto f() { return nullptr; };
-  )";
-  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::FunctionDecl&> fdecl = find_function("f", cx);
-    subdoc::Type t = subdoc::build_local_type(
-        fdecl->getReturnType(), cx.getSourceManager(), preprocessor);
-
-    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
-    EXPECT_EQ(t.name, "nullptr_t");
-    EXPECT_EQ(t.qualifier.is_const, false);
-    EXPECT_EQ(t.qualifier.is_volatile, false);
-    EXPECT_EQ(t.refs, subdoc::Refs::None);
-    EXPECT_EQ(t.pointers.len(), 0u);
-    EXPECT_EQ(t.array_dims.len(), 0u);
-    EXPECT_EQ(t.template_params.len(), 0u);
-    EXPECT_EQ(t.record_path.len(), 0u);
-    EXPECT_EQ(t.namespace_path.len(), 0u);
-
-    EXPECT_EQ(make_string("foo", t), "!nullptr_t! foo");
-  });
-}
-
 TEST_F(SubDocTypeTest, Bool) {
   const char test[] = R"(
     void f(bool);
@@ -709,6 +685,58 @@ TEST_F(SubDocTypeTest, Concept) {
   });
 }
 
+TEST_F(SubDocTypeTest, ConceptReturn) {
+  const char test[] = R"(
+    namespace a::b { template <class T, unsigned> concept C = true; }
+    a::b::C<1 + 3> auto f();
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function("f", cx).map(
+        [](clang::FunctionDecl& fdecl) { return fdecl.getReturnType(); });
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Concept);
+    EXPECT_EQ(t.name, "C");
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::None);
+    EXPECT_EQ(t.namespace_path, sus::vec("b", "a"));
+    const auto& [p1_type, p1_string] =
+        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Value>();
+    EXPECT_EQ(p1_type.name, "int");
+    EXPECT_EQ(p1_string, "1 + 3");
+
+    EXPECT_EQ(make_string("foo", t), "!C!<1 + 3> auto foo");
+  });
+}
+
+TEST_F(SubDocTypeTest, ConceptReturnWithBody) {
+  const char test[] = R"(
+    namespace a::b { template <class T, unsigned> concept C = true; }
+    a::b::C<1 + 3> auto f() { return 1; }
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function("f", cx).map(
+        [](clang::FunctionDecl& fdecl) { return fdecl.getReturnType(); });
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Concept);
+    EXPECT_EQ(t.name, "C");
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::None);
+    EXPECT_EQ(t.namespace_path, sus::vec("b", "a"));
+    const auto& [p1_type, p1_string] =
+        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Value>();
+    EXPECT_EQ(p1_type.name, "int");
+    EXPECT_EQ(p1_string, "1 + 3");
+
+    EXPECT_EQ(make_string("foo", t), "!C!<1 + 3> auto foo");
+  });
+}
+
 TEST_F(SubDocTypeTest, ConceptWithParam) {
   const char test[] = R"(
     namespace a::b { template <class T, unsigned> concept C = true; }
@@ -1099,4 +1127,178 @@ TEST_F(SubDocTypeTest, DependentTypeAsParamWithConcept) {
   });
 }
 
+TEST_F(SubDocTypeTest, AutoReturn) {
+  const char test[] = R"(
+    auto f();
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function("f", cx).map(
+        [](clang::FunctionDecl& fdecl) { return fdecl.getReturnType(); });
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
+    EXPECT_EQ(t.name, "auto");
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::None);
+
+    EXPECT_EQ(make_string("foo", t), "auto foo");
+  });
+}
+
+TEST_F(SubDocTypeTest, AutoReturnWithBody) {
+  const char test[] = R"(
+    namespace a::b { struct S{}; }
+    auto f() { return a::b::S(); }
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function("f", cx).map(
+        [](clang::FunctionDecl& fdecl) { return fdecl.getReturnType(); });
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
+    EXPECT_EQ(t.name, "auto");
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::None);
+    EXPECT_EQ(t.namespace_path, sus::vec());  // Don't use the namespace of `S`.
+
+    EXPECT_EQ(make_string("foo", t), "auto foo");
+  });
+}
+
+TEST_F(SubDocTypeTest, AutoReturnQualified) {
+  const char test[] = R"(
+    auto&& f();
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function("f", cx).map(
+        [](clang::FunctionDecl& fdecl) { return fdecl.getReturnType(); });
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
+    EXPECT_EQ(t.name, "auto");
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::RValueRef);
+
+    EXPECT_EQ(make_string("foo", t), "auto&& foo");
+  });
+}
+
+TEST_F(SubDocTypeTest, AutoReturnPointer) {
+  const char test[] = R"(
+    auto* f();
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function("f", cx).map(
+        [](clang::FunctionDecl& fdecl) { return fdecl.getReturnType(); });
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
+    EXPECT_EQ(t.name, "auto");
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::None);
+    EXPECT_EQ(t.pointers, sus::vec(subdoc::Qualifier(false, false)));
+
+    EXPECT_EQ(make_string("foo", t), "auto* foo");
+  });
+}
+
+TEST_F(SubDocTypeTest, AutoDecltypeReturn) {
+  const char test[] = R"(
+    decltype(auto) f();
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function("f", cx).map(
+        [](clang::FunctionDecl& fdecl) { return fdecl.getReturnType(); });
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
+    EXPECT_EQ(t.name, "decltype(auto)");
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::None);
+
+    EXPECT_EQ(make_string("foo", t), "decltype(auto) foo");
+  });
+}
+
+TEST_F(SubDocTypeTest, AutoDecltypeReturnWithBody) {
+  const char test[] = R"(
+    namespace a::b { struct S{}; }
+    decltype(auto) f() { return a::b::S(); }
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function("f", cx).map(
+        [](clang::FunctionDecl& fdecl) { return fdecl.getReturnType(); });
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
+    EXPECT_EQ(t.name, "decltype(auto)");
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::None);
+    EXPECT_EQ(t.namespace_path, sus::vec());  // Don't use the namespace of `S`.
+
+    EXPECT_EQ(make_string("foo", t), "decltype(auto) foo");
+  });
+}
+
+TEST_F(SubDocTypeTest, DecltypeParam) {
+  const char test[] = R"(
+    namespace a::b { struct C {}; }
+    void f(decltype(a::b::C()));
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
+    EXPECT_EQ(t.name, "decltype(a::b::C())");
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::None);
+    EXPECT_EQ(t.pointers.len(), 0u);
+    EXPECT_EQ(t.array_dims.len(), 0u);
+    EXPECT_EQ(t.template_params.len(), 0u);
+    EXPECT_EQ(t.record_path.len(), 0u);
+    EXPECT_EQ(t.namespace_path.len(), 0u);
+
+    EXPECT_EQ(make_string("foo", t), "decltype(a::b::C()) foo");
+  });
+}
+
+TEST_F(SubDocTypeTest, DecltypeReturnType) {
+  const char test[] = R"(
+    namespace a::b { struct C {}; }
+    decltype(a::b::C()) f() { return a::b::C(); };
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::FunctionDecl&> fdecl = find_function("f", cx);
+    subdoc::Type t = subdoc::build_local_type(
+        fdecl->getReturnType(), cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
+    EXPECT_EQ(t.name, "decltype(a::b::C())");
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::None);
+    EXPECT_EQ(t.pointers.len(), 0u);
+    EXPECT_EQ(t.array_dims.len(), 0u);
+    EXPECT_EQ(t.template_params.len(), 0u);
+    EXPECT_EQ(t.record_path.len(), 0u);
+    EXPECT_EQ(t.namespace_path.len(), 0u);
+
+    EXPECT_EQ(make_string("foo", t), "decltype(a::b::C()) foo");
+  });
+}
 }  // namespace

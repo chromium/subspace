@@ -145,13 +145,6 @@ Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
   // TODO: Vec::reverse() when it exists.
   pointers = sus::move(pointers).into_iter().rev().collect_vec();
 
-  // Auto type that is deduced should be unpacked to the deduced type. Pointers
-  // can be auto, so this needs to come after unpacking the pointers, but should
-  // come before anything else as it may be deduced to anything else.
-  if (auto* auto_type = clang::dyn_cast<clang::AutoType>(&*qualtype)) {
-    if (auto_type->isDeduced()) qualtype = auto_type->getDeducedType();
-  }
-
   // A `using A = B` is an elaborated type that names a typedef A, so unpack
   // the ElaboratedType. Template specializations can be inside an
   // ElaboratedType, so this comes first.
@@ -184,13 +177,24 @@ Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
         template_params.push(build_template_param(arg, sm, preprocessor));
       }
     }
+  } else if (auto* auto_type = clang::dyn_cast<clang::AutoType>(&*qualtype)) {
+    // This may be a `Concept auto` in a location other than a function
+    // parameter. Arguments would be part of that Concept specialization.
+    for (const clang::TemplateArgument& arg :
+         auto_type->getTypeConstraintArguments()) {
+      template_params.push(build_template_param(arg, sm, preprocessor));
+    }
   }
 
   // Find the context from which to collect the namespace/record paths.
   clang::DeclContext* context = nullptr;
-  if (clang::isa<clang::AutoType>(&*qualtype)) {
-    // No context.
+  if (auto* auto_type = clang::dyn_cast<clang::AutoType>(&*qualtype)) {
+    if (clang::ConceptDecl* condecl = auto_type->getTypeConstraintConcept()) {
+      context = condecl->getDeclContext();
+    }
   } else if (clang::isa<clang::BuiltinType>(&*qualtype)) {
+    // No context.
+  } else if (clang::isa<clang::DecltypeType>(&*qualtype)) {
     // No context.
   } else if (clang::isa<clang::PackExpansionType>(&*qualtype)) {
     // No context.
@@ -233,6 +237,7 @@ Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
     context = context->getParent();
   }
 
+  qualtype->dump();
   auto [name, category] = [&]() -> sus::Tuple<std::string, TypeCategory> {
     if (auto* c = clang::dyn_cast<clang::TemplateTypeParmType>(&*qualtype)) {
       if (template_parameter_is_concept(*c)) {
@@ -247,6 +252,27 @@ Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
         return sus::tuple(name_of_type(qualtype),
                           TypeCategory::TemplateVariable);
       }
+    } else if (auto* auto_type = clang::dyn_cast<clang::AutoType>(&*qualtype)) {
+      if (clang::ConceptDecl* condecl = auto_type->getTypeConstraintConcept()) {
+        // This is a `Concept auto` in a location other than a function
+        // parameter.
+        return sus::tuple(condecl->getNameAsString(), TypeCategory::Concept);
+      } else {
+        sus::check_with_message(!auto_type->isConstrained(),
+                                "constrained auto without a concept?");
+        if (auto_type->isDecltypeAuto()) {
+          return sus::tuple("decltype(auto)", TypeCategory::TemplateVariable);
+        } else {
+          return sus::tuple("auto", TypeCategory::TemplateVariable);
+        }
+      }
+    } else if (clang::isa<clang::DecltypeType>(&*qualtype)) {
+      // A decltype is an expression, it should not link to a type itself, so we
+      // call it a TemplateVariable. If we want to introspect inside the
+      // decltype and get types from the expression, and we could but don't yet,
+      // then we would need a different TypeCategory with data fields to hold
+      // the expression parts, similar to but different from `template_params`.
+      return sus::tuple(name_of_type(qualtype), TypeCategory::TemplateVariable);
     } else if (clang::isa<clang::PackExpansionType>(&*qualtype)) {
       return sus::tuple(name_of_type(qualtype), TypeCategory::TemplateVariable);
     } else {
