@@ -3,8 +3,9 @@ template <class Type, auto AutoValue, class TypeWithDefault = int,
   requires(AutoValue != ValueOfDependentType)
 struct TemplateStruct {};
 
-template <class T>
+template <class T, class... U>
 concept Concept = true;
+
 
 template <class T>
 struct S {};
@@ -13,10 +14,14 @@ template <class T>
 struct TemplateMethods {
   TemplateMethods();
 
-  T template_params(T) requires(Concept<T>);
+  T template_params(T t) requires(Concept<T>);
 
   template <Concept U>
-  U local_template_params(T, U);
+  U local_template_params(T t, U u);
+
+  Concept<S> auto concept_return();
+
+  void concept_param(Concept auto var);
 
   template <class U>
   operator U();
