@@ -770,30 +770,36 @@ TEST(Option, UnwrapUncheckedSome) {
 }
 
 TEST(Option, Take) {
-  auto x = Option<int>(404);
-  auto y = x.take();
-  // The value has moved from `x` to `y`.
-  IS_NONE(x);
-  IS_SOME(y);
-  EXPECT_EQ(sus::move(y).unwrap(), 404);
+  {
+    auto x = Option<int>(404);
+    auto y = x.take();
+    // The value has moved from `x` to `y`.
+    IS_NONE(x);
+    IS_SOME(y);
+    EXPECT_EQ(sus::move(y).unwrap(), 404);
 
-  auto n = Option<int>();
-  auto m = n.take();
-  // The None has moved from `n` to `m`, which is a no-op on `n`.
-  IS_NONE(n);
-  IS_NONE(m);
+    auto n = Option<int>();
+    auto m = n.take();
+    // The None has moved from `n` to `m`, which is a no-op on `n`.
+    IS_NONE(n);
+    IS_NONE(m);
+  }
+{
+    auto i = NoCopyMove();
+    auto ix = Option<NoCopyMove&>(i);
+    auto iy = ix.take();
+    IS_NONE(ix);
+    IS_SOME(iy);
+    EXPECT_EQ(&sus::move(iy).unwrap(), &i);
 
-  auto i = NoCopyMove();
-  auto ix = Option<NoCopyMove&>(i);
-  auto iy = ix.take();
-  IS_NONE(ix);
-  IS_SOME(iy);
-  EXPECT_EQ(&sus::move(iy).unwrap(), &i);
+    auto ir = Option<NoCopyMove&>(i);
+    EXPECT_EQ(&ir.take().unwrap(), &i);
 
-  auto in = Option<NoCopyMove&>();
-  auto im = in.take();
-  IS_NONE(in);
-  IS_NONE(im);
+    auto in = Option<NoCopyMove&>();
+    auto im = in.take();
+    IS_NONE(in);
+    IS_NONE(im);
+  }
 
   static_assert([]() {
     auto o = Option<i32>(2_i32);
