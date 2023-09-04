@@ -14,6 +14,8 @@
 
 #include "subdoc/lib/type.h"
 
+#include <sstream>
+
 #include "subdoc/lib/stmt_to_string.h"
 #include "sus/assertions/check.h"
 #include "sus/iter/compat_ranges.h"
@@ -240,11 +242,13 @@ Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
                               ->getTypeConstraint()
                               ->getNamedConcept()
                               ->getNameAsString(),
-                          TypeCategory::Type);
+                          TypeCategory::Concept);
       } else {
         return sus::tuple(name_of_type(qualtype),
                           TypeCategory::TemplateVariable);
       }
+    } else if (clang::isa<clang::PackExpansionType>(&*qualtype)) {
+      return sus::tuple(name_of_type(qualtype), TypeCategory::TemplateVariable);
     } else {
       return sus::tuple(name_of_type(qualtype), TypeCategory::Type);
     }
@@ -253,6 +257,102 @@ Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
   return Type(category, sus::move(namespace_path), sus::move(record_path),
               sus::move(name), refs, sus::move(qualifier), sus::move(pointers),
               sus::move(array_dims), sus::move(template_params));
+}
+
+namespace {
+
+std::string type_to_string_internal(
+    const std::string_view var_name, const Type& type,
+    sus::fn::FnMutRef<std::string(TypeToStringQuery)>& type_fn) noexcept {
+  std::ostringstream str;
+
+  switch (type.category) {
+    case TypeCategory::Concept: [[fallthrough]];
+    case TypeCategory::Type:
+      str << type_fn(TypeToStringQuery{
+          .namespace_path = type.namespace_path.as_slice(),
+          .record_path = type.record_path.as_slice(),
+          .name = std::string_view(type.name),
+      });
+      break;
+      break;
+    case TypeCategory::TemplateVariable:
+      // For template variables, do not call the callback. They may have
+      // name collisions with actual types, but they are not those types.
+      str << type.name;
+      break;
+  }
+
+  if (!type.template_params.is_empty()) {
+    str << "<";
+    for (const auto& [i, tv] : type.template_params.iter().enumerate()) {
+      if (i > 0u) str << ", ";
+      switch (tv.choice) {
+        case TypeOrValueTag::Type: {
+          const Type& template_type = tv.choice.as<TypeOrValueTag::Type>();
+          str << type_to_string_internal(std::string_view(), template_type,
+                                         type_fn);
+          break;
+        }
+        case TypeOrValueTag::Value: {
+          // The type of the value isn't used here, we just write the value.
+          str << tv.choice.as<TypeOrValueTag::Value>().into_inner<1>();
+          break;
+        }
+      }
+    }
+    str << ">";
+  }
+
+  if (type.category == TypeCategory::Concept) str << " auto";
+
+  for (Qualifier q : type.pointers) {
+    if (q.is_const) str << " const";
+    if (q.is_volatile) str << " volatile";
+    str << "*";
+  }
+
+  // TODO: Option to put the const/volatile qualifiers before the type name?
+  if (type.qualifier.is_const) str << " const";
+  if (type.qualifier.is_volatile) str << " volatile";
+
+  if (type.array_dims.is_empty()) {
+    switch (type.refs) {
+      case Refs::None: break;
+      case Refs::LValueRef: str << "&"; break;
+      case Refs::RValueRef: str << "&&"; break;
+    }
+    if (!var_name.empty()) str << " " << var_name;
+  } else {
+    if (type.refs != Refs::None) {
+      str << " (";
+      switch (type.refs) {
+        case Refs::None: break;
+        case Refs::LValueRef: str << "&"; break;
+        case Refs::RValueRef: str << "&&"; break;
+      }
+      str << var_name;
+      str << ")";
+    } else {
+      if (!var_name.empty()) str << " " << var_name;
+    }
+    if (!type.array_dims.is_empty()) {
+      for (const std::string& dim : type.array_dims) {
+        str << "[";
+        str << dim;
+        str << "]";
+      }
+    }
+  }
+  return sus::move(str).str();
+}
+
+}  // namespace
+
+std::string type_to_string(
+    std::string_view var_name, const Type& type,
+    sus::fn::FnMutRef<std::string(TypeToStringQuery)> type_fn) noexcept {
+  return type_to_string_internal(var_name, type, type_fn);
 }
 
 }  // namespace subdoc
