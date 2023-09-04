@@ -21,7 +21,7 @@ namespace {
 
 TEST(Check, CheckPasses) {
   check(true);
-  check_with_message(true, *"hello world");
+  check_with_message(true, "hello world");
 }
 
 TEST(Check, CheckFails) {
@@ -32,7 +32,17 @@ TEST(Check, CheckFails) {
 
 TEST(Check, WithMessage) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(check_with_message(false, *"hello world"), "hello world");
+  EXPECT_DEATH(check_with_message(false, "hello world"), "'hello world'");
+#endif
+#if GTEST_HAS_DEATH_TEST
+  // Verify it does not read past the string_view's end.
+  EXPECT_DEATH(check_with_message(
+                   false, std::string_view("hello world123").substr(0u, 11u)),
+               "'hello world'");
+#endif
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(check_with_message(false, std::string("hello world")),
+               "'hello world'");
 #endif
 }
 

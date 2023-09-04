@@ -36,7 +36,17 @@ TEST(PanicDeathTest, Panic) {
 
 TEST(PanicDeathTest, WithMessage) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(panic_with_message(*"hello world"),
+  EXPECT_DEATH(panic_with_message("hello world"),
+               "^PANIC! at 'hello world', .*panic_unittest.cc:" DIGIT "+:" DIGIT
+               "+\n$");
+#endif
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(
+      panic_with_message(std::string_view("hello world123").substr(0u, 11u)),
+      "^PANIC! at 'hello world', .*panic_unittest.cc:" DIGIT "+:" DIGIT "+\n$");
+#endif
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(panic_with_message(std::string("hello world")),
                "^PANIC! at 'hello world', .*panic_unittest.cc:" DIGIT "+:" DIGIT
                "+\n$");
 #endif

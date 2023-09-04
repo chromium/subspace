@@ -377,7 +377,7 @@ class Vec final {
       // If this fails there are more than usize elements in the iterator, but
       // the max container size is isize::MAX. We can't reserve that many so
       // panic now.
-      ::sus::check_with_message(upper.is_some(), *"capacity overflow");
+      ::sus::check_with_message(upper.is_some(), "capacity overflow");
       sus_debug_check(lower == upper.as_value());
       {
         T* ptr = reserve_internal(lower) + self_len;
@@ -436,7 +436,7 @@ class Vec final {
       // If this fails there are more than usize elements in the iterator, but
       // the max container size is isize::MAX. We can't reserve that many so
       // panic now.
-      ::sus::check_with_message(upper.is_some(), *"capacity overflow");
+      ::sus::check_with_message(upper.is_some(), "capacity overflow");
       sus_debug_check(lower == upper.as_value());
       {
         T* ptr = reserve_internal(lower) + self_len;

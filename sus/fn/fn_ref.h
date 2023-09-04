@@ -158,7 +158,7 @@ class [[sus_trivial_abi]] FnRef<R(CallArgs...)> {
   __private::InvokeFnPtr<R, CallArgs...> invoke_;
 
   // A function pointer to use as a never-value for InvokeFnPointer.
-  static R invoke_never_value(const union __private::Storage& s,
+  static R invoke_never_value(const union __private::Storage&,
                               CallArgs... args) {}
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn,
@@ -311,7 +311,7 @@ class [[sus_trivial_abi]] FnMutRef<R(CallArgs...)> {
   __private::InvokeFnPtr<R, CallArgs...> invoke_;
 
   // A function pointer to use as a never-value for InvokeFnPointer.
-  static R invoke_never_value(const union __private::Storage& s,
+  static R invoke_never_value(const union __private::Storage&,
                               CallArgs... args) {}
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn,
@@ -500,7 +500,7 @@ class [[sus_trivial_abi]] FnOnceRef<R(CallArgs...)> {
   __private::InvokeFnPtr<R, CallArgs...> invoke_;
 
   // A function pointer to use as a never-value for InvokeFnPointer.
-  static R invoke_never_value(const union __private::Storage& s,
+  static R invoke_never_value(const union __private::Storage&,
                               CallArgs... args) {}
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn,

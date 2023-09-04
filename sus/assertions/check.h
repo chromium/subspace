@@ -15,6 +15,7 @@
 #pragma once
 
 #include <stdlib.h>
+
 #include <source_location>
 
 #include "sus/assertions/panic.h"
@@ -30,8 +31,21 @@ constexpr sus_always_inline void check(
 }
 
 constexpr sus_always_inline void check_with_message(
-    bool cond,
-    /* TODO: string view type, or format + args */ const char& msg,
+    bool cond, const char* msg,
+    const std::source_location location = std::source_location::current()) {
+  if (!cond) [[unlikely]]
+    ::sus::panic_with_message(msg, location);
+}
+
+constexpr sus_always_inline void check_with_message(
+    bool cond, std::string_view msg,
+    const std::source_location location = std::source_location::current()) {
+  if (!cond) [[unlikely]]
+    ::sus::panic_with_message(msg, location);
+}
+
+constexpr sus_always_inline void check_with_message(
+    bool cond, const std::string& msg,
     const std::source_location location = std::source_location::current()) {
   if (!cond) [[unlikely]]
     ::sus::panic_with_message(msg, location);

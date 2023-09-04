@@ -99,7 +99,7 @@ class [[sus_trivial_abi]] Box final {
   constexpr Box clone() const noexcept
     requires(::sus::mem::Clone<T>)
   {
-    ::sus::check_with_message(t_, *"Box used after move");
+    ::sus::check_with_message(t_, "Box used after move");
     return Box(::sus::clone(*t_));
   }
 
@@ -111,7 +111,7 @@ class [[sus_trivial_abi]] Box final {
   constexpr void clone_from(const Box& rhs) noexcept
     requires(::sus::mem::Clone<T>)
   {
-    ::sus::check_with_message(t_, *"Box used after move");
+    ::sus::check_with_message(t_, "Box used after move");
     ::sus::clone_into(*t_, *rhs);
   }
 
@@ -121,13 +121,13 @@ class [[sus_trivial_abi]] Box final {
   /// #[doc.overloads=move]
   constexpr Box(Box&& rhs) noexcept
       : Box(FROM_POINTER, ::sus::move(rhs).into_raw()) {
-    ::sus::check_with_message(t_, *"Box used after move");
+    ::sus::check_with_message(t_, "Box used after move");
   }
   template <class U>
     requires(::sus::ptr::SameOrSubclassOf<U*, T*>)
   constexpr Box(Box<U>&& rhs) noexcept
       : Box(FROM_POINTER, ::sus::move(rhs).into_raw()) {
-    ::sus::check_with_message(t_, *"Box used after move");
+    ::sus::check_with_message(t_, "Box used after move");
   }
   /// Satisifes the [`Move`]($sus::mem::Move) concept for
   /// [`Box`]($sus::boxed::Box).
@@ -147,24 +147,24 @@ class [[sus_trivial_abi]] Box final {
   }
 
   sus_pure constexpr const T& operator*() const {
-    ::sus::check_with_message(t_, *"Box used after move");
+    ::sus::check_with_message(t_, "Box used after move");
     return *t_;
   }
   sus_pure constexpr T& operator*()
     requires(!std::is_const_v<T>)
   {
-    ::sus::check_with_message(t_, *"Box used after move");
+    ::sus::check_with_message(t_, "Box used after move");
     return *t_;
   }
 
   sus_pure constexpr const T* operator->() const {
-    ::sus::check_with_message(t_, *"Box used after move");
+    ::sus::check_with_message(t_, "Box used after move");
     return t_;
   }
   sus_pure constexpr T* operator->()
     requires(!std::is_const_v<T>)
   {
-    ::sus::check_with_message(t_, *"Box used after move");
+    ::sus::check_with_message(t_, "Box used after move");
     return t_;
   }
 
@@ -252,7 +252,7 @@ class [[sus_trivial_abi]] Box final {
   /// delete p;
   /// ```
   constexpr T* into_raw() && noexcept {
-    ::sus::check_with_message(t_, *"Box used after move");
+    ::sus::check_with_message(t_, "Box used after move");
     return ::sus::mem::replace(t_, nullptr);
   }
 
