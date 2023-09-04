@@ -559,19 +559,22 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
           signature += p->getOriginalType().getAsString();
         }
 
+        auto linked_return_type = LinkedType::with_type(
+            build_local_type(decl->getReturnType(),
+                             decl->getASTContext().getSourceManager(),
+                             preprocessor_),
+            docs_db_);
+
         auto fe = FunctionElement(
             iter_namespace_path(decl).collect_vec(), sus::move(comment),
             sus::move(function_name), sus::move(signature),
             decl->isOverloadedOperator() ||
                 decl->getLiteralIdentifier() != nullptr,
-            decl->getReturnType(), sus::move(constraints),
+            sus::move(linked_return_type), sus::move(constraints),
             sus::move(template_params), decl->isDeleted(), sus::move(params),
             sus::move(overload_set), sus::move(record_path),
             decl->getASTContext().getSourceManager().getFileOffset(
                 decl->getLocation()));
-        // TODO: Save the qualifiers/pointers like we do for parameters.
-        fe.overloads[0u].return_type_element =
-            docs_db_.find_type(decl->getReturnType());
 
         if (clang::isa<clang::CXXMethodDecl>(decl)) {
           sus::check(clang::isa<clang::RecordDecl>(context));

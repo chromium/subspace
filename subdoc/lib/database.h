@@ -162,9 +162,7 @@ struct FunctionOverload {
   // The return type is in the overload info because operator overloads can each
   // have different return types, e.g. operator+(int, int) vs
   // operator+(char, char).
-  sus::Option<const TypeElement&> return_type_element;
-  std::string return_type_name;
-  std::string return_short_type_name;
+  LinkedType return_type;
   sus::Option<RequiresConstraints> constraints;
   sus::Vec<std::string> template_params;
   bool is_deleted = false;
@@ -179,7 +177,7 @@ struct FunctionElement : public CommentElement {
   explicit FunctionElement(sus::Vec<Namespace> containing_namespaces,
                            Comment comment, std::string name,
                            std::string signature, bool is_operator,
-                           clang::QualType return_qual_type,
+                           LinkedType return_type,
                            sus::Option<RequiresConstraints> constraints,
                            sus::Vec<std::string> template_params,
                            bool is_deleted,
@@ -194,8 +192,7 @@ struct FunctionElement : public CommentElement {
     overloads.push(FunctionOverload{
         .parameters = sus::move(parameters),
         .method = sus::none(),
-        .return_type_name = friendly_type_name(return_qual_type),
-        .return_short_type_name = friendly_short_type_name(return_qual_type),
+        .return_type = sus::move(return_type),
         .constraints = sus::move(constraints),
         .template_params = sus::move(template_params),
         .is_deleted = is_deleted,

@@ -236,26 +236,13 @@ sus::Result<void, MarkdownToHtmlError> generate_record_fields(
           static_span.add_class("static");
           static_span.write_text("static");
         }
-        generate_type(
-            name_div, fe.type,
-            [&](HtmlWriter::OpenDiv& div) {
-              auto span = div.open_span(HtmlWriter::SingleLine);
-              span.add_class("const");
-              span.write_text("const");
-            },
-            [&](HtmlWriter::OpenDiv& div) {
-              auto span = div.open_span(HtmlWriter::SingleLine);
-              span.add_class("volatile");
-              span.write_text("volatile");
-            },
-            [&](HtmlWriter::OpenDiv& div) {
-              auto field_name_anchor = div.open_a();
-              field_name_anchor.add_name(
-                  construct_html_url_anchor_for_field(fe));
-              field_name_anchor.add_href(construct_html_url_for_field(fe));
-              field_name_anchor.add_class("field-name");
-              field_name_anchor.write_text(fe.name);
-            });
+        generate_type(name_div, fe.type, [&](HtmlWriter::OpenDiv& div) {
+          auto anchor = div.open_a();
+          anchor.add_name(construct_html_url_anchor_for_field(fe));
+          anchor.add_href(construct_html_url_for_field(fe));
+          anchor.add_class("field-name");
+          anchor.write_text(fe.name);
+        });
       }
       {
         auto desc_div = field_div.open_div();
