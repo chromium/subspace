@@ -20,12 +20,15 @@
 
 namespace subdoc {
 
-std::string template_arg_to_string(
-    const clang::TemplateArgumentLoc& loc) noexcept {
+std::string template_arg_to_string(const clang::TemplateArgumentLoc& loc,
+                                   const clang::ASTContext& context,
+                                   clang::Preprocessor& preprocessor) noexcept {
   const clang::TemplateArgument& arg = loc.getArgument();
   switch (arg.getKind()) {
     case clang::TemplateArgument::ArgKind::Null:
       // How can this happen in a concept instantiation?
+      arg.dump();
+      fmt::println("");
       sus::unreachable();
     case clang::TemplateArgument::ArgKind::Type: {
       if (arg.getAsType()->isDependentType()) {
@@ -38,6 +41,8 @@ std::string template_arg_to_string(
     }
     case clang::TemplateArgument::ArgKind::Declaration:
       // How can this happen in a concept instantiation?
+      arg.dump();
+      fmt::println("");
       sus::unreachable();
     case clang::TemplateArgument::ArgKind::NullPtr: return "nullptr";
     case clang::TemplateArgument::ArgKind::Integral: {
@@ -45,13 +50,17 @@ std::string template_arg_to_string(
     }
     case clang::TemplateArgument::ArgKind::Template:
       // How can this happen in a concept instantiation?
+      arg.dump();
+      fmt::println("");
       sus::unreachable();
     case clang::TemplateArgument::ArgKind::TemplateExpansion:
       // How can this happen in a concept instantiation?
+      arg.dump();
+      fmt::println("");
       sus::unreachable();
     case clang::TemplateArgument::ArgKind::Expression:
-      // How can this happen in a concept instantiation?
-      sus::unreachable();
+      return stmt_to_string(*arg.getAsExpr(), context.getSourceManager(),
+                            preprocessor);
     case clang::TemplateArgument::ArgKind::Pack:
       return std::string("TODO: pack");
   }
@@ -74,7 +83,9 @@ void requires_constraints_add_expr(RequiresConstraints& constaints,
              c != nullptr && c->getNamedConcept()) {
     sus::Vec<std::string> args =
         sus::iter::from_range(c->getTemplateArgsAsWritten()->arguments())
-            .map(template_arg_to_string)
+            .map([&](const clang::TemplateArgumentLoc& loc) {
+              return template_arg_to_string(loc, context, preprocessor);
+            })
             .collect<sus::Vec<std::string>>();
     for (std::string_view s : args) {
       // `Concept auto foo` appears in the function signature, no need to add a

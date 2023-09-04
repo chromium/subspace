@@ -16,7 +16,9 @@
 
 #include "subdoc/lib/stmt_to_string.h"
 #include "sus/assertions/check.h"
+#include "sus/iter/compat_ranges.h"
 #include "sus/iter/iterator.h"
+#include "sus/ptr/as_ref.h"
 
 namespace subdoc {
 
@@ -29,17 +31,31 @@ Qualifier qualifier_from_qualtype(clang::QualType q) noexcept {
 }
 
 std::string name_of_type(clang::QualType q) noexcept {
-  // Clang writes booleans as "_Bool".
-  if (q->isBooleanType()) return "bool";
-  std::string name = q.getLocalUnqualifiedType().getAsString();
+  clang::LangOptions lang;
+  lang.LangStd = clang::LangStandard::Kind::lang_cxx20;  // TODO: Configurable?
+  clang::PrintingPolicy p(lang);
+  p.Bool = true;
+  p.SuppressScope = true;
+  p.SuppressUnwrittenScope = true;
+  p.SuppressTagKeyword = true;
+  p.SplitTemplateClosers = false;
+  std::string name = q.getLocalUnqualifiedType().getAsString(p);
   // TODO: Is there a better way to drop the namespaces/records from the type?
-  if (usize pos = name.rfind("::"); pos != std::string::npos)
-    name = name.substr(pos + 2u);
+  //if (usize pos = name.rfind("::"); pos != std::string::npos)
+  //  name = name.substr(pos + 2u);
   // TODO: Is there a better way to drop the template specialization from the
   // type?
   if (usize pos = name.find("<"); pos != std::string::npos)
     name = name.substr(0u, pos);
   return name;
+}
+
+/// Returns whether the parameter is of the form `Concept auto` which
+/// specializes and references a concept as an anonymous template type for the
+/// parameter.
+bool template_parameter_is_concept(
+    const clang::TemplateTypeParmType& parm) noexcept {
+  return (parm.getDecl()->hasTypeConstraint() && parm.getDecl()->isImplicit());
 }
 
 TypeOrValue build_template_param(const clang::TemplateArgument& arg,
@@ -48,13 +64,6 @@ TypeOrValue build_template_param(const clang::TemplateArgument& arg,
   switch (arg.getKind()) {
     case clang::TemplateArgument::ArgKind::Null: sus::unreachable();
     case clang::TemplateArgument::ArgKind::Type: {
-      if (arg.getAsType()->isDependentType()) {
-        // A template argument that is a template parameter (from the function,
-        // the class, etc.)
-        return TypeOrValue(
-            TypeOrValueChoice::with<TypeOrValueChoice::Tag::DependentType>(
-                arg.getAsType().getAsString()));
-      }
       return TypeOrValue(TypeOrValueChoice::with<TypeOrValueChoice::Tag::Type>(
           build_local_type(arg.getAsType(), sm, preprocessor)));
     }
@@ -72,7 +81,11 @@ TypeOrValue build_template_param(const clang::TemplateArgument& arg,
     case clang::TemplateArgument::ArgKind::Template: sus::unreachable();
     case clang::TemplateArgument::ArgKind::TemplateExpansion:
       sus::unreachable();
-    case clang::TemplateArgument::ArgKind::Expression: sus::unreachable();
+    case clang::TemplateArgument::ArgKind::Expression:
+      return TypeOrValue(
+          TypeOrValueChoice::with<TypeOrValueChoice::Tag::Value>(sus::tuple(
+              build_local_type(arg.getAsExpr()->getType(), sm, preprocessor),
+              stmt_to_string(*arg.getAsExpr(), sm, preprocessor))));
     case clang::TemplateArgument::ArgKind::Pack: sus::unreachable();
   }
   sus::unreachable();
@@ -151,6 +164,24 @@ Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
     for (const clang::TemplateArgument& arg : ttype->template_arguments()) {
       template_params.push(build_template_param(arg, sm, preprocessor));
     }
+  } else if (auto* ptype =
+                 clang::dyn_cast<clang::TemplateTypeParmType>(&*qualtype)) {
+    if (template_parameter_is_concept(*ptype)) {
+      // This is a `Concept<...> auto` parameter, which may or may not have
+      // template arguments on the Concept.
+      auto it =
+          sus::ptr::as_ref(
+              ptype->getDecl()->getTypeConstraint()->getTemplateArgsAsWritten())
+              .into_iter()
+              .flat_map(
+                  [](const clang::ASTTemplateArgumentListInfo& as_written) {
+                    return sus::iter::from_range(as_written.arguments());
+                  })
+              .map(&clang::TemplateArgumentLoc::getArgument);
+      for (const clang::TemplateArgument& arg : it) {
+        template_params.push(build_template_param(arg, sm, preprocessor));
+      }
+    }
   }
 
   // Find the context from which to collect the namespace/record paths.
@@ -159,6 +190,8 @@ Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
     // No context.
   } else if (clang::isa<clang::BuiltinType>(&*qualtype)) {
     // No context.
+  } else if (clang::isa<clang::PackExpansionType>(&*qualtype)) {
+    // No context.
   } else if (auto* tag_type = clang::dyn_cast<clang::TagType>(&*qualtype)) {
     context = tag_type->getDecl()->getDeclContext();
   } else if (auto* spec_type =
@@ -166,16 +199,15 @@ Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
                      &*qualtype)) {
     context =
         spec_type->getTemplateName().getAsTemplateDecl()->getDeclContext();
-  } else if (auto* tparm_type = clang::dyn_cast<clang::TemplateTypeParmType>(&*qualtype)) {
-    qualtype->dump();
-    fmt::println("identifier name {}", std::string_view(tparm_type->getIdentifier()->getName()));
-    tparm_type->getDecl()->dump();
-    fmt::println("has type constraint {}", bool(tparm_type->getDecl()->getTypeConstraint()));
-    if (tparm_type->getDecl()->getTypeConstraint()) {
-      fmt::println("named concept {}", bool(tparm_type->getDecl()->getTypeConstraint()->getNamedConcept()));
-      fmt::println("explicit temp args {}", bool(tparm_type->getDecl()->getTypeConstraint()->hasExplicitTemplateArgs()));
+  } else if (auto* tparm_type =
+                 clang::dyn_cast<clang::TemplateTypeParmType>(&*qualtype)) {
+    if (template_parameter_is_concept(*tparm_type)) {
+      // This is a `Concept auto` parameter, get the context for the Concept.
+      context = tparm_type->getDecl()
+                    ->getTypeConstraint()
+                    ->getNamedConcept()
+                    ->getDeclContext();
     }
-    // No context.
   } else if (auto* typedef_type =
                  clang::dyn_cast<clang::TypedefType>(&*qualtype)) {
     context = typedef_type->getDecl()->getDeclContext();
@@ -199,9 +231,26 @@ Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
     context = context->getParent();
   }
 
-  std::string name = name_of_type(qualtype);
+  auto [name, category] = [&]() -> sus::Tuple<std::string, TypeCategory> {
+    if (auto* c = clang::dyn_cast<clang::TemplateTypeParmType>(&*qualtype)) {
+      if (template_parameter_is_concept(*c)) {
+        // `Concept auto` returns true for `isImplicit`, while the use of a
+        // template variable name constrained by a concept does not.
+        return sus::tuple(c->getDecl()
+                              ->getTypeConstraint()
+                              ->getNamedConcept()
+                              ->getNameAsString(),
+                          TypeCategory::Type);
+      } else {
+        return sus::tuple(name_of_type(qualtype),
+                          TypeCategory::TemplateVariable);
+      }
+    } else {
+      return sus::tuple(name_of_type(qualtype), TypeCategory::Type);
+    }
+  }();
 
-  return Type(sus::move(namespace_path), sus::move(record_path),
+  return Type(category, sus::move(namespace_path), sus::move(record_path),
               sus::move(name), refs, sus::move(qualifier), sus::move(pointers),
               sus::move(array_dims), sus::move(template_params));
 }
