@@ -715,12 +715,12 @@ class [[nodiscard]] Result final {
     if (state_ != ResultState::IsOk) [[unlikely]] {
       if (state_ == ResultState::IsErr) {
         if constexpr (fmt::is_formattable<E>::value) {
-          panic_with_message(*fmt::to_string(storage_.err_).c_str());
+          panic_with_message(fmt::to_string(storage_.err_));
         } else {
-          panic_with_message(*"Result has error state");
+          panic_with_message("Result has error state");
         }
       } else {
-        panic_with_message(*"Result used after move");
+        panic_with_message("Result used after move");
       }
     }
     return storage_.ok_;
@@ -737,12 +737,12 @@ class [[nodiscard]] Result final {
     if (state_ != ResultState::IsOk) [[unlikely]] {
       if (state_ == ResultState::IsErr) {
         if constexpr (fmt::is_formattable<E>::value) {
-          panic_with_message(*fmt::to_string(storage_.err_).c_str());
+          panic_with_message(fmt::to_string(storage_.err_));
         } else {
-          panic_with_message(*"Result has error state");
+          panic_with_message("Result has error state");
         }
       } else {
-        panic_with_message(*"Result used after move");
+        panic_with_message("Result used after move");
       }
     }
     return storage_.ok_;
@@ -756,15 +756,15 @@ class [[nodiscard]] Result final {
       if (state_ == ResultState::IsOk) {
         if constexpr (!std::is_void_v<T>) {
           if constexpr (fmt::is_formattable<T>::value) {
-            panic_with_message(*fmt::to_string(storage_.ok_).c_str());
+            panic_with_message(fmt::to_string(storage_.ok_));
           } else {
-            panic_with_message(*"Result has ok state");
+            panic_with_message("Result has ok state");
           }
         } else {
-          panic_with_message(*"Result has ok state");
+          panic_with_message("Result has ok state");
         }
       } else {
-        panic_with_message(*"Result used after move");
+        panic_with_message("Result used after move");
       }
     }
     return storage_.err_;
@@ -785,12 +785,12 @@ class [[nodiscard]] Result final {
     if (was != ResultState::IsOk) [[unlikely]] {
       if (was == ResultState::IsErr) {
         if constexpr (fmt::is_formattable<E>::value) {
-          panic_with_message(*fmt::to_string(storage_.err_).c_str());
+          panic_with_message(fmt::to_string(storage_.err_));
         } else {
-          panic_with_message(*"Result has error state");
+          panic_with_message("Result has error state");
         }
       } else {
-        panic_with_message(*"Result used after move");
+        panic_with_message("Result used after move");
       }
     }
     if constexpr (!std::is_void_v<T>) {
@@ -813,13 +813,12 @@ class [[nodiscard]] Result final {
     if (was != ResultState::IsOk) [[unlikely]] {
       if (was == ResultState::IsErr) {
         if constexpr (fmt::is_formattable<E>::value) {
-          panic_with_message(
-              *fmt::format("{}: {}", msg, storage_.err_).c_str());
+          panic_with_message(fmt::format("{}: {}", msg, storage_.err_));
         } else {
-          panic_with_message(*msg);
+          panic_with_message(msg);
         }
       } else {
-        panic_with_message(*"Result used after move");
+        panic_with_message("Result used after move");
       }
     }
     if constexpr (!std::is_void_v<T>) {
@@ -839,7 +838,7 @@ class [[nodiscard]] Result final {
     ResultState was = ::sus::mem::replace(state_, ResultState::IsMoved);
     check_with_message(
         was != ResultState::IsMoved,
-        *"called `Result::unwrap_or_default()` on a moved Result");
+        "called `Result::unwrap_or_default()` on a moved Result");
     if constexpr (!std::is_void_v<T>) {
       if (was == ResultState::IsOk) {
         return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
@@ -875,15 +874,15 @@ class [[nodiscard]] Result final {
       if (was == ResultState::IsOk) {
         if constexpr (!std::is_void_v<T>) {
           if constexpr (fmt::is_formattable<T>::value) {
-            panic_with_message(*fmt::to_string(storage_.ok_).c_str());
+            panic_with_message(fmt::to_string(storage_.ok_));
           } else {
-            panic_with_message(*"Result has ok state");
+            panic_with_message("Result has ok state");
           }
         } else {
-          panic_with_message(*"Result has ok state");
+          panic_with_message("Result has ok state");
         }
       } else {
-        panic_with_message(*"Result used after move");
+        panic_with_message("Result used after move");
       }
     }
     return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,

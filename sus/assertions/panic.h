@@ -17,10 +17,12 @@
 #include <stdlib.h>
 
 #include <source_location>
+#include <string>
+#include <string_view>
 
-#include "sus/macros/inline.h"
 #include "sus/macros/builtin.h"
 #include "sus/macros/compiler.h"
+#include "sus/macros/inline.h"
 
 #if __has_attribute(not_tail_called)
 #define _sus__not_tail_called __attribute__((not_tail_called))
@@ -39,8 +41,11 @@
 namespace sus::assertions {
 
 namespace __private {
-void print_panic_message(const char& msg, const std::source_location& location);
-void print_panic_location(const std::source_location& location);
+void print_panic_message(const char& msg,
+                         const std::source_location& location) noexcept;
+void print_panic_message(std::string_view msg,
+                         const std::source_location& location) noexcept;
+void print_panic_location(const std::source_location& location) noexcept;
 }  // namespace __private
 
 /// Terminate the program.
@@ -82,13 +87,42 @@ void print_panic_location(const std::source_location& location);
 /// can be overridden by defining a `SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER()`
 /// macro when compiling the library.
 [[noreturn]] _sus__crash_attributes inline void panic_with_message(
-    /* TODO: string view type, or format + args */ const char& msg,
-    const std::source_location location =
-        std::source_location::current()) noexcept {
+    const char* msg, const std::source_location location =
+                         std::source_location::current()) noexcept {
 #if defined(SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER)
   SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER(msg, location);
 #else
   __private::print_panic_message(msg, location);
+#endif
+#if defined(SUS_PROVIDE_PANIC_HANDLER)
+  SUS_PROVIDE_PANIC_HANDLER();
+#else
+  abort();
+#endif
+}
+
+[[noreturn]] _sus__crash_attributes inline void panic_with_message(
+    std::string_view msg, const std::source_location location =
+                              std::source_location::current()) noexcept {
+#if defined(SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER)
+  SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER(msg, location);
+#else
+  __private::print_panic_message(msg, location);
+#endif
+#if defined(SUS_PROVIDE_PANIC_HANDLER)
+  SUS_PROVIDE_PANIC_HANDLER();
+#else
+  abort();
+#endif
+}
+
+[[noreturn]] _sus__crash_attributes inline void panic_with_message(
+    const std::string& msg, const std::source_location location =
+                                std::source_location::current()) noexcept {
+#if defined(SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER)
+  SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER(msg.c_str(), location);
+#else
+  __private::print_panic_message(msg.c_str(), location);
 #endif
 #if defined(SUS_PROVIDE_PANIC_HANDLER)
   SUS_PROVIDE_PANIC_HANDLER();

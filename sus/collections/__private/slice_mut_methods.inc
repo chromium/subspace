@@ -590,7 +590,7 @@ constexpr RSplitNMut<T> rsplitn_mut(
     ::sus::fn::FnMutRef<std::weak_ordering(const T&, const T&)> compare)
     RETURN_REF noexcept {
   ::sus::check_with_message(
-      index < len(), *"partition_at_index index greater than length of slice");
+      index < len(), "partition_at_index index greater than length of slice");
 
   // TODO: Requires Iterator::enumerate(), max_by(), min_by()
   ::sus::unreachable();
