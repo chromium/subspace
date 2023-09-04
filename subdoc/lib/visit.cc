@@ -289,15 +289,15 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     Comment comment = make_db_comment(decl->getASTContext(), raw_comment,
                                       record_decl->getName());
 
-    Type type = build_local_type(decl->getType(),
-                                 decl->getASTContext().getSourceManager(),
-                                 preprocessor_);
-    sus::Vec<sus::Option<TypeRef>> type_refs =
-        docs_db_.collect_type_element_refs(type);
+    auto linked_type = LinkedType::with_type(
+        build_local_type(decl->getType(),
+                         decl->getASTContext().getSourceManager(),
+                         preprocessor_),
+        docs_db_);
 
     auto fe = FieldElement(
         iter_namespace_path(decl).collect_vec(), sus::move(comment),
-        std::string(decl->getName()), sus::move(type), sus::move(type_refs),
+        std::string(decl->getName()), sus::move(linked_type),
         iter_record_path(record_decl)
             .map([](std::string_view&& v) { return std::string(v); })
             .collect_vec(),
@@ -332,15 +332,15 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       template_params = collect_template_params(tmpl, preprocessor_);
     }
 
-    Type type = build_local_type(decl->getType(),
-                                 decl->getASTContext().getSourceManager(),
-                                 preprocessor_);
-    sus::Vec<sus::Option<TypeRef>> type_refs =
-        docs_db_.collect_type_element_refs(type);
+    auto linked_type = LinkedType::with_type(
+        build_local_type(decl->getType(),
+                         decl->getASTContext().getSourceManager(),
+                         preprocessor_),
+        docs_db_);
 
     auto fe = FieldElement(
         iter_namespace_path(decl).collect_vec(), sus::move(comment),
-        std::string(decl->getName()), sus::move(type), sus::move(type_refs),
+        std::string(decl->getName()), sus::move(linked_type),
         iter_record_path(record_decl)
             .map([](std::string_view&& v) { return std::string(v); })
             .collect_vec(),

@@ -24,6 +24,7 @@
 #include "subdoc/lib/record_type.h"
 #include "subdoc/lib/requires.h"
 #include "subdoc/lib/type.h"
+#include "subdoc/lib/linked_type.h"
 #include "subdoc/lib/unique_symbol.h"
 #include "subdoc/llvm.h"
 #include "sus/assertions/check.h"
@@ -55,14 +56,6 @@ using FoundName = sus::Choice<sus_choice_types(
     (FoundNameTag::Type, const TypeElement&),
     (FoundNameTag::Concept, const ConceptElement&),
     (FoundNameTag::Field, const FieldElement&))>;
-
-enum class TypeRefTag {
-  Concept,
-  Record,
-};
-using TypeRef =
-    sus::Choice<sus_choice_types((TypeRefTag::Concept, const ConceptElement&),
-                                 (TypeRefTag::Record, const RecordElement&))>;
 
 struct Comment {
   Comment() = default;
@@ -294,24 +287,21 @@ struct FieldElement : public CommentElement {
   };
 
   explicit FieldElement(sus::Vec<Namespace> containing_namespaces,
-                        Comment comment, std::string name, Type type,
-                        sus::Vec<sus::Option<TypeRef>> type_refs,
+                        Comment comment, std::string name,
+                        LinkedType linked_type,
                         sus::Vec<std::string> record_path, StaticType is_static,
                         sus::Vec<std::string> template_params, u32 sort_key)
       : CommentElement(sus::move(containing_namespaces), sus::move(comment),
                        sus::move(name), sort_key),
         record_path(sus::move(record_path)),
-        type(sus::move(type)),
-        type_element_refs(sus::move(type_refs)),
+        type(sus::move(linked_type)),
         is_static(is_static),
         template_params(sus::move(template_params)) {}
 
   sus::Vec<std::string> record_path;
   /// The complete type of the field, including any inner types in template
   /// params etc.
-  Type type;
-  /// References into the database for every type that makes up `type`.
-  sus::Vec<sus::Option<TypeRef>> type_element_refs;
+  LinkedType type;
   StaticType is_static;
   sus::Vec<std::string> template_params;
 
@@ -1072,10 +1062,10 @@ struct Database {
   }
 
   sus::Vec<sus::Option<TypeRef>> collect_type_element_refs(
-      const Type& type) noexcept {
+      const Type& type) const noexcept {
     sus::Vec<sus::Option<TypeRef>> vec;
     type_walk_types(type, [&](TypeToStringQuery q) {
-      NamespaceElement* ns_cursor = &global;
+      const NamespaceElement* ns_cursor = &global;
       for (const std::string& name : q.namespace_path) {
         auto it = ns_cursor->namespaces.find(NamespaceId(name));
         if (it == ns_cursor->namespaces.end()) {
@@ -1089,7 +1079,7 @@ struct Database {
         return;
       }
 
-      RecordElement* rec_cursor = nullptr;
+      const RecordElement* rec_cursor = nullptr;
       for (const auto& [i, name] : q.record_path.iter().enumerate()) {
         if (i == 0u) {
           auto it = ns_cursor->records.find(RecordId(name));

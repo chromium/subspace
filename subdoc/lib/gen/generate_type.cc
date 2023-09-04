@@ -34,15 +34,14 @@ std::string make_title_string(TypeToStringQuery q) {
 }  // namespace
 
 void generate_type(
-    HtmlWriter::OpenDiv& div, const Type& type,
-    sus::Slice<sus::Option<TypeRef>> type_refs,
+    HtmlWriter::OpenDiv& div, const LinkedType& linked_type,
     sus::fn::FnMutRef<void(HtmlWriter::OpenDiv&)> const_qualifier_fn,
     sus::fn::FnMutRef<void(HtmlWriter::OpenDiv&)> volatile_qualifier_fn,
     sus::fn::FnOnceRef<void(HtmlWriter::OpenDiv&)> var_name_fn) noexcept {
   auto text_fn = [&](std::string_view text) { div.write_text(text); };
   auto type_fn = [&, i_ = 0_usize](TypeToStringQuery q) mutable {
     const sus::Option<TypeRef>& maybe_ref =
-        type_refs[sus::mem::replace(i_, i_ + 1u)];
+        linked_type.type_element_refs[sus::mem::replace(i_, i_ + 1u)];
     if (maybe_ref.is_none()) {
       div.write_text(q.name);
       return;
@@ -75,7 +74,7 @@ void generate_type(
   auto volatile_fn = [&]() { volatile_qualifier_fn(div); };
   auto var_fn = [&]() { sus::move(var_name_fn)(div); };
 
-  type_to_string(type, text_fn, type_fn, const_fn, volatile_fn,
+  type_to_string(linked_type.type, text_fn, type_fn, const_fn, volatile_fn,
                  sus::some(sus::move(var_fn)));
 }
 

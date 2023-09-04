@@ -12,20 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#include "subdoc/lib/linked_type.h"
 
 #include "subdoc/lib/database.h"
-#include "subdoc/lib/gen/html_writer.h"
-#include "subdoc/lib/type.h"
-#include "sus/prelude.h"
-#include "sus/fn/fn_ref.h"
 
-namespace subdoc::gen {
+namespace subdoc {
 
-void generate_type(
-    HtmlWriter::OpenDiv& div, const LinkedType& linked_type,
-    sus::fn::FnMutRef<void(HtmlWriter::OpenDiv&)> const_qualifier_fn,
-    sus::fn::FnMutRef<void(HtmlWriter::OpenDiv&)> volatile_qualifier_fn,
-    sus::fn::FnOnceRef<void(HtmlWriter::OpenDiv&)> var_name_fn) noexcept;
+LinkedType LinkedType::with_type(Type t, const Database& db) noexcept {
+  sus::Vec<sus::Option<TypeRef>> refs = db.collect_type_element_refs(t);
+  return LinkedType(CONSTRUCT, sus::move(t), sus::move(refs));
+}
 
-}  // namespace subdoc::gen
+}  // namespace subdoc

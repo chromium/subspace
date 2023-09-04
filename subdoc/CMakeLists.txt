@@ -41,6 +41,8 @@ target_sources(subdoc_lib PUBLIC
     "lib/gen/options.h"
     "lib/database.h"
     "lib/friendly_names.h"
+    "lib/linked_type.cc"
+    "lib/linked_type.h"
     "lib/parse_comment.cc"
     "lib/parse_comment.h"
     "lib/path.h"
