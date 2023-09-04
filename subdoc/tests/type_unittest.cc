@@ -702,10 +702,9 @@ TEST_F(SubDocTypeTest, ConceptReturn) {
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
     EXPECT_EQ(t.namespace_path, sus::vec("b", "a"));
-    const auto& [p1_type, p1_string] =
+    const std::string& p1 =
         t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Value>();
-    EXPECT_EQ(p1_type.name, "int");
-    EXPECT_EQ(p1_string, "1 + 3");
+    EXPECT_EQ(p1, "1 + 3");
 
     EXPECT_EQ(make_string("foo", t), "!C!<1 + 3> auto foo");
   });
@@ -728,10 +727,9 @@ TEST_F(SubDocTypeTest, ConceptReturnWithBody) {
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
     EXPECT_EQ(t.namespace_path, sus::vec("b", "a"));
-    const auto& [p1_type, p1_string] =
+    const std::string& p1 =
         t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Value>();
-    EXPECT_EQ(p1_type.name, "int");
-    EXPECT_EQ(p1_string, "1 + 3");
+    EXPECT_EQ(p1, "1 + 3");
 
     EXPECT_EQ(make_string("foo", t), "!C!<1 + 3> auto foo");
   });
@@ -753,10 +751,9 @@ TEST_F(SubDocTypeTest, ConceptWithParam) {
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
     EXPECT_EQ(t.namespace_path, sus::vec("b", "a"));
-    const auto& [p1_type, p1_string] =
+    const std::string& p1 =
         t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Value>();
-    EXPECT_EQ(p1_type.name, "int");
-    EXPECT_EQ(p1_string, "5 + 2");
+    EXPECT_EQ(p1, "5 + 2");
 
     EXPECT_EQ(make_string("foo", t), "!C!<5 + 2> auto foo");
   });
@@ -1301,4 +1298,140 @@ TEST_F(SubDocTypeTest, DecltypeReturnType) {
     EXPECT_EQ(make_string("foo", t), "decltype(a::b::C()) foo");
   });
 }
+
+TEST_F(SubDocTypeTest, ConceptReturnWithTypeParam) {
+  const char test[] = R"(
+    namespace a::b { template <class T, class... U> concept C = true; }
+    namespace c::d { struct E {}; }
+    a::b::C<c::d::E> auto f();
+
+    template <class T>
+    struct S {
+      a::b::C<c::d::E> auto g();
+    };
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function("f", cx).map(
+        [](clang::FunctionDecl& fdecl) { return fdecl.getReturnType(); });
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Concept);
+    EXPECT_EQ(t.name, "C");
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::None);
+    EXPECT_EQ(t.namespace_path, sus::vec("b", "a"));
+    const subdoc::Type& p1 =
+        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
+    EXPECT_EQ(p1.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(p1.name, "E");
+    EXPECT_EQ(p1.namespace_path, sus::vec("d", "c"));
+
+    EXPECT_EQ(make_string("foo", t), "!C!<!E!> auto foo");
+
+    sus::Option<clang::QualType> qual2 = find_function("g", cx).map(
+        [](clang::FunctionDecl& fdecl) { return fdecl.getReturnType(); });
+    subdoc::Type t2 =
+        subdoc::build_local_type(*qual2, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t2.category, subdoc::TypeCategory::Concept);
+    EXPECT_EQ(t2.name, "C");
+    EXPECT_EQ(t2.qualifier.is_const, false);
+    EXPECT_EQ(t2.qualifier.is_volatile, false);
+    EXPECT_EQ(t2.refs, subdoc::Refs::None);
+    EXPECT_EQ(t2.namespace_path, sus::vec("b", "a"));
+    const subdoc::Type& p21 =
+        t2.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
+    EXPECT_EQ(p21.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(p21.name, "E");
+    EXPECT_EQ(p21.namespace_path, sus::vec("d", "c"));
+
+    EXPECT_EQ(make_string("foo", t2), "!C!<!E!> auto foo");
+  });
+}
+
+// The type in the concept is a template, rather than a specialization of a
+// template, which is not valid(?) but is accepted by compilers. So we should
+// handle it.
+TEST_F(SubDocTypeTest, ConceptReturnWithTemplate) {
+  const char test[] = R"(
+    namespace a::b { template <class T, class... U> concept C = true; }
+    namespace c::d { template <class T> struct E {}; }
+    a::b::C<c::d::E> auto f();
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function("f", cx).map(
+        [](clang::FunctionDecl& fdecl) { return fdecl.getReturnType(); });
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Concept);
+    EXPECT_EQ(t.name, "C");
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::None);
+    EXPECT_EQ(t.namespace_path, sus::vec("b", "a"));
+    const std::string& p1 =
+        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Value>();
+    EXPECT_EQ(p1, "c::d::E");
+
+    EXPECT_EQ(make_string("foo", t), "!C!<c::d::E> auto foo");
+  });
+}
+
+TEST_F(SubDocTypeTest, ConceptReturnWithTemplateTemplate) {
+  const char test[] = R"(
+    namespace a::b { template <class T, class... U> concept C = true; }
+    template <template<class> class T> 
+    a::b::C<T> auto f();
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function("f", cx).map(
+        [](clang::FunctionDecl& fdecl) { return fdecl.getReturnType(); });
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Concept);
+    EXPECT_EQ(t.name, "C");
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::None);
+    EXPECT_EQ(t.namespace_path, sus::vec("b", "a"));
+    const std::string& p1 =
+        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Value>();
+    EXPECT_EQ(p1, "T");
+
+    EXPECT_EQ(make_string("foo", t), "!C!<T> auto foo");
+  });
+}
+
+TEST_F(SubDocTypeTest, ConceptReturnWithPack) {
+  const char test[] = R"(
+    namespace a::b { template <class T, class... U> concept C = true; }
+    template <class... T>
+    a::b::C<T...> auto f();
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function("f", cx).map(
+        [](clang::FunctionDecl& fdecl) { return fdecl.getReturnType(); });
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Concept);
+    EXPECT_EQ(t.name, "C");
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::None);
+    EXPECT_EQ(t.namespace_path, sus::vec("b", "a"));
+    const subdoc::Type& p1 =
+        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
+    EXPECT_EQ(p1.category, subdoc::TypeCategory::TemplateVariable);
+    EXPECT_EQ(p1.name, "T...");
+    EXPECT_EQ(p1.namespace_path, sus::vec());
+
+    EXPECT_EQ(make_string("foo", t), "!C!<T...> auto foo");
+  });
+}
+
 }  // namespace

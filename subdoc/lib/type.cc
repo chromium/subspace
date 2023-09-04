@@ -52,6 +52,30 @@ std::string name_of_type(clang::QualType q) noexcept {
   return name;
 }
 
+std::string template_to_string(clang::TemplateName template_name) noexcept {
+  clang::TemplateDecl* decl = template_name.getAsTemplateDecl();
+  sus::check_with_message(decl != nullptr, "TemplateName without Decl?");
+
+  sus::Vec<clang::NamedDecl*> contexts;
+  clang::DeclContext* context = decl->getDeclContext();
+  while (context) {
+    if (auto* n = clang::dyn_cast<clang::NamedDecl>(context)) {
+      if (clang::isa<clang::NamespaceDecl>(n) ||
+          clang::isa<clang::RecordDecl>(n))
+        contexts.push(n);
+    }
+    context = context->getParent();
+  }
+
+  std::ostringstream str;
+  for (clang::NamedDecl* n : sus::move(contexts).into_iter().rev()) {
+    str << n->getNameAsString();
+    str << "::";
+  }
+  str << decl->getNameAsString();
+  return sus::move(str).str();
+}
+
 /// Returns whether the parameter is of the form `Concept auto` which
 /// specializes and references a concept as an anonymous template type for the
 /// parameter.
@@ -77,17 +101,26 @@ TypeOrValue build_template_param(const clang::TemplateArgument& arg,
           build_local_type(arg.getNullPtrType(), sm, preprocessor)));
     case clang::TemplateArgument::ArgKind::Integral: {
       return TypeOrValue(TypeOrValueChoice::with<TypeOrValueChoice::Tag::Value>(
-          sus::tuple(build_local_type(arg.getIntegralType(), sm, preprocessor),
-                     llvm_int_to_string(arg.getAsIntegral()))));
+          llvm_int_to_string(arg.getAsIntegral())));
     }
-    case clang::TemplateArgument::ArgKind::Template: sus::unreachable();
+    case clang::TemplateArgument::ArgKind::Template:
+      // Getting here means the template parameter is itself a template
+      // (without its own parameters specified), rather than a specialization of
+      // a template.
+      // ```
+      // template <class T> struct S {};
+      // void f(Concept<S>);  // Does land in here.
+      // void f(Concept<S<int>>);  // Does not land in here.
+      // ```
+      // Since it's not a complete type, we can't parse a `clang::QualType`. So
+      // we save the string as a Value.
+      return TypeOrValue(TypeOrValueChoice::with<TypeOrValueChoice::Tag::Value>(
+          template_to_string(arg.getAsTemplate())));
     case clang::TemplateArgument::ArgKind::TemplateExpansion:
       sus::unreachable();
     case clang::TemplateArgument::ArgKind::Expression:
-      return TypeOrValue(
-          TypeOrValueChoice::with<TypeOrValueChoice::Tag::Value>(sus::tuple(
-              build_local_type(arg.getAsExpr()->getType(), sm, preprocessor),
-              stmt_to_string(*arg.getAsExpr(), sm, preprocessor))));
+      return TypeOrValue(TypeOrValueChoice::with<TypeOrValueChoice::Tag::Value>(
+          stmt_to_string(*arg.getAsExpr(), sm, preprocessor)));
     case clang::TemplateArgument::ArgKind::Pack: sus::unreachable();
   }
   sus::unreachable();
@@ -236,8 +269,10 @@ Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
     }
     context = context->getParent();
   }
+  // TODO: Vec::reverse().
+  namespace_path = sus::move(namespace_path).into_iter().rev().collect_vec();
+  record_path = sus::move(record_path).into_iter().rev().collect_vec();
 
-  qualtype->dump();
   auto [name, category] = [&]() -> sus::Tuple<std::string, TypeCategory> {
     if (auto* c = clang::dyn_cast<clang::TemplateTypeParmType>(&*qualtype)) {
       if (template_parameter_is_concept(*c)) {
@@ -323,7 +358,7 @@ void type_to_string_internal(
         }
         case TypeOrValueTag::Value: {
           // The type of the value isn't used here, we just write the value.
-          text_fn(tv.choice.as<TypeOrValueTag::Value>().into_inner<1>());
+          text_fn(tv.choice.as<TypeOrValueTag::Value>());
           break;
         }
       }
