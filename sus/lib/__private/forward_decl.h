@@ -138,6 +138,8 @@ class Map;
 template <class ToItem, class InnerSizedIter, class MapFn>
 class MapWhile;
 template <class InnerSizedIter>
+class Moved;
+template <class InnerSizedIter>
 class Peekable;
 template <class InnerSizedIter>
 class Reverse;

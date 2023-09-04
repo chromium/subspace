@@ -28,6 +28,7 @@ TEST(CompatQueue, FromIterator) {
   auto in = std::vector<i32>{1, 2, 3, 4, 5, 6, 7};
   auto out = sus::iter::from_range(sus::move(in))
                  .filter([](const i32& i) { return i % 2 == 0; })
+                 .moved()
                  .collect<std::queue<i32>>();
   static_assert(std::same_as<decltype(out), std::queue<i32>>);
   sus::check(out == std::queue<i32>(std::deque<i32>{2, 4, 6}));
@@ -38,6 +39,7 @@ TEST(CompatQueue, FromIteratorRef) {
   auto out = sus::iter::from_range(sus::move(in))
                  .filter([](const i32& i) { return i % 2 == 0; })
                  .rev()
+                 .moved()
                  .collect<std::queue<i32>>();
   static_assert(std::same_as<decltype(out), std::queue<i32>>);
   sus::check(out == std::queue<i32>(std::deque<i32>{6, 4, 2}));
@@ -47,6 +49,7 @@ TEST(CompatPriorityQueue, FromIterator) {
   auto in = std::vector<i32>{1, 2, 3, 4, 5, 6, 7};
   auto out = sus::iter::from_range(sus::move(in))
                  .filter([](const i32& i) { return i % 2 == 0; })
+                 .moved()
                  .collect<std::priority_queue<i32>>();
   static_assert(std::same_as<decltype(out), std::priority_queue<i32>>);
   auto cmp =
@@ -65,6 +68,7 @@ TEST(CompatPriorityQueue, FromIteratorRef) {
   auto out = sus::iter::from_range(sus::move(in))
                  .filter([](const i32& i) { return i % 2 == 0; })
                  .rev()
+                 .moved()
                  .collect<std::priority_queue<i32>>();
   static_assert(std::same_as<decltype(out), std::priority_queue<i32>>);
   auto cmp =

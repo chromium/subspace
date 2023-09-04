@@ -218,13 +218,16 @@ TEST(CompatRanges, FromRange) {
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
     EXPECT_EQ(it.exact_size_hint(), 0u);
   }
-  // rvalues are moved from the range.
+  // rvalues are *not* moved from the range, the range is not actually moved
+  // from. Otherwise the range which may not be owning could cause the values to
+  // be moved from an unexpected place. Ranges do not express or understand
+  // ownership, and moving from a range is done on a per-element basis instead.
   {
     auto v = std::vector<i32>({1, 2, 3});
-    sus::iter::Iterator<i32> auto it = sus::iter::from_range(sus::move(v));
-    EXPECT_EQ(sus::move(it).sum(), 1 + 2 + 3);
+    sus::iter::Iterator<i32&> auto it = sus::iter::from_range(sus::move(v));
+    EXPECT_EQ(sus::move(it).copied().sum(), 1 + 2 + 3);
 
-    EXPECT_EQ(sus::iter::from_range(std::vector<i32>({1, 2, 3})).sum(),
+    EXPECT_EQ(sus::iter::from_range(std::vector<i32>({1, 2, 3})).copied().sum(),
               1 + 2 + 3);
   }
 }
@@ -238,7 +241,7 @@ TEST(CompatRanges, FromRange_Example) {
   {
     // An input_iterator by value.
     auto v = std::vector<i32>({1, 2, 3});
-    sus::check(sus::iter::from_range(sus::move(v)).sum() == 1 + 2 + 3);
+    sus::check(sus::iter::from_range(sus::move(v)).moved().sum() == 1 + 2 + 3);
   }
 }
 

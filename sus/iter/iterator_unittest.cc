@@ -832,7 +832,7 @@ TEST(Iterator, Cloned) {
 TEST(Iterator, Copied) {
   auto copying = sus::Vec<usize>(1u, 2u);
 
-  // Clone from references.
+  // Copy from references.
   {
     auto it = copying.iter().cloned();
     static_assert(std::same_as<usize, decltype(it.next().unwrap())>);
@@ -844,7 +844,7 @@ TEST(Iterator, Copied) {
     EXPECT_EQ(it.next(), sus::None);
   }
 
-  // Clone from values.
+  // Copy from values.
   {
     auto it = sus::move(copying).into_iter().cloned();
     static_assert(std::same_as<usize, decltype(it.next().unwrap())>);
@@ -854,6 +854,53 @@ TEST(Iterator, Copied) {
     EXPECT_EQ(it.next().unwrap(), 1u);
     EXPECT_EQ(it.next().unwrap(), 2u);
     EXPECT_EQ(it.next(), sus::None);
+  }
+
+  static_assert(sus::Vec<usize>(1u, 2u).into_iter().copied().sum() == 1u + 2u);
+}
+
+TEST(Iterator, Moved) {
+  static i32 moves;
+
+  struct Movable {
+    Movable(i32 i) : i(i) {}
+    Movable(Movable&& m) : i(m.i) { moves += 1; }
+    Movable& operator=(Movable&& m) { return i = m.i, moves += 1, *this; }
+    i32 i;
+  };
+
+  auto moving = sus::Vec<Movable>(Movable(1), Movable(2));
+
+  // Move from references.
+  {
+    auto it = moving.iter_mut().moved();
+    static_assert(std::same_as<Movable, decltype(it.next().unwrap())>);
+    EXPECT_EQ(it.size_hint().lower, 2u);
+    EXPECT_EQ(it.size_hint().upper.unwrap(), 2u);
+
+    EXPECT_EQ(moves, 0);
+    EXPECT_EQ(it.next().unwrap().i, 1);
+    EXPECT_EQ(moves, 1);
+    EXPECT_EQ(it.next().unwrap().i, 2);
+    EXPECT_EQ(moves, 2);
+    EXPECT_EQ(it.next(), sus::None);
+    EXPECT_EQ(moves, 2);
+  }
+
+  // Move from values.
+  {
+    auto it = sus::move(moving).into_iter().moved();
+    static_assert(std::same_as<Movable, decltype(it.next().unwrap())>);
+    EXPECT_EQ(it.size_hint().lower, 2u);
+    EXPECT_EQ(it.size_hint().upper.unwrap(), 2u);
+
+    EXPECT_EQ(moves, 0);
+    EXPECT_EQ(it.next().unwrap().i, 1);
+    EXPECT_EQ(moves, 1);
+    EXPECT_EQ(it.next().unwrap().i, 2);
+    EXPECT_EQ(moves, 2);
+    EXPECT_EQ(it.next(), sus::None);
+    EXPECT_EQ(moves, 2);
   }
 
   static_assert(sus::Vec<usize>(1u, 2u).into_iter().copied().sum() == 1u + 2u);

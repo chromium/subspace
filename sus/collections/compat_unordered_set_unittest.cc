@@ -28,6 +28,7 @@ TEST(CompatUnorderedSet, FromIterator) {
   auto in = std::vector<i32>{3, 4, 2, 7, 6, 1, 5};
   auto out = sus::iter::from_range(sus::move(in))
                  .filter([](const i32& i) { return i % 2 == 0; })
+                 .moved()
                  .collect<std::unordered_set<i32>>();
   static_assert(std::same_as<decltype(out), std::unordered_set<i32>>);
   sus::check(out == std::unordered_set<i32>{2, 4, 6});
@@ -39,6 +40,7 @@ TEST(CompatUnorderedSet, Options) {
       sus::none(),  // None is present, so output is None.
       sus::some(6), sus::some(1), sus::some(5)};
   auto out_with_none = sus::iter::from_range(sus::move(with_none))
+                           .moved()
                            .collect<sus::Option<std::unordered_set<i32>>>();
   static_assert(std::same_as<decltype(out_with_none),
                              sus::Option<std::unordered_set<i32>>>);
@@ -48,6 +50,7 @@ TEST(CompatUnorderedSet, Options) {
       sus::some(3), sus::some(4), sus::some(2), sus::some(7),
       sus::some(6), sus::some(1), sus::some(5)};
   auto out_all_some = sus::iter::from_range(sus::move(all_some))
+                          .moved()
                           .collect<sus::Option<std::unordered_set<i32>>>();
   static_assert(std::same_as<decltype(out_all_some),
                              sus::Option<std::unordered_set<i32>>>);
@@ -59,6 +62,7 @@ TEST(CompatUnorderedMultiSet, FromIterator) {
   auto in = std::vector<i32>{3, 4, 2, 7, 2, 6, 1, 2, 5};
   auto out = sus::iter::from_range(sus::move(in))
                  .filter([](const i32& i) { return i % 2 == 0; })
+                 .moved()
                  .collect<std::unordered_multiset<i32>>();
   static_assert(std::same_as<decltype(out), std::unordered_multiset<i32>>);
   sus::check(out == std::unordered_multiset<i32>{2, 2, 2, 4, 6});

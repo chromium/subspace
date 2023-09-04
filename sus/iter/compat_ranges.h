@@ -35,14 +35,20 @@ class IteratorOverRange;
 /// Constructs an [`Iterator`]($sus::iter::Iterator) from a
 /// [`std::ranges::input_range`](https://en.cppreference.com/w/cpp/ranges/input_range).
 ///
-/// If the input is an lvalue reference, the `Iterator` will also
-/// iterate over references to the range's values. If the input is const, the
-/// `Iterator` will iterate over const references. To iterate over values
+/// C++ ranges always operate on pointers, so the resulting `Iterator` will
+/// always iterate over references to the range's values. If the input is const,
+/// the `Iterator` will iterate over const references. To iterate over values
 /// instead, use [`Iterator::cloned`]($sus::iter::IteratorBase::cloned) or
 /// [`Iterator::copied`]($sus::iter::IteratorBase::copied).
 ///
-/// If the input is an rvalue refernce, the `Iterator` will iterate over the
-/// moved items from the range.
+/// If the input was an rvalue and the input owned the values iterated by the
+/// range it produces, the references returned by iterator will be to the
+/// input container now held within the iterator. To iterator over values
+/// instead, and move those values from the iterator's references, use
+/// [`Iterator::moved`]($sus::iter::IteratorBase::moved). If the input range did
+/// not own the values it iterates over, using
+/// [`Iterator::moved`]($sus::iter::IteratorBase::moved) will still move from
+/// the objects being iterated over by the range.
 ///
 /// If the input range's iterators satisfy `std::ranges::bidiectional_iterator`,
 /// then the output `Iterator` will be a `DoubleEndedIterator`.
@@ -61,26 +67,15 @@ class IteratorOverRange;
 /// Consumes a vector and iterates over its values, not as references.
 /// ```
 /// auto v = std::vector<i32>({1, 2, 3});
-/// sus::check(sus::iter::from_range(sus::move(v)).sum() == 1 + 2 + 3);
+/// sus::check(sus::iter::from_range(sus::move(v)).moved().sum() == 1 + 2 + 3);
 /// ```
 template <class R>
   requires(std::ranges::input_range<R>)
 auto from_range(R&& r) noexcept {
-  if constexpr (std::is_lvalue_reference_v<R&&>) {
-    using B = decltype(std::declval<R&>().begin());
-    using E = decltype(std::declval<R&>().end());
-    using Item = typename std::iterator_traits<B>::reference;
-    if constexpr (sus::mem::relocate_by_memcpy<B> &&
-                  sus::mem::relocate_by_memcpy<E>)
-      return IteratorOverRange<R, B, E, Item>(r);
-    else
-      return IteratorOverRange<R, B, E, Item>(r).box();
-  } else {
-    using B = decltype(std::make_move_iterator(std::declval<R&>().begin()));
-    using E = decltype(std::make_move_iterator(std::declval<R&>().end()));
-    using Item = typename std::iterator_traits<B>::value_type;
-    return IteratorOverRange<R, B, E, Item>(r);
-  }
+  using B = decltype(std::declval<R&>().begin());
+  using E = decltype(std::declval<R&>().end());
+  using Item = typename std::iterator_traits<B>::reference;
+  return IteratorOverRange<R, B, E, Item>(r);
 }
 
 template <class R, class B, class E, class ItemT>

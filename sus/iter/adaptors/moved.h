@@ -23,30 +23,35 @@
 
 namespace sus::iter {
 
-/// An iterator that copies the elements of an underlying iterator.
+/// An iterator that moves from the elements of an underlying iterator.
 ///
-/// This type is returned from `Iterator::copied()`.
+/// This type is returned from `Iterator::moved()`.
 template <class InnerSizedIter>
-class [[nodiscard]] Copied final
-    : public IteratorBase<Copied<InnerSizedIter>,
+class [[nodiscard]] Moved final
+    : public IteratorBase<Moved<InnerSizedIter>,
                           std::remove_cvref_t<typename InnerSizedIter::Item>> {
  public:
   using Item = std::remove_cvref_t<typename InnerSizedIter::Item>;
 
   // Type is Move and (can be) Clone.
-  Copied(Copied&&) = default;
-  Copied& operator=(Copied&&) = default;
+  Moved(Moved&&) = default;
+  Moved& operator=(Moved&&) = default;
 
   // sus::mem::Clone trait.
-  constexpr Copied clone() const noexcept
+  constexpr Moved clone() const noexcept
     requires(::sus::mem::Clone<InnerSizedIter>)
   {
-    return Copied(::sus::clone(next_iter_));
+    return Moved(::sus::clone(next_iter_));
   }
 
   // sus::iter::Iterator trait.
   constexpr Option<Item> next() noexcept {
-    return next_iter_.next().map([](const Item& item) -> Item { return item; });
+    return next_iter_.next().map(
+        // The `next_iter_` item may be a value or a reference, but we move from
+        // it unconditionally.
+        [](auto&& item) -> std::remove_reference_t<Item> {
+          return ::sus::move(item);
+        });
   }
 
   /// sus::iter::Iterator trait.
@@ -81,7 +86,7 @@ class [[nodiscard]] Copied final
   template <class U, class V>
   friend class IteratorBase;
 
-  explicit constexpr Copied(InnerSizedIter&& next_iter)
+  explicit constexpr Moved(InnerSizedIter&& next_iter)
       : next_iter_(::sus::move(next_iter)) {}
 
   InnerSizedIter next_iter_;
