@@ -17,6 +17,7 @@
 #include "subdoc/llvm.h"
 #include "sus/choice/choice.h"
 #include "sus/collections/vec.h"
+#include "sus/fn/fn_ref.h"
 #include "sus/prelude.h"
 
 namespace subdoc {
@@ -37,20 +38,15 @@ enum class Refs {
 };
 
 enum class TypeCategory {
-  /// A concrete type or concept/template specialization.
+  /// A concrete type or template specialization.
   Type,
+  /// A concept.
+  Concept,
   /// A reference to a template variable.
   TemplateVariable,
 };
 
 struct Type {
-  static Type from_template_variable(std::string_view name) noexcept {
-    // TODO: Can't a tempalte variable be used like T& or T*?
-    return Type(TypeCategory::TemplateVariable, sus::vec(), sus::vec(),
-                std::string(name), Refs::None, Qualifier(false, false),
-                sus::vec(), sus::vec(), sus::vec());
-  }
-
   TypeCategory category;
   /// Namespaces the type is nested in, ordered from closest to furthest. An
   /// empty string indicates an anonymous namespace. The global namespace is not
@@ -58,9 +54,12 @@ struct Type {
   sus::Vec<std::string> namespace_path;
   /// Records the type is nested in, ordered from closest to furthest.
   sus::Vec<std::string> record_path;
+  /// The name of the type. For `category == TemplateVariable` this will be the
+  /// the name of the variable.
   std::string name;
   /// Refs can only appear on the outermost type.
   Refs refs;
+  /// Const-volatile qualifiers for the outermost type.
   Qualifier qualifier;
   /// The qualifiers of each level of pointer indirection. Empty if the type is
   /// not a pointer. The order is reversed from the order that they are applied,
@@ -99,5 +98,19 @@ struct TypeOrValue {
 /// aliases.
 Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
                       clang::Preprocessor& preprocessor) noexcept;
+
+struct TypeToStringQuery {
+  sus::Slice<std::string> namespace_path;
+  sus::Slice<std::string> record_path;
+  std::string_view name;
+};
+
+/// Produces a text representation of the type, allowing a callback to be
+/// executed for each type encountered, and the returned value will be used
+/// in place of the `name` of the type. The callback can just return
+/// `ToStringQuery::name` to not change the output at all.
+std::string type_to_string(
+    std::string_view var_name, const Type& type,
+    sus::fn::FnMutRef<std::string(TypeToStringQuery)> type_fn) noexcept;
 
 }  // namespace subdoc
