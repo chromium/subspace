@@ -85,7 +85,7 @@ enum class TypeOrValueTag {
 // clang-format off
 using TypeOrValueChoice = sus::Choice<sus_choice_types(
     (TypeOrValueTag::Type, Type),
-    (TypeOrValueTag::Value, Type, std::string /* The value as text*/))>;
+    (TypeOrValueTag::Value, std::string /* The value as text*/))>;
 // clang-format on
 
 struct TypeOrValue {
