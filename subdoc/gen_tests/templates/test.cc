@@ -7,6 +7,9 @@ template <class T>
 concept Concept = true;
 
 template <class T>
+struct S {};
+
+template <class T>
 struct TemplateMethods {
   TemplateMethods();
 
@@ -20,14 +23,13 @@ struct TemplateMethods {
 
   template <class U>
   static U member;
+
+  S<S<int>> template_field;
 };
 
 // Returns template parameter.
 template <class U>
 U template_function(U);
-
-template <class T>
-struct S {};
 
 /// Returns template instantiation.
 S<int> return_template();

@@ -23,6 +23,7 @@
 #include "subdoc/lib/record_type.h"
 #include "subdoc/lib/requires.h"
 #include "subdoc/lib/stmt_to_string.h"
+#include "subdoc/lib/type.h"
 #include "subdoc/lib/unique_symbol.h"
 #include "sus/assertions/check.h"
 #include "sus/assertions/unreachable.h"
@@ -210,7 +211,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       //              << cxxdecl->getTemplateSpecializationKind() << "\n";
     }
 
-    RecordType type = [&]() {
+    RecordType record_type = [&]() {
       if (decl->isStruct()) return RecordType::Struct;
       if (decl->isUnion()) return RecordType::Union;
       return RecordType::Class;
@@ -237,7 +238,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         iter_record_path(parent_record_decl)
             .map([](std::string_view&& v) { return std::string(v); })
             .collect_vec(),
-        type, sus::move(constraints), sus::move(template_params),
+        record_type, sus::move(constraints), sus::move(template_params),
         decl->getDefinition()->hasAttr<clang::FinalAttr>(),
         decl->getASTContext().getSourceManager().getFileOffset(
             decl->getLocation()));
@@ -287,9 +288,16 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
     Comment comment = make_db_comment(decl->getASTContext(), raw_comment,
                                       record_decl->getName());
+
+    Type type = build_local_type(decl->getType(),
+                                 decl->getASTContext().getSourceManager(),
+                                 preprocessor_);
+    sus::Vec<sus::Option<TypeRef>> type_refs =
+        docs_db_.collect_type_element_refs(type);
+
     auto fe = FieldElement(
         iter_namespace_path(decl).collect_vec(), sus::move(comment),
-        std::string(decl->getName()), decl->getType(),
+        std::string(decl->getName()), sus::move(type), sus::move(type_refs),
         iter_record_path(record_decl)
             .map([](std::string_view&& v) { return std::string(v); })
             .collect_vec(),
@@ -298,7 +306,6 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         sus::vec(),  // Non-static fields can't have template parameters.
         decl->getASTContext().getSourceManager().getFileOffset(
             decl->getLocation()));
-    fe.type_element = docs_db_.find_type(decl->getType());
 
     if (sus::Option<RecordElement&> parent =
             docs_db_.find_record_mut(record_decl);
@@ -325,9 +332,15 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       template_params = collect_template_params(tmpl, preprocessor_);
     }
 
+    Type type = build_local_type(decl->getType(),
+                                 decl->getASTContext().getSourceManager(),
+                                 preprocessor_);
+    sus::Vec<sus::Option<TypeRef>> type_refs =
+        docs_db_.collect_type_element_refs(type);
+
     auto fe = FieldElement(
         iter_namespace_path(decl).collect_vec(), sus::move(comment),
-        std::string(decl->getName()), decl->getType(),
+        std::string(decl->getName()), sus::move(type), sus::move(type_refs),
         iter_record_path(record_decl)
             .map([](std::string_view&& v) { return std::string(v); })
             .collect_vec(),
@@ -335,8 +348,6 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         FieldElement::Static, sus::move(template_params),
         decl->getASTContext().getSourceManager().getFileOffset(
             decl->getLocation()));
-    // TODO: Save the qualifiers/pointers like we do for parameters.
-    fe.type_element = docs_db_.find_type(decl->getType());
 
     if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
             clang::cast<clang::RecordDecl>(decl->getDeclContext()));
@@ -657,7 +668,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     if (add_overload) {
       ::sus::check_with_message(
           db_element.overloads.len() == 1u,
-          *"Expected to add FunctionElement with 1 overload");
+          "Expected to add FunctionElement with 1 overload");
 
       bool exists = db_map.at(key).overloads.iter().any(
           [&db_element](const FunctionOverload& overload) {
