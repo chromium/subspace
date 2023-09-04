@@ -70,6 +70,7 @@ TEST_F(SubDocTypeTest, Primitive) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
@@ -91,6 +92,7 @@ TEST_F(SubDocTypeTest, Nullptr) {
     subdoc::Type t = subdoc::build_local_type(
         fdecl->getReturnType(), cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "nullptr_t");
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
@@ -103,6 +105,20 @@ TEST_F(SubDocTypeTest, Nullptr) {
   });
 }
 
+TEST_F(SubDocTypeTest, Bool) {
+  const char test[] = R"(
+    void f(bool);
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t.name, "bool");  // Not "_Bool".
+  });
+}
+
 TEST_F(SubDocTypeTest, Const) {
   const char test[] = R"(
     void f(const bool);
@@ -112,6 +128,7 @@ TEST_F(SubDocTypeTest, Const) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "bool");
     EXPECT_EQ(t.qualifier.is_const, true);
     EXPECT_EQ(t.qualifier.is_volatile, false);
@@ -128,6 +145,7 @@ TEST_F(SubDocTypeTest, Volatile) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "bool");
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, true);
@@ -144,6 +162,7 @@ TEST_F(SubDocTypeTest, ConstVolatile) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "bool");
     EXPECT_EQ(t.qualifier.is_const, true);
     EXPECT_EQ(t.qualifier.is_volatile, true);
@@ -160,6 +179,7 @@ TEST_F(SubDocTypeTest, ConstRef) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
     EXPECT_EQ(t.qualifier.is_const, true);
     EXPECT_EQ(t.qualifier.is_volatile, false);
@@ -176,6 +196,7 @@ TEST_F(SubDocTypeTest, MutRef) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
@@ -192,6 +213,7 @@ TEST_F(SubDocTypeTest, ConstRRef) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
     EXPECT_EQ(t.qualifier.is_const, true);
     EXPECT_EQ(t.qualifier.is_volatile, false);
@@ -208,6 +230,7 @@ TEST_F(SubDocTypeTest, MutRRef) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
@@ -224,6 +247,7 @@ TEST_F(SubDocTypeTest, Pointer) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
@@ -241,6 +265,7 @@ TEST_F(SubDocTypeTest, RefToPointer) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
@@ -258,6 +283,7 @@ TEST_F(SubDocTypeTest, ConstRefToPointer) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
     EXPECT_EQ(t.qualifier.is_const, true);
     EXPECT_EQ(t.qualifier.is_volatile, false);
@@ -275,6 +301,7 @@ TEST_F(SubDocTypeTest, ConstRefToPointerToConst) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
     EXPECT_EQ(t.qualifier.is_const, true);
     EXPECT_EQ(t.qualifier.is_volatile, false);
@@ -292,6 +319,7 @@ TEST_F(SubDocTypeTest, PointerQualifiers) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
@@ -312,6 +340,7 @@ TEST_F(SubDocTypeTest, SizedArray) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
@@ -330,6 +359,7 @@ TEST_F(SubDocTypeTest, QualifiedArray) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
     EXPECT_EQ(t.qualifier.is_const, true);
     EXPECT_EQ(t.qualifier.is_volatile, false);
@@ -348,6 +378,7 @@ TEST_F(SubDocTypeTest, SizedMultiArray) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
@@ -366,6 +397,7 @@ TEST_F(SubDocTypeTest, UnsizedArray) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
@@ -384,6 +416,7 @@ TEST_F(SubDocTypeTest, UnsizedAndSizedArray) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
@@ -403,6 +436,7 @@ TEST_F(SubDocTypeTest, DependentArray) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
@@ -422,6 +456,7 @@ TEST_F(SubDocTypeTest, SizedArrayRef) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
     EXPECT_EQ(t.qualifier.is_const, true);
     EXPECT_EQ(t.qualifier.is_volatile, false);
@@ -441,6 +476,7 @@ TEST_F(SubDocTypeTest, NamespaceReference) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "S");
     EXPECT_EQ(t.qualifier.is_const, true);
     EXPECT_EQ(t.qualifier.is_volatile, false);
@@ -461,6 +497,7 @@ TEST_F(SubDocTypeTest, NamespaceTypedefReference) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "S2");
     EXPECT_EQ(t.record_path, sus::vec());
     EXPECT_EQ(t.namespace_path, sus::Vec<std::string>("b", "a"));
@@ -478,6 +515,7 @@ TEST_F(SubDocTypeTest, NamespaceUsingReference) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "S2");
     EXPECT_EQ(t.record_path, sus::vec());
     EXPECT_EQ(t.namespace_path, sus::Vec<std::string>("b", "a"));
@@ -493,6 +531,7 @@ TEST_F(SubDocTypeTest, Auto) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
     EXPECT_EQ(t.name, "auto");
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
@@ -509,6 +548,7 @@ TEST_F(SubDocTypeTest, AutoRef) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
     EXPECT_EQ(t.name, "auto");
     EXPECT_EQ(t.qualifier.is_const, true);
     EXPECT_EQ(t.qualifier.is_volatile, false);
@@ -525,6 +565,7 @@ TEST_F(SubDocTypeTest, AutoPointer) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
     EXPECT_EQ(t.name, "auto");
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
@@ -535,18 +576,20 @@ TEST_F(SubDocTypeTest, AutoPointer) {
 
 TEST_F(SubDocTypeTest, Concept) {
   const char test[] = R"(
-    template <class T> concept C = true;
-    void f(C auto, C auto);
+    namespace a::b { template <class T> concept C = true; }
+    void f(a::b::C auto, const a::b::C auto&);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
     sus::Option<clang::QualType> qual = find_function_parm("f", cx);
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
-    EXPECT_EQ(t.name, "auto");
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t.name, "C");
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
+    EXPECT_EQ(t.namespace_path, sus::vec("b", "a"));
 
     sus::Option<clang::QualType> qual2 =
         find_function("f", cx).map([](clang::FunctionDecl& fdecl) {
@@ -557,27 +600,88 @@ TEST_F(SubDocTypeTest, Concept) {
     subdoc::Type t2 =
         subdoc::build_local_type(*qual2, cx.getSourceManager(), preprocessor);
 
-    EXPECT_EQ(t2.name, "auto");
-    EXPECT_EQ(t2.qualifier.is_const, false);
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t2.name, "C");
+    EXPECT_EQ(t2.qualifier.is_const, true);
     EXPECT_EQ(t2.qualifier.is_volatile, false);
-    EXPECT_EQ(t2.refs, subdoc::Refs::None);
+    EXPECT_EQ(t2.refs, subdoc::Refs::LValueRef);
+    EXPECT_EQ(t2.namespace_path, sus::vec("b", "a"));
   });
 }
 
 TEST_F(SubDocTypeTest, ConceptWithParam) {
   const char test[] = R"(
-    template <class T, unsigned> concept C = true;
-    void f(C<5> auto);
+    namespace a::b { template <class T, unsigned> concept C = true; }
+    void f(a::b::C<5 + 2> auto);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
     sus::Option<clang::QualType> qual = find_function_parm("f", cx);
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
-    EXPECT_EQ(t.name, "auto");
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t.name, "C");
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
+    EXPECT_EQ(t.namespace_path, sus::vec("b", "a"));
+    const auto& [p1_type, p1_string] =
+        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Value>();
+    EXPECT_EQ(p1_type.name, "int");
+    EXPECT_EQ(p1_string, "5 + 2");
+  });
+}
+
+TEST_F(SubDocTypeTest, ConceptWithTypeParam) {
+  const char test[] = R"(
+    namespace a::b { template <class T, class U> concept C = true; }
+    template <class T>
+    void f(a::b::C<T volatile* const&&> auto);
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t.name, "C");
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::None);
+    EXPECT_EQ(t.namespace_path, sus::vec("b", "a"));
+    const subdoc::Type& p1 =
+        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
+    EXPECT_EQ(p1.name, "T");
+    EXPECT_EQ(p1.qualifier.is_const, true);
+    EXPECT_EQ(p1.refs, subdoc::Refs::RValueRef);
+    EXPECT_EQ(p1.pointers, sus::Vec<Qualifier>(subdoc::Qualifier(false, true)));
+  });
+}
+
+TEST_F(SubDocTypeTest, ConceptWithPack) {
+  const char test[] = R"(
+    namespace a::b { template <class... T> concept C = true; }
+    template <class... T>
+    void f(a::b::C<T...> auto);
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t.name, "C");
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::None);
+    EXPECT_EQ(t.namespace_path, sus::vec("b", "a"));
+    const subdoc::Type& p1 =
+        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
+    EXPECT_EQ(p1.name, "T...");
+    EXPECT_EQ(p1.qualifier.is_const, false);
+    EXPECT_EQ(p1.qualifier.is_volatile, false);
+    EXPECT_EQ(p1.refs, subdoc::Refs::None);
+    EXPECT_EQ(p1.namespace_path, sus::vec());
   });
 }
 
@@ -593,13 +697,17 @@ TEST_F(SubDocTypeTest, AliasTemplate) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "A");
     ASSERT_EQ(t.template_params.len(), 1u);
-    EXPECT_EQ(t.template_params[0u].choice,
-              subdoc::TypeOrValueTag::DependentType);
+    EXPECT_EQ(t.template_params[0u].choice, subdoc::TypeOrValueTag::Type);
     EXPECT_EQ(t.template_params[0u]
-                  .choice.as<subdoc::TypeOrValueTag::DependentType>(),
-              "T");
+                  .choice.as<subdoc::TypeOrValueTag::Type>()
+                  .category,
+              subdoc::TypeCategory::TemplateVariable);
+    EXPECT_EQ(
+        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>().name,
+        "T");
   });
 }
 
@@ -616,6 +724,7 @@ TEST_F(SubDocTypeTest, NestedAliasTemplate) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "A");
     EXPECT_EQ(t.record_path, sus::vec("S"));
     EXPECT_EQ(t.namespace_path, sus::vec("b", "a"));
@@ -639,13 +748,65 @@ TEST_F(SubDocTypeTest, DependentTypeInTemplate) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "S");
     ASSERT_EQ(t.template_params.len(), 1u);
-    EXPECT_EQ(t.template_params[0u].choice,
-              subdoc::TypeOrValueTag::DependentType);
+    EXPECT_EQ(t.template_params[0u].choice, subdoc::TypeOrValueTag::Type);
     EXPECT_EQ(t.template_params[0u]
-                  .choice.as<subdoc::TypeOrValueTag::DependentType>(),
-              "T");
+                  .choice.as<subdoc::TypeOrValueTag::Type>()
+                  .category,
+              subdoc::TypeCategory::TemplateVariable);
+    EXPECT_EQ(
+        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>().name,
+        "T");
+  });
+}
+
+TEST_F(SubDocTypeTest, DependentTypeQualified) {
+  const char test[] = R"(
+    template <class T> struct S {};
+    template <class T>
+    void f(S<const T&>);
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t.name, "S");
+    ASSERT_EQ(t.template_params.len(), 1u);
+    EXPECT_EQ(t.template_params[0u].choice, subdoc::TypeOrValueTag::Type);
+    const subdoc::Type& p1 =
+        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
+    EXPECT_EQ(p1.category, subdoc::TypeCategory::TemplateVariable);
+    EXPECT_EQ(p1.name, "T");
+    EXPECT_EQ(p1.qualifier.is_const, true);
+    EXPECT_EQ(p1.refs, subdoc::Refs::LValueRef);
+  });
+}
+
+TEST_F(SubDocTypeTest, DependentTypePointer) {
+  const char test[] = R"(
+    template <class T> struct S {};
+    template <class T>
+    void f(S<T volatile*>);
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t.name, "S");
+    ASSERT_EQ(t.template_params.len(), 1u);
+    const subdoc::Type& p1 =
+        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
+    EXPECT_EQ(p1.category, subdoc::TypeCategory::TemplateVariable);
+    EXPECT_EQ(p1.name, "T");
+    EXPECT_EQ(p1.qualifier.is_const, false);
+    EXPECT_EQ(p1.refs, subdoc::Refs::None);
+    EXPECT_EQ(p1.pointers, sus::vec(subdoc::Qualifier(false, true)));
   });
 }
 
@@ -659,6 +820,7 @@ TEST_F(SubDocTypeTest, NestedClassMultiple) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "C");
     EXPECT_EQ(t.record_path, sus::vec("B", "A"));
     EXPECT_EQ(t.namespace_path, sus::vec("b", "a"));
@@ -677,7 +839,8 @@ TEST_F(SubDocTypeTest, DependentTypeAsParam) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
-    EXPECT_EQ(t.name, "T_");  // `T` IS WRONG CUZ IT WILL POINT TO `struct T`.
+    EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
+    EXPECT_EQ(t.name, "T");
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
@@ -699,7 +862,8 @@ TEST_F(SubDocTypeTest, DependentTypeFromClassAsParam) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
-    EXPECT_EQ(t.name, "T_");  // `T` IS WRONG CUZ IT WILL POINT TO `struct T`.
+    EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
+    EXPECT_EQ(t.name, "T");
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
@@ -722,7 +886,8 @@ TEST_F(SubDocTypeTest, DependentTypeFromClassAsParamOnTemplateFunction) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
-    EXPECT_EQ(t.name, "T_");  // `T` IS WRONG CUZ IT WILL POINT TO `struct T`.
+    EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
+    EXPECT_EQ(t.name, "T");
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
@@ -744,7 +909,8 @@ TEST_F(SubDocTypeTest, DependentTypeAsParamWithRequires) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
-    EXPECT_EQ(t.name, "T_");
+    EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
+    EXPECT_EQ(t.name, "T");
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
@@ -765,7 +931,8 @@ TEST_F(SubDocTypeTest, DependentTypeAsParamWithConcept) {
     subdoc::Type t =
         subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
 
-    EXPECT_EQ(t.name, "T_");
+    EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
+    EXPECT_EQ(t.name, "T");
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);

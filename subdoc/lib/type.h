@@ -36,7 +36,22 @@ enum class Refs {
   RValueRef,
 };
 
+enum class TypeCategory {
+  /// A concrete type or concept/template specialization.
+  Type,
+  /// A reference to a template variable.
+  TemplateVariable,
+};
+
 struct Type {
+  static Type from_template_variable(std::string_view name) noexcept {
+    // TODO: Can't a tempalte variable be used like T& or T*?
+    return Type(TypeCategory::TemplateVariable, sus::vec(), sus::vec(),
+                std::string(name), Refs::None, Qualifier(false, false),
+                sus::vec(), sus::vec(), sus::vec());
+  }
+
+  TypeCategory category;
   /// Namespaces the type is nested in, ordered from closest to furthest. An
   /// empty string indicates an anonymous namespace. The global namespace is not
   /// represented.
@@ -63,20 +78,20 @@ struct Type {
 };
 
 enum class TypeOrValueTag {
-  Concept,
   Type,
-  DependentType,
   Value,
 };
 
+// clang-format off
 using TypeOrValueChoice = sus::Choice<sus_choice_types(
-    (TypeOrValueTag::Concept, Type),                          //
-    (TypeOrValueTag::Type, Type),                             //
-    (TypeOrValueTag::DependentType, std::string /* name */),  //
-    (TypeOrValueTag::Value, Type /* a primitive or enum */,
-     std::string /* value as text*/))>;
+    (TypeOrValueTag::Type, Type),
+    (TypeOrValueTag::Value, Type, std::string /* The value as text*/))>;
+// clang-format on
 
 struct TypeOrValue {
+  /// We can't forward declare a Choice type, as it needs to know the size of the
+  /// things it can hold, when we declare it, so we forward declare the
+  /// `TypeOrValue` struct and put a Choice inside it.
   TypeOrValueChoice choice;
 };
 
