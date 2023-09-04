@@ -138,22 +138,10 @@ struct MethodSpecific {
   MethodQualifier qualifier;
 };
 
-struct Qualifiers {
-  bool is_const;
-  bool is_volatile;
-};
-
 struct FunctionParameter {
-  sus::Option<const TypeElement&> type_element;
-  sus::Option<std::string> default_value;
-  std::string type_name;
-  std::string short_type_name;
+  LinkedType type;
   std::string parameter_name;
-  Qualifiers qualifiers;
-  bool is_lvalue_reference;
-  bool is_rvalue_reference;
-  // Counts how many `*` are part of the type and their qualifiers.
-  sus::Vec<Qualifiers> pointers;
+  sus::Option<std::string> default_value;
 };
 
 struct FunctionOverload {
