@@ -30,6 +30,7 @@ struct Qualifier {
 
   friend bool operator==(const Qualifier&, const Qualifier&) = default;
 };
+static_assert(sus::ops::Eq<Qualifier>);
 
 enum class Refs {
   LValueRef,
@@ -106,11 +107,23 @@ struct TypeToStringQuery {
 };
 
 /// Produces a text representation of the type, allowing a callback to be
-/// executed for each type encountered, and the returned value will be used
-/// in place of the `name` of the type. The callback can just return
-/// `ToStringQuery::name` to not change the output at all.
-std::string type_to_string(
-    std::string_view var_name, const Type& type,
-    sus::fn::FnMutRef<std::string(TypeToStringQuery)> type_fn) noexcept;
+/// executed for each type encountered. Text in between types is emitted to the
+/// `text_fn`, and the types are emitted to `type_fn`. The `type_fn` callback
+/// can use `ToStringQuery::name` to just forward the name along as text.
+///
+/// The `var_name_fn` is called at the place where the variable name (if any)
+/// would appear.
+void type_to_string(
+    const Type& type, sus::fn::FnMutRef<void(std::string_view)> text_fn,
+    sus::fn::FnMutRef<void(TypeToStringQuery)> type_fn,
+    sus::fn::FnMutRef<void()> const_qualifier_fn,
+    sus::fn::FnMutRef<void()> volatile_qualifier_fn,
+    sus::Option<sus::fn::FnOnceRef<void()>> var_name_fn) noexcept;
+
+/// Like `type_to_string` but just walks through the types and does not produce
+/// any output.
+void type_walk_types(
+    const Type& type,
+    sus::fn::FnMutRef<void(TypeToStringQuery)> type_fn) noexcept;
 
 }  // namespace subdoc

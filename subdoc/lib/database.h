@@ -40,6 +40,7 @@ struct FunctionElement;
 struct TypeElement;
 struct ConceptElement;
 struct FieldElement;
+struct RecordElement;
 
 enum class FoundNameTag {
   Namespace,
@@ -54,6 +55,14 @@ using FoundName = sus::Choice<sus_choice_types(
     (FoundNameTag::Type, const TypeElement&),
     (FoundNameTag::Concept, const ConceptElement&),
     (FoundNameTag::Field, const FieldElement&))>;
+
+enum class TypeRefTag {
+  Concept,
+  Record,
+};
+using TypeRef =
+    sus::Choice<sus_choice_types((TypeRefTag::Concept, const ConceptElement&),
+                                 (TypeRefTag::Record, const RecordElement&))>;
 
 struct Comment {
   Comment() = default;
@@ -285,27 +294,24 @@ struct FieldElement : public CommentElement {
   };
 
   explicit FieldElement(sus::Vec<Namespace> containing_namespaces,
-                        Comment comment, std::string name,
-                        clang::QualType qual_type,
+                        Comment comment, std::string name, Type type,
+                        sus::Vec<sus::Option<TypeRef>> type_refs,
                         sus::Vec<std::string> record_path, StaticType is_static,
                         sus::Vec<std::string> template_params, u32 sort_key)
       : CommentElement(sus::move(containing_namespaces), sus::move(comment),
                        sus::move(name), sort_key),
         record_path(sus::move(record_path)),
-        type_name(friendly_type_name(qual_type)),
-        short_type_name(friendly_short_type_name(qual_type)),
-        is_const(qual_type.getQualifiers().hasConst()),
-        is_volatile(qual_type.getQualifiers().hasVolatile()),
+        type(sus::move(type)),
+        type_element_refs(sus::move(type_refs)),
         is_static(is_static),
         template_params(sus::move(template_params)) {}
 
   sus::Vec<std::string> record_path;
-  /// The field's type if it's in the database.
-  sus::Option<const TypeElement&> type_element;
-  std::string type_name;
-  std::string short_type_name;
-  bool is_const;
-  bool is_volatile;
+  /// The complete type of the field, including any inner types in template
+  /// params etc.
+  Type type;
+  /// References into the database for every type that makes up `type`.
+  sus::Vec<sus::Option<TypeRef>> type_element_refs;
   StaticType is_static;
   sus::Vec<std::string> template_params;
 
@@ -454,6 +460,18 @@ struct RecordElement : public TypeElement {
       if (e.has_any_comments()) return true;
     }
     return false;
+  }
+
+  /// Finds a TypeElement in the record (not looking recursively) by its
+  /// name. It looks for records, enums, etc.
+  sus::Option<TypeRef> get_local_type_element_ref_by_name(
+      std::string_view find_name) const noexcept {
+    if (auto rec_it = records.find(RecordId(std::string(find_name)));
+        rec_it != records.end() && !rec_it->second.hidden()) {
+      return sus::some(TypeRef::with<TypeRef::Tag::Record>(rec_it->second));
+    } else {
+      return sus::none();
+    }
   }
 
   sus::Option<const CommentElement&> find_record_comment(
@@ -606,6 +624,21 @@ struct NamespaceElement : public CommentElement {
       if (e.has_any_comments()) return true;
     }
     return false;
+  }
+
+  /// Finds a TypeElement in the namespace (not looking recursively) by its
+  /// name. It looks for records, concepts, etc.
+  sus::Option<TypeRef> get_local_type_element_ref_by_name(
+      std::string_view find_name) const noexcept {
+    if (auto rec_it = records.find(RecordId(std::string(find_name)));
+        rec_it != records.end() && !rec_it->second.hidden()) {
+      return sus::some(TypeRef::with<TypeRef::Tag::Record>(rec_it->second));
+    } else if (auto con_it = concepts.find(ConceptId(std::string(find_name)));
+               con_it != concepts.end() && !con_it->second.hidden()) {
+      return sus::some(TypeRef::with<TypeRef::Tag::Concept>(con_it->second));
+    } else {
+      return sus::none();
+    }
   }
 
   sus::Option<const CommentElement&> find_concept_comment(
@@ -1036,6 +1069,47 @@ struct Database {
       // TODO: Support typedefs!  They are not stored in the database.
     }
     return sus::none();
+  }
+
+  sus::Vec<sus::Option<TypeRef>> collect_type_element_refs(
+      const Type& type) noexcept {
+    sus::Vec<sus::Option<TypeRef>> vec;
+    type_walk_types(type, [&](TypeToStringQuery q) {
+      NamespaceElement* ns_cursor = &global;
+      for (const std::string& name : q.namespace_path) {
+        auto it = ns_cursor->namespaces.find(NamespaceId(name));
+        if (it == ns_cursor->namespaces.end()) {
+          vec.push(sus::none());
+          return;
+        }
+        ns_cursor = &it->second;
+      }
+      if (q.record_path.is_empty()) {
+        vec.push(ns_cursor->get_local_type_element_ref_by_name(q.name));
+        return;
+      }
+
+      RecordElement* rec_cursor = nullptr;
+      for (const auto& [i, name] : q.record_path.iter().enumerate()) {
+        if (i == 0u) {
+          auto it = ns_cursor->records.find(RecordId(name));
+          if (it == ns_cursor->records.end()) {
+            vec.push(sus::none());
+            return;
+          }
+          rec_cursor = &it->second;
+        } else {
+          auto it = rec_cursor->records.find(RecordId(name));
+          if (it == rec_cursor->records.end()) {
+            vec.push(sus::none());
+            return;
+          }
+          rec_cursor = &it->second;
+        }
+      }
+      vec.push(rec_cursor->get_local_type_element_ref_by_name(q.name));
+    });
+    return vec;
   }
 
   sus::Option<NamespaceElement&> find_namespace_mut(

@@ -261,98 +261,156 @@ Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
 
 namespace {
 
-std::string type_to_string_internal(
-    const std::string_view var_name, const Type& type,
-    sus::fn::FnMutRef<std::string(TypeToStringQuery)>& type_fn) noexcept {
-  std::ostringstream str;
-
+void type_to_string_internal(
+    const Type& type, sus::fn::FnMutRef<void(std::string_view)>& text_fn,
+    sus::fn::FnMutRef<void(TypeToStringQuery)>& type_fn,
+    sus::fn::FnMutRef<void()>& const_qualifier_fn,
+    sus::fn::FnMutRef<void()>& volatile_qualifier_fn,
+    sus::Option<sus::fn::FnOnceRef<void()>> var_name_fn) noexcept {
   switch (type.category) {
     case TypeCategory::Concept: [[fallthrough]];
     case TypeCategory::Type:
-      str << type_fn(TypeToStringQuery{
+      type_fn(TypeToStringQuery{
           .namespace_path = type.namespace_path.as_slice(),
           .record_path = type.record_path.as_slice(),
           .name = std::string_view(type.name),
       });
       break;
-      break;
     case TypeCategory::TemplateVariable:
       // For template variables, do not call the callback. They may have
       // name collisions with actual types, but they are not those types.
-      str << type.name;
+      text_fn(type.name);
       break;
   }
 
   if (!type.template_params.is_empty()) {
-    str << "<";
+    text_fn("<");
     for (const auto& [i, tv] : type.template_params.iter().enumerate()) {
-      if (i > 0u) str << ", ";
+      if (i > 0u) text_fn(", ");
       switch (tv.choice) {
         case TypeOrValueTag::Type: {
           const Type& template_type = tv.choice.as<TypeOrValueTag::Type>();
-          str << type_to_string_internal(std::string_view(), template_type,
-                                         type_fn);
+          type_to_string_internal(template_type, text_fn, type_fn,
+                                  const_qualifier_fn, volatile_qualifier_fn,
+                                  sus::none());
           break;
         }
         case TypeOrValueTag::Value: {
           // The type of the value isn't used here, we just write the value.
-          str << tv.choice.as<TypeOrValueTag::Value>().into_inner<1>();
+          text_fn(tv.choice.as<TypeOrValueTag::Value>().into_inner<1>());
           break;
         }
       }
     }
-    str << ">";
+    text_fn(">");
   }
 
-  if (type.category == TypeCategory::Concept) str << " auto";
+  if (type.category == TypeCategory::Concept) text_fn(" auto");
 
   for (Qualifier q : type.pointers) {
-    if (q.is_const) str << " const";
-    if (q.is_volatile) str << " volatile";
-    str << "*";
+    if (q.is_const) {
+      text_fn(" ");
+      const_qualifier_fn();
+    }
+    if (q.is_volatile) {
+      text_fn(" ");
+      volatile_qualifier_fn();
+    }
+    text_fn("*");
   }
 
   // TODO: Option to put the const/volatile qualifiers before the type name?
-  if (type.qualifier.is_const) str << " const";
-  if (type.qualifier.is_volatile) str << " volatile";
+  if (type.qualifier.is_const) {
+    text_fn(" ");
+    const_qualifier_fn();
+  }
+  if (type.qualifier.is_volatile) {
+    text_fn(" ");
+    volatile_qualifier_fn();
+  }
 
   if (type.array_dims.is_empty()) {
     switch (type.refs) {
       case Refs::None: break;
-      case Refs::LValueRef: str << "&"; break;
-      case Refs::RValueRef: str << "&&"; break;
+      case Refs::LValueRef: text_fn("&"); break;
+      case Refs::RValueRef: text_fn("&&"); break;
     }
-    if (!var_name.empty()) str << " " << var_name;
+    if (var_name_fn.is_some()) {
+      text_fn(" ");
+      var_name_fn.take().unwrap()();
+    }
   } else {
     if (type.refs != Refs::None) {
-      str << " (";
+      text_fn(" (");
       switch (type.refs) {
         case Refs::None: break;
-        case Refs::LValueRef: str << "&"; break;
-        case Refs::RValueRef: str << "&&"; break;
+        case Refs::LValueRef: text_fn("&"); break;
+        case Refs::RValueRef: text_fn("&&"); break;
       }
-      str << var_name;
-      str << ")";
+      if (var_name_fn.is_some()) var_name_fn.take().unwrap()();
+
+      text_fn(")");
     } else {
-      if (!var_name.empty()) str << " " << var_name;
+      if (var_name_fn.is_some()) {
+        text_fn(" ");
+        var_name_fn.take().unwrap()();
+      }
     }
     if (!type.array_dims.is_empty()) {
       for (const std::string& dim : type.array_dims) {
-        str << "[";
-        str << dim;
-        str << "]";
+        text_fn("[");
+        text_fn(dim);
+        text_fn("]");
       }
     }
   }
-  return sus::move(str).str();
+}
+
+void type_walk_types_internal(
+    const Type& type,
+    sus::fn::FnMutRef<void(TypeToStringQuery)>& type_fn) noexcept {
+  switch (type.category) {
+    case TypeCategory::Concept: [[fallthrough]];
+    case TypeCategory::Type:
+      type_fn(TypeToStringQuery{
+          .namespace_path = type.namespace_path.as_slice(),
+          .record_path = type.record_path.as_slice(),
+          .name = std::string_view(type.name),
+      });
+      break;
+    case TypeCategory::TemplateVariable: break;
+  }
+
+  for (const TypeOrValue& tv : type.template_params) {
+    switch (tv.choice) {
+      case TypeOrValueTag::Type: {
+        const Type& template_type = tv.choice.as<TypeOrValueTag::Type>();
+        type_walk_types_internal(template_type, type_fn);
+        break;
+      }
+      case TypeOrValueTag::Value: {
+        break;
+      }
+    }
+  }
 }
 
 }  // namespace
 
-std::string type_to_string(
-    std::string_view var_name, const Type& type,
-    sus::fn::FnMutRef<std::string(TypeToStringQuery)> type_fn) noexcept {
-  return type_to_string_internal(var_name, type, type_fn);
+void type_to_string(
+    const Type& type, sus::fn::FnMutRef<void(std::string_view)> text_fn,
+    sus::fn::FnMutRef<void(TypeToStringQuery)> type_fn,
+    sus::fn::FnMutRef<void()> const_qualifier_fn,
+    sus::fn::FnMutRef<void()> volatile_qualifier_fn,
+    sus::Option<sus::fn::FnOnceRef<void()>> var_name_fn) noexcept {
+  return type_to_string_internal(type, text_fn, type_fn, const_qualifier_fn,
+                                 volatile_qualifier_fn, sus::move(var_name_fn));
+}
+
+void type_walk_types(
+    const Type& type,
+    sus::fn::FnMutRef<void(TypeToStringQuery)> type_fn) noexcept {
+  return type_walk_types_internal(type, type_fn);
 }
 
 }  // namespace subdoc

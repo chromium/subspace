@@ -23,6 +23,7 @@
 #include "subdoc/lib/gen/generate_head.h"
 #include "subdoc/lib/gen/generate_nav.h"
 #include "subdoc/lib/gen/generate_requires.h"
+#include "subdoc/lib/gen/generate_type.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/gen/options.h"
@@ -216,7 +217,7 @@ sus::Result<void, MarkdownToHtmlError> generate_record_fields(
       field_div.add_class("section-item");
 
       {
-        auto name_div = field_div.open_div();
+        auto name_div = field_div.open_div(HtmlWriter::SingleLine);
         name_div.add_class("item-name");
         name_div.add_class("member-signature");
 
@@ -235,39 +236,26 @@ sus::Result<void, MarkdownToHtmlError> generate_record_fields(
           static_span.add_class("static");
           static_span.write_text("static");
         }
-        if (fe.is_const) {
-          auto field_type_span = name_div.open_span();
-          field_type_span.add_class("const");
-          field_type_span.write_text("const");
-        }
-        if (fe.is_volatile) {
-          auto field_type_span = name_div.open_span();
-          field_type_span.add_class("volatile");
-          field_type_span.write_text("volatile");
-        }
-        if (fe.type_element.is_some()) {
-          auto field_type_link = name_div.open_a();
-          field_type_link.add_class("type-name");
-          field_type_link.add_title(fe.type_name);
-          if (!fe.hidden()) {
-            field_type_link.add_href(
-                construct_html_url_for_type(fe.type_element.as_value()));
-          } else {
-            llvm::errs() << "WARNING: Reference to hidden FieldElement "
-                         << fe.name << " in record " << element.name
-                         << " in namespace " << element.namespace_path;
-          }
-          field_type_link.write_text(fe.short_type_name);
-        } else {
-          name_div.write_text(fe.short_type_name);
-        }
-        {
-          auto field_name_anchor = name_div.open_a();
-          field_name_anchor.add_name(construct_html_url_anchor_for_field(fe));
-          field_name_anchor.add_href(construct_html_url_for_field(fe));
-          field_name_anchor.add_class("field-name");
-          field_name_anchor.write_text(fe.name);
-        }
+        generate_type(
+            name_div, fe.type, fe.type_element_refs,
+            [&](HtmlWriter::OpenDiv& div) {
+              auto span = div.open_span(HtmlWriter::SingleLine);
+              span.add_class("const");
+              span.write_text("const");
+            },
+            [&](HtmlWriter::OpenDiv& div) {
+              auto span = div.open_span(HtmlWriter::SingleLine);
+              span.add_class("volatile");
+              span.write_text("volatile");
+            },
+            [&](HtmlWriter::OpenDiv& div) {
+              auto field_name_anchor = div.open_a();
+              field_name_anchor.add_name(
+                  construct_html_url_anchor_for_field(fe));
+              field_name_anchor.add_href(construct_html_url_for_field(fe));
+              field_name_anchor.add_class("field-name");
+              field_name_anchor.write_text(fe.name);
+            });
       }
       {
         auto desc_div = field_div.open_div();
