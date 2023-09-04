@@ -24,8 +24,6 @@ namespace subdoc::gen {
 
 void generate_type(
     HtmlWriter::OpenDiv& div, const LinkedType& linked_type,
-    sus::fn::FnMutRef<void(HtmlWriter::OpenDiv&)> const_qualifier_fn,
-    sus::fn::FnMutRef<void(HtmlWriter::OpenDiv&)> volatile_qualifier_fn,
     sus::fn::FnOnceRef<void(HtmlWriter::OpenDiv&)> var_name_fn) noexcept;
 
 }  // namespace subdoc::gen

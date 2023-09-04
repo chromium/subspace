@@ -22,6 +22,7 @@
 #include "subdoc/lib/gen/generate_head.h"
 #include "subdoc/lib/gen/generate_nav.h"
 #include "subdoc/lib/gen/generate_requires.h"
+#include "subdoc/lib/gen/generate_type.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/gen/options.h"
@@ -37,26 +38,6 @@ enum Style {
   StyleLong,
   StyleLongWithConstraints,
 };
-
-void generate_return_type(HtmlWriter::OpenDiv& div,
-                          const FunctionOverload& overload) noexcept {
-  if (overload.return_type_element.is_some()) {
-    auto return_type_link = div.open_a();
-    return_type_link.add_class("type-name");
-    return_type_link.add_title(overload.return_type_name);
-    if (!overload.return_type_element->hidden()) {
-      return_type_link.add_href(
-          construct_html_url_for_type(overload.return_type_element.as_value()));
-    } else {
-      llvm::errs() << "WARNING: Reference to hidden TypeElement "
-                   << overload.return_type_element->name << " in namespace "
-                   << overload.return_type_element->namespace_path;
-    }
-    return_type_link.write_text(overload.return_short_type_name);
-  } else {
-    div.write_text(overload.return_short_type_name);
-  }
-}
 
 void generate_function_params(HtmlWriter::OpenDiv& div,
                               const FunctionOverload& overload) {
@@ -208,7 +189,8 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
         generate_function_params(signature_div, overload);
         if (has_return) {
           signature_div.write_text(" -> ");
-          generate_return_type(signature_div, overload);
+          generate_type(signature_div, overload.return_type,
+                        [&](HtmlWriter::OpenDiv&) { /* no variable name */ });
         }
       }
 
@@ -352,8 +334,11 @@ sus::Result<void, MarkdownToHtmlError> generate_function(
           name_anchor.write_text(element.name);
         }
         generate_function_params(signature_div, overload);
+        // This is generating a function that is not a method, so there's always
+        // some return type (ie. it can't be a special method like a ctor/dtor).
         signature_div.write_text(" -> ");
-        generate_return_type(signature_div, overload);
+        generate_type(signature_div, overload.return_type,
+                      [&](HtmlWriter::OpenDiv&) { /* no variable name */ });
 
         if (overload.constraints.is_some()) {
           generate_requires_constraints(signature_div,
