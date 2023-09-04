@@ -27,6 +27,7 @@ TEST(CompatStack, FromIterator) {
   auto in = std::vector<i32>{1, 2, 3, 4, 5, 6, 7};
   auto out = sus::iter::from_range(sus::move(in))
                  .filter([](const i32& i) { return i % 2 == 0; })
+                 .moved()
                  .collect<std::stack<i32>>();
   static_assert(std::same_as<decltype(out), std::stack<i32>>);
   sus::check(out == std::stack<i32>(std::deque<i32>{2, 4, 6}));
@@ -37,6 +38,7 @@ TEST(CompatStack, FromIteratorRef) {
   auto out = sus::iter::from_range(sus::move(in))
                  .filter([](const i32& i) { return i % 2 == 0; })
                  .rev()
+                 .moved()
                  .collect<std::stack<i32>>();
   static_assert(std::same_as<decltype(out), std::stack<i32>>);
   sus::check(out == std::stack<i32>(std::deque<i32>{6, 4, 2}));

@@ -27,6 +27,7 @@ TEST(CompatDeque, FromIterator) {
   auto in = std::deque<i32>{1, 2, 3, 4, 5, 6, 7};
   auto out = sus::iter::from_range(sus::move(in))
                  .filter([](const i32& i) { return i % 2 == 0; })
+                 .moved()
                  .collect<std::deque<i32>>();
   sus::check(out == std::deque<i32>{2, 4, 6});
 }

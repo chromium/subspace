@@ -46,20 +46,22 @@ static_assert(sus::iter::FromIterator<std::forward_list<usize>, usize>);
 TEST(CompatForwardList, FromIterator) {
   auto in = std::vector<i32>{1, 2, 3, 4, 5, 6, 7};
   static_assert(sus::iter::DoubleEndedIterator<
-                decltype(sus::iter::from_range(sus::move(in))), i32>);
+                decltype(sus::iter::from_range(sus::move(in))), i32&>);
   auto out = sus::iter::from_range(sus::move(in))
                  .filter([](const i32& i) { return i % 2 == 0; })
+                 .moved()
                  .collect<std::forward_list<i32>>();
   sus::check(out == std::forward_list<i32>{2, 4, 6});
 }
 
 TEST(CompatForwardList, FromIteratorNotDoubleEnded) {
   auto in = std::vector<i32>{1, 2, 3, 4, 5, 6, 7};
-  auto it = SingleEnded(sus::iter::from_range(sus::move(in)));
+  auto it = SingleEnded(sus::iter::from_range(sus::move(in)).moved());
   static_assert(sus::iter::Iterator<decltype(it), i32>);
   static_assert(!sus::iter::DoubleEndedIterator<decltype(it), i32>);
   auto out = sus::move(it)
                  .filter([](const i32& i) { return i % 2 == 0; })
+                 .moved()
                  .collect<std::forward_list<i32>>();
   sus::check(out == std::forward_list<i32>{2, 4, 6});
 }
