@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"></meta>
   <meta property="og:type" content="website"></meta>
   <meta property="og:site_name" content="PROJECT NAME"></meta>
-  <title>other::S - PROJECT NAME</title>
-  <meta property="og:title" content="other::S - PROJECT NAME"></meta>
+  <title>other::subother::S::FirstNested - PROJECT NAME</title>
+  <meta property="og:title" content="other::subother::S::FirstNested - PROJECT NAME"></meta>
   <meta name="description" content=""></meta>
   <meta property="og:description" content=""></meta>
   <link rel="stylesheet" href="../subdoc-test-style.css">
@@ -25,7 +25,7 @@
       </div></a>
     <span class="topbar-text-area">
       <span class="topbar-title">
-        <a href="#">S</a>
+        <a href="#">FirstNested</a>
       </span>
     </span>
   </nav>
@@ -37,7 +37,7 @@
       struct
     </div>
     <div class="sidebar-title sidebar-text">
-      <a href="#">S</a>
+      <a href="#">FirstNested</a>
     </div>
     <div class="sidebar-subtitle sidebar-text">
     </div>
@@ -57,14 +57,18 @@
           <span class="namespace-dots">::</span>
           <a class="namespace-name" href="namespace.other.html">other</a>
           <span class="namespace-dots">::</span>
-          <a class="type-name" href="#">S</a>
+          <a class="namespace-name" href="other-namespace.subother.html">subother</a>
+          <span class="namespace-dots">::</span>
+          <a class="type-name" href="other-subother-S.html">S</a>
+          <span class="namespace-dots">::</span>
+          <a class="type-name" href="#">FirstNested</a>
         </div>
         <div class="type-signature">
           <span class="struct">
             struct
           </span>
           <span class="type-name">
-            S
+            FirstNested
           </span>
           <div class="record-body">
             { ... };
