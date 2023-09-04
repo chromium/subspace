@@ -1964,6 +1964,18 @@ TEST(Iterator, FlatMap) {
     }
   }
 
+  // Mapping References.
+  {
+    auto n = NoCopyMove();
+    auto o = sus::Option<const NoCopyMove&>(n);
+    EXPECT_EQ(o.iter()
+                  .flat_map([](const NoCopyMove&) {
+                    return sus::Vec<i32>(1, 2, 3, 4);
+                  })
+                  .sum(),
+              1 + 2 + 3 + 4);
+  }
+
   sus_gcc_bug_110905_else(  //
       static_assert(
           sus::Vec<i32>(2, 3, 4)
