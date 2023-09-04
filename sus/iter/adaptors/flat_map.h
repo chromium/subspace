@@ -68,7 +68,8 @@ class [[nodiscard]] FlatMap final
       }
       // Otherwise grab the next iterator into front_iter_.
       front_iter_ = iters_.next().map([this](auto&& i) {
-        return ::sus::fn::call_mut(map_fn_, ::sus::move(i)).into_iter();
+        return ::sus::fn::call_mut(map_fn_, ::sus::forward<decltype(i)>(i))
+            .into_iter();
       });
       if (front_iter_.is_none()) break;
     }
@@ -114,7 +115,8 @@ class [[nodiscard]] FlatMap final
       }
       // Otherwise grab the next iterator into back_iter_.
       back_iter_ = iters_.next_back().map([this](auto&& i) {
-        return ::sus::fn::call_mut(map_fn_, ::sus::move(i)).into_iter();
+        return ::sus::fn::call_mut(map_fn_, ::sus::forward<decltype(i)>(i))
+            .into_iter();
       });
       if (back_iter_.is_none()) break;
     }
