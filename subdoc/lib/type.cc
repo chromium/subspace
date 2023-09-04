@@ -269,7 +269,7 @@ Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
     }
     context = context->getParent();
   }
-  // TODO: Vec::reverse().
+  // TODO: Use Vec::reverse().
   namespace_path = sus::move(namespace_path).into_iter().rev().collect_vec();
   record_path = sus::move(record_path).into_iter().rev().collect_vec();
 

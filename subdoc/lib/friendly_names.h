@@ -60,68 +60,6 @@ inline std::string friendly_function_name(clang::FunctionDecl& decl) noexcept {
   return s.str();
 }
 
-inline std::string friendly_type_name(const clang::QualType& type) noexcept {
-  clang::QualType unqualified = type.getUnqualifiedType();
-  // Clang writes booleans as "_Bool".
-  std::string full = unqualified->isBooleanType() ? std::string("bool")
-                                                  : unqualified.getAsString();
-
-  // Type path component other than the last show up like `struct S` instead of
-  // just `S`. So we're dropping those from each component.
-  sus::Vec<std::string> split = [&]() {
-    sus::Vec<std::string> v;
-    // TODO: Add a String type to subspace, give it String::split().
-    while (true) {
-      size_t pos = full.find_first_of("::");
-      if (pos == std::string::npos) {
-        v.push(sus::move(full));
-        break;
-      }
-      v.push(full.substr(0, pos));
-      full = full.substr(pos + strlen("::"));
-    }
-    for (std::string& s : v.iter_mut()) {
-      if (s.starts_with("struct "))
-        s = s.substr(strlen("struct "));
-      else if (s.starts_with("class "))
-        s = s.substr(strlen("class "));
-      else if (s.starts_with("union "))
-        s = s.substr(strlen("union "));
-      else if (s.starts_with("enum "))
-        s = s.substr(strlen("enum "));
-    }
-    return v;
-  }();
-
-  std::ostringstream s;
-  if (type->isEnumeralType()) {
-    s << "enum ";
-  } else if (type->isStructureType()) {
-    s << "struct ";
-  } else if (type->isClassType()) {
-    s << "class ";
-  } else if (type->isUnionType()) {
-    s << "union ";
-  } else if (type->isTypedefNameType()) {
-    s << "typedef ";
-  }
-  bool add_colons = false;
-  for (std::string&& component : sus::move(split).into_iter()) {
-    if (add_colons) s << "::";
-    s << sus::move(component);
-    add_colons = true;
-  }
-  return sus::move(s).str();
-}
-
-inline std::string friendly_short_type_name(
-    const clang::QualType& type) noexcept {
-  clang::QualType unqualified = type.getUnqualifiedType();
-  // Clang writes booleans as "_Bool".
-  return unqualified->isBooleanType() ? std::string("bool")
-                                      : unqualified.getAsString();
-}
-
 inline std::string friendly_record_type_name(RecordType t,
                                              bool capitalize) noexcept {
   switch (t) {
