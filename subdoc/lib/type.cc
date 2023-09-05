@@ -148,6 +148,10 @@ Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
 
   sus::Vec<std::string> array_dims;
   while (qualtype->isArrayType()) {
+    // Arrays come with the var name wrapped in parens, which must be removed.
+    qualtype = qualtype.IgnoreParens();
+    sus::check(clang::isa<clang::ArrayType>(&*qualtype));
+
     const clang::Type* const type = &*qualtype;
     if (auto* constarr = clang::dyn_cast<clang::ConstantArrayType>(type)) {
       array_dims.push(
@@ -231,6 +235,9 @@ Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
     // No context.
   } else if (clang::isa<clang::PackExpansionType>(&*qualtype)) {
     // No context.
+  } else if (auto* proto_type =
+                 clang::dyn_cast<clang::FunctionProtoType>(&*qualtype)) {
+    // No context.
   } else if (auto* tag_type = clang::dyn_cast<clang::TagType>(&*qualtype)) {
     context = tag_type->getDecl()->getDeclContext();
   } else if (auto* spec_type =
@@ -250,9 +257,14 @@ Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
   } else if (auto* typedef_type =
                  clang::dyn_cast<clang::TypedefType>(&*qualtype)) {
     context = typedef_type->getDecl()->getDeclContext();
-  } else if (auto* using_type =
+  } else if (auto* un_using_type =
                  clang::dyn_cast<clang::UnresolvedUsingType>(&*qualtype)) {
-    context = using_type->getDecl()->getDeclContext();
+    context = un_using_type->getDecl()->getDeclContext();
+  } else if (auto* using_type = clang::dyn_cast<clang::UsingType>(&*qualtype)) {
+    context = using_type->getFoundDecl()->getDeclContext();
+  } else if (auto* injected_type =
+                 clang::dyn_cast<clang::InjectedClassNameType>(&*qualtype)) {
+        context = injected_type->getDecl()->getDeclContext();
   } else {
     qualtype->dump();
     sus::unreachable();  // Find the context.
