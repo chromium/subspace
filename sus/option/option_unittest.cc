@@ -784,7 +784,7 @@ TEST(Option, Take) {
     IS_NONE(n);
     IS_NONE(m);
   }
-{
+  {
     auto i = NoCopyMove();
     auto ix = Option<NoCopyMove&>(i);
     auto iy = ix.take();
