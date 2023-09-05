@@ -19,6 +19,7 @@
 #include "sus/fn/__private/callable_types.h"
 #include "sus/fn/__private/fn_ref_invoker.h"
 #include "sus/lib/__private/forward_decl.h"
+#include "sus/assertions/unreachable.h"
 #include "sus/macros/lifetimebound.h"
 #include "sus/mem/addressof.h"
 #include "sus/mem/forward.h"
@@ -90,11 +91,11 @@ class [[sus_trivial_abi]] FnRef<R(CallArgs...)> {
 
   ~FnRef() noexcept = default;
 
-  constexpr FnRef(FnRef&& o sus_lifetimebound) noexcept
+  constexpr FnRef(FnRef&& o) noexcept
       : storage_(o.storage_), invoke_(::sus::mem::replace(o.invoke_, nullptr)) {
     ::sus::check(invoke_);  // Catch use-after-move.
   }
-  constexpr FnRef& operator=(FnRef&& o sus_lifetimebound) noexcept {
+  constexpr FnRef& operator=(FnRef&& o) noexcept {
     storage_ = o.storage_;
     invoke_ = ::sus::mem::replace(o.invoke_, nullptr);
     ::sus::check(invoke_);  // Catch use-after-move.
@@ -133,11 +134,8 @@ class [[sus_trivial_abi]] FnRef<R(CallArgs...)> {
   /// FnRef satisfies `From<T>` for the same types that it is constructible
   /// from: function pointers that exactly match its own signature, and
   /// const-callable objects (lambdas) that are compatible with its signature.
-  constexpr static auto from(
-      __private::FunctionPointer<R, CallArgs...> auto ptr) noexcept {
-    return FnRef(ptr);
-  }
-  template <__private::CallableConst<R, CallArgs...> F>
+  template <class F>
+    requires(std::constructible_from<FnRef, F &&>)
   constexpr static auto from(F&& object sus_lifetimebound) noexcept {
     return FnRef(::sus::forward<F>(object));
   }
@@ -159,7 +157,9 @@ class [[sus_trivial_abi]] FnRef<R(CallArgs...)> {
 
   // A function pointer to use as a never-value for InvokeFnPointer.
   static R invoke_never_value(const union __private::Storage&,
-                              CallArgs... args) {}
+                              CallArgs... args) {
+    sus::unreachable();
+  }
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn,
                                   decltype(storage_.fnptr),
@@ -245,11 +245,11 @@ class [[sus_trivial_abi]] FnMutRef<R(CallArgs...)> {
 
   ~FnMutRef() noexcept = default;
 
-  constexpr FnMutRef(FnMutRef&& o sus_lifetimebound) noexcept
+  constexpr FnMutRef(FnMutRef&& o) noexcept
       : storage_(o.storage_), invoke_(::sus::mem::replace(o.invoke_, nullptr)) {
     ::sus::check(invoke_);  // Catch use-after-move.
   }
-  constexpr FnMutRef& operator=(FnMutRef&& o sus_lifetimebound) noexcept {
+  constexpr FnMutRef& operator=(FnMutRef&& o) noexcept {
     storage_ = o.storage_;
     invoke_ = ::sus::mem::replace(o.invoke_, nullptr);
     ::sus::check(invoke_);  // Catch use-after-move.
@@ -288,11 +288,8 @@ class [[sus_trivial_abi]] FnMutRef<R(CallArgs...)> {
   /// FnMutRef satisfies `From<T>` for the same types that it is constructible
   /// from: function pointers that exactly match its own signature, and callable
   /// objects (lambdas) that are compatible with its signature.
-  constexpr static auto from(
-      __private::FunctionPointer<R, CallArgs...> auto ptr) noexcept {
-    return FnMutRef(ptr);
-  }
-  template <__private::CallableMut<R, CallArgs...> F>
+  template <class F>
+    requires(std::constructible_from<FnMutRef, F &&>)
   constexpr static auto from(F&& object sus_lifetimebound) noexcept {
     return FnMutRef(::sus::forward<F>(object));
   }
@@ -312,7 +309,9 @@ class [[sus_trivial_abi]] FnMutRef<R(CallArgs...)> {
 
   // A function pointer to use as a never-value for InvokeFnPointer.
   static R invoke_never_value(const union __private::Storage&,
-                              CallArgs... args) {}
+                              CallArgs... args) {
+    sus::unreachable();
+  }
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn,
                                   decltype(storage_.fnptr),
@@ -409,11 +408,11 @@ class [[sus_trivial_abi]] FnOnceRef<R(CallArgs...)> {
 
   ~FnOnceRef() noexcept = default;
 
-  constexpr FnOnceRef(FnOnceRef&& o sus_lifetimebound) noexcept
+  constexpr FnOnceRef(FnOnceRef&& o) noexcept
       : storage_(o.storage_), invoke_(::sus::mem::replace(o.invoke_, nullptr)) {
     ::sus::check(invoke_);  // Catch use-after-move.
   }
-  constexpr FnOnceRef& operator=(FnOnceRef&& o sus_lifetimebound) noexcept {
+  constexpr FnOnceRef& operator=(FnOnceRef&& o) noexcept {
     storage_ = o.storage_;
     invoke_ = ::sus::mem::replace(o.invoke_, nullptr);
     ::sus::check(invoke_);  // Catch use-after-move.
@@ -477,11 +476,8 @@ class [[sus_trivial_abi]] FnOnceRef<R(CallArgs...)> {
   /// FnOnceRef satisfies `From<T>` for the same types that it is constructible
   /// from: function pointers that exactly match its own signature, and callable
   /// objects (lambdas) that are compatible with its signature.
-  constexpr static auto from(
-      __private::FunctionPointer<R, CallArgs...> auto ptr) noexcept {
-    return FnOnceRef(ptr);
-  }
-  template <__private::CallableOnceMut<R, CallArgs...> F>
+  template <class F>
+    requires(std::constructible_from<FnOnceRef, F &&>)
   constexpr static auto from(F&& object sus_lifetimebound) noexcept {
     return FnOnceRef(::sus::forward<F>(object));
   }
@@ -501,7 +497,9 @@ class [[sus_trivial_abi]] FnOnceRef<R(CallArgs...)> {
 
   // A function pointer to use as a never-value for InvokeFnPointer.
   static R invoke_never_value(const union __private::Storage&,
-                              CallArgs... args) {}
+                              CallArgs... args) {
+    sus::unreachable();
+  }
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn,
                                   decltype(storage_.fnptr),
