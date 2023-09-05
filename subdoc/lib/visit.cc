@@ -420,6 +420,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     // declaration, we are not interested in instantiations where it gets used.
     if (decl->isTemplateInstantiation()) return true;
     if (should_skip_decl(cx_, decl)) return true;
+    decl->getBeginLoc().dump(decl->getASTContext().getSourceManager());
 
     // TODO: Save the linkage spec (`extern "C"`) so we can show it.
     clang::DeclContext* context = decl->getDeclContext();

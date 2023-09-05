@@ -1434,4 +1434,178 @@ TEST_F(SubDocTypeTest, ConceptReturnWithPack) {
   });
 }
 
+TEST_F(SubDocTypeTest, UsingType) {
+  const char test[] = R"(
+    namespace a::b { struct S {}; }
+    namespace c::d { using a::b::S; }
+    void f(c::d::S const&);
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t.name, "S");
+    EXPECT_EQ(t.qualifier.is_const, true);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
+    EXPECT_EQ(t.namespace_path, sus::vec("c", "d"));
+
+    EXPECT_EQ(make_string("foo", t), "!S! const& foo");
+  });
+}
+
+TEST_F(SubDocTypeTest, ConceptWithFunctionProto) {
+  const char test[] = R"(
+    namespace a::b { template <class R, class... Args> concept C = true; }
+    namespace c::d { template <class T> struct S {}; struct R {}; }
+    void f(a::b::C<c::d::R(c::d::S<c::d::R>, c::d::R)> auto);
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Concept);
+    EXPECT_EQ(t.name, "C");
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::None);
+    EXPECT_EQ(t.namespace_path, sus::vec("a", "b"));
+    // TODO: FunctionProto type
+    const subdoc::Type& p1 =
+        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
+    EXPECT_EQ(p1.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(p1.name, "R(S<R>, R)");
+
+    EXPECT_EQ(make_string("foo", t), "!F!<!R!(!S!<!R!>, !R!)> foo");
+  });
+}
+
+TEST_F(SubDocTypeTest, StructWithFunctionProto) {
+  const char test[] = R"(
+    namespace a::b { template <class R, class... Args> struct F {}; }
+    namespace c::d { template <class T> struct S {}; struct R {}; }
+    void f(a::b::F<c::d::R(c::d::S<c::d::R>, c::d::R)>);
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t.name, "F");
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::None);
+    EXPECT_EQ(t.namespace_path, sus::vec("a", "b"));
+    // TODO: FunctionProto type
+    const subdoc::Type& p1 =
+        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
+    EXPECT_EQ(p1.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(p1.name, "R(S<R>, R)");
+
+    EXPECT_EQ(make_string("foo", t), "!F!<!R!(!S!<!R!>, !R!)> foo");
+  });
+}
+
+TEST_F(SubDocTypeTest, StructWithDependentFunctionProto) {
+  const char test[] = R"(
+    namespace a::b { template <class R, class... Args> struct F {}; }
+    namespace c::d { template <class T> struct S {}; struct R {}; }
+    template <class T>
+    void f(a::b::F<c::d::R(T)>);
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t.name, "F");
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::None);
+    EXPECT_EQ(t.namespace_path, sus::vec("a", "b"));
+    // TODO: FunctionProto type
+    const subdoc::Type& p1 =
+        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
+    EXPECT_EQ(p1.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(p1.name, "R(T)");
+
+    EXPECT_EQ(make_string("foo", t), "!F!<!R!(T)> foo");
+  });
+}
+
+TEST_F(SubDocTypeTest, PartialSpecializationMethod) {
+  const char test[] = R"(
+    namespace a::b { template <class T> struct F {}; }
+    namespace c::d { template <class T> struct S {}; }
+    namespace e::f { struct G {}; }
+    template <>
+    struct a::b::F<c::d::S<e::f::G>> {
+      static void f(F&);
+    };
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t.name, "F");
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
+    EXPECT_EQ(t.namespace_path, sus::vec("a", "b"));
+    const subdoc::Type& p1 =
+        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
+    EXPECT_EQ(p1.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(p1.name, "S");
+    EXPECT_EQ(t.namespace_path, sus::vec("c", "d"));
+    const subdoc::Type& p21 =
+        p1.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
+    EXPECT_EQ(p21.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(p21.name, "F");
+    EXPECT_EQ(t.namespace_path, sus::vec("e", "f"));
+
+    EXPECT_EQ(make_string("foo", t), "!F!<!S!<!G!>>& foo");
+  });
+}
+
+TEST_F(SubDocTypeTest, PartialSpecializationMethodInjectedClassName) {
+  const char test[] = R"(
+    namespace a::b { template <class T> struct F {}; }
+    namespace c::d { template <class T> struct S {}; }
+    template <class T>
+    struct a::b::F<c::d::S<T>> {
+      static void f(F&);
+    };
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t.name, "F");
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
+    EXPECT_EQ(t.namespace_path, sus::vec("a", "b"));
+    const subdoc::Type& p1 =
+        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
+    EXPECT_EQ(p1.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(p1.name, "S");
+    EXPECT_EQ(t.namespace_path, sus::vec("c", "d"));
+    const subdoc::Type& p21 =
+        p1.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
+    EXPECT_EQ(p21.category, subdoc::TypeCategory::TemplateVariable);
+    EXPECT_EQ(p21.name, "T");
+
+    EXPECT_EQ(make_string("foo", t), "!F!<!S!<T>>& foo");
+  });
+}
+
 }  // namespace
