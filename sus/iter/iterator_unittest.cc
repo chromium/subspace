@@ -860,47 +860,51 @@ TEST(Iterator, Copied) {
 }
 
 TEST(Iterator, Moved) {
-  static i32 moves;
-
   struct Movable {
     Movable(i32 i) : i(i) {}
-    Movable(Movable&& m) : i(m.i) { moves += 1; }
-    Movable& operator=(Movable&& m) { return i = m.i, moves += 1, *this; }
+    Movable(Movable&& m) : i(m.i) { m.i += 1; }
+    Movable& operator=(Movable&& m) { return i = m.i, m.i += 1, *this; }
     i32 i;
-  };
 
-  auto moving = sus::Vec<Movable>(Movable(1), Movable(2));
+    constexpr bool operator==(const Movable& rhs) const noexcept = default;
+  };
 
   // Move from references.
   {
+    auto moving = sus::Vec<Movable>(Movable(1), Movable(2));
+    auto mslice = moving.as_slice();
+
     auto it = moving.iter_mut().moved();
     static_assert(std::same_as<Movable, decltype(it.next().unwrap())>);
     EXPECT_EQ(it.size_hint().lower, 2u);
     EXPECT_EQ(it.size_hint().upper.unwrap(), 2u);
 
-    EXPECT_EQ(moves, 0);
+    EXPECT_EQ(mslice, (sus::Vec<Movable>(Movable(1), Movable(2))));
     EXPECT_EQ(it.next().unwrap().i, 1);
-    EXPECT_EQ(moves, 1);
+    EXPECT_EQ(mslice, (sus::Vec<Movable>(Movable(2), Movable(2))));
     EXPECT_EQ(it.next().unwrap().i, 2);
-    EXPECT_EQ(moves, 2);
+    EXPECT_EQ(mslice, (sus::Vec<Movable>(Movable(2), Movable(3))));
     EXPECT_EQ(it.next(), sus::None);
-    EXPECT_EQ(moves, 2);
+    EXPECT_EQ(mslice, (sus::Vec<Movable>(Movable(2), Movable(3))));
   }
 
   // Move from values.
   {
+    auto moving = sus::Vec<Movable>(Movable(1), Movable(2));
+    auto mslice = moving.as_slice();
+
     auto it = sus::move(moving).into_iter().moved();
     static_assert(std::same_as<Movable, decltype(it.next().unwrap())>);
     EXPECT_EQ(it.size_hint().lower, 2u);
     EXPECT_EQ(it.size_hint().upper.unwrap(), 2u);
 
-    EXPECT_EQ(moves, 0);
+    EXPECT_EQ(mslice, (sus::Vec<Movable>(Movable(1), Movable(2))));
     EXPECT_EQ(it.next().unwrap().i, 1);
-    EXPECT_EQ(moves, 1);
+    EXPECT_EQ(mslice, (sus::Vec<Movable>(Movable(2), Movable(2))));
     EXPECT_EQ(it.next().unwrap().i, 2);
-    EXPECT_EQ(moves, 2);
+    EXPECT_EQ(mslice, (sus::Vec<Movable>(Movable(2), Movable(3))));
     EXPECT_EQ(it.next(), sus::None);
-    EXPECT_EQ(moves, 2);
+    EXPECT_EQ(mslice, (sus::Vec<Movable>(Movable(2), Movable(3))));
   }
 
   static_assert(sus::Vec<usize>(1u, 2u).into_iter().copied().sum() == 1u + 2u);
