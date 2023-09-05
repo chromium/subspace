@@ -83,6 +83,7 @@ struct NeverValueAccess {
   constexpr NeverValueAccess() = default;
 
   template <class... U>
+    requires(sizeof...(U) > 0u)
   constexpr NeverValueAccess(U&&... v) : t_(::sus::forward<U>(v)...) {}
 
   /// Checks if the never-value field is set to the never-value, returning false
