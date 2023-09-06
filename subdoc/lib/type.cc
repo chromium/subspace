@@ -19,7 +19,9 @@
 #include "subdoc/lib/stmt_to_string.h"
 #include "sus/assertions/check.h"
 #include "sus/iter/compat_ranges.h"
+#include "sus/iter/generator.h"
 #include "sus/iter/iterator.h"
+#include "sus/iter/once.h"
 #include "sus/ptr/as_ref.h"
 
 namespace subdoc {
@@ -50,6 +52,22 @@ std::string name_of_type(clang::QualType q) noexcept {
   if (usize pos = name.find("<"); pos != std::string::npos)
     name = name.substr(0u, pos);
   return name;
+}
+
+std::string name_of_template_parm_type(
+    clang::QualType q,
+    llvm::ArrayRef<clang::NamedDecl*> template_params_from_context) noexcept {
+  sus::check_with_message(
+      clang::isa<clang::TemplateTypeParmType>(&*q),
+      "not a TemplateTypeParmType, use name_of_type() instead");
+  auto* parm = clang::cast<clang::TemplateTypeParmType>(&*q);
+  if (parm->getIdentifier()) {
+    return name_of_type(q);
+  } else {
+    sus::check(parm->getDepth() == 0u);
+    sus::check(parm->getIndex() < template_params_from_context.size());
+    return template_params_from_context[parm->getIndex()]->getNameAsString();
+  }
 }
 
 std::string template_to_string(clang::TemplateName template_name) noexcept {
@@ -95,7 +113,10 @@ TypeOrValue build_template_param(
     const clang::SourceManager& sm,
     clang::Preprocessor& preprocessor) noexcept {
   switch (arg.getKind()) {
-    case clang::TemplateArgument::ArgKind::Null: sus::unreachable();
+    case clang::TemplateArgument::ArgKind::Null:
+      arg.dump();
+      fmt::println(stderr, "");
+      sus::unreachable();
     case clang::TemplateArgument::ArgKind::Type: {
       if (auto* proto =
               clang::dyn_cast<clang::FunctionProtoType>(&*arg.getAsType())) {
@@ -142,11 +163,22 @@ TypeOrValue build_template_param(
       return TypeOrValue(TypeOrValueChoice::with<TypeOrValueChoice::Tag::Value>(
           template_to_string(arg.getAsTemplate())));
     case clang::TemplateArgument::ArgKind::TemplateExpansion:
+      arg.dump();
+      fmt::println(stderr, "");
       sus::unreachable();
     case clang::TemplateArgument::ArgKind::Expression:
       return TypeOrValue(TypeOrValueChoice::with<TypeOrValueChoice::Tag::Value>(
           stmt_to_string(*arg.getAsExpr(), sm, preprocessor)));
-    case clang::TemplateArgument::ArgKind::Pack: sus::unreachable();
+    case clang::TemplateArgument::ArgKind::Pack:
+      // Packs are handled at a higher level since they produce multiple types.
+      sus::unreachable();
+      // The pack here should not be expanded, as we're not dealing with an
+      // instantiation. The `pack_elements` are all the template arguments
+      // so we need to find the pack.
+      sus::check(arg.pack_elements().size() > 0u);
+      return build_template_param(
+          arg.pack_elements()[arg.pack_elements().size() - 1u], template_params,
+          sm, preprocessor);
   }
   sus::unreachable();
 };
@@ -156,6 +188,15 @@ Type build_local_type_internal(
     llvm::ArrayRef<clang::NamedDecl*> template_params_from_context,
     const clang::SourceManager& sm,
     clang::Preprocessor& preprocessor) noexcept {
+  // PackExpansionTypes wrap a QualType that has all the actual type data we
+  // want on it. We just need to remember that it was a pack to add back the
+  // `...`.
+  bool is_pack = false;
+  if (auto* pack_type = clang::dyn_cast<clang::PackExpansionType>(&*qualtype)) {
+    qualtype = pack_type->getPattern();
+    is_pack = true;
+  }
+
   Refs refs =
       qualtype->isLValueReferenceType()
           ? Refs::LValueRef
@@ -174,6 +215,9 @@ Type build_local_type_internal(
 
   sus::Vec<std::string> array_dims;
   while (qualtype->isArrayType()) {
+    // The type inside a pack can not be an array.
+    sus::check(!is_pack);
+
     // Arrays come with the var name wrapped in parens, which must be removed.
     qualtype = qualtype.IgnoreParens();
     sus::check(clang::isa<clang::ArrayType>(&*qualtype));
@@ -205,8 +249,6 @@ Type build_local_type_internal(
     qualtype = qualtype->getPointeeType();
     pointers.push(qualifier_from_qualtype(qualtype));
   }
-  // TODO: Vec::reverse() when it exists.
-  pointers = sus::move(pointers).into_iter().rev().collect_vec();
 
   // A `using A = B` is an elaborated type that names a typedef A, so unpack
   // the ElaboratedType. Template specializations can be inside an
@@ -214,12 +256,29 @@ Type build_local_type_internal(
   while (auto* elab = clang::dyn_cast<clang::ElaboratedType>(&*qualtype))
     qualtype = elab->getNamedType();
 
+  // TODO: Drop the from_range() on the uses of iter_args:
+  // https://github.com/chromium/subspace/issues/348
+  auto iter_args =
+      [](sus::iter::IntoIterator<const clang::TemplateArgument&> auto ii)
+      -> sus::iter::Generator<const clang::TemplateArgument&> {
+    {
+      for (const clang::TemplateArgument& arg : sus::move(ii).into_iter())
+        if (arg.getKind() == clang::TemplateArgument::ArgKind::Pack) {
+          for (const clang::TemplateArgument& p : arg.pack_elements())
+            co_yield p;
+        } else {
+          co_yield arg;
+        }
+    }
+  };
+
   // Arrays and pointers aren't templated, but the inner type can be, so we
   // look for this after stripping off references, arrays, and pointers.
   sus::Vec<TypeOrValue> template_params;
   if (auto* ttype =
           clang::dyn_cast<clang::TemplateSpecializationType>(&*qualtype)) {
-    for (const clang::TemplateArgument& arg : ttype->template_arguments()) {
+    for (const clang::TemplateArgument& arg :
+         iter_args(sus::iter::from_range(ttype->template_arguments()))) {
       template_params.push(build_template_param(
           arg, template_params_from_context, sm, preprocessor));
     }
@@ -237,7 +296,8 @@ Type build_local_type_internal(
                     return sus::iter::from_range(as_written.arguments());
                   })
               .map(&clang::TemplateArgumentLoc::getArgument);
-      for (const clang::TemplateArgument& arg : it) {
+      for (const clang::TemplateArgument& arg :
+           sus::move(it).generate(iter_args)) {
         template_params.push(build_template_param(
             arg, template_params_from_context, sm, preprocessor));
       }
@@ -245,8 +305,8 @@ Type build_local_type_internal(
   } else if (auto* auto_type = clang::dyn_cast<clang::AutoType>(&*qualtype)) {
     // This may be a `Concept auto` in a location other than a function
     // parameter. Arguments would be part of that Concept specialization.
-    for (const clang::TemplateArgument& arg :
-         auto_type->getTypeConstraintArguments()) {
+    for (const clang::TemplateArgument& arg : iter_args(
+             sus::iter::from_range(auto_type->getTypeConstraintArguments()))) {
       template_params.push(build_template_param(
           arg, template_params_from_context, sm, preprocessor));
     }
@@ -263,8 +323,8 @@ Type build_local_type_internal(
       // There are both `getTemplateArgs` and `getTemplateInstantiationArgs`,
       // and they both return the same thing in my tests, so what is the
       // difference?
-      for (const clang::TemplateArgument& arg :
-           full->getTemplateArgs().asArray()) {
+      for (const clang::TemplateArgument& arg : iter_args(
+               sus::iter::from_range(full->getTemplateArgs().asArray()))) {
         template_params.push(build_template_param(
             arg, template_params_from_context, sm, preprocessor));
       }
@@ -290,8 +350,8 @@ Type build_local_type_internal(
       template_params_from_context_here =
           partial->getTemplateParameters()->asArray();
     }
-    for (const clang::TemplateArgument& arg :
-         inj_type->getInjectedTST()->template_arguments()) {
+    for (const clang::TemplateArgument& arg : iter_args(sus::iter::from_range(
+             inj_type->getInjectedTST()->template_arguments()))) {
       template_params.push(build_template_param(
           arg, template_params_from_context_here, sm, preprocessor));
     }
@@ -309,8 +369,6 @@ Type build_local_type_internal(
   } else if (clang::isa<clang::BuiltinType>(&*qualtype)) {
     // No context.
   } else if (clang::isa<clang::DecltypeType>(&*qualtype)) {
-    // No context.
-  } else if (clang::isa<clang::PackExpansionType>(&*qualtype)) {
     // No context.
   } else if (auto* tag_type = clang::dyn_cast<clang::TagType>(&*qualtype)) {
     context = tag_type->getDecl()->getDeclContext();
@@ -355,28 +413,19 @@ Type build_local_type_internal(
     }
     context = context->getParent();
   }
-  // TODO: Use Vec::reverse().
-  namespace_path = sus::move(namespace_path).into_iter().rev().collect_vec();
-  record_path = sus::move(record_path).into_iter().rev().collect_vec();
 
   auto [name, category] = [&]() -> sus::Tuple<std::string, TypeCategory> {
     if (auto* c = clang::dyn_cast<clang::TemplateTypeParmType>(&*qualtype)) {
       if (template_parameter_is_concept(*c)) {
-        // `Concept auto` returns true for `isImplicit`, while the use of a
-        // template variable name constrained by a concept does not.
+        // This is a `Concept auto` in a function parameter position.
         return sus::tuple(c->getDecl()
                               ->getTypeConstraint()
                               ->getNamedConcept()
                               ->getNameAsString(),
                           TypeCategory::Concept);
-      } else if (c->getIdentifier()) {
-        return sus::tuple(name_of_type(qualtype),
-                          TypeCategory::TemplateVariable);
       } else {
-        sus::check(c->getDepth() == 0u);
-        sus::check(c->getIndex() < template_params_from_context.size());
         return sus::tuple(
-            template_params_from_context[c->getIndex()]->getNameAsString(),
+            name_of_template_parm_type(qualtype, template_params_from_context),
             TypeCategory::TemplateVariable);
       }
     } else if (auto* auto_type = clang::dyn_cast<clang::AutoType>(&*qualtype)) {
@@ -400,16 +449,19 @@ Type build_local_type_internal(
       // then we would need a different TypeCategory with data fields to hold
       // the expression parts, similar to but different from `template_params`.
       return sus::tuple(name_of_type(qualtype), TypeCategory::TemplateVariable);
-    } else if (clang::isa<clang::PackExpansionType>(&*qualtype)) {
-      return sus::tuple(name_of_type(qualtype), TypeCategory::TemplateVariable);
     } else {
       return sus::tuple(name_of_type(qualtype), TypeCategory::Type);
     }
   }();
 
+  // TODO: Use Vec::reverse().
+  namespace_path = sus::move(namespace_path).into_iter().rev().collect_vec();
+  record_path = sus::move(record_path).into_iter().rev().collect_vec();
+  pointers = sus::move(pointers).into_iter().rev().collect_vec();
+
   return Type(category, sus::move(namespace_path), sus::move(record_path),
               sus::move(name), refs, sus::move(qualifier), sus::move(pointers),
-              sus::move(array_dims), sus::move(template_params));
+              sus::move(array_dims), sus::move(template_params), is_pack);
 }
 
 }  // namespace
@@ -511,11 +563,14 @@ void type_to_string_internal(
       case Refs::LValueRef: text_fn("&"); break;
       case Refs::RValueRef: text_fn("&&"); break;
     }
+    if (type.is_pack) text_fn("...");
     if (var_name_fn.is_some()) {
       text_fn(" ");
       var_name_fn.take().unwrap()();
     }
   } else {
+    sus::check(!type.is_pack);
+
     if (type.refs != Refs::None) {
       text_fn(" (");
       switch (type.refs) {
