@@ -1473,13 +1473,19 @@ TEST_F(SubDocTypeTest, ConceptWithFunctionProto) {
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
     EXPECT_EQ(t.namespace_path, sus::vec("a", "b"));
-    // TODO: FunctionProto type
-    const subdoc::Type& p1 =
-        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
+    const subdoc::FunctionProtoType& p =
+        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::FunctionProto>();
+    const subdoc::Type& pr = p.return_type;
+    EXPECT_EQ(pr.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(pr.name, "R");
+    const subdoc::Type& p1 = p.param_types[0u];
     EXPECT_EQ(p1.category, subdoc::TypeCategory::Type);
-    EXPECT_EQ(p1.name, "R(S<R>, R)");
+    EXPECT_EQ(p1.name, "S");
+    const subdoc::Type& p2 = p.param_types[1u];
+    EXPECT_EQ(p2.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(p2.name, "R");
 
-    EXPECT_EQ(make_string("foo", t), "!F!<!R!(!S!<!R!>, !R!)> foo");
+    EXPECT_EQ(make_string("foo", t), "!C!<!R!(!S!<!R!>, !R!)> auto foo");
   });
 }
 
@@ -1500,11 +1506,17 @@ TEST_F(SubDocTypeTest, StructWithFunctionProto) {
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
     EXPECT_EQ(t.namespace_path, sus::vec("a", "b"));
-    // TODO: FunctionProto type
-    const subdoc::Type& p1 =
-        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
+    const subdoc::FunctionProtoType& p =
+        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::FunctionProto>();
+    const subdoc::Type& pr = p.return_type;
+    EXPECT_EQ(pr.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(pr.name, "R");
+    const subdoc::Type& p1 = p.param_types[0u];
     EXPECT_EQ(p1.category, subdoc::TypeCategory::Type);
-    EXPECT_EQ(p1.name, "R(S<R>, R)");
+    EXPECT_EQ(p1.name, "S");
+    const subdoc::Type& p2 = p.param_types[1u];
+    EXPECT_EQ(p2.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(p2.name, "R");
 
     EXPECT_EQ(make_string("foo", t), "!F!<!R!(!S!<!R!>, !R!)> foo");
   });
@@ -1528,11 +1540,14 @@ TEST_F(SubDocTypeTest, StructWithDependentFunctionProto) {
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
     EXPECT_EQ(t.namespace_path, sus::vec("a", "b"));
-    // TODO: FunctionProto type
-    const subdoc::Type& p1 =
-        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
-    EXPECT_EQ(p1.category, subdoc::TypeCategory::Type);
-    EXPECT_EQ(p1.name, "R(T)");
+    const subdoc::FunctionProtoType& p =
+        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::FunctionProto>();
+    const subdoc::Type& pr = p.return_type;
+    EXPECT_EQ(pr.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(pr.name, "R");
+    const subdoc::Type& p1 = p.param_types[0u];
+    EXPECT_EQ(p1.category, subdoc::TypeCategory::TemplateVariable);
+    EXPECT_EQ(p1.name, "T");
 
     EXPECT_EQ(make_string("foo", t), "!F!<!R!(T)> foo");
   });

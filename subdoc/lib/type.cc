@@ -97,6 +97,21 @@ TypeOrValue build_template_param(
   switch (arg.getKind()) {
     case clang::TemplateArgument::ArgKind::Null: sus::unreachable();
     case clang::TemplateArgument::ArgKind::Type: {
+      if (auto* proto =
+              clang::dyn_cast<clang::FunctionProtoType>(&*arg.getAsType())) {
+        // A function proto is actually a group of types, so we can't build just
+        // a single type for it.
+        FunctionProtoType types;
+        types.return_type = build_local_type_internal(
+            proto->getReturnType(), template_params, sm, preprocessor);
+        for (clang::QualType p : proto->param_types()) {
+          types.param_types.push(
+              build_local_type_internal(p, template_params, sm, preprocessor));
+        }
+        return TypeOrValue(
+            TypeOrValueChoice::with<TypeOrValueChoice::Tag::FunctionProto>(
+                sus::move(types)));
+      }
       return TypeOrValue(TypeOrValueChoice::with<TypeOrValueChoice::Tag::Type>(
           build_local_type_internal(arg.getAsType(), template_params, sm,
                                     preprocessor)));
@@ -297,9 +312,6 @@ Type build_local_type_internal(
     // No context.
   } else if (clang::isa<clang::PackExpansionType>(&*qualtype)) {
     // No context.
-  } else if (auto* proto_type =
-                 clang::dyn_cast<clang::FunctionProtoType>(&*qualtype)) {
-    // No context.
   } else if (auto* tag_type = clang::dyn_cast<clang::TagType>(&*qualtype)) {
     context = tag_type->getDecl()->getDeclContext();
   } else if (auto* spec_type =
@@ -444,6 +456,21 @@ void type_to_string_internal(
                                   sus::none());
           break;
         }
+        case TypeOrValueTag::FunctionProto: {
+          const FunctionProtoType& proto =
+              tv.choice.as<TypeOrValueTag::FunctionProto>();
+          type_to_string_internal(proto.return_type, text_fn, type_fn,
+                                  const_qualifier_fn, volatile_qualifier_fn,
+                                  sus::none());
+          text_fn("(");
+          for (const auto& [j, t] : proto.param_types.iter().enumerate()) {
+            if (j > 0u) text_fn(", ");
+            type_to_string_internal(t, text_fn, type_fn, const_qualifier_fn,
+                                    volatile_qualifier_fn, sus::none());
+          }
+          text_fn(")");
+          break;
+        }
         case TypeOrValueTag::Value: {
           // The type of the value isn't used here, we just write the value.
           text_fn(tv.choice.as<TypeOrValueTag::Value>());
@@ -535,6 +562,14 @@ void type_walk_types_internal(
       case TypeOrValueTag::Type: {
         const Type& template_type = tv.choice.as<TypeOrValueTag::Type>();
         type_walk_types_internal(template_type, type_fn);
+        break;
+      }
+      case TypeOrValueTag::FunctionProto: {
+        const FunctionProtoType& proto =
+            tv.choice.as<TypeOrValueTag::FunctionProto>();
+        type_walk_types_internal(proto.return_type, type_fn);
+        for (const Type& t : proto.param_types)
+          type_walk_types_internal(t, type_fn);
         break;
       }
       case TypeOrValueTag::Value: {
