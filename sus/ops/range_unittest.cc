@@ -78,7 +78,7 @@ static_assert(std::same_as<decltype("1.."_r), sus::ops::RangeFrom<usize>>);
 static_assert(std::same_as<decltype("..2"_r), sus::ops::RangeTo<usize>>);
 static_assert(std::same_as<decltype("1..2"_r), sus::ops::Range<usize>>);
 static_assert(std::same_as<decltype("1..=2"_r), sus::ops::Range<usize>>);
-// SIgned.
+// Signed.
 static_assert(std::same_as<decltype(".."_rs), sus::ops::RangeFull<isize>>);
 static_assert(std::same_as<decltype("1.."_rs), sus::ops::RangeFrom<isize>>);
 static_assert(std::same_as<decltype("..2"_rs), sus::ops::RangeTo<isize>>);
@@ -233,6 +233,13 @@ static_assert([]() constexpr {
   return r == Range(8_usize, 9_usize);
 }());
 
+static_assert(std::same_as<decltype(sus::ops::range(1_i32, 2_i32)),
+                           sus::ops::Range<i32>>);
+static_assert(std::same_as<decltype(sus::ops::range_from(1_i32)),
+                           sus::ops::RangeFrom<i32>>);
+static_assert(
+    std::same_as<decltype(sus::ops::range_to(2_i32)), sus::ops::RangeTo<i32>>);
+
 TEST(Range, Iter) {
   auto it = "1..5"_r;
   EXPECT_EQ(it.next().unwrap(), 1u);
@@ -279,6 +286,22 @@ TEST(Range, StructuredBindings) {
   auto [a, b] = "1..5"_r;
   EXPECT_EQ(a, 1u);
   EXPECT_EQ(b, 5u);
+}
+
+TEST(Range, Functions) {
+  static_assert(sus::ops::range(2_i32, 5_i32).into_iter().sum() == 2 + 3 + 4);
+  static_assert(sus::ops::range_from(2_i32).into_iter().take(3u).sum() ==
+                2 + 3 + 4);
+  static_assert(sus::ops::range_to(5_i32).start_at(2).into_iter().sum() ==
+                2 + 3 + 4);
+}
+
+TEST(Range, Primitives) {
+  int sum = 0;
+  for (int i : sus::ops::range(2, 5)) {
+    sum += i;
+  }
+  EXPECT_EQ(sum, 2 + 3 + 4);
 }
 
 TEST(Range, fmt) {

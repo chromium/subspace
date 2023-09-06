@@ -62,7 +62,7 @@ template <class Final, class T>
 class RangeIter<Final, T, true> : public ::sus::iter::IteratorBase<Final, T> {
  public:
   // sus::iter::Iterator trait.
-  Option<T> next() noexcept {
+  constexpr Option<T> next() noexcept {
     if (static_cast<Final*>(this)->start == static_cast<Final*>(this)->finish)
       return Option<T>();
     return Option<T>(
@@ -72,7 +72,7 @@ class RangeIter<Final, T, true> : public ::sus::iter::IteratorBase<Final, T> {
   }
 
   // sus::iter::Iterator trait optional method.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     Option<::sus::num::usize> steps = ::sus::iter::__private::steps_between(
         static_cast<const Final*>(this)->start,
         static_cast<const Final*>(this)->finish);
@@ -81,7 +81,7 @@ class RangeIter<Final, T, true> : public ::sus::iter::IteratorBase<Final, T> {
   }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<T> next_back() noexcept {
+  constexpr Option<T> next_back() noexcept {
     if (static_cast<Final*>(this)->start == static_cast<Final*>(this)->finish)
       return Option<T>();
     static_cast<Final*>(this)->finish = ::sus::iter::__private::step_backward(
@@ -95,12 +95,12 @@ class RangeIter<Final, T, true> : public ::sus::iter::IteratorBase<Final, T> {
 
 template <class Final, class T>
 class RangeIter<Final, T, false> {
-  auto begin() noexcept {
+  constexpr auto begin() noexcept {
     static_assert(!std::same_as<T, T>,
                   "Step<T> is not defined for the T that the range is over. "
                   "Use a range over subspace numerics to iterate.");
   }
-  auto end() noexcept {}
+  constexpr auto end() noexcept {}
 };
 
 template <class Final, class T, bool = ::sus::iter::__private::Step<T>>
@@ -111,14 +111,14 @@ class RangeFromIter<Final, T, true>
     : public ::sus::iter::IteratorBase<Final, T> {
  public:
   /// sus::iter::Iterator trait.
-  Option<T> next() noexcept {
+  constexpr Option<T> next() noexcept {
     return Option<T>(
         ::sus::mem::replace(static_cast<Final*>(this)->start,
                             ::sus::iter::__private::step_forward(
                                 static_cast<Final*>(this)->start)));
   }
   /// sus::iter::Iterator trait.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     return ::sus::iter::SizeHint(0u, ::sus::Option<::sus::num::usize>());
   }
 
