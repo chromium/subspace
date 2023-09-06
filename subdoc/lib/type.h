@@ -58,6 +58,8 @@ struct Type {
   /// The name of the type. For `category == TemplateVariable` this will be the
   /// the name of the variable.
   std::string name;
+  /// For types of the form `A::B::C` the `nested_name` would hold `B` and `C`.
+  sus::Vec<TypeOrValue> nested_names;
   /// Refs can only appear on the outermost type.
   Refs refs;
   /// Const-volatile qualifiers for the outermost type.

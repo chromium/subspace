@@ -172,13 +172,6 @@ TypeOrValue build_template_param(
     case clang::TemplateArgument::ArgKind::Pack:
       // Packs are handled at a higher level since they produce multiple types.
       sus::unreachable();
-      // The pack here should not be expanded, as we're not dealing with an
-      // instantiation. The `pack_elements` are all the template arguments
-      // so we need to find the pack.
-      sus::check(arg.pack_elements().size() > 0u);
-      return build_template_param(
-          arg.pack_elements()[arg.pack_elements().size() - 1u], template_params,
-          sm, preprocessor);
   }
   sus::unreachable();
 };
@@ -202,6 +195,28 @@ Type build_local_type_internal(
           ? Refs::LValueRef
           : (qualtype->isRValueReferenceType() ? Refs::RValueRef : Refs::None);
   qualtype = qualtype.getNonReferenceType();
+
+  sus::Vec<TypeOrValue> nested_names;
+  if (auto* dep = clang::dyn_cast<clang::DependentNameType>(&*qualtype)) {
+    clang::NestedNameSpecifier* spec = dep->getQualifier();
+    while (spec) {
+      clang::NestedNameSpecifier::SpecifierKind kind = spec->getKind();
+      if (kind == clang::NestedNameSpecifier::Identifier) {
+        nested_names.push(
+            TypeOrValue(TypeOrValueChoice::with<TypeOrValueTag::Value>(
+                std::string(spec->getAsIdentifier()->getName()))));
+      } else {
+        sus::check(kind == clang::NestedNameSpecifier::TypeSpec ||
+                   kind == clang::NestedNameSpecifier::TypeSpecWithTemplate);
+        nested_names.push(
+            TypeOrValue(TypeOrValueChoice::with<TypeOrValueTag::Type>(
+                build_local_type_internal(
+                    clang::QualType(spec->getAsType(), 0u),
+                    llvm::ArrayRef<clang::NamedDecl*>(), sm, preprocessor))));
+      }
+      spec = spec->getPrefix();
+    }
+  }
 
   // Arrays may already be "DecayedType", but we can get the original type from
   // it.
@@ -370,6 +385,8 @@ Type build_local_type_internal(
     // No context.
   } else if (clang::isa<clang::DecltypeType>(&*qualtype)) {
     // No context.
+  } else if (clang::isa<clang::DependentNameType>(&*qualtype)) {
+    // No context.
   } else if (auto* tag_type = clang::dyn_cast<clang::TagType>(&*qualtype)) {
     context = tag_type->getDecl()->getDeclContext();
   } else if (auto* spec_type =
@@ -449,6 +466,12 @@ Type build_local_type_internal(
       // then we would need a different TypeCategory with data fields to hold
       // the expression parts, similar to but different from `template_params`.
       return sus::tuple(name_of_type(qualtype), TypeCategory::TemplateVariable);
+    } else if (auto* dep_type =
+                   clang::dyn_cast<clang::DependentNameType>(&*qualtype)) {
+      // The dependent name is not a resolved type, so we call it a
+      // TemplateVariable so it's just displayed as text.
+      return sus::tuple(std::string(dep_type->getIdentifier()->getName()),
+                        TypeCategory::TemplateVariable);
     } else {
       return sus::tuple(name_of_type(qualtype), TypeCategory::Type);
     }
@@ -457,11 +480,13 @@ Type build_local_type_internal(
   // TODO: Use Vec::reverse().
   namespace_path = sus::move(namespace_path).into_iter().rev().collect_vec();
   record_path = sus::move(record_path).into_iter().rev().collect_vec();
+  nested_names = sus::move(nested_names).into_iter().rev().collect_vec();
   pointers = sus::move(pointers).into_iter().rev().collect_vec();
 
   return Type(category, sus::move(namespace_path), sus::move(record_path),
-              sus::move(name), refs, sus::move(qualifier), sus::move(pointers),
-              sus::move(array_dims), sus::move(template_params), is_pack);
+              sus::move(name), sus::move(nested_names), refs,
+              sus::move(qualifier), sus::move(pointers), sus::move(array_dims),
+              sus::move(template_params), is_pack);
 }
 
 }  // namespace
@@ -480,6 +505,22 @@ void type_to_string_internal(
     sus::fn::FnMutRef<void()>& const_qualifier_fn,
     sus::fn::FnMutRef<void()>& volatile_qualifier_fn,
     sus::Option<sus::fn::FnOnceRef<void()>> var_name_fn) noexcept {
+  for (const TypeOrValue& tv : type.nested_names) {
+    switch (tv.choice) {
+      case TypeOrValueTag::Type: {
+        type_to_string_internal(tv.choice.as<TypeOrValueTag::Type>(), text_fn,
+                                type_fn, const_qualifier_fn,
+                                volatile_qualifier_fn, sus::none());
+        break;
+      }
+      case TypeOrValueTag::Value:
+        text_fn(tv.choice.as<TypeOrValueTag::Value>());
+        break;
+      case TypeOrValueTag::FunctionProto: sus::unreachable();
+    }
+    text_fn("::");
+  }
+
   switch (type.category) {
     case TypeCategory::Concept: [[fallthrough]];
     case TypeCategory::Type:
@@ -600,6 +641,17 @@ void type_to_string_internal(
 void type_walk_types_internal(
     const Type& type,
     sus::fn::FnMutRef<void(TypeToStringQuery)>& type_fn) noexcept {
+  for (const TypeOrValue& tv : type.nested_names) {
+    switch (tv.choice) {
+      case TypeOrValueTag::Type: {
+        type_walk_types_internal(tv.choice.as<TypeOrValueTag::Type>(), type_fn);
+        break;
+      }
+      case TypeOrValueTag::Value: break;
+      case TypeOrValueTag::FunctionProto: sus::unreachable();
+    }
+  }
+
   switch (type.category) {
     case TypeCategory::Concept: [[fallthrough]];
     case TypeCategory::Type:

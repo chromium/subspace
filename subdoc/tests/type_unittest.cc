@@ -1810,4 +1810,31 @@ TEST_F(SubDocTypeTest, VariadicConcept) {
   });
 }
 
+TEST_F(SubDocTypeTest, DependentNameType) {
+  const char test[] = R"(
+    template <class T> struct R { using RType = T; };
+    template <class T> struct S { using SType = T; };
+    template <class T>
+    void f(typename R<S<T>>::RType::SType&);
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
+    EXPECT_EQ(t.name, "SType");
+    EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
+    const subdoc::Type& n1 =
+        t.nested_names[0u].choice.as<subdoc::TypeOrValueTag::Type>();
+    EXPECT_EQ(n1.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(n1.name, "R");
+    const std::string& n2 =
+        t.nested_names[1u].choice.as<subdoc::TypeOrValueTag::Value>();
+    EXPECT_EQ(n2, "RType");
+
+    EXPECT_EQ(make_string("foo", t), "!R!<!S!<T>>::RType::SType& foo");
+  });
+}
+
 }  // namespace
