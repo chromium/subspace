@@ -77,14 +77,23 @@ struct Type {
   sus::Vec<TypeOrValue> template_params;
 };
 
+/// A function proto is a template parameter that names a function signature
+/// like `int(char*)` in `T<i32(char*)>`.
+struct FunctionProtoType {
+  Type return_type;
+  sus::Vec<Type> param_types;
+};
+
 enum class TypeOrValueTag {
   Type,
+  FunctionProto,
   Value,
 };
 
 // clang-format off
 using TypeOrValueChoice = sus::Choice<sus_choice_types(
     (TypeOrValueTag::Type, Type),
+    (TypeOrValueTag::FunctionProto, FunctionProtoType),
     (TypeOrValueTag::Value, std::string /* The value as text*/))>;
 // clang-format on
 
