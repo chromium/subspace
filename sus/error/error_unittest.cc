@@ -60,7 +60,11 @@ struct sus::error::ErrorImpl<ErrorString> {
     return sus::clone(self.reason);
   }
 };
-static_assert(sus::error::error_display(ErrorString("oops")) == "oops");
+// We use a long string to avoid a compiler error in libstdc++ due to bug
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=110158.
+static_assert(sus::error::error_display(ErrorString{
+                  .reason = "a long string to avoid SSO"}) ==
+              "a long string to avoid SSO");
 
 // Example for `Error` with source.
 template <>
@@ -119,9 +123,10 @@ TEST(Error, Example_Source) {
 
 TEST(ErrorDeathTest, Example_Unwrap) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(sus::env::var("IMPORTANT_PATH")
-                   .expect("env variable `IMPORTANT_PATH` is not set"),
-               "PANIC! at 'env variable `IMPORTANT_PATH` is not set: NotFound'");
+  EXPECT_DEATH(
+      sus::env::var("IMPORTANT_PATH")
+          .expect("env variable `IMPORTANT_PATH` is not set"),
+      "PANIC! at 'env variable `IMPORTANT_PATH` is not set: NotFound'");
 #endif
 }
 
