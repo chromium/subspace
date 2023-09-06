@@ -75,6 +75,8 @@ struct Type {
   sus::Vec<std::string> array_dims;
   /// Recursive structure, each template param is another type, or value.
   sus::Vec<TypeOrValue> template_params;
+  /// When true, the type is a parameter pack, and should append `...`.
+  bool is_pack;
 };
 
 /// A function proto is a template parameter that names a function signature
