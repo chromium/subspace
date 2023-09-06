@@ -17,6 +17,8 @@
 #include <concepts>
 #include <iterator>
 #include <ranges>
+#include <string>
+#include <string_view>
 #include <vector>
 
 #include "googletest/include/gtest/gtest.h"
@@ -92,8 +94,8 @@ TEST(CompatRanges, InputRange) {
   EXPECT_EQ(max, 6);
 
   // max() requires a `std::ranges::input_range`.
-  static_assert(std::ranges::max(
-                    sus::Vec<i32>(1, 2, 4, 3).into_iter().range()) == 4);
+  static_assert(
+      std::ranges::max(sus::Vec<i32>(1, 2, 4, 3).into_iter().range()) == 4);
 }
 
 TEST(CompatRanges, InputRangeConstRefs) {
@@ -238,6 +240,26 @@ TEST(CompatRanges, FromRange_Example) {
     auto v = std::vector<i32>({1, 2, 3});
     sus::check(sus::iter::from_range(sus::move(v)).sum() == 1 + 2 + 3);
   }
+}
+
+TEST(CompatRanges, Tr) {
+  auto tr = [](std::string_view from, std::string_view to, std::string & s) {
+    sus::iter::from_range(s).for_each([&](char& b) {
+      if (auto found = sus::iter::from_range(from)
+                           .zip(sus::iter::from_range(to))
+                           .find([&](auto from_to) {
+                             auto [f, t] = from_to;
+                             return f == b;
+                           });
+          found.is_some()) {
+        auto [f, t] = *found;
+        b = t;
+      }
+    });
+  };
+  auto s = std::string("abracadabra");
+  tr("abc", "ABC", s);
+  EXPECT_EQ(s, "ABrACAdABrA");
 }
 
 }  // namespace
