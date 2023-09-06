@@ -81,24 +81,34 @@ std::string template_to_string(clang::TemplateName template_name) noexcept {
 /// parameter.
 bool template_parameter_is_concept(
     const clang::TemplateTypeParmType& parm) noexcept {
-  return (parm.getDecl()->hasTypeConstraint() && parm.getDecl()->isImplicit());
+  return parm.getDecl() && parm.getDecl()->hasTypeConstraint() &&
+         parm.getDecl()->isImplicit();
 }
 
-TypeOrValue build_template_param(const clang::TemplateArgument& arg,
-                                 const clang::SourceManager& sm,
-                                 clang::Preprocessor& preprocessor) noexcept {
+Type build_local_type_internal(
+    clang::QualType qualtype, llvm::ArrayRef<clang::NamedDecl*> template_params,
+    const clang::SourceManager& sm, clang::Preprocessor& preprocessor) noexcept;
+
+TypeOrValue build_template_param(
+    const clang::TemplateArgument& arg,
+    llvm::ArrayRef<clang::NamedDecl*> template_params,
+    const clang::SourceManager& sm,
+    clang::Preprocessor& preprocessor) noexcept {
   switch (arg.getKind()) {
     case clang::TemplateArgument::ArgKind::Null: sus::unreachable();
     case clang::TemplateArgument::ArgKind::Type: {
       return TypeOrValue(TypeOrValueChoice::with<TypeOrValueChoice::Tag::Type>(
-          build_local_type(arg.getAsType(), sm, preprocessor)));
+          build_local_type_internal(arg.getAsType(), template_params, sm,
+                                    preprocessor)));
     }
     case clang::TemplateArgument::ArgKind::Declaration:
       return TypeOrValue(TypeOrValueChoice::with<TypeOrValueChoice::Tag::Type>(
-          build_local_type(arg.getAsDecl()->getType(), sm, preprocessor)));
+          build_local_type_internal(arg.getAsDecl()->getType(), template_params,
+                                    sm, preprocessor)));
     case clang::TemplateArgument::ArgKind::NullPtr:
       return TypeOrValue(TypeOrValueChoice::with<TypeOrValueChoice::Tag::Type>(
-          build_local_type(arg.getNullPtrType(), sm, preprocessor)));
+          build_local_type_internal(arg.getNullPtrType(), template_params, sm,
+                                    preprocessor)));
     case clang::TemplateArgument::ArgKind::Integral: {
       return TypeOrValue(TypeOrValueChoice::with<TypeOrValueChoice::Tag::Value>(
           llvm_int_to_string(arg.getAsIntegral())));
@@ -126,10 +136,11 @@ TypeOrValue build_template_param(const clang::TemplateArgument& arg,
   sus::unreachable();
 };
 
-}  // namespace
-
-Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
-                      clang::Preprocessor& preprocessor) noexcept {
+Type build_local_type_internal(
+    clang::QualType qualtype,
+    llvm::ArrayRef<clang::NamedDecl*> template_params_from_context,
+    const clang::SourceManager& sm,
+    clang::Preprocessor& preprocessor) noexcept {
   Refs refs =
       qualtype->isLValueReferenceType()
           ? Refs::LValueRef
@@ -194,7 +205,8 @@ Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
   if (auto* ttype =
           clang::dyn_cast<clang::TemplateSpecializationType>(&*qualtype)) {
     for (const clang::TemplateArgument& arg : ttype->template_arguments()) {
-      template_params.push(build_template_param(arg, sm, preprocessor));
+      template_params.push(build_template_param(
+          arg, template_params_from_context, sm, preprocessor));
     }
   } else if (auto* ptype =
                  clang::dyn_cast<clang::TemplateTypeParmType>(&*qualtype)) {
@@ -211,7 +223,8 @@ Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
                   })
               .map(&clang::TemplateArgumentLoc::getArgument);
       for (const clang::TemplateArgument& arg : it) {
-        template_params.push(build_template_param(arg, sm, preprocessor));
+        template_params.push(build_template_param(
+            arg, template_params_from_context, sm, preprocessor));
       }
     }
   } else if (auto* auto_type = clang::dyn_cast<clang::AutoType>(&*qualtype)) {
@@ -219,8 +232,57 @@ Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
     // parameter. Arguments would be part of that Concept specialization.
     for (const clang::TemplateArgument& arg :
          auto_type->getTypeConstraintArguments()) {
-      template_params.push(build_template_param(arg, sm, preprocessor));
+      template_params.push(build_template_param(
+          arg, template_params_from_context, sm, preprocessor));
     }
+  } else if (auto* rec_type = clang::dyn_cast<clang::RecordType>(&*qualtype)) {
+    if (auto* partial =
+            clang::dyn_cast<clang::ClassTemplatePartialSpecializationDecl>(
+                rec_type->getDecl())) {
+      // Partial specialization in another type?
+      partial->dump();
+      sus::unreachable();
+    } else if (auto* full =
+                   clang::dyn_cast<clang::ClassTemplateSpecializationDecl>(
+                       rec_type->getDecl())) {
+      // There are both `getTemplateArgs` and `getTemplateInstantiationArgs`,
+      // and they both return the same thing in my tests, so what is the
+      // difference?
+      for (const clang::TemplateArgument& arg :
+           full->getTemplateArgs().asArray()) {
+        template_params.push(build_template_param(
+            arg, template_params_from_context, sm, preprocessor));
+      }
+    }
+  } else if (auto* inj_type =
+                 clang::dyn_cast<clang::InjectedClassNameType>(&*qualtype)) {
+    llvm::ArrayRef<clang::NamedDecl*> template_params_from_context_here;
+    if (auto* partial =
+            clang::dyn_cast<clang::ClassTemplatePartialSpecializationDecl>(
+                inj_type->getDecl())) {
+      // In a partial specialization, any `TemplateTypeParmType` (template
+      // arguments) that refer to a template parameter on the class do not have
+      // the usual `getDecl` pointer or even `getIdentifier` pointer. They only
+      // have a name like "type-parameter-0-0" which is the depth and index.
+      //
+      // To work backward and get the parameter from the class we need to pass
+      // that in to `build_template_param` here.
+      //
+      // It feels like we should be pushing this array of NamedDecl onto a stack
+      // in case there's a `TemplateTypeParmType` with a depth > 0, but it's
+      // unclear how to get into that position, as you can't have multiple
+      // levels of partial specializations nested.
+      template_params_from_context_here =
+          partial->getTemplateParameters()->asArray();
+    }
+    for (const clang::TemplateArgument& arg :
+         inj_type->getInjectedTST()->template_arguments()) {
+      template_params.push(build_template_param(
+          arg, template_params_from_context_here, sm, preprocessor));
+    }
+  } else {
+    // No template parameters.
+    // qualtype->dump();
   }
 
   // Find the context from which to collect the namespace/record paths.
@@ -264,7 +326,7 @@ Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
     context = using_type->getFoundDecl()->getDeclContext();
   } else if (auto* injected_type =
                  clang::dyn_cast<clang::InjectedClassNameType>(&*qualtype)) {
-        context = injected_type->getDecl()->getDeclContext();
+    context = injected_type->getDecl()->getDeclContext();
   } else {
     qualtype->dump();
     sus::unreachable();  // Find the context.
@@ -295,9 +357,15 @@ Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
                               ->getNamedConcept()
                               ->getNameAsString(),
                           TypeCategory::Concept);
-      } else {
+      } else if (c->getIdentifier()) {
         return sus::tuple(name_of_type(qualtype),
                           TypeCategory::TemplateVariable);
+      } else {
+        sus::check(c->getDepth() == 0u);
+        sus::check(c->getIndex() < template_params_from_context.size());
+        return sus::tuple(
+            template_params_from_context[c->getIndex()]->getNameAsString(),
+            TypeCategory::TemplateVariable);
       }
     } else if (auto* auto_type = clang::dyn_cast<clang::AutoType>(&*qualtype)) {
       if (clang::ConceptDecl* condecl = auto_type->getTypeConstraintConcept()) {
@@ -330,6 +398,14 @@ Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
   return Type(category, sus::move(namespace_path), sus::move(record_path),
               sus::move(name), refs, sus::move(qualifier), sus::move(pointers),
               sus::move(array_dims), sus::move(template_params));
+}
+
+}  // namespace
+
+Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
+                      clang::Preprocessor& preprocessor) noexcept {
+  return build_local_type_internal(
+      qualtype, llvm::ArrayRef<clang::NamedDecl*>(), sm, preprocessor);
 }
 
 namespace {

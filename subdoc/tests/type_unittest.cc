@@ -1563,23 +1563,25 @@ TEST_F(SubDocTypeTest, PartialSpecializationMethod) {
         t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
     EXPECT_EQ(p1.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(p1.name, "S");
-    EXPECT_EQ(t.namespace_path, sus::vec("c", "d"));
+    EXPECT_EQ(p1.namespace_path, sus::vec("c", "d"));
     const subdoc::Type& p21 =
         p1.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
     EXPECT_EQ(p21.category, subdoc::TypeCategory::Type);
-    EXPECT_EQ(p21.name, "F");
-    EXPECT_EQ(t.namespace_path, sus::vec("e", "f"));
+    EXPECT_EQ(p21.name, "G");
+    EXPECT_EQ(p21.namespace_path, sus::vec("e", "f"));
 
     EXPECT_EQ(make_string("foo", t), "!F!<!S!<!G!>>& foo");
   });
 }
 
 TEST_F(SubDocTypeTest, PartialSpecializationMethodInjectedClassName) {
+  // When the specialization has a dependent type, the use of the class
+  // as a parameter causes a `InjectedClassNameType` in the AST.
   const char test[] = R"(
     namespace a::b { template <class T> struct F {}; }
     namespace c::d { template <class T> struct S {}; }
     template <class T>
-    struct a::b::F<c::d::S<T>> {
+    struct a::b::F<c::d::S<const T&>> {
       static void f(F&);
     };
   )";
@@ -1598,13 +1600,78 @@ TEST_F(SubDocTypeTest, PartialSpecializationMethodInjectedClassName) {
         t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
     EXPECT_EQ(p1.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(p1.name, "S");
-    EXPECT_EQ(t.namespace_path, sus::vec("c", "d"));
+    EXPECT_EQ(p1.namespace_path, sus::vec("c", "d"));
     const subdoc::Type& p21 =
         p1.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
     EXPECT_EQ(p21.category, subdoc::TypeCategory::TemplateVariable);
     EXPECT_EQ(p21.name, "T");
+    EXPECT_EQ(p21.qualifier.is_const, true);
+    EXPECT_EQ(p21.qualifier.is_volatile, false);
+    EXPECT_EQ(p21.refs, subdoc::Refs::LValueRef);
 
-    EXPECT_EQ(make_string("foo", t), "!F!<!S!<T>>& foo");
+    EXPECT_EQ(make_string("foo", t), "!F!<!S!<T const&>>& foo");
+  });
+}
+
+TEST_F(SubDocTypeTest, PartialSpecializationMethodInNestedTemplateClass) {
+  // When the specialization has a dependent type, the use of the class
+  // as a parameter causes a `InjectedClassNameType` in the AST.
+  const char test[] = R"(
+    namespace a::b { template <class T> struct F {}; }
+    namespace c::d { template <class T> struct S {}; }
+    template <class T>
+    struct a::b::F<c::d::S<const T&>> {
+      template <class U>
+      struct G {
+        static void f(F&);
+        static void g(G&);
+      };
+    };
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t.name, "F");
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
+    EXPECT_EQ(t.namespace_path, sus::vec("a", "b"));
+    const subdoc::Type& p1 =
+        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
+    EXPECT_EQ(p1.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(p1.name, "S");
+    EXPECT_EQ(p1.namespace_path, sus::vec("c", "d"));
+    const subdoc::Type& p21 =
+        p1.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
+    EXPECT_EQ(p21.category, subdoc::TypeCategory::TemplateVariable);
+    EXPECT_EQ(p21.name, "T");
+    EXPECT_EQ(p21.qualifier.is_const, true);
+    EXPECT_EQ(p21.qualifier.is_volatile, false);
+    EXPECT_EQ(p21.refs, subdoc::Refs::LValueRef);
+
+    EXPECT_EQ(make_string("foo", t), "!F!<!S!<T const&>>& foo");
+  });
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function_parm("g", cx);
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t.name, "G");
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
+    EXPECT_EQ(t.namespace_path, sus::vec("a", "b"));
+    const subdoc::Type& p1 =
+        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
+    EXPECT_EQ(p1.category, subdoc::TypeCategory::TemplateVariable);
+    EXPECT_EQ(p1.name, "U");
+    EXPECT_EQ(p1.namespace_path, sus::vec());
+
+    EXPECT_EQ(make_string("foo", t), "!G!<U>& foo");
   });
 }
 
