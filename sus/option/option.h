@@ -57,10 +57,6 @@
 // Have to forward declare a bunch of iterator stuff here because Iterator
 // includes Option, so it can't include iterator back.
 namespace sus::iter {
-template <class Item>
-class Once;
-template <class Item>
-constexpr Once<Item> once(::sus::option::Option<Item> o) noexcept;
 namespace __private {
 template <class T>
   requires requires(const T& t) {
@@ -412,9 +408,11 @@ namespace option {}
 
 namespace sus::option {
 
+template <class Item>
+class OptionIter;
+
 using State::None;
 using State::Some;
-using ::sus::iter::Once;
 using ::sus::mem::__private::IsTrivialCopyAssignOrRef;
 using ::sus::mem::__private::IsTrivialCopyCtorOrRef;
 using ::sus::mem::__private::IsTrivialDtorOrRef;
@@ -1597,44 +1595,22 @@ class Option final {
     return ::sus::clone(*this).as_mut();
   }
 
-  sus_pure constexpr Once<const std::remove_reference_t<T>&> iter()
-      const& noexcept {
-    return ::sus::iter::once<const std::remove_reference_t<T>&>(as_ref());
-  }
-  constexpr Once<const std::remove_reference_t<T>&> iter() && noexcept
-    requires(std::is_reference_v<T>)
-  {
-    return ::sus::iter::once<const std::remove_reference_t<T>&>(
-        ::sus::move(*this).as_ref());
-  }
-  constexpr Once<const std::remove_reference_t<T>&> iter() const& noexcept
-    requires(std::is_reference_v<T>)
-  {
-    return ::sus::clone(*this).iter();
-  }
+  sus_pure constexpr OptionIter<const std::remove_reference_t<T>&> iter()
+      const& noexcept;
+  constexpr OptionIter<const std::remove_reference_t<T>&> iter() && noexcept
+    requires(std::is_reference_v<T>);
+  constexpr OptionIter<const std::remove_reference_t<T>&> iter() const& noexcept
+    requires(std::is_reference_v<T>);
 
-  sus_pure constexpr Once<T&> iter_mut() & noexcept {
-    return ::sus::iter::once<T&>(as_mut());
-  }
-  constexpr Once<T&> iter_mut() && noexcept
-    requires(std::is_reference_v<T>)
-  {
-    return ::sus::iter::once<T&>(::sus::move(*this).as_mut());
-  }
-  constexpr Once<T&> iter_mut() const& noexcept
-    requires(std::is_reference_v<T>)
-  {
-    return ::sus::clone(*this).iter_mut();
-  }
+  sus_pure constexpr OptionIter<T&> iter_mut() & noexcept;
+  constexpr OptionIter<T&> iter_mut() && noexcept
+    requires(std::is_reference_v<T>);
+  constexpr OptionIter<T&> iter_mut() const& noexcept
+    requires(std::is_reference_v<T>);
 
-  constexpr Once<T> into_iter() && noexcept {
-    return ::sus::iter::once<T>(take());
-  }
-  constexpr Once<T> into_iter() const& noexcept
-    requires(::sus::mem::CopyOrRef<T>)
-  {
-    return ::sus::clone(*this).into_iter();
-  }
+  constexpr OptionIter<T> into_iter() && noexcept;
+  constexpr OptionIter<T> into_iter() const& noexcept
+    requires(::sus::mem::CopyOrRef<T>);
 
   /// Satisfies the [`Eq<Option<U>>`]($sus::ops::Eq) concept.
   ///
@@ -2142,6 +2118,64 @@ constexpr Option<T> from_sum_impl(Iter&& it) noexcept {
 }
 
 }  // namespace __private
+
+}  // namespace sus::option
+
+//////
+
+// This header contains a type that needs to use Option, and is used by the
+// Option method implementations below. So we have to include it after defining
+// Option but before implementing the following methods.
+#include "sus/option/option_iter.h"
+
+namespace sus::option {
+
+template <class T>
+sus_pure constexpr OptionIter<const std::remove_reference_t<T>&> Option<T>::iter()
+    const& noexcept {
+  return OptionIter<const std::remove_reference_t<T>&>(as_ref());
+}
+template <class T>
+constexpr OptionIter<const std::remove_reference_t<T>&> Option<T>::iter() && noexcept
+  requires(std::is_reference_v<T>)
+{
+  return OptionIter<const std::remove_reference_t<T>&>(::sus::move(*this).as_ref());
+}
+template <class T>
+constexpr OptionIter<const std::remove_reference_t<T>&> Option<T>::iter()
+    const& noexcept
+  requires(std::is_reference_v<T>)
+{
+  return ::sus::clone(*this).iter();
+}
+
+template <class T>
+sus_pure constexpr OptionIter<T&> Option<T>::iter_mut() & noexcept {
+  return OptionIter<T&>(as_mut());
+}
+template <class T>
+constexpr OptionIter<T&> Option<T>::iter_mut() && noexcept
+  requires(std::is_reference_v<T>)
+{
+  return OptionIter<T&>(::sus::move(*this).as_mut());
+}
+template <class T>
+constexpr OptionIter<T&> Option<T>::iter_mut() const& noexcept
+  requires(std::is_reference_v<T>)
+{
+  return ::sus::clone(*this).iter_mut();
+}
+
+template <class T>
+constexpr OptionIter<T> Option<T>::into_iter() && noexcept {
+  return OptionIter<T>(take());
+}
+template <class T>
+constexpr OptionIter<T> Option<T>::into_iter() const& noexcept
+  requires(::sus::mem::CopyOrRef<T>)
+{
+  return ::sus::clone(*this).into_iter();
+}
 
 }  // namespace sus::option
 

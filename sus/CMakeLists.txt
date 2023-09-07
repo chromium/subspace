@@ -192,6 +192,7 @@ target_sources(subspace PUBLIC
     "option/__private/is_tuple_type.h"
     "option/__private/marker.h"
     "option/__private/storage.h"
+    "option/option_iter.h"
     "option/option.h"
     "option/compat_option.h"
     "option/state.h"
