@@ -96,10 +96,9 @@ class [[sus_trivial_abi]] FnRef<R(CallArgs...)> {
     ::sus::check(invoke_);  // Catch use-after-move.
   }
   constexpr FnRef& operator=(FnRef&& o) noexcept {
-    storage_ = o.storage_;
-    invoke_ = ::sus::mem::replace(o.invoke_, nullptr);
-    ::sus::check(invoke_);  // Catch use-after-move.
-    return *this;
+    // Assigning to an lvalue from a lambda would cause the lambda to be dropped
+    // but the FnRef would still hold a reference to it.
+    sus::unreachable();
   }
 
   // Not copyable.
@@ -249,10 +248,9 @@ class [[sus_trivial_abi]] FnMutRef<R(CallArgs...)> {
     ::sus::check(invoke_);  // Catch use-after-move.
   }
   constexpr FnMutRef& operator=(FnMutRef&& o) noexcept {
-    storage_ = o.storage_;
-    invoke_ = ::sus::mem::replace(o.invoke_, nullptr);
-    ::sus::check(invoke_);  // Catch use-after-move.
-    return *this;
+    // Assigning to an lvalue from a lambda would cause the lambda to be dropped
+    // but the FnMutRef would still hold a reference to it.
+    sus::unreachable();
   }
 
   // Not copyable.
@@ -411,10 +409,9 @@ class [[sus_trivial_abi]] FnOnceRef<R(CallArgs...)> {
     ::sus::check(invoke_);  // Catch use-after-move.
   }
   constexpr FnOnceRef& operator=(FnOnceRef&& o) noexcept {
-    storage_ = o.storage_;
-    invoke_ = ::sus::mem::replace(o.invoke_, nullptr);
-    ::sus::check(invoke_);  // Catch use-after-move.
-    return *this;
+    // Assigning to an lvalue from a lambda would cause the lambda to be dropped
+    // but the FnOnceRef would still hold a reference to it.
+    sus::unreachable();
   }
 
   // Not copyable.
