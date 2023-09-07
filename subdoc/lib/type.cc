@@ -28,10 +28,29 @@ namespace subdoc {
 
 namespace {
 Qualifier qualifier_from_qualtype(clang::QualType q) noexcept {
-  return Qualifier{
-      .is_const = q.isLocalConstQualified(),
-      .is_volatile = q.isLocalVolatileQualified(),
-  };
+  Nullness null = Nullness::Unknown;
+  if (auto* attr_type = clang::dyn_cast<clang::AttributedType>(&*q)) {
+    if (auto try_null = attr_type->getImmediateNullability();
+        try_null.has_value()) {
+      switch (try_null.value()) {
+        case clang::NullabilityKind::NonNull:
+          null = Nullness::Disallowed;
+          break;
+        case clang::NullabilityKind::Nullable: null = Nullness::Allowed; break;
+        case clang::NullabilityKind::NullableResult:
+          null = Nullness::Allowed;
+          break;
+        case clang::NullabilityKind::Unspecified: break;
+      }
+    }
+
+    // `AttributedType` does not have qualifiers, the type inside does.
+    q = attr_type->getEquivalentType();
+  }
+  return Qualifier()
+      .set_const(q.isLocalConstQualified())
+      .set_volatile(q.isLocalVolatileQualified())
+      .set_nullness(null);
 }
 
 std::string name_of_type(clang::QualType q) noexcept {
@@ -176,6 +195,26 @@ TypeOrValue build_template_param(
   sus::unreachable();
 };
 
+clang::QualType unwrap_skipped_types(clang::QualType q) noexcept {
+  // Arrays may already be "DecayedType", but we can get the original type from
+  // it.
+  if (auto* dtype = clang::dyn_cast<clang::DecayedType>(&*q))
+    q = dtype->getOriginalType();
+
+  // A `using A = B` is an elaborated type that names a typedef A, so unpack
+  // the ElaboratedType. Template specializations can be inside an
+  // ElaboratedType, so this comes first.
+  while (auto* elab = clang::dyn_cast<clang::ElaboratedType>(&*q))
+    q = elab->getNamedType();
+
+  // `AttributedType` have an attribute applied, and should be unwrapped to get
+  // to the underlying type.
+  while (auto* attr = clang::dyn_cast<clang::AttributedType>(&*q))
+    q = attr->getEquivalentType();
+
+  return q;
+}
+
 Type build_local_type_internal(
     clang::QualType qualtype,
     llvm::ArrayRef<clang::NamedDecl*> template_params_from_context,
@@ -194,7 +233,10 @@ Type build_local_type_internal(
       qualtype->isLValueReferenceType()
           ? Refs::LValueRef
           : (qualtype->isRValueReferenceType() ? Refs::RValueRef : Refs::None);
-  qualtype = qualtype.getNonReferenceType();
+  // Grab the qualifiers on the outer type, if it's a pointer this is what we
+  // want. But for an array we will need to replace these.
+  Qualifier qualifier = qualifier_from_qualtype(qualtype.getNonReferenceType());
+  qualtype = unwrap_skipped_types(qualtype.getNonReferenceType());
 
   sus::Vec<TypeOrValue> nested_names;
   if (auto* dep = clang::dyn_cast<clang::DependentNameType>(&*qualtype)) {
@@ -218,16 +260,6 @@ Type build_local_type_internal(
     }
   }
 
-  // Arrays may already be "DecayedType", but we can get the original type from
-  // it.
-  if (auto* dtype = clang::dyn_cast<clang::DecayedType>(&*qualtype)) {
-    qualtype = dtype->getOriginalType();
-  }
-
-  // Grab the qualifiers on the outer type, if it's a pointer this is what we
-  // want. But for an array we will need to replace these.
-  Qualifier qualifier = qualifier_from_qualtype(qualtype);
-
   sus::Vec<std::string> array_dims;
   while (qualtype->isArrayType()) {
     // The type inside a pack can not be an array.
@@ -237,7 +269,8 @@ Type build_local_type_internal(
     qualtype = qualtype.IgnoreParens();
     sus::check(clang::isa<clang::ArrayType>(&*qualtype));
 
-    const clang::Type* const type = &*qualtype;
+    const clang::ArrayType* const type =
+        clang::cast<clang::ArrayType>(&*qualtype);
     if (auto* constarr = clang::dyn_cast<clang::ConstantArrayType>(type)) {
       array_dims.push(
           llvm_int_without_sign_to_string(constarr->getSize(), false));
@@ -252,24 +285,19 @@ Type build_local_type_internal(
       sus::unreachable();  // This is a C thing, not C++.
     }
 
-    qualtype = clang::cast<clang::ArrayType>(&*qualtype)->getElementType();
     // For arrays the root qualifiers come from the element type.
-    qualifier = qualifier_from_qualtype(qualtype);
+    qualifier = qualifier_from_qualtype(type->getElementType());
+    qualtype = unwrap_skipped_types(type->getElementType());
   }
 
   // The array can be an array of pointers, so we look for pointers after
   // unwrapping the array.
   sus::Vec<Qualifier> pointers;
   while (qualtype->isPointerType()) {
-    qualtype = qualtype->getPointeeType();
-    pointers.push(qualifier_from_qualtype(qualtype));
+    pointers.push(qualifier);
+    qualifier = qualifier_from_qualtype(qualtype->getPointeeType());
+    qualtype = unwrap_skipped_types(qualtype->getPointeeType());
   }
-
-  // A `using A = B` is an elaborated type that names a typedef A, so unpack
-  // the ElaboratedType. Template specializations can be inside an
-  // ElaboratedType, so this comes first.
-  while (auto* elab = clang::dyn_cast<clang::ElaboratedType>(&*qualtype))
-    qualtype = elab->getNamedType();
 
   // TODO: Drop the from_range() on the uses of iter_args:
   // https://github.com/chromium/subspace/issues/348
@@ -505,6 +533,15 @@ void type_to_string_internal(
     sus::fn::FnMutRef<void()>& const_qualifier_fn,
     sus::fn::FnMutRef<void()>& volatile_qualifier_fn,
     sus::Option<sus::fn::FnOnceRef<void()>> var_name_fn) noexcept {
+  if (type.qualifier.is_const) {
+    const_qualifier_fn();
+    text_fn(" ");
+  }
+  if (type.qualifier.is_volatile) {
+    volatile_qualifier_fn();
+    text_fn(" ");
+  }
+
   for (const TypeOrValue& tv : type.nested_names) {
     switch (tv.choice) {
       case TypeOrValueTag::Type: {
@@ -576,26 +613,28 @@ void type_to_string_internal(
 
   if (type.category == TypeCategory::Concept) text_fn(" auto");
 
+  bool wrote_quals = false;
   for (Qualifier q : type.pointers) {
+    bool has_quals = q.is_const || q.is_volatile;
+    // If there are quals on either side of the `*` put a space to the left
+    // of the `*.
+    //
+    // wrote_quals gives: *const[space here]*
+    // has_quals gives: *[space here]*const
+    if (wrote_quals || has_quals) text_fn(" ");
+    text_fn("*");
+    wrote_quals = false;
+
     if (q.is_const) {
-      text_fn(" ");
+      if (wrote_quals) text_fn(" ");
+      wrote_quals = true;
       const_qualifier_fn();
     }
     if (q.is_volatile) {
-      text_fn(" ");
+      if (wrote_quals) text_fn(" ");
+      wrote_quals = true;
       volatile_qualifier_fn();
     }
-    text_fn("*");
-  }
-
-  // TODO: Option to put the const/volatile qualifiers before the type name?
-  if (type.qualifier.is_const) {
-    text_fn(" ");
-    const_qualifier_fn();
-  }
-  if (type.qualifier.is_volatile) {
-    text_fn(" ");
-    volatile_qualifier_fn();
   }
 
   if (type.array_dims.is_empty()) {

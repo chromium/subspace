@@ -223,10 +223,6 @@ main {
 }
 
 
-.overload .function-signature span {
-    margin-right: 0.4em;  /* Put back the space after other elements */
-}
-
 .description.short {
     margin: 0;
     line-height: 1.2;

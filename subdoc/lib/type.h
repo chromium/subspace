@@ -24,14 +24,125 @@ namespace subdoc {
 
 struct TypeOrValue;
 
+enum class Nullness {
+  Allowed,
+  Disallowed,
+  Unknown,
+};
+
 struct Qualifier {
-  bool is_const;
-  bool is_volatile;
+  /// Creates `Qualifier` with neither const nor volatile set, and with
+  /// nullness set to `Nullness::Unknown`.
+  constexpr Qualifier() = default;
+  /// Creates `Qualifier` with const set.
+  constexpr static Qualifier with_const() noexcept {
+    return Qualifier().set_const(true);
+  }
+  /// Creates `Qualifier` with volatile set.
+  constexpr static Qualifier with_volatile() noexcept {
+    return Qualifier().set_volatile(true);
+  }
+  /// Creates `Qualifier` with both const and volatile set.
+  constexpr static Qualifier with_cv() noexcept {
+    return Qualifier().set_const(true).set_volatile(true);
+  }
+
+  /// Creates a new `Qualifier` from this with const set to `c`.
+  constexpr Qualifier set_const(bool c) noexcept {
+    Qualifier q = *this;
+    q.is_const = c;
+    return q;
+  }
+  /// Creates a new `Qualifier` from this with volatile set to `v`.
+  constexpr Qualifier set_volatile(bool v) noexcept {
+    Qualifier q = *this;
+    q.is_volatile = v;
+    return q;
+  }
+  /// Creates a new `Qualifier` from this with nullness set to `n`.
+  constexpr Qualifier set_nullness(Nullness n) noexcept {
+    Qualifier q = *this;
+    q.nullness = n;
+    return q;
+  }
+
+  bool is_const = false;
+  bool is_volatile = false;
+  Nullness nullness = Nullness::Unknown;
 
   friend bool operator==(const Qualifier&, const Qualifier&) = default;
 };
 static_assert(sus::ops::Eq<Qualifier>);
+}  // namespace subdoc
 
+template <>
+struct fmt::formatter<subdoc::Nullness> {
+  template <class ParseContext>
+  constexpr auto parse(ParseContext& ctx) {
+    return ctx.begin();
+  }
+
+  template <class FormatContext>
+  constexpr auto format(const subdoc::Nullness& t, FormatContext& ctx) const {
+    using enum subdoc::Nullness;
+    auto out = ctx.out();
+    switch (t) {
+      case Allowed: out = fmt::format_to(out, "Allowed"); break;
+      case Disallowed: out = fmt::format_to(out, "Disallowed"); break;
+      case Unknown: out = fmt::format_to(out, "Unknown"); break;
+    }
+    ctx.advance_to(out);
+    return out;
+  }
+};
+
+template <>
+struct fmt::formatter<subdoc::Qualifier> {
+  template <class ParseContext>
+  constexpr auto parse(ParseContext& ctx) {
+    return ctx.begin();
+  }
+
+  template <class FormatContext>
+  constexpr auto format(const subdoc::Qualifier& t, FormatContext& ctx) const {
+    auto out = ctx.out();
+    out = fmt::format_to(out, "Qualifier(");
+    ctx.advance_to(out);
+    u32 count;
+    if (t.is_const) {
+      out = fmt::format_to(out, "c");
+      ctx.advance_to(out);
+      count += 1u;
+    }
+    if (t.is_volatile) {
+      if (count > 0u) {
+        out = fmt::format_to(out, ", ");
+        ctx.advance_to(out);
+      }
+      out = fmt::format_to(out, "v");
+      ctx.advance_to(out);
+      count += 1u;
+    }
+    if (t.nullness != subdoc::Nullness::Unknown) {
+      if (count > 0u) {
+        out = fmt::format_to(out, ", ");
+        ctx.advance_to(out);
+      }
+      if (t.nullness == subdoc::Nullness::Allowed) {
+        out = fmt::format_to(out, "nullable");
+        ctx.advance_to(out);
+      } else {
+        out = fmt::format_to(out, "nonnull");
+        ctx.advance_to(out);
+      }
+    }
+    out = fmt::format_to(out, ")");
+    ctx.advance_to(out);
+    return out;
+  }
+};
+
+namespace subdoc {
 enum class Refs {
   LValueRef,
   None,
@@ -60,15 +171,19 @@ struct Type {
   std::string name;
   /// For types of the form `A::B::C` the `nested_name` would hold `B` and `C`.
   sus::Vec<TypeOrValue> nested_names;
-  /// Refs can only appear on the outermost type.
+  /// References can only be applied to the outermost type. While most of the
+  /// `Type` structure refers to the innermost type (the deepest pointee, a
+  /// non-pointer), this refers to the outermost type (the first pointer in
+  /// `int***`).
   Refs refs;
   /// Const-volatile qualifiers for the outermost type.
   Qualifier qualifier;
   /// The qualifiers of each level of pointer indirection. Empty if the type is
   /// not a pointer. The order is reversed from the order that they are applied,
-  /// to optimize for display.
+  /// to optimize for display. The qualifiers for the inner most type are stored
+  /// on the `Type`.
   ///
-  /// `T *const<1st *const<2nd *const<3rd`.
+  /// `const T *const<1st *const<2nd *const<3rd`.
   ///
   sus::Vec<Qualifier> pointers;
   /// The dimension of each level of an array, if any. An empty string
