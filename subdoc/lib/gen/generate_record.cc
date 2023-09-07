@@ -221,6 +221,10 @@ sus::Result<void, MarkdownToHtmlError> generate_record_fields(
         name_div.add_class("item-name");
         name_div.add_class("member-signature");
 
+        {
+          auto anchor = name_div.open_a();
+          anchor.add_name(construct_html_url_anchor_for_field(fe));
+        }
         if (!fe.template_params.is_empty()) {
           auto template_div = name_div.open_div(HtmlWriter::SingleLine);
           template_div.add_class("template");
@@ -241,7 +245,6 @@ sus::Result<void, MarkdownToHtmlError> generate_record_fields(
         }
         generate_type(name_div, fe.type, [&](HtmlWriter::OpenDiv& div) {
           auto anchor = div.open_a();
-          anchor.add_name(construct_html_url_anchor_for_field(fe));
           anchor.add_href(construct_html_url_for_field(fe));
           anchor.add_class("field-name");
           anchor.write_text(fe.name);
