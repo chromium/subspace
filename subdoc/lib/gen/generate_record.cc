@@ -232,9 +232,12 @@ sus::Result<void, MarkdownToHtmlError> generate_record_fields(
           template_div.write_text(">");
         }
         if (static_fields) {
-          auto static_span = name_div.open_span(HtmlWriter::SingleLine);
-          static_span.add_class("static");
-          static_span.write_text("static");
+          {
+            auto static_span = name_div.open_span(HtmlWriter::SingleLine);
+            static_span.add_class("static");
+            static_span.write_text("static");
+          }
+          name_div.write_text(" ");
         }
         generate_type(name_div, fe.type, [&](HtmlWriter::OpenDiv& div) {
           auto anchor = div.open_a();

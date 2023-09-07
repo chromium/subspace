@@ -127,14 +127,20 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
           template_div.write_text(">");
         }
         if (is_static) {
-          auto static_span = signature_div.open_span(HtmlWriter::SingleLine);
-          static_span.add_class("static");
-          static_span.write_text("static");
+          {
+            auto static_span = signature_div.open_span(HtmlWriter::SingleLine);
+            static_span.add_class("static");
+            static_span.write_text("static");
+          }
+          signature_div.write_text(" ");
         }
         if (has_return) {
-          auto auto_span = signature_div.open_span(HtmlWriter::SingleLine);
-          auto_span.add_class("function-auto");
-          auto_span.write_text("auto");
+          {
+            auto auto_span = signature_div.open_span(HtmlWriter::SingleLine);
+            auto_span.add_class("function-auto");
+            auto_span.write_text("auto");
+          }
+          signature_div.write_text(" ");
         }
       }
       {
