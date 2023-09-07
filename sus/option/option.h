@@ -577,6 +577,8 @@ class Option final {
   constexpr Option(const Option& o) noexcept
     requires(::sus::mem::CopyOrRef<T> && !IsTrivialCopyCtorOrRef<T>)
   {
+    // TODO: This constructed a None value then destroys it and constructs a
+    // Some value. Optimize.
     if (o.t_.state() == Some)
       t_.construct_from_none(copy_to_storage(o.t_.val()));
   }
@@ -605,6 +607,8 @@ class Option final {
   constexpr Option(Option&& o) noexcept
     requires(::sus::mem::MoveOrRef<T> && !IsTrivialMoveCtorOrRef<T>)
   {
+    // TODO: This constructed a None value then destroys it and constructs a
+    // Some value. Optimize.
     if (o.t_.state() == Some) t_.construct_from_none(o.t_.take_and_set_none());
   }
 
@@ -2131,15 +2135,17 @@ constexpr Option<T> from_sum_impl(Iter&& it) noexcept {
 namespace sus::option {
 
 template <class T>
-sus_pure constexpr OptionIter<const std::remove_reference_t<T>&> Option<T>::iter()
-    const& noexcept {
+sus_pure constexpr OptionIter<const std::remove_reference_t<T>&>
+Option<T>::iter() const& noexcept {
   return OptionIter<const std::remove_reference_t<T>&>(as_ref());
 }
 template <class T>
-constexpr OptionIter<const std::remove_reference_t<T>&> Option<T>::iter() && noexcept
+constexpr OptionIter<const std::remove_reference_t<T>&>
+Option<T>::iter() && noexcept
   requires(std::is_reference_v<T>)
 {
-  return OptionIter<const std::remove_reference_t<T>&>(::sus::move(*this).as_ref());
+  return OptionIter<const std::remove_reference_t<T>&>(
+      ::sus::move(*this).as_ref());
 }
 template <class T>
 constexpr OptionIter<const std::remove_reference_t<T>&> Option<T>::iter()
