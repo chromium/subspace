@@ -925,30 +925,33 @@ class [[nodiscard]] Result final {
     }
   }
 
-  constexpr Once<const std::remove_reference_t<TUnlessVoid>&> iter()
-      const& noexcept
+  constexpr ::sus::option::OptionIter<
+      const std::remove_reference_t<TUnlessVoid>&>
+  iter() const& noexcept
     requires(!std::is_void_v<T>)
   {
     ::sus::check(state_ != ResultState::IsMoved);
     if (state_ == ResultState::IsOk) {
-      return ::sus::iter::once<const std::remove_reference_t<T>&>(
+      return ::sus::option::OptionIter<const std::remove_reference_t<T>&>(
           // SAFETY: The static_cast is needed to convert the pointer storage
           // type to a `const T&`, which does not create a temporary as it's
           // converting a pointer to a reference.
           Option<const std::remove_reference_t<T>&>(
               static_cast<const std::remove_reference_t<T>&>(storage_.ok_)));
     } else {
-      return ::sus::iter::once<const std::remove_reference_t<T>&>(
+      return ::sus::option::OptionIter<const std::remove_reference_t<T>&>(
           Option<const std::remove_reference_t<T>&>());
     }
   }
-  constexpr Once<const std::remove_reference_t<TUnlessVoid>&> iter() && noexcept
+  constexpr ::sus::option::OptionIter<
+      const std::remove_reference_t<TUnlessVoid>&>
+  iter() && noexcept
     requires(!std::is_void_v<T> && std::is_reference_v<T>)
   {
     ::sus::check(state_ != ResultState::IsMoved);
     if (::sus::mem::replace(state_, ResultState::IsMoved) ==
         ResultState::IsOk) {
-      return ::sus::iter::once<const std::remove_reference_t<T>&>(
+      return ::sus::option::OptionIter<const std::remove_reference_t<T>&>(
           // SAFETY: The static_cast is needed to convert the pointer storage
           // type to a `const T&`, which does not create a temporary as it's
           // converting a pointer to a reference.
@@ -956,45 +959,47 @@ class [[nodiscard]] Result final {
               static_cast<const std::remove_reference_t<T>&>(storage_.ok_)));
     } else {
       storage_.destroy_err();
-      return ::sus::iter::once<const std::remove_reference_t<T>&>(
+      return ::sus::option::OptionIter<const std::remove_reference_t<T>&>(
           Option<const std::remove_reference_t<T>&>());
     }
   }
 
-  constexpr Once<TUnlessVoid&> iter_mut() & noexcept
+  constexpr ::sus::option::OptionIter<TUnlessVoid&> iter_mut() & noexcept
     requires(!std::is_void_v<T>)
   {
     ::sus::check(state_ != ResultState::IsMoved);
     if (state_ == ResultState::IsOk) {
-      return ::sus::iter::once<T&>(Option<T&>(storage_.ok_));
+      return ::sus::option::OptionIter<T&>(Option<T&>(storage_.ok_));
     } else {
-      return ::sus::iter::once<T&>(Option<T&>());
+      return ::sus::option::OptionIter<T&>(Option<T&>());
     }
   }
-  constexpr Once<TUnlessVoid&> iter_mut() && noexcept
-    requires(!std::is_void_v<T> && std::is_reference_v<T>)
+  constexpr ::sus::option::OptionIter<TUnlessVoid&> iter_mut() && noexcept
+    requires(!std::is_void_v<T> &&  //
+             std::is_reference_v<T>)
   {
     ::sus::check(state_ != ResultState::IsMoved);
     if (::sus::mem::replace(state_, ResultState::IsMoved) ==
         ResultState::IsOk) {
-      return ::sus::iter::once<T&>(Option<T&>(storage_.ok_));
+      return ::sus::option::OptionIter<T&>(Option<T&>(storage_.ok_));
     } else {
       storage_.destroy_err();
-      return ::sus::iter::once<T&>(Option<T&>());
+      return ::sus::option::OptionIter<T&>(Option<T&>());
     }
   }
 
-  constexpr Once<T> into_iter() && noexcept
+  constexpr ::sus::option::OptionIter<T> into_iter() && noexcept
     requires(!std::is_void_v<T>)
   {
     ::sus::check(state_ != ResultState::IsMoved);
     if (::sus::mem::replace(state_, ResultState::IsMoved) ==
         ResultState::IsOk) {
-      return ::sus::iter::once<T>(Option<T>(::sus::mem::take_and_destruct(
-          ::sus::marker::unsafe_fn, storage_.ok_)));
+      return ::sus::option::OptionIter<T>(
+          Option<T>(::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
+                                                  storage_.ok_)));
     } else {
       storage_.destroy_err();
-      return ::sus::iter::once<T>(Option<T>());
+      return ::sus::option::OptionIter<T>(Option<T>());
     }
   }
 
