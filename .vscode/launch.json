@@ -20,11 +20,20 @@
                 "/third_party/",
                 "--copy-file",
                 "subdoc/gen_tests/subdoc-test-style.css",
+                "--copy-file",
+                "web/logo.png",
+                "--favicon",
+                "logo.png;image/png",
                 "--css",
                 "subdoc-test-style.css",
                 "--project-md",
                 "sus/project.md",
-                "subspace/sus/lib"
+                "--project-logo",
+                "logo.png",
+                "--project-name",
+                "Subspace",
+                "--ignore-bad-code-links",
+                "usize_unitt"
             ],
             "cwd": "${workspaceFolder}"
         },
