@@ -27,7 +27,10 @@ namespace sus::option {
 ///
 /// This type is returned from [`Option::iter`]($sus::option::Option::iter),
 /// [`Option::iter_mut`]($sus::option::Option::iter_mut) and
-/// [`Option::into_iter`]($sus::option::Option::into_iter)
+/// [`Option::into_iter`]($sus::option::Option::into_iter), as well as
+/// [`Result::iter`]($sus::result::Result::iter),
+/// [`Result::iter_mut`]($sus::result::Result::iter_mut) and
+/// [`Result::into_iter`]($sus::result::Result::into_iter).
 template <class ItemT>
 class [[nodiscard]] OptionIter final
     : public ::sus::iter::IteratorBase<OptionIter<ItemT>, ItemT> {
@@ -68,6 +71,8 @@ class [[nodiscard]] OptionIter final
  private:
   template <class U>
   friend class Option;
+  template <class U, class V>
+  friend class ::sus::result::Result;
 
   constexpr OptionIter(Option<Item> item) : item_(::sus::move(item)) {}
 

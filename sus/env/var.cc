@@ -148,9 +148,9 @@ void set_var(const std::string& key, const std::string& value) noexcept {
 #else
   auto v = sus::iter::from_range(key)
                .copied()
-               .chain(sus::iter::once<char>(sus::some('=')))
+               .chain(sus::iter::once('='))
                .chain(sus::iter::from_range(value).copied())
-               .chain(sus::iter::once<char>(sus::some('\0')))
+               .chain(sus::iter::once('\0'))
                .collect<Vec<char>>();
   // Take the pointer out of the Vec, as putenv retains ownership of it. The Vec
   // must be using the default allocator as well as a result.

@@ -16,6 +16,7 @@
 
 #include "sus/iter/iterator_defn.h"
 #include "sus/iter/size_hint.h"
+#include "sus/macros/lifetimebound.h"
 #include "sus/mem/move.h"
 #include "sus/mem/relocate.h"
 
@@ -26,18 +27,28 @@ using ::sus::option::Option;
 template <class ItemT>
 class Once;
 
-/// Constructs a `Once` iterator that will return `o` and then None. If `o` is
-/// `None`, then the iterator will be empty on construction.
+/// Constructs a `Once` iterator that will return `o` and then None.
 ///
-/// # Example
+/// # Examples
+/// An iterator that returns a number once:
 /// ```
-/// auto o = sus::iter::once<u16>(sus::some(3_u16));
+/// auto o = sus::iter::once<u16>(3_u16);
 /// sus::check(o.next().unwrap() == 3_u16);
+/// sus::check(o.next().is_none());
+/// ```
+///
+/// An iterator that returns a reference once:
+/// ```
+/// auto u = 3_u16;
+/// auto o = sus::iter::once<u16&>(u);
+/// u16& r = o.next().unwrap();
+/// sus::check(r == 3u);
+/// sus::check(&r == &u);
+/// sus::check(o.next().is_none());
 /// ```
 template <class Item>
-// TODO: This should not receive Option. Option should make its own iterator.
-constexpr inline Once<Item> once(Option<Item> o) noexcept {
-  return Once<Item>(::sus::move(o));
+constexpr inline Once<Item> once(Item o sus_lifetimebound) noexcept {
+  return Once<Item>(::sus::forward<Item>(o));
 }
 
 /// An Iterator that walks over at most a single Item.
@@ -61,9 +72,10 @@ class [[nodiscard]] Once final : public IteratorBase<Once<ItemT>, ItemT> {
   }
 
  private:
-  friend constexpr Once<Item> sus::iter::once<Item>(Option<Item> o) noexcept;
+  friend constexpr Once<Item> sus::iter::once<Item>(Item o) noexcept;
 
-  constexpr Once(Option<Item> single) : single_(::sus::move(single)) {}
+  constexpr Once(Item single sus_lifetimebound)
+      : single_(::sus::forward<Item>(single)) {}
 
   Option<Item> single_;
 

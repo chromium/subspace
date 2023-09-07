@@ -16,23 +16,27 @@
 
 #include "googletest/include/gtest/gtest.h"
 #include "sus/prelude.h"
+#include "sus/test/no_copy_move.h"
 
 namespace {
 
 TEST(Once, Example) {
-  auto o = sus::iter::once<u16>(sus::some(3_u16));
+  auto o = sus::iter::once<u16>(3_u16);
   sus::check(o.next().unwrap() == 3_u16);
+  sus::check(o.next().is_none());
 }
 
-TEST(Once, Empty) {
-  auto o = sus::iter::once<u16>(sus::none());
-  EXPECT_EQ(o.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
-  EXPECT_EQ(o.exact_size_hint(), 0u);
-  EXPECT_EQ(o.next(), sus::none());
+TEST(Once, ExampleReference) {
+  auto u = 3_u16;
+  auto o = sus::iter::once<u16&>(u);
+  u16& r = o.next().unwrap();
+  sus::check(r == 3u);
+  sus::check(&r == &u);
+  sus::check(o.next().is_none());
 }
 
 TEST(Once, Next) {
-  auto o = sus::iter::once<u16>(sus::some(3_u16));
+  auto o = sus::iter::once<u16>(3_u16);
   EXPECT_EQ(o.size_hint(), sus::iter::SizeHint(1u, sus::some(1u)));
   EXPECT_EQ(o.exact_size_hint(), 1u);
   EXPECT_EQ(o.next(), sus::some(3_u16));
@@ -42,7 +46,7 @@ TEST(Once, Next) {
 }
 
 TEST(Once, NextBack) {
-  auto o = sus::iter::once<u16>(sus::some(3_u16));
+  auto o = sus::iter::once<u16>(3_u16);
   EXPECT_EQ(o.size_hint(), sus::iter::SizeHint(1u, sus::some(1u)));
   EXPECT_EQ(o.exact_size_hint(), 1u);
   EXPECT_EQ(o.next_back(), sus::some(3_u16));
