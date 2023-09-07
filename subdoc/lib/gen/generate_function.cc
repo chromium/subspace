@@ -46,9 +46,13 @@ void generate_function_params(HtmlWriter::OpenDiv& div,
     for (const auto& [i, p] : overload.parameters.iter().enumerate()) {
       if (i > 0u) div.write_text(", ");
 
-      generate_type(div, p.type, [&](HtmlWriter::OpenDiv& div) {
-        div.write_text(p.parameter_name);
-      });
+      if (p.parameter_name.empty()) {
+        generate_type(div, p.type, sus::none());
+      } else {
+        generate_type(div, p.type, sus::some([&](HtmlWriter::OpenDiv& div) {
+                        div.write_text(p.parameter_name);
+                      }));
+      }
 
       if (p.default_value.is_some()) {
         div.write_text(" = ");
@@ -167,7 +171,7 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
         if (has_return) {
           signature_div.write_text(" -> ");
           generate_type(signature_div, overload.return_type,
-                        [&](HtmlWriter::OpenDiv&) { /* no variable name */ });
+                        sus::none() /* no variable name */);
         }
       }
 
@@ -315,7 +319,7 @@ sus::Result<void, MarkdownToHtmlError> generate_function(
         // some return type (ie. it can't be a special method like a ctor/dtor).
         signature_div.write_text(" -> ");
         generate_type(signature_div, overload.return_type,
-                      [&](HtmlWriter::OpenDiv&) { /* no variable name */ });
+                      sus::none() /* no variable name */);
 
         if (overload.constraints.is_some()) {
           generate_requires_constraints(signature_div,

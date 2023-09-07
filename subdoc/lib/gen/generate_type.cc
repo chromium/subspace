@@ -33,9 +33,9 @@ std::string make_title_string(TypeToStringQuery q) {
 
 }  // namespace
 
-void generate_type(
-    HtmlWriter::OpenDiv& div, const LinkedType& linked_type,
-    sus::fn::FnOnceRef<void(HtmlWriter::OpenDiv&)> var_name_fn) noexcept {
+void generate_type(HtmlWriter::OpenDiv& div, const LinkedType& linked_type,
+                   sus::Option<sus::fn::FnOnceRef<void(HtmlWriter::OpenDiv&)>>
+                       var_name_fn) noexcept {
   auto text_fn = [&](std::string_view text) { div.write_text(text); };
   auto type_fn = [&, i_ = 0_usize](TypeToStringQuery q) mutable {
     const sus::Option<TypeRef>& maybe_ref =
@@ -78,10 +78,12 @@ void generate_type(
     span.add_class("volatile");
     span.write_text("volatile");
   };
-  auto var_fn = [&]() { sus::move(var_name_fn)(div); };
 
   type_to_string(linked_type.type, text_fn, type_fn, const_fn, volatile_fn,
-                 sus::some(sus::move(var_fn)));
+                 sus::some([&]() {
+                   if (var_name_fn.is_some())
+                     sus::move(var_name_fn).unwrap()(div);
+                 }));
 }
 
 }  // namespace subdoc::gen

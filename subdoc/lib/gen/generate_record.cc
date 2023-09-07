@@ -243,12 +243,13 @@ sus::Result<void, MarkdownToHtmlError> generate_record_fields(
           }
           name_div.write_text(" ");
         }
-        generate_type(name_div, fe.type, [&](HtmlWriter::OpenDiv& div) {
-          auto anchor = div.open_a();
-          anchor.add_href(construct_html_url_for_field(fe));
-          anchor.add_class("field-name");
-          anchor.write_text(fe.name);
-        });
+        generate_type(name_div, fe.type,
+                      sus::some([&](HtmlWriter::OpenDiv& div) {
+                        auto anchor = div.open_a();
+                        anchor.add_href(construct_html_url_for_field(fe));
+                        anchor.add_class("field-name");
+                        anchor.write_text(fe.name);
+                      }));
       }
       {
         auto desc_div = field_div.open_div();
