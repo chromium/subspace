@@ -16,10 +16,10 @@
 // IWYU pragma: friend "sus/.*"
 #pragma once
 
+#include "sus/assertions/unreachable.h"
 #include "sus/fn/__private/callable_types.h"
 #include "sus/fn/__private/fn_ref_invoker.h"
 #include "sus/lib/__private/forward_decl.h"
-#include "sus/assertions/unreachable.h"
 #include "sus/macros/lifetimebound.h"
 #include "sus/mem/addressof.h"
 #include "sus/mem/forward.h"
@@ -156,8 +156,7 @@ class [[sus_trivial_abi]] FnRef<R(CallArgs...)> {
   __private::InvokeFnPtr<R, CallArgs...> invoke_;
 
   // A function pointer to use as a never-value for InvokeFnPointer.
-  static R invoke_never_value(const union __private::Storage&,
-                              CallArgs... args) {
+  static R invoke_never_value(const union __private::Storage&, CallArgs...) {
     sus::unreachable();
   }
 
@@ -308,8 +307,7 @@ class [[sus_trivial_abi]] FnMutRef<R(CallArgs...)> {
   __private::InvokeFnPtr<R, CallArgs...> invoke_;
 
   // A function pointer to use as a never-value for InvokeFnPointer.
-  static R invoke_never_value(const union __private::Storage&,
-                              CallArgs... args) {
+  static R invoke_never_value(const union __private::Storage&, CallArgs...) {
     sus::unreachable();
   }
 
@@ -496,8 +494,7 @@ class [[sus_trivial_abi]] FnOnceRef<R(CallArgs...)> {
   __private::InvokeFnPtr<R, CallArgs...> invoke_;
 
   // A function pointer to use as a never-value for InvokeFnPointer.
-  static R invoke_never_value(const union __private::Storage&,
-                              CallArgs... args) {
+  static R invoke_never_value(const union __private::Storage&, CallArgs...) {
     sus::unreachable();
   }
 

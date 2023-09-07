@@ -658,7 +658,9 @@ void type_to_string_internal(
         case Refs::LValueRef: text_fn("&"); break;
         case Refs::RValueRef: text_fn("&&"); break;
       }
-      if (var_name_fn.is_some()) var_name_fn.take().unwrap()();
+      if (var_name_fn.is_some()) {
+        var_name_fn.take().unwrap()();
+      }
 
       text_fn(")");
     } else {
