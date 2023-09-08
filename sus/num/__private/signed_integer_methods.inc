@@ -58,7 +58,7 @@ constexpr inline _self() noexcept = default;
 /// Construction from signed types where no bits are lost.
 ///
 /// For conversions from types with a larger range use
-/// [`try_from`](#method.try_from). For lossy conversions use the
+/// [`try_from`]($sus::num::@doc.self::try_from!signed). For lossy conversions use the
 /// [`Transmogrify`]($sus::construct::Transmogrify) concept with
 /// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
@@ -70,8 +70,8 @@ constexpr inline _self(S v) noexcept : primitive_value(v.primitive_value) {}
 /// Construction from signed primitive types where no bits are lost.
 ///
 /// For conversions from types with a larger range use
-/// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
+/// [`try_from`]($sus::num::@doc.self::try_from!signed.primitive). For lossy conversions use
+/// the [`Transmogrify`]($sus::construct::Transmogrify) concept with
 /// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=signedint.ctor.signedint.primitive]
@@ -82,7 +82,7 @@ constexpr inline _self(P v) noexcept : primitive_value(v) {}
 /// Construction from signed enum types where no bits are lost.
 ///
 /// For conversions from types with a larger range use
-/// [`try_from`](#method.try_from). For lossy conversions use the
+/// [`try_from`]($sus::num::@doc.self::try_from!signed.enum). For lossy conversions use the
 /// [`Transmogrify`]($sus::construct::Transmogrify) concept with
 /// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
@@ -94,8 +94,8 @@ constexpr inline _self(P v) noexcept : primitive_value(v) {}
 /// Construction from signed enum class types where no bits are lost.
 ///
 /// For conversions from types with a larger range use
-/// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
+/// [`try_from`]($sus::num::@doc.self::try_from!signed.enum). For lossy conversions use
+/// the [`Transmogrify`]($sus::construct::Transmogrify) concept with
 /// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=signedint.ctor.signedenumclass]
@@ -107,7 +107,7 @@ explicit constexpr inline _self(P v) noexcept
 /// Construction from unsigned types where no bits are lost.
 ///
 /// For conversions from types with a larger range use
-/// [`try_from`](#method.try_from). For lossy conversions use the
+/// [`try_from`]($sus::num::@doc.self::try_from!unsigned). For lossy conversions use the
 /// [`Transmogrify`]($sus::construct::Transmogrify) concept with
 /// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
@@ -119,8 +119,8 @@ constexpr inline _self(U v) noexcept : primitive_value(v.primitive_value) {}
 /// Construction from unsigned primitive types where no bits are lost.
 ///
 /// For conversions from types with a larger range use
-/// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
+/// [`try_from`]($sus::num::@doc.self::try_from!unsigned.primitive). For lossy conversions use
+/// the [`Transmogrify`]($sus::construct::Transmogrify) concept with
 /// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=signedint.ctor.unsignedint.primitive]
@@ -131,7 +131,7 @@ constexpr inline _self(P v) noexcept : primitive_value(v) {}
 /// Construction from unsigned enum types where no bits are lost.
 ///
 /// For conversions from types with a larger range use
-/// [`try_from`](#method.try_from). For lossy conversions use the
+/// [`try_from`]($sus::num::@doc.self::try_from!unsigned.enum). For lossy conversions use the
 /// [`Transmogrify`]($sus::construct::Transmogrify) concept with
 /// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
@@ -143,8 +143,8 @@ constexpr inline _self(P v) noexcept : primitive_value(v) {}
 /// Construction from unsigned enum class types where no bits are lost.
 ///
 /// For conversions from types with a larger range use
-/// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
+/// [`try_from`]($sus::num::@doc.self::try_from!unsigned.enum). For lossy conversions
+/// use the [`Transmogrify`]($sus::construct::Transmogrify) concept with
 /// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=signedint.ctor.unsignedenumclass]
@@ -156,7 +156,7 @@ explicit constexpr inline _self(P v) noexcept
 /// Assignment from signed types where no bits are lost.
 ///
 /// For conversions from types with a larger range use
-/// [`try_from`](#method.try_from). For lossy conversions use the
+/// [`try_from`]($sus::num::@doc.self::try_from!signed). For lossy conversions use the
 /// [`Transmogrify`]($sus::construct::Transmogrify) concept with
 /// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
@@ -171,8 +171,8 @@ constexpr inline _self& operator=(S v) noexcept {
 /// Assignment from signed primitive types where no bits are lost.
 ///
 /// For conversions from types with a larger range use
-/// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
+/// [`try_from`]($sus::num::@doc.self::try_from!signed.primitive). For lossy conversions use
+/// the [`Transmogrify`]($sus::construct::Transmogrify) concept with
 /// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=signedint.assign.signedint.primitive]
@@ -186,7 +186,7 @@ constexpr inline _self& operator=(P v) noexcept {
 /// Assignment from signed enum types where no bits are lost.
 ///
 /// For conversions from types with a larger range use
-/// [`try_from`](#method.try_from). For lossy conversions use the
+/// [`try_from`]($sus::num::@doc.self::try_from!signed.enum). For lossy conversions use the
 /// [`Transmogrify`]($sus::construct::Transmogrify) concept with
 /// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
@@ -202,7 +202,7 @@ constexpr inline _self& operator=(P v) noexcept {
 /// no bits are lost.
 ///
 /// For conversions from types with a larger range use
-/// [`try_from`](#method.try_from). For lossy conversions use the
+/// [`try_from`]($sus::num::@doc.self::try_from!signed). For lossy conversions use the
 /// [`Transmogrify`]($sus::construct::Transmogrify) concept with
 /// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
@@ -217,7 +217,7 @@ sus_pure static constexpr _self from(S s) noexcept {
 ///
 /// Returns an error if the source value is outside of the range of @doc.self.
 ///
-/// #[doc.overloads=0]
+/// #[doc.overloads=signed]
 template <Signed S>
 sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
@@ -240,7 +240,7 @@ try_from(S s) noexcept {
 /// int, unsigned long, etc) where no bits are lost.
 ///
 /// For conversions from types with a larger range use
-/// [`try_from`](#method.try_from). For lossy conversions use the
+/// [`try_from`]($sus::num::@doc.self::try_from!unsigned). For lossy conversions use the
 /// [`Transmogrify`]($sus::construct::Transmogrify) concept with
 /// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
@@ -251,12 +251,12 @@ sus_pure static constexpr _self from(S s) noexcept {
   return _self(s);
 }
 
-/// Try to construct a @doc.self from an unsigned integer type (u8, u16, u32,
-/// etc).
+/// Try to construct a `@doc.self` from an unsigned integer type (`u8`, `u16`,
+/// `u32`, etc).
 ///
-/// Returns an error if the source value is outside of the range of @doc.self.
+/// Returns an error if the source value is outside of the range of `@doc.self`.
 ///
-/// #[doc.overloads=1]
+/// #[doc.overloads=unsigned]
 template <Unsigned U>
 sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
@@ -271,12 +271,13 @@ try_from(U u) noexcept {
   return R(_self(static_cast<_primitive>(u.primitive_value)));
 }
 
-/// Constructs a @doc.self from a signed primitive integer type (int, long, etc)
+/// Constructs a `@doc.self` from a signed primitive integer type (int, long, etc)
 /// where no bits are lost.
 ///
 /// For conversions from types with a larger range use
-/// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
+/// [`try_from`]($sus::num::@doc.self::try_from!signed.primitive). For lossy
+/// conversions use
+/// the [`Transmogrify`]($sus::construct::Transmogrify) concept with
 /// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=from.signed.prim]
@@ -286,12 +287,12 @@ sus_pure static constexpr _self from(S s) noexcept {
   return _self(s);
 }
 
-/// Tries to construct a @doc.self from a signed primitive integer type (int,
+/// Tries to construct a `@doc.self` from a signed primitive integer type (int,
 /// long, etc).
 ///
 /// Returns an error if the source value is outside of the range of @doc.self.
 ///
-/// #[doc.overloads=signedint.tryfrom.signedint]
+/// #[doc.overloads=signed.primitive]
 template <SignedPrimitiveInteger S>
 sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
@@ -310,12 +311,12 @@ try_from(S s) noexcept {
   return R(_self(static_cast<_primitive>(s)));
 }
 
-/// Constructs a @doc.self from a signed enum type (or enum class) where no bits
+/// Constructs a `@doc.self` from a signed enum type (or enum class) where no bits
 /// are lost.
 ///
 /// For conversions from types with a larger range use
-/// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
+/// [`try_from`]($sus::num::@doc.self::try_from!signed.enum). For lossy conversions use
+/// the [`Transmogrify`]($sus::construct::Transmogrify) concept with
 /// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=signedint.from.signedenum]
@@ -331,7 +332,7 @@ sus_pure static constexpr _self from(S s) noexcept {
 ///
 /// Returns an error if the source value is outside of the range of @doc.self.
 ///
-/// #[doc.overloads=signedint.tryfrom.signedenum]
+/// #[doc.overloads=signed.enum]
 template <class S>
   requires(SignedPrimitiveEnum<S> || SignedPrimitiveEnumClass<S>)
 sus_pure static constexpr ::sus::result::Result<_self,
@@ -356,8 +357,8 @@ try_from(S s) noexcept {
 /// int, unsigned long, etc) where no bits are lost.
 ///
 /// For conversions from types with a larger range use
-/// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
+/// [`try_from`]($sus::num::@doc.self::try_from!unsigned.primitive). For lossy conversions use
+/// the [`Transmogrify`]($sus::construct::Transmogrify) concept with
 /// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=from.unsigned.prim]
@@ -372,7 +373,7 @@ sus_pure static constexpr _self from(S s) noexcept {
 ///
 /// Returns an error if the source value is outside of the range of @doc.self.
 ///
-/// #[doc.overloads=signedint.tryfrom.unsignedint]
+/// #[doc.overloads=unsigned.primitive]
 template <UnsignedPrimitiveInteger U>
 sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
@@ -391,7 +392,7 @@ try_from(U u) noexcept {
 /// bits are lost.
 ///
 /// For conversions from types with a larger range use
-/// [`try_from`](#method.try_from). For lossy conversions use the
+/// [`try_from`]($sus::num::@doc.self::try_from!unsigned.enum). For lossy conversions use the
 /// [`Transmogrify`]($sus::construct::Transmogrify) concept with
 /// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
@@ -408,7 +409,7 @@ sus_pure static constexpr _self from(S s) noexcept {
 ///
 /// Returns an error if the source value is outside of the range of @doc.self.
 ///
-/// #[doc.overloads=signedint.tryfrom.unsignedenum]
+/// #[doc.overloads=unsigned.enum]
 template <class U>
   requires(UnsignedPrimitiveEnum<U> || UnsignedPrimitiveEnumClass<U>)
 sus_pure static constexpr ::sus::result::Result<_self,

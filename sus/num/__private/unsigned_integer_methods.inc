@@ -120,8 +120,8 @@ explicit constexpr inline _self(P v) noexcept : primitive_value(v) {}
 /// Construction from unsigned types where no bits are lost.
 ///
 /// For conversions from types with a larger range use
-/// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
+/// [`try_from`]($sus::num::@doc.self::try_from!unsigned). For lossy conversions
+/// use the [`Transmogrify`]($sus::construct::Transmogrify) concept with
 /// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=ctor.unsigned.small.typed]
@@ -132,9 +132,9 @@ constexpr inline _self(U v) noexcept : primitive_value(v.primitive_value) {}
 /// Construction from unsigned primitive types where no bits are lost.
 ///
 /// For conversions from types with a larger range use
-/// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
-/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
+/// [`try_from`]($sus::num::@doc.self::try_from!unsigned.primitive). For lossy
+/// conversions use the [`Transmogrify`]($sus::construct::Transmogrify) concept
+/// with [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=ctor.unsigned.small.primitive]
 template <UnsignedPrimitiveInteger P>
@@ -144,9 +144,9 @@ constexpr inline _self(P v) noexcept : primitive_value(v) {}
 /// Construction from unsigned enum types where no bits are lost.
 ///
 /// For conversions from types with a larger range use
-/// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
-/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
+/// [`try_from`]($sus::num::@doc.self::try_from!unsigned.enum). For lossy
+/// conversions use the [`Transmogrify`]($sus::construct::Transmogrify) concept
+/// with [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=ctor.unsigned.smallenum]
 template <UnsignedPrimitiveEnum P>
@@ -156,7 +156,8 @@ constexpr inline _self(P v) noexcept : primitive_value(v) {}
 /// Construction from unsigned enum class types where no bits are lost.
 ///
 /// For conversions from types with a larger range use
-/// [`try_from`](#method.try_from). For lossy conversions use the
+/// [`try_from`]($sus::num::@doc.self::try_from!unsigned.enum). For lossy
+/// conversions use the
 /// [`Transmogrify`]($sus::construct::Transmogrify) concept with
 /// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
@@ -219,8 +220,8 @@ constexpr inline _self& operator=(P v) noexcept {
 /// Assignment from unsigned types (u8, u16, etc.) where no bits are lost.
 ///
 /// For conversions from types with a larger range use
-/// [`try_from`](#method.try_from). For lossy conversions use the
-/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
+/// [`try_from`]($sus::num::@doc.self::try_from!unsigned). For lossy conversions
+/// use the [`Transmogrify`]($sus::construct::Transmogrify) concept with
 /// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
 /// #[doc.overloads=assign.unsigned.small.typed]
@@ -235,7 +236,8 @@ constexpr inline _self& operator=(U v) noexcept {
 /// where no bits are lost.
 ///
 /// For conversions from types with a larger range use
-/// [`try_from`](#method.try_from). For lossy conversions use the
+/// [`try_from`]($sus::num::@doc.self::try_from!unsigned.primitive). For lossy
+/// conversions use the
 /// [`Transmogrify`]($sus::construct::Transmogrify) concept with
 /// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
@@ -250,7 +252,8 @@ constexpr inline _self& operator=(P v) noexcept {
 /// Assignment from unsigned enum types where no bits are lost.
 ///
 /// For conversions from types with a larger range use
-/// [`try_from`](#method.try_from). For lossy conversions use the
+/// [`try_from`]($sus::num::@doc.self::try_from!unsigned.primitive). For lossy
+/// conversions use the
 /// [`Transmogrify`]($sus::construct::Transmogrify) concept with
 /// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
 ///
@@ -295,7 +298,7 @@ sus_pure static _self from(U* u) noexcept {
 ///
 /// This operation can not fail, so it always returns success.
 ///
-/// #[doc.overloads=uptr.tryfrom.pointer]
+/// #[doc.overloads=ptr]
 template <class U>
 sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
@@ -318,7 +321,7 @@ sus_pure static constexpr _self from(U u) noexcept {
 ///
 /// As the input has the same size, this function can not return an error.
 ///
-/// #[doc.overloads=unsigned.tryfrom.unsigned]
+/// #[doc.overloads=unsigned]
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() == ::sus::mem::size_of<_primitive>())
 sus_pure static constexpr ::sus::result::Result<_self,
@@ -342,7 +345,7 @@ sus_pure static constexpr _self from(U u) noexcept {
 ///
 /// As the input has the same size, this function can not return an error.
 ///
-/// #[doc.overloads=unsigned.tryfrom.unsignedprimitive]
+/// #[doc.overloads=unsigned.primitive]
 template <UnsignedPrimitiveInteger U>
   requires(::sus::mem::size_of<U>() == ::sus::mem::size_of<_primitive>())
 sus_pure static constexpr ::sus::result::Result<_self,
@@ -366,7 +369,7 @@ sus_pure static constexpr _self from(U u) noexcept {
 ///
 /// Returns an error if the source value is outside of the range of @doc.self.
 ///
-/// #[doc.overloads=unsigned.tryfrom.unsigned]
+/// #[doc.overloads=unsigned]
 template <Unsigned U>
 sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
@@ -387,7 +390,7 @@ sus_pure static constexpr _self from(U u) noexcept {
 ///
 /// Returns an error if the source value is outside of the range of @doc.self.
 ///
-/// #[doc.overloads=unsigned.tryfrom.unsignedprimitive]
+/// #[doc.overloads=unsigned.primitive]
 template <UnsignedPrimitiveInteger U>
 sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
@@ -398,7 +401,7 @@ try_from(U u) noexcept;
 ///
 /// Returns an error if the source value is outside of the range of @doc.self.
 ///
-/// #[doc.overloads=unsigned.tryfrom.signed]
+/// #[doc.overloads=signed]
 template <Signed S>
 sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
@@ -409,7 +412,7 @@ try_from(S s) noexcept;
 ///
 /// Returns an error if the source value is outside of the range of @doc.self.
 ///
-/// #[doc.overloads=unsigned.tryfrom.signedprimitive]
+/// #[doc.overloads=signed.primitive]
 template <SignedPrimitiveInteger S>
 sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
@@ -419,7 +422,7 @@ try_from(S s) noexcept;
 ///
 /// Returns an error if the source value is outside of the range of @doc.self.
 ///
-/// #[doc.overloads=unsigned.tryfrom.signedenum]
+/// #[doc.overloads=signed.enum]
 template <class S>
   requires(SignedPrimitiveEnum<S> || SignedPrimitiveEnumClass<S>)
 sus_pure static constexpr ::sus::result::Result<_self,
@@ -441,7 +444,7 @@ sus_pure static constexpr _self from(U u) noexcept {
 ///
 /// Returns an error if the source value is outside of the range of @doc.self.
 ///
-/// #[doc.overloads=unsigned.tryfrom.unsignedenum]
+/// #[doc.overloads=unsigned.enum]
 template <class U>
   requires(UnsignedPrimitiveEnum<U> || UnsignedPrimitiveEnumClass<U>)
 sus_pure static constexpr ::sus::result::Result<_self,
