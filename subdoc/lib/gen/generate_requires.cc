@@ -31,31 +31,33 @@ void generate_requires_constraints(HtmlWriter::OpenDiv& div,
       keyword_div.write_text("requires");
     }
     for (const RequiresConstraint& constraint : constraints.list) {
-      auto clause_div = requires_div.open_div();
-      clause_div.add_class("requires-constaint");
+      auto clause_div = requires_div.open_div(HtmlWriter::SingleLine);
+      clause_div.add_class("requires-constraint");
       switch (constraint) {
         using enum RequiresConstraint::Tag;
-        case Concept:
-          clause_div.write_text(constraint.as<Concept>().concept_name);
-          clause_div.write_text("<");
-          for (const auto& [i, s] :
-               constraint.as<Concept>().args.iter().enumerate()) {
-            clause_div.write_text(s);
+        case Concept: {
+          auto clause_line_pre = clause_div.open_pre();
+          clause_line_pre.add_class("requires-constraint-line");
+          clause_line_pre.write_text(constraint.as<Concept>().concept_name);
+          clause_line_pre.write_text("<");
+          for (const std::string& s : constraint.as<Concept>().args) {
+            clause_line_pre.write_text(s);
           }
-          clause_div.write_text(">");
+          clause_line_pre.write_text(">");
           break;
+        }
         case Text: {
           auto clause = std::string_view(constraint.as<Text>());
           while (true) {
             if (usize pos = clause.find('\n');
                 pos != std::string::npos && pos != clause.size() - 1u) {
               auto clause_line_pre = clause_div.open_pre();
-              clause_line_pre.add_class("requires-constaint-line");
+              clause_line_pre.add_class("requires-constraint-line");
               clause_line_pre.write_text(clause.substr(0u, pos));
               clause = clause.substr(pos + 1u);
             } else {
               auto clause_line_pre = clause_div.open_pre();
-              clause_line_pre.add_class("requires-constaint-line");
+              clause_line_pre.add_class("requires-constraint-line");
               clause_line_pre.write_text(clause);
               break;
             }

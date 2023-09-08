@@ -392,9 +392,12 @@ a.field-name:hover {
 :is(.type-signature, .overload) .requires .requires-paren {
     color: rgb(180, 180, 180)
 }
-:is(.type-signature, .overload) .requires .requires-constaint {
+:is(.type-signature, .overload) .requires .requires-constraint {
     margin-left: 36px;
     color: rgb(87, 218, 218)
+}
+.requires .requires-constraint pre {
+    margin: 0;
 }
 .overload .deleted {
     color: rgb(238, 84, 110)

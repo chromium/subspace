@@ -43,7 +43,7 @@ struct RequiresConstraints {
   sus::Vec<RequiresConstraint> list;
 };
 
-void requires_constraints_add_expr(RequiresConstraints& constaints,
+void requires_constraints_add_expr(RequiresConstraints& constraints,
                                    const clang::ASTContext& context,
                                    clang::Preprocessor& preprocessor,
                                    const clang::Expr* e) noexcept;

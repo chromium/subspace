@@ -67,7 +67,7 @@ std::string template_arg_to_string(const clang::TemplateArgumentLoc& loc,
   sus::unreachable();
 };
 
-void requires_constraints_add_expr(RequiresConstraints& constaints,
+void requires_constraints_add_expr(RequiresConstraints& constraints,
                                    const clang::ASTContext& context,
                                    clang::Preprocessor& preprocessor,
                                    const clang::Expr* e) noexcept {
@@ -75,9 +75,9 @@ void requires_constraints_add_expr(RequiresConstraints& constaints,
 
   if (auto* bin_and = clang::dyn_cast<clang::BinaryOperator>(e);
       bin_and != nullptr && bin_and->getOpcode() == clang::BO_LAnd) {
-    requires_constraints_add_expr(constaints, context, preprocessor,
+    requires_constraints_add_expr(constraints, context, preprocessor,
                                   bin_and->getLHS());
-    requires_constraints_add_expr(constaints, context, preprocessor,
+    requires_constraints_add_expr(constraints, context, preprocessor,
                                   bin_and->getRHS());
   } else if (auto* c = clang::dyn_cast<clang::ConceptSpecializationExpr>(e);
              c != nullptr && c->getNamedConcept()) {
@@ -93,7 +93,7 @@ void requires_constraints_add_expr(RequiresConstraints& constaints,
       // either.
       if (s.ends_with(" auto")) return;
     }
-    constaints.list.push(
+    constraints.list.push(
         RequiresConstraint::with<RequiresConstraint::Tag::Concept>(
             RequiresConceptConstraint{
                 // TODO: Split this up into namespaces and link them to
@@ -106,7 +106,7 @@ void requires_constraints_add_expr(RequiresConstraints& constaints,
     // TODO: There can be types in here that need to be resolved and can be
     // linked to database entries, such as the macro name `_primitive` in:
     // * `::sus::mem::size_of<S>() <= ::sus::mem::size_of<_primitive>()`
-    constaints.list.push(
+    constraints.list.push(
         RequiresConstraint::with<RequiresConstraint::Tag::Text>(
             stmt_to_string(*e, context.getSourceManager(), preprocessor)));
   }
