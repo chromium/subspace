@@ -11,4 +11,4 @@ out/subdoc/subdoc -p out --out docs \
     --project-logo logo.png \
     --project-name Subspace \
     --ignore-bad-code-links \
-   i32_unittest compat_range boxed choice_unit
+   i8_unittest
