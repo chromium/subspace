@@ -5,8 +5,13 @@ struct OtherType {};
 
 namespace __private { struct Private {}; }
 
+struct Base {
+  /// Comment headline BaseMethod
+  void BaseMethod();
+};
+
 /// Comment headline S
-struct S {
+struct S : Base {
   /// Comment headline void_method
   void void_method() const&;
   /// Comment headline static_type_method

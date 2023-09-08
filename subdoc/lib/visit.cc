@@ -53,7 +53,9 @@ struct DiagnosticIds {
 
 static bool should_skip_decl(VisitCx& cx, clang::Decl* decl) {
   auto* ndecl = clang::dyn_cast<clang::NamedDecl>(decl);
-  if (!ndecl) return true;
+  if (!ndecl) {
+    return true;
+  }
 
   // TODO: These could be configurable. As well as user-defined namespaces to
   // skip.
@@ -390,6 +392,104 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     // clang::RawComment* raw_comment = get_raw_comment(decl);
     // if (raw_comment)
     //   llvm::errs() << "TypeAliasDecl " << raw_comment->getKind() << "\n";
+    return true;
+  }
+
+  bool VisitUsingEnumDecl(clang::UsingEnumDecl* decl) noexcept {
+    if (should_skip_decl(cx_, decl)) return true;
+    // clang::RawComment* raw_comment = get_raw_comment(decl);
+    // if (raw_comment)
+    //   llvm::errs() << "UsingEnumDecl " << raw_comment->getKind() << "\n";
+    return true;
+  }
+
+  bool VisitUsingDecl(clang::UsingDecl* decl) noexcept {
+    if (should_skip_decl(cx_, decl)) return true;
+    clang::RawComment* raw_comment = get_raw_comment(decl);
+    Comment comment = make_db_comment(decl->getASTContext(), raw_comment, "");
+    if (decl->shadow_size() != 1u) {
+      decl->dump();
+      decl->getBeginLoc().dump(decl->getASTContext().getSourceManager());
+      sus::unreachable();
+    }
+    clang::UsingShadowDecl* shadow = *decl->shadow_begin();
+    if (auto* rec =
+            clang::dyn_cast<clang::RecordDecl>(shadow->getTargetDecl())) {
+      auto* context =
+          clang::dyn_cast<clang::NamespaceDecl>(decl->getDeclContext());
+      if (!context &&
+          !clang::isa<clang::TranslationUnitDecl>(decl->getDeclContext())) {
+        // The context for a using record is a namespace or translation unit.
+        decl->dump();
+        decl->getDeclContext()->dumpAsDecl();
+        sus::unreachable();
+      }
+
+      auto ae = AliasElement(
+          // alias info.
+          iter_namespace_path(decl).collect_vec(), sus::move(comment),
+          decl->getNameAsString(),
+          decl->getASTContext().getSourceManager().getFileOffset(
+              decl->getLocation()),
+          sus::vec(),
+          // target info.
+          iter_namespace_path(rec).collect_vec(),
+          iter_record_path(rec)
+              .map([](std::string_view v) { return std::string(v); })
+              .collect_vec(),
+          rec->getNameAsString());
+      NamespaceElement& parent = docs_db_.find_namespace_mut(context).unwrap();
+      add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(ae),
+                      parent.aliases, decl->getASTContext());
+    } else if (auto* edecl =
+                   clang::dyn_cast<clang::EnumDecl>(shadow->getTargetDecl())) {
+      edecl->dump();
+      decl->dump();
+      decl->getBeginLoc().dump(decl->getASTContext().getSourceManager());
+      sus::unreachable();
+    } else if (auto* method = clang::dyn_cast<clang::CXXMethodDecl>(
+                   shadow->getTargetDecl())) {
+      auto* context =
+          clang::dyn_cast<clang::RecordDecl>(decl->getDeclContext());
+      if (!context) {
+        // The context for a using record is a namespace or translation unit.
+        decl->dump();
+        decl->getDeclContext()->dumpAsDecl();
+        sus::unreachable();
+      }
+      auto* target_context =
+          clang::dyn_cast<clang::RecordDecl>(method->getDeclContext());
+      if (!target_context) {
+        // The context for a using record is a namespace or translation unit.
+        decl->dump();
+        decl->getDeclContext()->dumpAsDecl();
+        sus::unreachable();
+      }
+
+      auto ae = AliasElement(
+          // alias info.
+          iter_namespace_path(context).collect_vec(), sus::move(comment),
+          decl->getNameAsString(),
+          decl->getASTContext().getSourceManager().getFileOffset(
+              decl->getLocation()),
+          iter_record_path(context)
+              .map([](std::string_view v) { return std::string(v); })
+              .collect_vec(),
+          // target info.
+          iter_namespace_path(target_context).collect_vec(),
+          iter_record_path(target_context)
+              .map([](std::string_view v) { return std::string(v); })
+              .collect_vec(),
+          method->getNameAsString());
+      RecordElement& parent = docs_db_.find_record_mut(context).unwrap();
+      add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(ae),
+                      parent.aliases, decl->getASTContext());
+    } else {
+      decl->dump();
+      decl->getBeginLoc().dump(decl->getASTContext().getSourceManager());
+      sus::unreachable();
+    }
+
     return true;
   }
 
@@ -828,6 +928,28 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     } else {
       auto& ast_cx = decl->getASTContext();
       const ElementT& old_element = it->second;
+      ast_cx.getDiagnostics()
+          .Report(db_element.comment.attrs.location,
+                  diag_ids_.superceded_comment)
+          .AddString(old_element.comment.begin_loc);
+    }
+  }
+  template <class MapT>
+  void add_alias_to_db(AliasId db_key, AliasElement db_element, MapT& db_map,
+                       clang::ASTContext& ast_cx) noexcept {
+    auto it = db_map.find(db_key);
+    if (it == db_map.end()) {
+      db_map.emplace(db_key, std::move(db_element));
+    } else if (!it->second.has_found_comment() &&
+               db_element.has_found_comment()) {
+      // Steal the comment.
+      sus::mem::swap(db_map.at(db_key).comment, db_element.comment);
+    } else if (!db_element.has_found_comment()) {
+      // Leave the existing comment in place, do nothing.
+    } else if (db_element.comment.begin_loc == it->second.comment.begin_loc) {
+      // We already visited this thing, from another translation unit.
+    } else {
+      const AliasElement& old_element = it->second;
       ast_cx.getDiagnostics()
           .Report(db_element.comment.attrs.location,
                   diag_ids_.superceded_comment)

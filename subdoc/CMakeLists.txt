@@ -45,6 +45,7 @@ target_sources(subdoc_lib PUBLIC
     "lib/linked_type.h"
     "lib/parse_comment.cc"
     "lib/parse_comment.h"
+    "lib/path.cc"
     "lib/path.h"
     "lib/record_type.h"
     "lib/requires.cc"
@@ -130,6 +131,7 @@ if(${SUBSPACE_BUILD_TESTS})
     add_executable(subdoc_unittests
         "gen_tests/gen_tests.cc"
         "tests/access_unittest.cc"
+        "tests/aliases_unittest.cc"
         "tests/cpp_version.h"
         "tests/doc_attributes_unittest.cc"
         "tests/fields_unittest.cc"
