@@ -50,9 +50,9 @@ void print_panic_location(const std::source_location& location) noexcept;
 
 /// Terminate the program.
 ///
-/// The default behaviour of this function is to abort(). The behaviour of this
-/// function can be overridden by defining a `SUS_PROVIDE_PANIC_HANDLER()` macro
-/// when compiling the library.
+/// The default behaviour of this function is to `abort()`. The behaviour of
+/// this function can be overridden by defining a `SUS_PROVIDE_PANIC_HANDLER()`
+/// macro when compiling the library.
 ///
 /// The panic message will be printed to stderr before aborting. This behaviour
 /// can be overridden by defining a `SUS_PROVIDE_PRINT_PANIC_LOCATION_HANDLER()`

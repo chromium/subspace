@@ -21,22 +21,24 @@
 namespace sus::ops {
 
 /// Concept for types that can be compared for equality with the `==` and `!=`
-/// operators.
+/// operators. There is no guarantee of a full equivalence relation, and a
+/// partial equivalence is possible, which allows for values that compare
+/// not-equal to themselves (such as NaN).
 ///
-/// Implementations must ensure that eq and ne are consistent with each other:
+/// Implementations must ensure that `operator==` and `operator!=` are
+/// consistent with each other:
 ///
-/// * a != b if and only if !(a == b).
+/// * `a != b` if and only if `!(a == b)`.
 ///
-/// The default implementation of the `!=` operator provides this consistency
+/// The default implementation of `operator!=` provides this consistency
 /// and is almost always sufficient. It should not be overridden without very
 /// good reason.
 ///
-/// This concept allows for partial equality, for types that do not have a full
-/// equivalence relation. For example, in floating point numbers NaN != NaN, but
-/// they can still be compared with `==` and `!=`. Unlike Rust, C++ does not
-/// understand partial equivalence so we are unable to differentiate.
-///
-/// TODO: How do we do PartialEq? Can we even? Should we require StrongOrd to be Eq?
+/// This maps to the [`PartialEq`](
+/// https://doc.rust-lang.org/stable/std/cmp/trait.PartialEq.html) trait in Rust
+/// rather than the `Eq` trait. Since C++ does not understand
+/// equivalent vs partial equivalence, we are unable to differentiate and
+/// provide a stronger relationship than partial equivalence.
 template <class T, class U = T>
 concept Eq = requires(const std::remove_reference_t<T>& lhs,
                       const std::remove_reference_t<U>& rhs) {
