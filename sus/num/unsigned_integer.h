@@ -147,13 +147,13 @@ struct [[sus_trivial_abi]] usize final {
 ///
 /// # Constructing a [`uptr`]($sus::num::uptr)
 ///
-/// See [`with_addr`](#method.with_addr) for constructing
+/// See [`with_addr`]($sus::num::uptr::with_addr) for constructing
 /// [`uptr`]($sus::num::uptr) with an address from another
 /// [`uptr`]($sus::num::uptr).
 ///
 /// If pointers contain additional metadata beyond an address, the
-/// [`with_addr`](#method.with_addr) method copies the metadata from the
-/// original `uptr` to the newly produced
+/// [`with_addr`]($sus::num::uptr::with_addr) method copies the metadata from
+/// the original `uptr` to the newly produced
 /// [`uptr`]($sus::num::uptr). Otherwise, constructing a
 /// [`uptr`]($sus::num::uptr) from an integer can produce a pointer with
 /// invalid (empty) metadata and dereferencing such a pointer would be invalid.

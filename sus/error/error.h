@@ -273,7 +273,7 @@ concept HasErrorSource = requires(const T& t) {
 /// * Place all application error types into a single sum type such as
 ///   [`std::variant`](https://en.cppreference.com/w/cpp/utility/variant) or
 ///   [`Choice`]($sus::choice_type::Choice). Then implement
-///   [`Error`](#sus::error::Error) for your fully resolved sum type.
+///   [`Error`]($sus::error::Error) for your fully resolved sum type.
 ///
 ///   This allows each error inside the sum type to be any type at all, and
 ///   avoids type erasure, using type composition instead.

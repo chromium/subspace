@@ -295,7 +295,7 @@ operator<=>(_self l, PrimitiveFloat auto r) noexcept {
 /// [`PartialOrd`]($sus::ops::PartialOrd) and [`Eq`]($sus::ops::Eq)
 /// implementations of [`@doc.self`]($sus::num::@doc.self). For example, they
 /// consider negative and positive zero equal, while
-/// [`total_cmp`](#method.total_cmp) doesn't.
+/// [`total_cmp`]($sus::num::@doc.self::total_cmp) doesn't.
 ///
 /// The interpretation of the signaling NaN bit follows the definition in the
 /// IEEE 754 standard, which may not match the interpretation by some of the
@@ -696,9 +696,9 @@ sus_pure inline _self powf(_self n) const& noexcept {
 }
 /// Raises a number to an integer point power.
 ///
-/// Using this function may be faster than using [`powf`](#method.powf). It
+/// Using this function may be faster than using [`powf`]($sus::num::@doc.self::powf). It
 /// might have a different sequence of rounding operations than
-/// [`powf`](#method.powf), so the results are not guaranteed to agree.
+/// [`powf`]($sus::num::@doc.self::powf), so the results are not guaranteed to agree.
 sus_pure inline _self powi(i32 n) const& noexcept {
   // MSVC pow(float) is returning a double for some reason.
   return static_cast<_primitive>(
@@ -715,9 +715,10 @@ sus_pure inline _self round() const& noexcept {
 }
 /// Returns a number that represents the sign of self.
 ///
-/// * `1.0` if the number is positive, `+0.0` or [`INFINITY`](#field.INFINITY).
+/// * `1.0` if the number is positive, `+0.0` or [`INFINITY`](
+///   $sus::num::@doc.self::INFINITY).
 /// * `-1.0` if the number is negative, `-0.0` or
-///   [`NEG_INFINITY`](#field.NEG_INFINITY).
+///   [`NEG_INFINITY`]($sus::num::@doc.self::NEG_INFINITY).
 /// * `NaN` if the number is `NaN`. The input value is returned exactly,
 ///   preserving signaling NaNs.
 sus_pure inline _self signum() const& noexcept {
@@ -906,7 +907,7 @@ sus_pure constexpr inline _self clamp(_self min, _self max) const& noexcept {
 }
 
 /// Calculates Euclidean division, the matching method for
-/// [`rem_euclid`](#method.rem_euclid).
+/// [`rem_euclid`]($sus::num::@doc.self::rem_euclid).
 ///
 /// This computes the integer `n` such that `self = n * rhs +
 /// self.rem_euclid(rhs)`. In other words, the result is `self / rhs` rounded
@@ -953,24 +954,24 @@ to_le_bytes() const& noexcept;
 /// array in native byte order.
 ///
 /// As the target platform's native endianness is used, portable code should
-/// use [`to_be_bytes`](#method.to_be_bytes) or
-/// [`to_le_bytes`](#method.to_le_bytes), as appropriate, instead.
+/// use [`to_be_bytes`]($sus::num::@doc.self::to_be_bytes) or
+/// [`to_le_bytes`]($sus::num::@doc.self::to_le_bytes), as appropriate, instead.
 sus_pure constexpr ::sus::collections::Array<u8,
                                              ::sus::mem::size_of<_primitive>()>
 to_ne_bytes() const& noexcept;
 /// Create a floating point value from its representation as a byte array in
 /// big endian.
 ///
-///  See [`from_bits`](#method.from_bits) for why this function is not
-///  constexpr.
+/// See [`from_bits`]($sus::num::@doc.self::from_bits) for why this function is
+/// not  constexpr.
 sus_pure static _self from_be_bytes(
     const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept;
 /// Create a floating point value from its representation as a byte array in
 /// big endian.
 ///
-///  See [`from_bits`](#method.from_bits) for why this function is not
-///  constexpr.
+/// See [`from_bits`]($sus::num::@doc.self::from_bits) for why this function is
+/// not constexpr.
 sus_pure static _self from_le_bytes(
     const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept;
@@ -978,11 +979,12 @@ sus_pure static _self from_le_bytes(
 /// native endian.
 ///
 /// As the target platform's native endianness is used, portable code likely
-/// wants to use [`from_be_bytes`](#method.from_be_bytes) or
-/// [`from_le_bytes`](#method.from_le_bytes), as appropriate instead.
+/// wants to use [`from_be_bytes`]($sus::num::@doc.self::from_be_bytes) or
+/// [`from_le_bytes`]($sus::num::@doc.self::from_le_bytes), as appropriate
+/// instead.
 ///
-///  See [`from_bits`](#method.from_bits) for why this function is not
-///  constexpr.
+/// See [`from_bits`]($sus::num::@doc.self::from_bits) for why this function is
+/// not constexpr.
 sus_pure static _self from_ne_bytes(
     const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept;

@@ -53,8 +53,8 @@ static const _self MAX_ADDR;
 /// The largest value that can be represented by an
 /// [`@doc.self`]($sus::num::@doc.self), if the size of a pointer is larger
 /// than the size of an address, this value will be larger than
-/// [`MAX_ADDR`](#field.MAX_ADDR) and will always be the maximum value for the
-/// integer type.
+/// [`MAX_ADDR`]($sus::num::@doc.self::MAX_ADDR) and will always be the maximum
+/// value for the integer type.
 static const _self MAX_BIT_PATTERN;
 #else
 /// The largest value that can be represented by an

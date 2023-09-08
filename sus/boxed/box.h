@@ -237,7 +237,7 @@ class [[sus_trivial_abi]] Box final {
   ///
   /// # Examples
   /// Converting the raw pointer back into a `Box` with
-  /// [`Box::from_raw`](#sus::boxed::Box::from_raw) for automatic cleanup:
+  /// [`Box::from_raw`]($sus::boxed::Box::from_raw) for automatic cleanup:
   ///
   /// ```
   /// auto x = Box<std::string>("Hello");
