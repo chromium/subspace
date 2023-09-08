@@ -1038,22 +1038,28 @@ constexpr T* Vec<T>::grow_to_internal_check_cap(usize cap) noexcept {
   return new_data;
 }
 
-// Implicit for-ranged loop iteration via `Vec::iter()`.
+/// Implicit for-ranged loop iteration via
+/// [`Vec::iter()`]($sus:collections::Vec::iter).
 using ::sus::iter::__private::begin;
+/// Implicit for-ranged loop iteration via
+/// [`Vec::iter()`]($sus:collections::Vec::iter).
 using ::sus::iter::__private::end;
 
-/// Used to construct a `Vec<T>` with the parameters as its values.
+/// Used to construct a [`Vec`]($sus::collections::Vec) with the parameters as
+/// its values.
 ///
-/// Calling `vec()` produces a hint to make a `Vec<T>` but does not actually
-/// construct `Vec<T>`, as the type `T` is not known here. The `Vec<T>` will be
-/// constructed once the `T` is deduced by converting the marker to the `Vec<T>`
-/// type.
+/// Calling `vec()` produces a hint to make a [`Vec<T>`]($sus::collections::Vec)
+/// but does not actually construct [`Vec<T>`]($sus::collections::Vec), as the
+/// type `T` is not known here. The [`Vec`]($sus::collections::Vec) will be
+/// constructed once the `T` is deduced by converting the marker to the
+/// [`Vec<T>`]($sus::collections::Vec) type.
 ///
-/// Passing no arguments will produce an empty `Vec<T>`.
-//
-// Note: A marker type is used instead of explicitly constructing a vec
-// immediately in order to avoid redundantly having to specify `T` when using
-// the result of `sus::vec()` as a function argument or return value.
+/// Passing no arguments will produce an empty [`Vec`]($sus::collections::Vec).
+///
+/// A marker type like that from `vec` is used instead of explicitly
+/// constructing a [`Vec`]($sus::collections::Vec) in order to avoid redundantly
+/// having to specify `T` in `Vec<T>` when using the result of `vec()` as a
+/// function argument or return value.
 template <class... Ts>
 [[nodiscard]] inline constexpr auto vec(Ts&&... vs sus_lifetimebound) noexcept {
   if constexpr (sizeof...(Ts) > 0) {
