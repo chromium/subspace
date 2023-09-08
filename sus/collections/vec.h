@@ -661,21 +661,22 @@ class Vec final {
     len_ += 1u;
   }
 
-  // Returns a slice that references all the elements of the vector as const
-  // references.
+  /// Returns a [`Slice`]($sus::collections::Slice) that references all the
+  /// elements of the vector as const references.
   sus_pure constexpr Slice<T> as_slice() const& noexcept sus_lifetimebound {
     return *this;
   }
   constexpr Slice<T> as_slice() && = delete;
 
-  // Returns a slice that references all the elements of the vector as mutable
-  // references.
+  /// Returns a [`SliceMut`]($sus::collections::SliceMut) that references all
+  /// the elements of the vector as mutable references.
   sus_pure constexpr SliceMut<T> as_mut_slice() & noexcept sus_lifetimebound {
     return *this;
   }
 
-  /// Consumes the Vec into an iterator that will return each element in the
-  /// same order they appear in the Vec.
+  /// Consumes the `Vec` into an [`Iterator`]($sus::iter::Iterator) that will
+  /// return ownership of each element in the same order they appear in the
+  /// `Vec`.
   constexpr VecIntoIter<T> into_iter() && noexcept
     requires(::sus::mem::Move<T>)
   {
@@ -725,6 +726,7 @@ class Vec final {
     ::sus::check(i < len_);
     return *(as_ptr() + i);
   }
+  /// #[doc.overloads=vec.index.usize]
   constexpr const T& operator[](::sus::num::usize i) && = delete;
 
   /// Returns a mutable reference to the element at position `i` in the Vec.
@@ -764,6 +766,7 @@ class Vec final {
                                          iter_refs_.to_view_from_owner(),
                                          as_ptr() + rstart, rlen);
   }
+  /// #[doc.overloads=vec.index.range]
   constexpr Slice<T> operator[](
       const ::sus::ops::RangeBounds<::sus::num::usize> auto range) && = delete;
 
@@ -794,7 +797,8 @@ class Vec final {
                                                 as_mut_ptr() + rstart, rlen);
   }
 
-  // Const Vec can be used as a Slice.
+  /// Converts to a [`Slice<T>`]($sus::collections::Slice). A `Vec` can be used
+  /// anywhere a [`Slice`]($sus::collections::Slice) is wanted.
   sus_pure constexpr operator Slice<T>() const& noexcept {
     check(!is_moved_from());
     return Slice<T>::from_raw_collection(
@@ -807,7 +811,9 @@ class Vec final {
         ::sus::marker::unsafe_fn, iter_refs_.to_view_from_owner(), data_, len_);
   }
 
-  // Mutable Vec can be used as a SliceMut.
+  /// Converts to a [`SliceMut<T>`]($sus::collections::SliceMut). A mutable
+  /// `Vec` can be used anywhere a [`SliceMut`]($sus::collections::SliceMut) is
+  /// wanted.
   sus_pure constexpr operator SliceMut<T>() & noexcept {
     check(!is_moved_from());
     return SliceMut<T>::from_raw_collection_mut(
