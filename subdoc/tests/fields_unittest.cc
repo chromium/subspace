@@ -75,3 +75,17 @@ TEST_F(SubDocTest, NestedField) {
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_field_comment(db, "3:7", "<p>Comment headline</p>"));
 }
+
+TEST_F(SubDocTest, FieldInNamespaces) {
+  auto result = run_code(R"(
+    namespace a::b::c {
+    struct S {
+      /// Comment headline
+      int f = 1;
+    };
+    }
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_field_comment(db, "4:7", "<p>Comment headline</p>"));
+}

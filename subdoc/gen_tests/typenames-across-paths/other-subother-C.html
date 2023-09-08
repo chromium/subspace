@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"></meta>
   <meta property="og:type" content="website"></meta>
   <meta property="og:site_name" content="PROJECT NAME"></meta>
-  <title>n::pass_s - PROJECT NAME</title>
-  <meta property="og:title" content="n::pass_s - PROJECT NAME"></meta>
-  <meta name="description" content="Should show S as the paramter type, not the full path."></meta>
-  <meta property="og:description" content="Should show S as the paramter type, not the full path."></meta>
+  <title>other::subother::C - PROJECT NAME</title>
+  <meta property="og:title" content="other::subother::C - PROJECT NAME"></meta>
+  <meta name="description" content=""></meta>
+  <meta property="og:description" content=""></meta>
   <link rel="stylesheet" href="../subdoc-test-style.css">
   <link rel="icon" type="image/svg+xml" href="../icon.svg">
   <link rel="alternate icon" type="image/png" href="../icon.png">
@@ -25,7 +25,7 @@
       </div></a>
     <span class="topbar-text-area">
       <span class="topbar-title">
-        <a href="#">pass_s</a>
+        <a href="#">C</a>
       </span>
     </span>
   </nav>
@@ -34,10 +34,10 @@
         <img class="sidebar-logo" src="PROJECT LOGO.png"></img>
       </div></a>
     <div class="sidebar-pretitle sidebar-text">
-      function
+      concept
     </div>
     <div class="sidebar-title sidebar-text">
-      <a href="#">pass_s</a>
+      <a href="#">C</a>
     </div>
     <div class="sidebar-subtitle sidebar-text">
     </div>
@@ -47,26 +47,38 @@
     </div>
   </nav>
   <main>
-    <div class="function">
+    <div class="concept">
       <div class="section overview">
         <div class="section-header">
           <span>
-            Function
+            Concept
           </span>
           <a class="project-name" href="index.html">PROJECT NAME</a>
           <span class="namespace-dots">::</span>
-          <a class="namespace-name" href="namespace.n.html">n</a>
+          <a class="namespace-name" href="namespace.other.html">other</a>
           <span class="namespace-dots">::</span>
-          <a class="function-name" href="#">pass_s</a>
+          <a class="namespace-name" href="other-namespace.subother.html">subother</a>
+          <span class="namespace-dots">::</span>
+          <a class="concept-name" href="#">C</a>
         </div>
-        <div class="overload-set">
-          <div class="overload">
-            <div class="function-signature"><span class="function-auto">auto</span> <a class="function-name" href="#">pass_s</a>(<a class="type-name" href="other-subother-S.html" title="other::subother::S">S</a>) -&gt; void</div>
+        <div class="type-signature">
+          <pre class="template">template &lt;class T&gt;</pre>
+          <span class="concept">
+            concept
+          </span>
+          <span class="type-name">
+            C
+          </span>
+          <div>
+            <div class="requires">
+              <span class="requires-keyword keyword">
+                requires
+              </span>
+              <div class="requires-constraint"><pre class="requires-constraint-line">true</pre></div>
+            </div>
           </div>
         </div>
         <div class="description long">
-          <p>Should show <code>S</code> as the paramter type, not the full path.</p>
-
         </div>
       </div>
     </div>

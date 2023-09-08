@@ -89,17 +89,12 @@ class SubDocGenTest : public testing::Test {
     sus::Vec<std::filesystem::path> expecteds;
     find_paths(path_to_input(directory, sus::none()), std::filesystem::path(),
                expecteds);
+    expecteds.sort();
     sus::Vec<std::filesystem::path> actuals;
     find_paths(path_to_output(directory, sus::none()), std::filesystem::path(),
                actuals);
-    // TODO: Implement Vec::Eq.
-    auto eq = [](const auto& a, const auto& b) {
-      if (a.len() != b.len()) return false;
-      for (auto i = 0_usize; i < a.len(); i += 1u)
-        if (a[i] != b[i]) return false;
-      return true;
-    };
-    if (!eq(expecteds, actuals)) {
+    actuals.sort();
+    if (expecteds != actuals) {
       ADD_FAILURE() << "Found different files in output than expected.\n"
                     << "Expected:\n"
                     << paths_to_strings(expecteds.iter())  //

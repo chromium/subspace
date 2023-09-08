@@ -4,25 +4,33 @@ struct S {
     struct Nested {};
   };
 };
+
+template <class T>
+concept C = true;
 }  // namespace other
 
 namespace n {
 
-// Should show `S` as the return type, not the full path.
+/// Alias of [`S`]($other::subother::S).
+using other::subother::S;
+/// Alias of [`C`]($other::subother::C).
+using other::subother::C;
+
+/// Should show `S` as the return type, not the full path.
 other::subother::S return_s();
 
-// Should show `Nested` as the return type, not the full path.
+/// Should show `Nested` as the return type, not the full path.
 other::subother::S::FirstNested::Nested return_nested();
 
-// Should show `S` as the paramter type, not the full path.
+/// Should show `S` as the paramter type, not the full path.
 void pass_s(other::subother::S);
 
 struct HoldS {
-  // Should show `S` as the field type, not the full path, and link to
-  // `other::subother::S`.
+  /// Should show `S` as the field type, not the full path, and link to
+  /// `other::subother::S`.
   other::subother::S s;
-  // Should show `Nested` as the field type, not the full path, and link to
-  // `other::subother::S::FirstNested::Nested`.
+  /// Should show `Nested` as the field type, not the full path, and link to
+  /// `other::subother::S::FirstNested::Nested`.
   other::subother::S::FirstNested::Nested nested;
 };
 
