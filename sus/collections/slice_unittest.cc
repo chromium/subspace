@@ -2563,8 +2563,8 @@ TEST(SliceMut, FillWith) {
   v1["2..4"_r].fill_with(f);
   EXPECT_EQ(v1[0u], 6);
   EXPECT_EQ(v1[1u], 7);
-  EXPECT_EQ(v1[2u], 10);
-  EXPECT_EQ(v1[3u], 11);
+  EXPECT_EQ(v1[2u], 6);
+  EXPECT_EQ(v1[3u], 7);
 }
 
 TEST(SliceMut, FillWithDefault) {

@@ -233,7 +233,7 @@ constexpr void fill(T value) NO_RETURN_REF noexcept
 /// This method uses a closure to create new values. If you’d rather `Clone` a
 /// given value, use `fill()`. If you want to default-construct elements for a
 /// type that satisfies `sus::construct::Default`, use `fill_with_default()`.
-constexpr void fill_with(::sus::fn::FnMutRef<T()> f) NO_RETURN_REF noexcept {
+constexpr void fill_with(::sus::fn::FnMut<T()> auto f) NO_RETURN_REF noexcept {
   T* ptr = as_mut_ptr();
   T* const end_ptr = ptr + len();
   while (ptr != end_ptr) {
@@ -527,9 +527,10 @@ void rotate_right(::sus::num::usize k) NO_RETURN_REF noexcept
 ///
 /// As with `split_mut()`, if the first or last element is matched, an empty
 /// slice will be the first (or last) item returned by the iterator.
-constexpr RSplitMut<T> rsplit_mut(::sus::fn::FnMutRef<bool(const T&)> pred)
-    RETURN_REF noexcept {
-  return RSplitMut<T>(SplitMut<T>(_iter_refs_expr, *this, ::sus::move(pred)));
+template <::sus::fn::FnMut<bool(const T&)> Pred>
+constexpr RSplitMut<T, Pred> rsplit_mut(Pred pred) RETURN_REF noexcept {
+  return RSplitMut<T, Pred>(
+      SplitMut<T, Pred>(_iter_refs_expr, *this, ::sus::move(pred)));
 }
 
 /// Returns an iterator over subslices separated by elements that match `pred`
@@ -537,10 +538,13 @@ constexpr RSplitMut<T> rsplit_mut(::sus::fn::FnMutRef<bool(const T&)> pred)
 /// and works backwards. The matched element is not contained in the subslices.
 ///
 /// The last element returned, if any, will contain the remainder of the slice.
-constexpr RSplitNMut<T> rsplitn_mut(
-    usize n, ::sus::fn::FnMutRef<bool(const T&)> pred) RETURN_REF noexcept {
-  return RSplitNMut<T>(
-      RSplitMut<T>(SplitMut<T>(_iter_refs_expr, *this, ::sus::move(pred))), n);
+template <::sus::fn::FnMut<bool(const T&)> Pred>
+constexpr RSplitNMut<T, Pred> rsplitn_mut(usize n,
+                                          Pred pred) RETURN_REF noexcept {
+  return RSplitNMut<T, Pred>(  //
+      RSplitMut<T, Pred>(
+          SplitMut<T, Pred>(_iter_refs_expr, *this, ::sus::move(pred))),
+      n);
 }
 
 #if 0
@@ -587,7 +591,7 @@ constexpr RSplitNMut<T> rsplitn_mut(
 /// Panics when `index >= len()`, meaning it always panics on empty slices.
 ::sus::Tuple<SliceMut<T>, T&, SliceMut<T>> select_nth_unstable_by(
     usize index,
-    ::sus::fn::FnMutRef<std::weak_ordering(const T&, const T&)> compare)
+    ::sus::fn::FnMut<std::weak_ordering(const T&, const T&)> auto compare)
     RETURN_REF noexcept {
   ::sus::check_with_message(
       index < len(), "partition_at_index index greater than length of slice");
@@ -659,7 +663,7 @@ void sort() NO_RETURN_REF noexcept
 ///
 /// TODO: Rust's stable sort is O(n * log(n)), so this can be improved. It can
 /// also be constexpr?
-void sort_by(::sus::fn::FnMutRef<std::weak_ordering(const T&, const T&)>
+void sort_by(::sus::fn::FnMut<std::weak_ordering(const T&, const T&)> auto
                  compare) NO_RETURN_REF noexcept {
   if (len() > ::sus::num::usize(0u)) {
     std::stable_sort(as_mut_ptr(), as_mut_ptr() + len(),
@@ -760,7 +764,7 @@ constexpr void sort_unstable() NO_RETURN_REF noexcept
 /// TODO: Rust's sort is unstable (i.e., may reorder equal elements), in-place
 /// (i.e., does not allocate), and O(n * log(n)) worst-case.
 constexpr void sort_unstable_by(
-    ::sus::fn::FnMutRef<std::weak_ordering(const T&, const T&)> compare)
+    ::sus::fn::FnMut<std::weak_ordering(const T&, const T&)> auto compare)
     NO_RETURN_REF noexcept {
   if (len() > 0u) {
     std::sort(as_mut_ptr(), as_mut_ptr() + len(),
@@ -794,9 +798,9 @@ void sort_unstable_by_key(KeyFn f) NO_RETURN_REF noexcept {
 /// If the first element is matched, an empty slice will be the first item
 /// returned by the iterator. Similarly, if the last element in the slice is
 /// matched, an empty slice will be the last item returned by the iterator.
-constexpr SplitMut<T> split_mut(::sus::fn::FnMutRef<bool(const T&)> pred)
-    RETURN_REF noexcept {
-  return SplitMut<T>(_iter_refs_expr, *this, ::sus::move(pred));
+template <::sus::fn::FnMut<bool(const T&)> Pred>
+constexpr SplitMut<T, Pred> split_mut(Pred pred) RETURN_REF noexcept {
+  return SplitMut<T, Pred>(_iter_refs_expr, *this, ::sus::move(pred));
 }
 
 /// Divides one mutable slice into two at an index.
@@ -865,9 +869,10 @@ split_first_mut() RETURN_REF noexcept {
 /// If the last element of the slice is matched, that element will be considered
 /// the terminator of the preceding slice. That slice will be the last item
 /// returned by the iterator.
-constexpr SplitInclusiveMut<T> split_inclusive_mut(
-    ::sus::fn::FnMutRef<bool(const T&)> pred) RETURN_REF noexcept {
-  return SplitInclusiveMut<T>(_iter_refs_expr, *this, ::sus::move(pred));
+template <::sus::fn::FnMut<bool(const T&)> Pred>
+constexpr SplitInclusiveMut<T, Pred> split_inclusive_mut(Pred pred)
+    RETURN_REF noexcept {
+  return SplitInclusiveMut<T, Pred>(_iter_refs_expr, *this, ::sus::move(pred));
 }
 
 /// Returns the last and all the rest of the elements of the slice, or `None` if
@@ -889,10 +894,11 @@ sus_pure constexpr ::sus::Option<::sus::Tuple<T&, SliceMut<T>>> split_last_mut()
 /// contained in the subslices.
 ///
 /// The last element returned, if any, will contain the remainder of the slice.
-constexpr SplitNMut<T> splitn_mut(
-    usize n, ::sus::fn::FnMutRef<bool(const T&)> pred) RETURN_REF noexcept {
-  return SplitNMut<T>(SplitMut<T>(_iter_refs_expr, *this, ::sus::move(pred)),
-                      n);
+template <::sus::fn::FnMut<bool(const T&)> Pred>
+constexpr SplitNMut<T, Pred> splitn_mut(usize n,
+                                        Pred pred) RETURN_REF noexcept {
+  return SplitNMut<T, Pred>(
+      SplitMut<T, Pred>(_iter_refs_expr, *this, ::sus::move(pred)), n);
 }
 
 /// Returns a subslice with the `prefix` removed.

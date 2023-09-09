@@ -32,7 +32,7 @@ namespace __private {
 /// match a predicate function, splitting at most a fixed number of
 /// times.
 template <class ItemT, ::sus::iter::Iterator<ItemT> I>
-class [[sus_trivial_abi]] GenericSplitN final
+class GenericSplitN final
     : public ::sus::iter::IteratorBase<GenericSplitN<ItemT, I>, ItemT> {
  public:
   using Item = ItemT;
@@ -66,8 +66,8 @@ class [[sus_trivial_abi]] GenericSplitN final
   I iter_;
   usize count_;
 
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(iter_),
-                                  decltype(count_));
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(iter_), decltype(count_));
 };
 
 }  // namespace __private
@@ -76,9 +76,9 @@ class [[sus_trivial_abi]] GenericSplitN final
 /// function.
 ///
 /// This struct is created by the `split()` method on slices.
-template <class ItemT>
-class [[nodiscard]] [[sus_trivial_abi]] Split final
-    : public ::sus::iter::IteratorBase<Split<ItemT>,
+template <class ItemT, ::sus::fn::FnMut<bool(const ItemT&)> Pred>
+class [[nodiscard]] Split final
+    : public ::sus::iter::IteratorBase<Split<ItemT, Pred>,
                                        ::sus::collections::Slice<ItemT>> {
  public:
   // `Item` is a `Slice<T>`.
@@ -160,7 +160,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Split final
   template <class A, ::sus::iter::Iterator<A> B>
   friend class __private::GenericSplitN;
   // Access to finish().
-  template <class A>
+  template <class A, ::sus::fn::FnMut<bool(const A&)> APred>
   friend class RSplit;
 
   constexpr Option<Item> finish() noexcept {
@@ -173,26 +173,27 @@ class [[nodiscard]] [[sus_trivial_abi]] Split final
   }
 
   constexpr Split(::sus::iter::IterRef ref, const Slice<ItemT>& values,
-                  ::sus::fn::FnMutRef<bool(const ItemT&)>&& pred) noexcept
+                  Pred&& pred) noexcept
       : ref_(::sus::move(ref)), v_(values), pred_(::sus::move(pred)) {}
 
   [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
   Slice<ItemT> v_;
-  ::sus::fn::FnMutRef<bool(const ItemT&)> pred_;
+  Pred pred_;
   bool finished_ = false;
 
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(ref_),
-                                  decltype(v_), decltype(pred_),
-                                  decltype(finished_));
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(ref_), decltype(v_),
+                                           decltype(pred_),
+                                           decltype(finished_));
 };
 
 /// An iterator over subslices separated by elements that match a predicate
 /// function.
 ///
 /// This struct is created by the `split_mut()` method on slices.
-template <class ItemT>
-class [[nodiscard]] [[sus_trivial_abi]] SplitMut final
-    : public ::sus::iter::IteratorBase<SplitMut<ItemT>,
+template <class ItemT, ::sus::fn::FnMut<bool(const ItemT&)> Pred>
+class [[nodiscard]] SplitMut final
+    : public ::sus::iter::IteratorBase<SplitMut<ItemT, Pred>,
                                        ::sus::collections::SliceMut<ItemT>> {
  public:
   // `Item` is a `SliceMut<T>`.
@@ -274,7 +275,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitMut final
   template <class A, ::sus::iter::Iterator<A> B>
   friend class __private::GenericSplitN;
   // Access to finish().
-  template <class A>
+  template <class A, ::sus::fn::FnMut<bool(const A&)>>
   friend class RSplitMut;
 
   constexpr Option<Item> finish() noexcept {
@@ -286,24 +287,19 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitMut final
     }
   }
 
-  static constexpr auto with(
-      ::sus::iter::IterRef ref, const SliceMut<ItemT>& values,
-      ::sus::fn::FnMutRef<bool(const ItemT&)>&& pred) noexcept {
-    return SplitMut(::sus::move(ref), values, ::sus::move(pred));
-  }
-
   constexpr SplitMut(::sus::iter::IterRef ref, const SliceMut<ItemT>& values,
-                     ::sus::fn::FnMutRef<bool(const ItemT&)>&& pred) noexcept
+                     Pred&& pred) noexcept
       : ref_(::sus::move(ref)), v_(values), pred_(::sus::move(pred)) {}
 
   [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
   SliceMut<ItemT> v_;
-  ::sus::fn::FnMutRef<bool(const ItemT&)> pred_;
+  Pred pred_;
   bool finished_ = false;
 
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(ref_),
-                                  decltype(v_), decltype(pred_),
-                                  decltype(finished_));
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(ref_), decltype(v_),
+                                           decltype(pred_),
+                                           decltype(finished_));
 };
 
 /// An iterator over subslices separated by elements that match a predicate
@@ -311,9 +307,9 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitMut final
 /// of the subslice.
 ///
 /// This struct is created by the `split_inclusive()` method on slices.
-template <class ItemT>
-class [[nodiscard]] [[sus_trivial_abi]] SplitInclusive final
-    : public ::sus::iter::IteratorBase<SplitInclusive<ItemT>,
+template <class ItemT, ::sus::fn::FnMut<bool(const ItemT&)> Pred>
+class [[nodiscard]] SplitInclusive final
+    : public ::sus::iter::IteratorBase<SplitInclusive<ItemT, Pred>,
                                        ::sus::collections::Slice<ItemT>> {
  public:
   // `Item` is a `Slice<T>`.
@@ -398,9 +394,8 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusive final
   template <class ArrayItemT, size_t N>
   friend class Array;
 
-  constexpr SplitInclusive(
-      ::sus::iter::IterRef ref, const Slice<ItemT>& values,
-      ::sus::fn::FnMutRef<bool(const ItemT&)>&& pred) noexcept
+  constexpr SplitInclusive(::sus::iter::IterRef ref, const Slice<ItemT>& values,
+                           Pred&& pred) noexcept
       : ref_(::sus::move(ref)),
         v_(values),
         pred_(::sus::move(pred)),
@@ -408,12 +403,13 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusive final
 
   [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
   Slice<ItemT> v_;
-  ::sus::fn::FnMutRef<bool(const ItemT&)> pred_;
+  Pred pred_;
   bool finished_;
 
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(ref_),
-                                  decltype(v_), decltype(pred_),
-                                  decltype(finished_));
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(ref_), decltype(v_),
+                                           decltype(pred_),
+                                           decltype(finished_));
 };
 
 /// An iterator over subslices separated by elements that match a predicate
@@ -421,9 +417,9 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusive final
 /// of the subslice.
 ///
 /// This struct is created by the `split_inclusive_mut()` method on slices.
-template <class ItemT>
-class [[nodiscard]] [[sus_trivial_abi]] SplitInclusiveMut final
-    : public ::sus::iter::IteratorBase<SplitInclusiveMut<ItemT>,
+template <class ItemT, ::sus::fn::FnMut<bool(const ItemT&)> Pred>
+class [[nodiscard]] SplitInclusiveMut final
+    : public ::sus::iter::IteratorBase<SplitInclusiveMut<ItemT, Pred>,
                                        ::sus::collections::SliceMut<ItemT>> {
  public:
   // `Item` is a `SliceMut<T>`.
@@ -509,15 +505,9 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusiveMut final
   template <class ArrayItemT, size_t N>
   friend class Array;
 
-  static constexpr auto with(
-      ::sus::iter::IterRef ref, const SliceMut<ItemT>& values,
-      ::sus::fn::FnMutRef<bool(const ItemT&)>&& pred) noexcept {
-    return SplitInclusiveMut(::sus::move(ref), values, ::sus::move(pred));
-  }
-
-  constexpr SplitInclusiveMut(
-      ::sus::iter::IterRef ref, const SliceMut<ItemT>& values,
-      ::sus::fn::FnMutRef<bool(const ItemT&)>&& pred) noexcept
+  constexpr SplitInclusiveMut(::sus::iter::IterRef ref,
+                              const SliceMut<ItemT>& values,
+                              Pred&& pred) noexcept
       : ref_(::sus::move(ref)),
         v_(values),
         pred_(::sus::move(pred)),
@@ -525,25 +515,25 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusiveMut final
 
   [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
   SliceMut<ItemT> v_;
-  ::sus::fn::FnMutRef<bool(const ItemT&)> pred_;
+  Pred pred_;
   bool finished_;
 
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(ref_),
-                                  decltype(v_), decltype(pred_),
-                                  decltype(finished_));
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(ref_), decltype(v_),
+                                           decltype(pred_),
+                                           decltype(finished_));
 };
 
 /// An iterator over subslices separated by elements that match a predicate
 /// function, starting from the end of the slice.
 ///
 /// This struct is created by the `rsplit()` method on slices.
-template <class ItemT>
-class [[nodiscard]] [[sus_trivial_abi]] RSplit final
-    : public ::sus::iter::IteratorBase<RSplit<ItemT>,
+template <class ItemT, ::sus::fn::FnMut<bool(const ItemT&)> Pred>
+class [[nodiscard]] RSplit final
+    : public ::sus::iter::IteratorBase<RSplit<ItemT, Pred>,
                                        ::sus::collections::Slice<ItemT>> {
  public:
-  // `Item` is a `Slice<T>`.
-  using Item = typename Split<ItemT>::Item;
+  using Item = ::sus::collections::Slice<ItemT>;
 
   // sus::iter::Iterator trait.
   constexpr Option<Item> next() noexcept { return inner_.next_back(); }
@@ -571,25 +561,25 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplit final
 
   constexpr Option<Item> finish() noexcept { return inner_.finish(); }
 
-  constexpr RSplit(Split<ItemT>&& split) noexcept
+  constexpr RSplit(Split<ItemT, Pred>&& split) noexcept
       : inner_(::sus::move(split)) {}
 
-  Split<ItemT> inner_;
+  Split<ItemT, Pred> inner_;
 
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(inner_));
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(inner_));
 };
 
 /// An iterator over the subslices of the vector which are separated by elements
 /// that match pred, starting from the end of the slice.
 ///
 /// This struct is created by the `rsplit_mut()` method on slices.
-template <class ItemT>
-class [[nodiscard]] [[sus_trivial_abi]] RSplitMut final
-    : public ::sus::iter::IteratorBase<RSplitMut<ItemT>,
+template <class ItemT, ::sus::fn::FnMut<bool(const ItemT&)> Pred>
+class [[nodiscard]] RSplitMut final
+    : public ::sus::iter::IteratorBase<RSplitMut<ItemT, Pred>,
                                        ::sus::collections::SliceMut<ItemT>> {
  public:
-  // `Item` is a `SliceMut<T>`.
-  using Item = typename SplitMut<ItemT>::Item;
+  using Item = ::sus::collections::SliceMut<ItemT>;
 
   // sus::iter::Iterator trait.
   constexpr Option<Item> next() noexcept { return inner_.next_back(); }
@@ -617,25 +607,25 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplitMut final
 
   Option<Item> finish() noexcept { return inner_.finish(); }
 
-  constexpr RSplitMut(SplitMut<ItemT>&& split) noexcept
+  constexpr RSplitMut(SplitMut<ItemT, Pred>&& split) noexcept
       : inner_(::sus::move(split)) {}
 
-  SplitMut<ItemT> inner_;
+  SplitMut<ItemT, Pred> inner_;
 
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(inner_));
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(inner_));
 };
 
 /// An iterator over subslices separated by elements that match a predicate
 /// function, limited to a given number of splits.
 ///
 /// This struct is created by the `splitn()` method on slices.
-template <class ItemT>
-class [[nodiscard]] [[sus_trivial_abi]] SplitN final
-    : public ::sus::iter::IteratorBase<SplitN<ItemT>,
+template <class ItemT, ::sus::fn::FnMut<bool(const ItemT&)> Pred>
+class [[nodiscard]] SplitN final
+    : public ::sus::iter::IteratorBase<SplitN<ItemT, Pred>,
                                        ::sus::collections::Slice<ItemT>> {
  public:
-  // `Item` is a `Slice<T>`.
-  using Item = typename Split<ItemT>::Item;
+  using Item = ::sus::collections::Slice<ItemT>;
 
   // sus::iter::Iterator trait.
   constexpr Option<Item> next() noexcept { return inner_.next(); }
@@ -654,25 +644,25 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitN final
   template <class ArrayItemT, size_t N>
   friend class Array;
 
-  constexpr SplitN(Split<ItemT> split, usize n) noexcept
+  constexpr SplitN(Split<ItemT, Pred> split, usize n) noexcept
       : inner_(::sus::move(split), n) {}
 
-  __private::GenericSplitN<Slice<ItemT>, Split<ItemT>> inner_;
+  __private::GenericSplitN<Slice<ItemT>, Split<ItemT, Pred>> inner_;
 
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(inner_));
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(inner_));
 };
 
 /// An iterator over mutable subslices separated by elements that match a
 /// predicate function, limited to a given number of splits.
 ///
 /// This struct is created by the `splitn_mut()` method on slices.
-template <class ItemT>
-class [[nodiscard]] [[sus_trivial_abi]] SplitNMut final
-    : public ::sus::iter::IteratorBase<SplitNMut<ItemT>,
+template <class ItemT, ::sus::fn::FnMut<bool(const ItemT&)> Pred>
+class [[nodiscard]] SplitNMut final
+    : public ::sus::iter::IteratorBase<SplitNMut<ItemT, Pred>,
                                        ::sus::collections::SliceMut<ItemT>> {
  public:
-  // `Item` is a `SliceMut<T>`.
-  using Item = typename SplitMut<ItemT>::Item;
+  using Item = ::sus::collections::SliceMut<ItemT>;
 
   // sus::iter::Iterator trait.
   constexpr Option<Item> next() noexcept { return inner_.next(); }
@@ -691,12 +681,13 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitNMut final
   template <class ArrayItemT, size_t N>
   friend class Array;
 
-  constexpr SplitNMut(SplitMut<ItemT> split, usize n) noexcept
+  constexpr SplitNMut(SplitMut<ItemT, Pred> split, usize n) noexcept
       : inner_(::sus::move(split), n) {}
 
-  __private::GenericSplitN<SliceMut<ItemT>, SplitMut<ItemT>> inner_;
+  __private::GenericSplitN<SliceMut<ItemT>, SplitMut<ItemT, Pred>> inner_;
 
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(inner_));
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(inner_));
 };
 
 /// An iterator over subslices separated by elements that match a predicate
@@ -704,13 +695,12 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitNMut final
 /// slice.
 ///
 /// This struct is created by the `rsplitn()` method on slices.
-template <class ItemT>
-class [[nodiscard]] [[sus_trivial_abi]] RSplitN final
-    : public ::sus::iter::IteratorBase<RSplitN<ItemT>,
+template <class ItemT, ::sus::fn::FnMut<bool(const ItemT&)> Pred>
+class [[nodiscard]] RSplitN final
+    : public ::sus::iter::IteratorBase<RSplitN<ItemT, Pred>,
                                        ::sus::collections::Slice<ItemT>> {
  public:
-  // `Item` is a `Slice<T>`.
-  using Item = typename RSplit<ItemT>::Item;
+  using Item = ::sus::collections::Slice<ItemT>;
 
   // sus::iter::Iterator trait.
   constexpr Option<Item> next() noexcept { return inner_.next(); }
@@ -729,12 +719,13 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplitN final
   template <class ArrayItemT, size_t N>
   friend class Array;
 
-  constexpr RSplitN(RSplit<ItemT> split, usize n) noexcept
+  constexpr RSplitN(RSplit<ItemT, Pred> split, usize n) noexcept
       : inner_(::sus::move(split), n) {}
 
-  __private::GenericSplitN<Slice<ItemT>, RSplit<ItemT>> inner_;
+  __private::GenericSplitN<Slice<ItemT>, RSplit<ItemT, Pred>> inner_;
 
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(inner_));
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(inner_));
 };
 
 /// An iterator over subslices separated by elements that match a predicate
@@ -742,13 +733,13 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplitN final
 /// slice.
 ///
 /// This struct is created by the rsplitn_mut method on slices.
-template <class ItemT>
-class [[nodiscard]] [[sus_trivial_abi]] RSplitNMut final
-    : public ::sus::iter::IteratorBase<RSplitNMut<ItemT>,
+template <class ItemT, ::sus::fn::FnMut<bool(const ItemT&)> Pred>
+class [[nodiscard]] RSplitNMut final
+    : public ::sus::iter::IteratorBase<RSplitNMut<ItemT, Pred>,
                                        ::sus::collections::SliceMut<ItemT>> {
  public:
   // `Item` is a `SliceMut<T>`.
-  using Item = typename RSplitMut<ItemT>::Item;
+  using Item = ::sus::collections::SliceMut<ItemT>;
 
   // sus::iter::Iterator trait.
   constexpr Option<Item> next() noexcept { return inner_.next(); }
@@ -767,12 +758,13 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplitNMut final
   template <class ArrayItemT, size_t N>
   friend class Array;
 
-  constexpr RSplitNMut(RSplitMut<ItemT> split, usize n) noexcept
+  constexpr RSplitNMut(RSplitMut<ItemT, Pred> split, usize n) noexcept
       : inner_(::sus::move(split), n) {}
 
-  __private::GenericSplitN<SliceMut<ItemT>, RSplitMut<ItemT>> inner_;
+  __private::GenericSplitN<SliceMut<ItemT>, RSplitMut<ItemT, Pred>> inner_;
 
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(inner_));
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(inner_));
 };
 
 }  // namespace sus::collections

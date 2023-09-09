@@ -112,7 +112,7 @@ binary_search(const T& x) const& noexcept
 /// element could be inserted while maintaining sorted order.
 constexpr ::sus::result::Result<::sus::num::usize, ::sus::num::usize>
 binary_search_by(
-    ::sus::fn::FnMutRef<std::weak_ordering(const T&)> f) const& noexcept {
+    ::sus::fn::FnMut<std::weak_ordering(const T&)> auto f) const& noexcept {
   using Result = ::sus::result::Result<::sus::num::usize, ::sus::num::usize>;
 
   // INVARIANTS:
@@ -518,7 +518,7 @@ constexpr ::sus::Option<const T&> last() && = delete;
 /// See also `binary_search()`, `binary_search_by()`, and
 /// `binary_search_by_key()`.
 constexpr ::sus::num::usize partition_point(
-    ::sus::fn::FnMutRef<bool(const T&)> pred) const& noexcept {
+    ::sus::fn::FnMut<bool(const T&)> auto pred) const& noexcept {
   return binary_search_by([pred = ::sus::move(pred)](const T& x) {
            if (::sus::fn::call_mut(pred, x)) {
              return std::strong_ordering::less;
@@ -642,13 +642,15 @@ constexpr ::sus::collections::Vec<T> repeat(usize n) const& noexcept
 ///
 /// As with `split()`, if the first or last element is matched, an empty slice
 /// will be the first (or last) item returned by the iterator.
-constexpr RSplit<T> rsplit(
-    ::sus::fn::FnMutRef<bool(const T&)> pred) const& noexcept {
-  return RSplit<T>(Split<T>(_iter_refs_expr, *this, ::sus::move(pred)));
+template <::sus::fn::FnMut<bool(const T&)> Pred>
+constexpr RSplit<T, Pred> rsplit(Pred pred) const& noexcept {
+  return RSplit<T, Pred>(
+      Split<T, Pred>(_iter_refs_expr, *this, ::sus::move(pred)));
 }
 
 #if _delete_rvalue
-constexpr Split<T> rsplit(::sus::fn::FnMutRef<bool(const T&)>) && = delete;
+template <::sus::fn::FnMut<bool(const T&)> Pred>
+constexpr Split<T, Pred> rsplit(Pred) && = delete;
 #endif
 
 /// Returns an iterator over subslices separated by elements that match `pred`
@@ -656,15 +658,17 @@ constexpr Split<T> rsplit(::sus::fn::FnMutRef<bool(const T&)>) && = delete;
 /// and works backwards. The matched element is not contained in the subslices.
 ///
 /// The last element returned, if any, will contain the remainder of the slice.
-constexpr RSplitN<T> rsplitn(
-    usize n, ::sus::fn::FnMutRef<bool(const T&)> pred) const& noexcept {
-  return RSplitN<T>(
-      RSplit<T>(Split<T>(_iter_refs_expr, *this, ::sus::move(pred))), n);
+template <::sus::fn::FnMut<bool(const T&)> Pred>
+constexpr RSplitN<T, Pred> rsplitn(usize n, Pred pred) const& noexcept {
+  return RSplitN<T, Pred>(  //
+      RSplit<T, Pred>(
+          Split<T, Pred>(_iter_refs_expr, *this, ::sus::move(pred))),
+      n);
 }
 
 #if _delete_rvalue
-constexpr RSplit<T> rsplitn(
-    usize n, ::sus::fn::FnMutRef<bool(const T&)> pred) && = delete;
+template <::sus::fn::FnMut<bool(const T&)> Pred>
+constexpr RSplit<T, Pred> rsplitn(usize n, Pred pred) && = delete;
 #endif
 
 /// Returns an iterator over subslices separated by elements that match `pred`.
@@ -673,13 +677,14 @@ constexpr RSplit<T> rsplitn(
 /// If the first element is matched, an empty slice will be the first item
 /// returned by the iterator. Similarly, if the last element in the slice is
 /// matched, an empty slice will be the last item returned by the iterator.
-constexpr Split<T> split(
-    ::sus::fn::FnMutRef<bool(const T&)> pred) const& noexcept {
-  return Split<T>(_iter_refs_expr, *this, ::sus::move(pred));
+template <::sus::fn::FnMut<bool(const T&)> Pred>
+constexpr Split<T, Pred> split(Pred pred) const& noexcept {
+  return Split<T, Pred>(_iter_refs_expr, *this, ::sus::move(pred));
 }
 
 #if _delete_rvalue
-constexpr Split<T> split(::sus::fn::FnMutRef<bool(const T&)>) && = delete;
+template <::sus::fn::FnMut<bool(const T&)> Pred>
+constexpr Split<T, Pred> split(Pred) && = delete;
 #endif
 
 /// Divides one slice into two at an index.
@@ -756,14 +761,14 @@ constexpr ::sus::Option<::sus::Tuple<const T&, Slice<T>>> split_first() && =
 /// If the last element of the slice is matched, that element will be considered
 /// the terminator of the preceding slice. That slice will be the last item
 /// returned by the iterator.
-constexpr SplitInclusive<T> split_inclusive(
-    ::sus::fn::FnMutRef<bool(const T&)> pred) const& noexcept {
-  return SplitInclusive<T>(_iter_refs_expr, *this, ::sus::move(pred));
+template <::sus::fn::FnMut<bool(const T&)> Pred>
+constexpr SplitInclusive<T, Pred> split_inclusive(Pred pred) const& noexcept {
+  return SplitInclusive<T, Pred>(_iter_refs_expr, *this, ::sus::move(pred));
 }
 
 #if _delete_rvalue
-constexpr SplitInclusive<T> split_inclusive(
-    ::sus::fn::FnMutRef<bool(const T&)>) && = delete;
+template <::sus::fn::FnMut<bool(const T&)> Pred>
+constexpr SplitInclusive<T, Pred> split_inclusive(Pred) && = delete;
 #endif
 
 /// Returns the last and all the rest of the elements of the slice, or `None` if
@@ -786,14 +791,15 @@ constexpr ::sus::Option<::sus::Tuple<const T&, Slice<T>>> split_last() && =
 /// in the subslices.
 ///
 /// The last element returned, if any, will contain the remainder of the slice.
-constexpr SplitN<T> splitn(
-    usize n, ::sus::fn::FnMutRef<bool(const T&)> pred) const& noexcept {
-  return SplitN<T>(Split<T>(_iter_refs_expr, *this, ::sus::move(pred)), n);
+template <::sus::fn::FnMut<bool(const T&)> Pred>
+constexpr SplitN<T, Pred> splitn(usize n, Pred pred) const& noexcept {
+  return SplitN<T, Pred>(
+      Split<T, Pred>(_iter_refs_expr, *this, ::sus::move(pred)), n);
 }
 
 #if _delete_rvalue
-constexpr Split<T> splitn(usize n,
-                          ::sus::fn::FnMutRef<bool(const T&)> pred) && = delete;
+template <::sus::fn::FnMut<bool(const T&)> Pred>
+constexpr Split<T, Pred> splitn(usize n, Pred pred) && = delete;
 #endif
 
 /// Returns `true` if `needle` is a prefix of the slice.
