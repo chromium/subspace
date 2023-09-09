@@ -44,7 +44,7 @@
 
 namespace sus {
 /// The [`Tuple`]($sus::tuple_type::Tuple) type, and the
-/// [`tuple`]($sus::tuple_type::tuple) type-deduction function.
+/// [`tuple`]($sus::tuple_type::tuple) type-deduction constructor function.
 namespace tuple_type {}
 }  // namespace sus
 

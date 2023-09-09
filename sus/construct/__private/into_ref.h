@@ -17,23 +17,24 @@
 #pragma once
 
 #include "sus/construct/from.h"
+#include "sus/mem/forward.h"
 
 namespace sus::construct ::__private {
 
 template <class FromType>
 struct IntoRef final {
   [[nodiscard]] constexpr IntoRef(FromType&& from) noexcept
-      : from_(static_cast<FromType&&>(from)) {}
+      : from_(::sus::forward<FromType>(from)) {}
 
-  template <std::same_as<std::decay_t<FromType>> ToType>
+  template <std::same_as<std::remove_reference_t<FromType>> ToType>
   constexpr operator ToType() && noexcept {
     return static_cast<ToType&&>(from_);
   }
 
   template <::sus::construct::From<FromType> ToType>
-    requires(!std::same_as<std::decay_t<FromType>, ToType>)
+    requires(!std::same_as<std::remove_reference_t<FromType>, ToType>)
   constexpr operator ToType() && noexcept {
-    return ToType::from(static_cast<FromType&&>(from_));
+    return ToType::from(::sus::forward<FromType>(from_));
   }
 
   // Doesn't copy or move. `IntoRef` should only be used as a temporary.

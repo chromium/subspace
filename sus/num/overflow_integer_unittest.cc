@@ -18,6 +18,7 @@
 
 #include "googletest/include/gtest/gtest.h"
 #include "sus/collections/array.h"
+#include "sus/iter/iterator.h"
 #include "sus/num/signed_integer.h"
 #include "sus/num/unsigned_integer.h"
 #include "sus/prelude.h"
@@ -101,6 +102,13 @@ TEST(OverflowInteger, TryFrom) {
             sus::num::TryFromIntError::with_out_of_bounds());
 }
 
+TEST(OverflowInteger, Example_Iterator) {
+  auto a = sus::Array<i32, 2>(2, i32::MAX);
+  auto maybe_answer =
+      a.iter().copied().product<sus::num::OverflowInteger<i32>>();
+  sus::check(maybe_answer.is_overflow());  // Overflow happened.
+}
+
 TEST(OverflowInteger, FromProduct) {
   static_assert(::sus::iter::Product<OverflowInteger<i32>, i32>);
   static_assert(::sus::iter::Product<OverflowInteger<i32>>);
@@ -110,6 +118,14 @@ TEST(OverflowInteger, FromProduct) {
     auto a = sus::Array<i32, 2>(2, i32::MAX);
     decltype(auto) o =
         sus::move(a).into_iter().product<sus::num::OverflowInteger<i32>>();
+    static_assert(std::same_as<decltype(o), sus::num::OverflowInteger<i32>>);
+    EXPECT_EQ(o.to_option(), sus::None);
+  }
+  // Reference iterator.
+  {
+    auto a = sus::Array<i32, 2>(2, i32::MAX);
+    decltype(auto) o =
+        a.iter().copied().product<sus::num::OverflowInteger<i32>>();
     static_assert(std::same_as<decltype(o), sus::num::OverflowInteger<i32>>);
     EXPECT_EQ(o.to_option(), sus::None);
   }
@@ -131,8 +147,8 @@ TEST(OverflowInteger, FromProduct) {
   }
   // Iterating OverflowInteger types without overflow.
   {
-    auto a = sus::Array<OverflowInteger<i32>, 2>(
-        OverflowInteger<i32>(2), OverflowInteger<i32>(4));
+    auto a = sus::Array<OverflowInteger<i32>, 2>(OverflowInteger<i32>(2),
+                                                 OverflowInteger<i32>(4));
     decltype(auto) o = sus::move(a).into_iter().product();
     static_assert(std::same_as<decltype(o), sus::num::OverflowInteger<i32>>);
     EXPECT_EQ(o.to_option().unwrap(), 2 * 4);
@@ -164,9 +180,8 @@ TEST(OverflowInteger, AsValue) {
     auto lvalue = OverflowInteger<i32>(i32::MAX);
     EXPECT_EQ(lvalue.as_value_unchecked(unsafe_fn), i32::MAX);
     EXPECT_EQ(OverflowInteger<i32>(i32::MAX).as_value(), i32::MAX);
-    EXPECT_EQ(
-        OverflowInteger<i32>(i32::MAX).as_value_unchecked(unsafe_fn),
-        i32::MAX);
+    EXPECT_EQ(OverflowInteger<i32>(i32::MAX).as_value_unchecked(unsafe_fn),
+              i32::MAX);
   }
 }
 
@@ -213,8 +228,7 @@ TEST(OverflowIntegerDeathTest, AsValueMutOverflow) {
 TEST(OverflowInteger, Unwrap) {
   EXPECT_EQ(OverflowInteger<i32>(i32::MAX).unwrap(), i32::MAX);
   static_assert(
-      std::same_as<decltype(OverflowInteger<i32>(i32::MAX).unwrap()),
-                   i32>);
+      std::same_as<decltype(OverflowInteger<i32>(i32::MAX).unwrap()), i32>);
   EXPECT_EQ(OverflowInteger<i32>(i32::MAX).unwrap_unchecked(unsafe_fn),
             i32::MAX);
 }
@@ -225,10 +239,8 @@ TEST(OverflowInteger, ToOption) {
   lvalue += 1;
   EXPECT_EQ(lvalue.to_option(), sus::none());
 
-  EXPECT_EQ(OverflowInteger<i32>(i32::MAX).to_option(),
-            sus::some(i32::MAX));
-  EXPECT_EQ((OverflowInteger<i32>(i32::MAX) + 1).to_option(),
-            sus::none());
+  EXPECT_EQ(OverflowInteger<i32>(i32::MAX).to_option(), sus::some(i32::MAX));
+  EXPECT_EQ((OverflowInteger<i32>(i32::MAX) + 1).to_option(), sus::none());
 }
 
 TEST(OverflowInteger, MathAssignFromInt) {
@@ -445,10 +457,8 @@ TEST(OverflowInteger, Eq) {
 
   EXPECT_EQ(OverflowInteger<i32>(1) + i32::MAX,
             OverflowInteger<i32>(1) + i32::MAX);
-  EXPECT_NE(OverflowInteger<i32>(5),
-            OverflowInteger<i32>(1) + i32::MAX);
-  EXPECT_NE(OverflowInteger<i32>(1) + i32::MAX,
-            OverflowInteger<i32>(5));
+  EXPECT_NE(OverflowInteger<i32>(5), OverflowInteger<i32>(1) + i32::MAX);
+  EXPECT_NE(OverflowInteger<i32>(1) + i32::MAX, OverflowInteger<i32>(5));
 }
 
 TEST(OverflowInteger, StrongOrd) {
@@ -456,17 +466,13 @@ TEST(OverflowInteger, StrongOrd) {
   static_assert(::sus::ops::StrongOrd<OverflowInteger<i32>, i32>);
   static_assert(::sus::ops::StrongOrd<i32, OverflowInteger<i32>>);
 
-  EXPECT_EQ(OverflowInteger<i32>(5) <=> 4_i32,
-            std::strong_ordering::greater);
-  EXPECT_EQ(OverflowInteger<i32>(5) <=> 6_i32,
-            std::strong_ordering::less);
+  EXPECT_EQ(OverflowInteger<i32>(5) <=> 4_i32, std::strong_ordering::greater);
+  EXPECT_EQ(OverflowInteger<i32>(5) <=> 6_i32, std::strong_ordering::less);
   EXPECT_EQ(OverflowInteger<i32>(5) <=> 5_i32,
             std::strong_ordering::equivalent);
 
-  EXPECT_EQ(6_i32 <=> OverflowInteger<i32>(5),
-            std::strong_ordering::greater);
-  EXPECT_EQ(4_i32 <=> OverflowInteger<i32>(5),
-            std::strong_ordering::less);
+  EXPECT_EQ(6_i32 <=> OverflowInteger<i32>(5), std::strong_ordering::greater);
+  EXPECT_EQ(4_i32 <=> OverflowInteger<i32>(5), std::strong_ordering::less);
   EXPECT_EQ(5_i32 <=> OverflowInteger<i32>(5),
             std::strong_ordering::equivalent);
 
@@ -477,18 +483,16 @@ TEST(OverflowInteger, StrongOrd) {
   EXPECT_EQ(OverflowInteger<i32>(5) <=> OverflowInteger<i32>(5),
             std::strong_ordering::equivalent);
 
-  EXPECT_EQ(OverflowInteger<i32>(1) + i32::MAX <=>
-                OverflowInteger<i32>(1) + i32::MAX,
-            std::strong_ordering::equivalent);
+  EXPECT_EQ(
+      OverflowInteger<i32>(1) + i32::MAX <=> OverflowInteger<i32>(1) + i32::MAX,
+      std::strong_ordering::equivalent);
   EXPECT_EQ(OverflowInteger<i32>(1) + i32::MAX <=> 0_i32,
             std::strong_ordering::greater);
   EXPECT_EQ(0_i32 <=> OverflowInteger<i32>(1) + i32::MAX,
             std::strong_ordering::less);
-  EXPECT_EQ(OverflowInteger<i32>(1) + i32::MAX <=>
-                OverflowInteger<i32>(0),
+  EXPECT_EQ(OverflowInteger<i32>(1) + i32::MAX <=> OverflowInteger<i32>(0),
             std::strong_ordering::greater);
-  EXPECT_EQ(OverflowInteger<i32>(0) <=>
-                OverflowInteger<i32>(1) + i32::MAX,
+  EXPECT_EQ(OverflowInteger<i32>(0) <=> OverflowInteger<i32>(1) + i32::MAX,
             std::strong_ordering::less);
 }
 

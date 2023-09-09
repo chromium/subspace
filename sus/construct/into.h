@@ -29,38 +29,44 @@
 
 namespace sus::construct {
 
-/// A concept that declares `FromType` can be converted to `ToType` through the
-/// [`From`]($sus::construct::From) concept or through an identity
-/// transformation.
+/// A concept that declares `FromType` can be converted to `ToType`.
 ///
-/// When true, `ToType::from(FromType)` can be used to construct `ToType`,
-/// or `ToType` is the same as `FromType`.
+/// When true, the conversion can be done in one of three ways:
+/// * `ToType::from(FromType)` can be used to construct `ToType`, which is the
+///   preferred way to write conversions. It avoids any accidental conversions
+///   as it does not have an ambiguous appearance with a copy or move.
+/// * `ToType` is the same as `FromType`, in which case a reference to the
+///   object is passed along, and no construction or conversion happens.
 ///
-/// This is the inverse of the [`From`]($sus::construct::From) concept, meant to
-/// be used on methods that want to receive any type and which will explicitly
-/// convert what they are given type.
+/// This is the inverse direction from the [`From`]($sus::construct::From)
+/// concept, while also a broader generalization. It is meant to
+/// be used on methods that want to receive any type that can explicitly be
+/// converted to a specific type.
 ///
 /// This concept is not implementable directly, as it's satisfied for `T` by
 /// implementing the [`From<T>`]($sus::construct::From) concept on a different
-/// type. It is only possible to satisfy this concept for `ToType` that is not a
+/// type.
+/// It is only possible to satisfy this concept for a `ToType` that is not a
 /// reference, as it needs to be able to construct `ToType`.
 ///
 /// # Templates
 ///
 /// To receive [`into()`]($sus::construct::into) correctly for a templated
 /// function argument:
-/// * Avoid
-/// [`std::same_as<T>`](https://en.cppreference.com/w/cpp/concepts/same_as), use
-/// [`std::convertible_to<T>`](https://en.cppreference.com/w/cpp/concepts/convertible_to)
-/// instead, as this will
-///   accept the marker type returned from [into]($sus::construct::into).
+/// * Avoid [`std::same_as<T>`](
+///   https://en.cppreference.com/w/cpp/concepts/same_as), use
+///   [`std::convertible_to<T>`](
+///   https://en.cppreference.com/w/cpp/concepts/convertible_to) instead, as
+///   this will accept the marker type returned from
+///   [into]($sus::construct::into).
 /// * If the argument is a fixed dependent type, like the following:
 ///   ```
 ///   template <class T, class In = Foo<T>>
 ///   void f(In i) {}
 ///   ```
 ///   Insert an extra template parameter that uses
-///   [`std::convertible_to`](https://en.cppreference.com/w/cpp/concepts/convertible_to)
+///   [`std::convertible_to`](
+///   https://en.cppreference.com/w/cpp/concepts/convertible_to)
 ///   and the template type, such as:
 ///   ```
 ///   template <class T, class Exact = Foo<T>, std::convertible_to<Exact> In>
@@ -141,12 +147,14 @@ concept TryInto = ::sus::construct::TryFrom<ToType, FromType> ||
 
 /// Attempts to convert from the given value to a `ToType`.
 ///
-/// Unlike `into()`, this function can not use type deduction to determine the
-/// receiving type as it needs to determine the Result type and allow the caller
-/// the chance to handle the error condition.
+/// Unlike [`into()`]($sus::construct::into), this function can not use type
+/// deduction to determine the
+/// receiving type as it needs to determine the [`Result`]($sus::result::Result)
+/// type and allow the caller the chance to handle the error condition.
 ///
 /// The `TryFrom` concept requires a `try_from()` method that returns a
-/// `Result`. That `Result` will be the return type of this function.
+/// [`Result`]($sus::result::Result). That [`Result`]($sus::result::Result)
+/// will be the return type of this function.
 ///
 /// # Example
 /// ```
