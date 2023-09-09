@@ -36,7 +36,12 @@ std::string make_string(std::string_view var_name, const subdoc::Type& type) {
   auto var_fn = [&]() { str << var_name; };
 
   subdoc::type_to_string(type, text_fn, type_fn, const_fn, volatile_fn,
-                         sus::some(sus::move(var_fn)));
+                         [&]() -> sus::Option<sus::fn::FnOnceRef<void()>> {
+                           if (var_name.empty())
+                             return sus::none();
+                           else
+                             return sus::some(sus::move(var_fn));
+                         }());
   return sus::move(str).str();
 }
 
@@ -79,6 +84,30 @@ struct SubDocTypeTest : public SubDocTest {
     ASSERT_TRUE(result.is_ok());
   }
 };
+
+TEST_F(SubDocTypeTest, NoVarName) {
+  const char test[] = R"(
+    void f(int);
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
+    subdoc::Type t =
+        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t.name, "int");
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.refs, subdoc::Refs::None);
+    EXPECT_EQ(t.pointers.len(), 0u);
+    EXPECT_EQ(t.array_dims.len(), 0u);
+    EXPECT_EQ(t.template_params.len(), 0u);
+    EXPECT_EQ(t.record_path.len(), 0u);
+    EXPECT_EQ(t.namespace_path.len(), 0u);
+
+    EXPECT_EQ(make_string("", t), "!int!");
+  });
+}
 
 TEST_F(SubDocTypeTest, Primitive) {
   const char test[] = R"(

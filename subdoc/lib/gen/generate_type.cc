@@ -78,12 +78,16 @@ void generate_type(HtmlWriter::OpenDiv& div, const LinkedType& linked_type,
     span.add_class("volatile");
     span.write_text("volatile");
   };
+  auto var_fn = [&]() { sus::move(var_name_fn).unwrap()(div); };
 
   type_to_string(linked_type.type, text_fn, type_fn, const_fn, volatile_fn,
-                 sus::some([&]() {
-                   if (var_name_fn.is_some())
-                     sus::move(var_name_fn).unwrap()(div);
-                 }));
+                 [&]() -> sus::Option<sus::fn::FnOnceRef<void(void)>> {
+                   if (var_name_fn.is_some()) {
+                     return sus::some(sus::move(var_fn));
+                   } else {
+                     return sus::none();
+                   }
+                 }());
 }
 
 }  // namespace subdoc::gen

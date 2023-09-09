@@ -9,8 +9,4 @@ out\subdoc\subdoc -p out --out docs ^
     --project-logo logo.png ^
     --project-name Subspace ^
     --ignore-bad-code-links ^
-    subspace/sus/num/uptr ^
-    subspace/sus/error ^
-    subspace/sus/boxed ^
-    subspace/sus/iter/compat_ranges_unittest ^
-    subspace/sus/choice 
+    subspace/sus/num/uptr
