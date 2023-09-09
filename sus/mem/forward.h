@@ -21,7 +21,7 @@
 
 namespace sus::mem {
 
-/// Passes a reference as an argument while preserving the reference type.
+/// Move from non-reference values but pass through and preserve references.
 ///
 /// Typically, passing an rvalue reference will convert it to an lvalue. Using
 /// `sus::forward<T>(t)` on an rvalue reference `T&& t` will preserve the rvalue
@@ -35,11 +35,13 @@ namespace sus::mem {
 ///
 /// In the common case, when you want to receive a parameter that will be moved,
 /// it should be received by value. However, library implementors sometimes with
-/// to receive an *rvalue reference*. If you find yourself needing to `move()`
-/// from a universal reference instead of `forward()`, such as to construct a
+/// to receive an *rvalue reference*. If you find yourself needing to
+/// [`move()`]($sus::mem::move) from a universal reference instead of
+/// [`forward()`]($sus::mem::forward), such as to construct a
 /// value type `T` from a universal reference `T&&` without introducing a copy,
-/// use `IsMoveRef` to constrain the universal reference to be an rvalue, and
-/// use `move()` instead of `forward()`.
+/// use [`IsMoveRef`]($sus::mem::IsMoveRef) to constrain the universal reference
+/// to be an rvalue, and use [`move()`]($sus::mem::move) instead of
+/// [`forward()`]($sus::mem::forward).
 template <class T>
 sus_pure_const sus_always_inline constexpr T&& forward(
     std::remove_reference_t<T>& t) noexcept {

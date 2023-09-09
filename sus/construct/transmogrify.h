@@ -61,13 +61,18 @@ struct TransmogrifyImpl<T, T> {
 /// conversion may truncate or extend `F` in order to do the conversion to `T`.
 ///
 /// This operation is also commonly known as type casting, or type coercion. The
-/// conversion to `T` can be done by calling `sus::mog<T>(from)`.
+/// conversion to `T` can be done by calling
+/// [`sus::mog<T>(from)`]($sus::construct::mog).
 ///
 /// The conversion is defined for the identity conversion where both the input
-/// and output are the same type, if the type is `Copy`, in which case the input
-/// is copied and returned. As Transmogrification is meant to be a cheap
-/// conversion, primarily for primitive types, it does not support `Clone`
-/// types, and `sus::construct::Into` should be used in more complex cases.
+/// and output are the same type, if the type is [`Copy`]($sus::mem::Copy), in
+//  which case the input is copied and returned.
+/// As Transmogrification is meant to be a cheap
+/// conversion, primarily for primitive types, it does not support
+/// [`Clone`]($sus::mem::Clone) types, and [`Into`]($sus::construct::Into)
+/// should be used in more complex cases.
+///
+/// # Casting numeric types
 ///
 /// For numeric and primitive types, `Transmogrify` is defined to provide a
 /// mechanism like `static_cast<T>` but it is much safer than `static_cast<T>`
@@ -76,32 +81,33 @@ struct TransmogrifyImpl<T, T> {
 /// * Casting from a float to an integer will perform a static_cast, which
 ///   rounds the float towards zero, except:
 ///   * `NAN` will return 0.
-///   * Values larger than the maximum integer value, including `f32::INFINITY`,
+///   * Values larger than the maximum integer value, including
+///     [`f32::INFINITY`]($sus::num::f32::INFINITY),
 ///     will saturate to the maximum value of the integer type.
 ///   * Values smaller than the minimum integer value, including
-///     `f32::NEG_INFINITY`, will saturate to the minimum value of the integer
-///     type.
+///     [`f32::NEG_INFINITY`]($sus::num::f32::NEG_INFINITY), will saturate to
+///     the minimum value of the integer type.
 /// * Casting from an integer to a float will perform a static_cast, which
 ///   converts to the nearest floating point value. The rounding direction for
 ///   values that land between representable floating point values is
 ///   implementation defined (per C++20 Section 7.3.10).
-/// * Casting from an `f32` (or `float`) to an `f64` (or `double`) preserves the
+/// * Casting from an [`f32`]($sus::num::f32) (or `float`) to an
+///   [`f64`]($sus::num::f64) (or `double`) preserves the
 ///   value unchanged.
-/// * Casting from an `f64` (or `double`) to an `f32` (or float) performs the
-///   same action as a static_cast if the value is in range for f32, otherwise:
+/// * Casting from an [`f64`]($sus::num::f64) (or `double`) to an
+///   [`f32`]($sus::num::f32) (or float) performs the same action as a
+///   `static_cast` if the value is in range for [`f32`]($sus::num::f32),
+///   otherwise:
 ///   * `NAN` will return a `NAN`.
-///   * Values outside of f32's range will return `f32::INFINITY` or
-///     `f32::NEG_INFINITY` for positive and negative values respectively.
-/// * Casting to and from `std::byte` produces the same values as casting to and
-///   from `u8`.
+///   * Values outside of [`f32`]($sus::num::f32)'s range will return
+///     [`f32::INFINITY`]($sus::num::f32::INFINITY) or
+///     [`f32::NEG_INFINITY`]($sus::num::f32::NEG_INFINITY) for positive and
+///     negative values respectively.
+/// * Casting to and from [`std::byte`](
+///   https://en.cppreference.com/w/cpp/types/byte) produces the same values
+///   as casting to and from [`u8`]($sus::num::u8).
 ///
 /// These conversions are all defined in `sus/num/types.h`.
-///
-/// The transmogrifier is one of three of the most complicated inventions. The
-/// other two are the [Cerebral
-/// Enhance-O-Tron](https://calvinandhobbes.fandom.com/wiki/Cerebral_Enhance-O-Tron),
-/// and the [Transmogrifier
-/// Gun](https://calvinandhobbes.fandom.com/wiki/Transmogrifier_Gun).
 ///
 /// # Extending to other types
 ///
@@ -112,6 +118,14 @@ struct TransmogrifyImpl<T, T> {
 ///
 /// The `Transmogrify` specialization needs a static method `mog_from()` that
 /// receives `const From&` and returns `To`.
+///
+/// # Lore
+///
+/// The transmogrifier is one of three of the most complicated inventions. The
+/// other two are the [Cerebral
+/// Enhance-O-Tron](https://calvinandhobbes.fandom.com/wiki/Cerebral_Enhance-O-Tron),
+/// and the [Transmogrifier
+/// Gun](https://calvinandhobbes.fandom.com/wiki/Transmogrifier_Gun).
 template <class To, class From>
 concept Transmogrify = requires(const From& from) {
   {
@@ -126,15 +140,19 @@ concept Transmogrify = requires(const From& from) {
 /// memory unsafety if used incorrectly. This behaves like `static_cast<To>()`
 /// but without Undefined Behaviour.
 ///
-/// The `mog` operation is supported for types `To` and `From` that satisfy
-/// `Transmogrify<To, From>`.
+/// The [`mog`]($sus::construct::mog) operation is supported for types `To` and
+/// `From` that satisfy [`Transmogrify<To, From>`](
+/// $sus::construct::Transmogrify).
 ///
 /// To convert between types while ensuring the values are preserved, use
-/// `sus::construct::Into` or `sus::construct::TryInto`. Usually prefer using
-/// `sus::into(x)` or `sus::try_into(x)` over `sus::mog<Y>(x)` as most code
+/// [`Into`]($sus::construct::Into) or [`TryInto`]($sus::construct::TryInto).
+/// Usually prefer using [`sus::into(x)`]($sus::construct::into) or
+/// [`sus::try_into(x)`]($sus::construct::try_into) over
+/// [`sus::mog<Y>(x)`]($sus::construct::mog) as most code
 /// should preserve values across type transitions.
 ///
-/// See `Transmogrify` for how numeric and primitive values are converted.
+/// See [`Transmogrify`]($sus::construct::Transmogrify) for how numeric and
+/// primitive values are converted.
 ///
 /// # Examples
 ///

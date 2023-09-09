@@ -18,34 +18,76 @@
 
 namespace sus {
 
-/// Safe integer and floating point numerics, and numeric concepts.
+/// Safe integer (e.g. [`i32`]($sus::num::i32)) and floating point
+/// (e.g. [`f32`]($sus::num::f32)) numerics, and numeric concepts.
 ///
-/// This namespace contains safe integer types (i8, i16, u32, usize, etc.) and
-/// floating point types (f32, f64).
+/// This namespace contains safe integer types and floating point types.
+///
+/// Safe numeric types:
+/// * Signed integers: [`i8`]($sus::num::i8), [`i16`]($sus::num::i16),
+///   [`i32`]($sus::num::i32), [`i64`]($sus::num::i64),
+///   [`isize`]($sus::num::isize).
+/// * Unsigned integers: [`u8`]($sus::num::u8), [`u16`]($sus::num::u16),
+///   [`u32`]($sus::num::u32), [`u64`]($sus::num::u64),
+///   [`usize`]($sus::num::usize), [`uptr`]($sus::num::uptr).
+/// * Floating point: [`f32`]($sus::num::f32), [`f64`]($sus::num::f64).
+/// * Portability helper: [`CInt`]
 ///
 /// Additionally, there are Concepts that match against safe numerics, C++
 /// primitive types, and operations with numeric types.
 ///
+/// The Subspace library numeric types can interoperate with primitive C++
+/// types, but are safer than primitive C++ types and eliminate many classes of
+/// bugs that often lead to security vulnerabilities:
+/// * Integer overflow is not allowed by default, and will
+///   [`panic`]($sus::assertions::panic) to terminate the
+///   program. Intentional overflow can be achieved through methods like
+///   [`wrapping_add`]($sus::num::i32::wrapping_add) or
+///   [`saturating_mul`]($sus::num::i32::saturating_mul). The
+///   [`OverflowInteger`]($sus::num::OverflowInteger) type can be used for a
+///   series of potentially-overflowing operations and unwraps to an integer
+///   value if-and-only-if no overflow has occured.
+/// * Integers and floats convert implicitly into each other or into primitive
+///   types *only* when no data can be lost, otherwise conversions do not
+///   compile. To convert fallibly and observe data loss, use the
+///   [`TryFrom`]($sus::construct::TryFrom) concept methods, such as
+///   `u32::try_from(3_i32)`. To do casting conversions with truncation, use
+///   [`Transmogrify`]($sus::construct::Transmogrify).
+/// * No integer promotion. Math on 8-bit and 16-bit integers will not change
+///   their type, unlike primitive types which convert to (signed) int on any
+///   math operation.
+/// * No Undefined Behaviour in conversions. Conversions between all numeric
+///   types, and between them and primitive types is well-defined for all
+///   possible values, unlike conversions between primitive integer and
+///   floating point types which can result in Undefined Behaviour.
+///
+/// The numeric types also come with builtin methods to perform common
+/// operations, such as [`abs`]($sus::num::i32::abs),
+/// [`pow`]($sus::num::i32::pow), [`log10`]($sus::num::i32::log10), or
+/// [`leading_ones`]($sus::num::i32::leading_ones).
+///
 /// # Conversions
 ///
-/// To convert to and from integer values, use
-/// [`sus::into`]($sus::construct::into) when
-/// [`Into<From, To>`]($sus::construct::Into) is satisfied between the two
-/// types for lossless conversion. Otherwise use
-/// [`sus::try_into`]($sus::construct::try_into) when
-/// [`TryInto<From, To>`]($sus::construct::TryInto) is satisfied to convert
-/// and handle cases where the value can not be represented in the target type.
+/// To explicitly invoke a lossless conversion, use
+/// [`From`]($sus::construct::From). Use [`Into`]($sus::construct::Into) to
+/// constain inputs in generic code, and [`sus::into()`]($sus::construct::into)
+/// to type-deduce for conversions. Some lossless conversions are also allowed
+/// to happen implicitly, though explicit conversion is better.
 ///
-/// To convert between floating point types, use
-/// [`sus::into(x)`]($sus::construct::into) to losslessly promote `x` to a
-/// larger type ([`f32`]($sus::num::f32) to [`f64`]($sus::num::f64)) or
-/// `sus::try_into(x)` to convert `x` to a smaller type
-/// ([`f64`]($sus::num::f64) to [`f32`]($sus::num::f32)).
+/// To convert and handle the case where data is lost, use
+/// [`TryFrom`]($sus::construct::TryFrom), or
+/// [`TryInto`]($sus::construct::TryInto) in generic code. Using
+/// `T::try_from(U).unwrap()` is a quick way to convert and find out if there
+/// are values out of range, or to terminate on malicious inputs. Or
+/// `T::try_from(U).unwrap_or_default()` to convert to the input value or else
+/// to zero.
 ///
-/// Use [`sus::mog<T>()`]($sus::construct::mog) to do a lossy type coercion
-/// (like `static_cast<T>()`) between integer and floating point types, or C++
-/// primitive integers, floating point, or enums. When converting to a larger
-/// signed integer type, the value will be sign-extended.
+/// To convert with truncation/loss of data, like `static_cast`, use
+/// [`sus::mog<T>()`]($sus::construct::mog). It can convert between
+/// integers, floats, and enums, for both safe numerics and primitives. See
+/// [Casting numeric types](
+/// $sus::construct::Transmogrify#casting-numeric-types) for the rules of
+/// conversion through [`mog`]($sus::construct::mog).
 namespace num {}
 
 }  // namespace sus

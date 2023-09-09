@@ -28,28 +28,53 @@ namespace sus::num {
 /// An integer type that handles overflow instead of panicing.
 ///
 /// The value inside the integer can be accessed or unwrapped like with an
-/// `Option`, which will panic if the integer has overflowed. Or it can be
-/// converted into an `Option` that will represent the overflow state as `None`.
+/// [`Option`]($sus::option::Option), which will panic if the integer has
+/// overflowed. Or it can be converted into an [`Option`]($sus::option::Option)
+/// that will represent the overflow state as `None`.
+///
+/// This type is useful for performing a series of operations as a unit, and
+/// then checking for overflow after. It satisfies the
+/// [`Sum`]($sus::iter::Sum) and [`Product`]($sus::iter::Product) concepts
+/// so can be used with [`sum`]($sus::iter::IteratorBase::sum) and
+/// [`product`]($sus::iter::IteratorBase::product) for iterators over integers.
+///
+/// # Examples
+/// Using OverflowInteger to sum an iterator of integers and look for overflow
+/// after without panicking.
+/// ```
+/// auto a = sus::Array<i32, 2>(2, i32::MAX);
+/// auto maybe_answer =
+///     a.iter().copied().product<sus::num::OverflowInteger<i32>>();
+/// sus::check(maybe_answer.is_overflow());
+/// ```
 template <::sus::num::Integer I>
 class OverflowInteger {
  public:
-  // Default constructs OverflowInteger with the default value of the inner
+  // Default constructs `OverflowInteger` with the default value of the inner
   // integer type `I`.
   explicit constexpr OverflowInteger() noexcept
     requires(::sus::construct::Default<I>)
       : v_(Option<I>(I())) {}
 
-  /// Constructs an OverflowInteger from the same subspace integer type.
-  template <std::convertible_to<I> U>
-  explicit constexpr OverflowInteger(U u) noexcept
-      : v_(Option<I>(::sus::move(u))) {}
+  /// Constructs an `OverflowInteger` from the same subspace integer type.
+  ///
+  /// # Implementation note
+  ///
+  /// Because `OverflowInteger` is constructible from a smaller integer, but
+  /// `I` is also constructible from a smaller integer, which can then be used
+  /// to construct `OverflowInteger`, on MSVC this conversion becomes ambiguous.
+  /// So we use `convertible_to` to make the constructor a template,
+  /// which allows the compiler to choose one.
+  /// https://developercommunity.visualstudio.com/t/Ambiguous-conversion-with-two-paths-of-d/10461863
+  explicit constexpr OverflowInteger(std::convertible_to<I> auto u) noexcept
+      : v_(Option<I>(sus::move(u))) {}
 
-  /// Satisfies `sus::construct::From<OverflowInteger<I>, U>` if the inner
-  /// integer type `I` satisfies `sus::construct::From<I, U>`.
+  /// Satisfies `sus::construct::From<OverflowInteger<I>, U>` if the
+  /// `OverflowInteger` is constructible from `U`.
   template <class U>
-    requires(::sus::construct::From<I, U>)
+    requires(std::constructible_from<OverflowInteger, U>)
   sus_pure static constexpr OverflowInteger from(U u) noexcept {
-    return OverflowInteger(::sus::move_into(u));
+    return OverflowInteger(u);
   }
 
   /// Satisfies `sus::construct::TryFrom<OverflowInteger<I>, U>` if the inner
@@ -80,7 +105,7 @@ class OverflowInteger {
   /// If an iterator yields a subspace integer type, `iter.product()` would
   /// panic on overflow. So instead `iter.product<OverflowInteger<T>>()` can be
   /// used (for integer type `T`) which will perform the product computation and
-  /// return an OverflowInteger without ever panicking.
+  /// return an `OverflowInteger` without ever panicking.
   static constexpr OverflowInteger from_product(
       ::sus::iter::Iterator<I> auto&& it) noexcept
     requires(::sus::mem::IsMoveRef<decltype(it)>)
