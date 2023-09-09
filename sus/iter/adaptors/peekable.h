@@ -74,7 +74,7 @@ class [[nodiscard]] Peekable final
   /// If `func` returns `true` for the next value of this iterator, consume and
   /// return it. Otherwise, return `None`.
   constexpr Option<Item> next_if(
-      ::sus::fn::FnOnceRef<bool(const std::remove_reference_t<Item>&)>
+      ::sus::fn::FnOnce<bool(const std::remove_reference_t<Item>&)> auto
           pred) noexcept {
     Option<Item> o = next();
     if (o.is_some() && ::sus::fn::call_once(::sus::move(pred), o.as_value())) {
