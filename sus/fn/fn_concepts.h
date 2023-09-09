@@ -380,11 +380,11 @@ concept Fn = requires {
   requires FnOnce<F, S...>;
 };
 
-/// Invokes the `FnOnce`, passing any given arguments along, and returning the
-/// result.
+/// Invokes the [`FnOnce`]($sus::fn::FnOnce), passing any given arguments along,
+/// and returning the result.
 ///
 /// This function is like
-/// [`std::invoke()`](https://en.cppreference.com/w/cpp/utility/functional/invoke)
+/// [`std::invoke`](https://en.cppreference.com/w/cpp/utility/functional/invoke)
 /// but it provides the following additional guiderails:
 /// * Verifies that the thing being invoked is being moved from so that the
 ///   correct overload will be invoked.
@@ -395,11 +395,11 @@ sus_always_inline constexpr decltype(auto) call_once(F&& f, Args&&... args)
   return std::invoke(sus::move(f), sus::forward<Args>(args)...);
 }
 
-/// Invokes the `FnMut`, passing any given arguments along, and returning the
-/// result.
+/// Invokes the [`FnMut`]($sus::fn::FnMut), passing any given arguments along,
+/// and returning the result.
 ///
 /// This function is like
-/// [`std::invoke()`](https://en.cppreference.com/w/cpp/utility/functional/invoke)
+/// [`std::invoke`](https://en.cppreference.com/w/cpp/utility/functional/invoke)
 /// but it provides the following additional guiderails:
 /// * Verifies that the thing being invoked is called as a mutable lvalue so
 ///   that the correct overload will be invoked.
@@ -410,11 +410,11 @@ sus_always_inline constexpr decltype(auto) call_mut(F&& f, Args&&... args) {
                      sus::forward<Args>(args)...);
 }
 
-/// Invokes the `Fn`, passing any given arguments along, and returning the
-/// result.
+/// Invokes the [`Fn`]($sus::fn::Fn), passing any given arguments along,
+/// and returning the result.
 ///
 /// This function is like
-/// [`std::invoke()`](https://en.cppreference.com/w/cpp/utility/functional/invoke)
+/// [`std::invoke`](https://en.cppreference.com/w/cpp/utility/functional/invoke)
 /// but it provides the following additional guiderails:
 /// * Verifies that the thing being invoked is called as a const lvalue so
 ///   that the correct overload will be invoked.
