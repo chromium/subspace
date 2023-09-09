@@ -26,24 +26,33 @@
 
 namespace sus::fn {
 
-/// When used as the return type of the function signature in `Fn`, `FnMut` and
-/// `FnOnce`, the concepts will match against any return type from a functor
-/// except `void`.
+/// When used as the return type of the function signature in
+/// [`Fn`]($sus::fn::Fn), [`FnMut`]($sus::fn::FnMut) and
+/// [`FnOnce`]($sus::fn::FnOnce), the concepts will match against any return
+/// type from a functor except `void`.
+///
+/// Use [`Anything`]($sus::fn::Anything) to include `void` as an accepted return
+/// type.
 struct NonVoid {
   template <class T>
   constexpr NonVoid(T&&) noexcept {}
 };
 
-/// When used as the return type of the function signature in `Fn`, `FnMut` and
-/// `FnOnce`, the concepts will match against any return type from a functor
-/// including `void`.
+/// When used as the return type of the function signature in
+/// [`Fn`]($sus::fn::Fn), [`FnMut`]($sus::fn::FnMut) and
+/// [`FnOnce`]($sus::fn::FnOnce), the concepts will match against any return
+/// type from a functor including `void`.
+///
+/// Use [`NonVoid`]($sus::fn::NonVoid) to exclude `void` as an accepted return
+/// type.
 struct Anything {
   template <class T>
   constexpr Anything(T&&) noexcept {}
 };
 
-/// The version of a callable object that is called on an rvalue (moved-from)
-/// receiver. A `FnOnce` is typically the best fit for any callable that will
+/// The version of a callable object that may be called only once.
+///
+/// A `FnOnce` is typically the best fit for any callable that will
 /// only be called at most once. However when a template (or constexpr) is not
 /// required, receiving a `FnOnceRef` instead of `FnOnce auto&&` will typically
 /// produce less code by using type erasure to avoid template instantiation.
@@ -154,7 +163,9 @@ concept FnOnce = requires {
 };
 
 /// The version of a callable object that is allowed to mutate internal state
-/// and may be called multiple times. A `FnMut` is typically the best fit for
+/// and may be called multiple times.
+///
+/// A `FnMut` is typically the best fit for
 /// any callable that may be called one or more times. However when a template
 /// (or constexpr) is not required, receiving a `FnMutRef` instead of `FnMut
 /// auto` will typically produce less code by using type erasure to avoid
@@ -268,7 +279,9 @@ concept FnMut = requires {
 };
 
 /// The version of a callable object that may be called multiple times without
-/// mutating internal state. A `Fn` is useful for a callable that is received as
+/// mutating internal state.
+///
+/// A `Fn` is useful for a callable that is received as
 /// a const reference to indicate it and may be called one or more times and
 /// does not change between call. However when a template (or constexpr) is not
 /// required, receiving a `FnRef` instead of `const Fn auto&` will typically
