@@ -87,7 +87,7 @@ struct TransmogrifyImpl<T, T> {
 ///   * Values smaller than the minimum integer value, including
 ///     [`f32::NEG_INFINITY`]($sus::num::f32::NEG_INFINITY), will saturate to
 ///     the minimum value of the integer type.
-/// * Casting from an integer to a float will perform a static_cast, which
+/// * Casting from an integer to a float will perform a `static_cast`, which
 ///   converts to the nearest floating point value. The rounding direction for
 ///   values that land between representable floating point values is
 ///   implementation defined (per C++20 Section 7.3.10).
