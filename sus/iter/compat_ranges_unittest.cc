@@ -246,7 +246,7 @@ TEST(CompatRanges, FromRange_Example) {
 }
 
 TEST(CompatRanges, Tr) {
-  auto tr = [](std::string_view from, std::string_view to, std::string & s) {
+  auto tr = [](std::string_view from, std::string_view to, std::string& s) {
     sus::iter::from_range(s).for_each([&](char& b) {
       if (auto found = sus::iter::from_range(from)
                            .zip(sus::iter::from_range(to))
