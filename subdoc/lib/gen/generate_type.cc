@@ -41,6 +41,14 @@ void generate_type(HtmlWriter::OpenDiv& div, const LinkedType& linked_type,
     const sus::Option<TypeRef>& maybe_ref =
         linked_type.type_element_refs[sus::mem::replace(i_, i_ + 1u)];
     if (maybe_ref.is_none()) {
+      for (const std::string& p : q.namespace_path) {
+        div.write_text(p);
+        div.write_text("::");
+      }
+      for (const std::string& p : q.record_path) {
+        div.write_text(p);
+        div.write_text("::");
+      }
       div.write_text(q.name);
       return;
     }

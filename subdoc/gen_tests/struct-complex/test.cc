@@ -3,6 +3,8 @@
 
 struct OtherType {};
 
+namespace __private { struct Private {}; }
+
 /// Comment headline S
 struct S {
   /// Comment headline void_method
@@ -16,6 +18,9 @@ struct S {
 
   // Overload should be grouped with the other int_method().
   void int_method() volatile {}
+
+  /// Parameter isn't linked.
+  void unlinked_param(__private::Private) {}
 
   /// Comment headline type_field
   const OtherType type_field;
