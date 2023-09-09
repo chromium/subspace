@@ -47,7 +47,7 @@
 namespace sus {
 /// The [`Result`]($sus::result::Result) type, and the
 /// [`ok`]($sus::result::ok) and [`err`]($sus::result::err)
-/// type-deduction functions.
+/// type-deduction constructor functions.
 namespace result {}
 }  // namespace sus
 
