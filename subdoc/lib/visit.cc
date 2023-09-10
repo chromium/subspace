@@ -517,9 +517,10 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                     ->getNameAsString();
               } else if (auto* convdecl =
                              clang::dyn_cast<clang::CXXConversionDecl>(decl)) {
-                Type t = build_local_type(convdecl->getReturnType(),
-                                          convdecl->getASTContext().getSourceManager(),
-                                          preprocessor_);
+                Type t = build_local_type(
+                    convdecl->getReturnType(),
+                    convdecl->getASTContext().getSourceManager(),
+                    preprocessor_);
                 return std::string("operator ") + t.name;
               } else {
                 return decl->getNameAsString();
@@ -538,9 +539,26 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             sus::Option<std::string> overload_set =
                 sus::clone(comment.attrs.overload_set);
 
-            std::string signature;
+            std::string signature = "(";
             for (clang::ParmVarDecl* p : decl->parameters()) {
               signature += p->getOriginalType().getAsString();
+            }
+            signature += ")";
+            if (auto* mdecl = clang::dyn_cast<clang::CXXMethodDecl>(decl)) {
+              // Prevent a parameter and return qualifier from possibly being
+              // confused for eachother in the string by putting a delimiter in
+              // here that can't appear in the parameter list.
+              signature += " -> ";
+              signature += mdecl->getMethodQualifiers().getAsString();
+              switch (mdecl->getRefQualifier()) {
+                case clang::RefQualifierKind::RQ_None: break;
+                case clang::RefQualifierKind::RQ_LValue:
+                  signature += "&";
+                  break;
+                case clang::RefQualifierKind::RQ_RValue:
+                  signature += "&&";
+                  break;
+              }
             }
 
             auto linked_return_type = LinkedType::with_type(
@@ -561,7 +579,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                 decl->getASTContext().getSourceManager().getFileOffset(
                     decl->getLocation()));
 
-            if (clang::isa<clang::CXXMethodDecl>(decl)) {
+            if (auto* mdecl = clang::dyn_cast<clang::CXXMethodDecl>(decl)) {
               sus::check(clang::isa<clang::RecordDecl>(context));
 
               // TODO: It's possible to overload a method in a base class. What
@@ -572,7 +590,6 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
               if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
                       clang::cast<clang::RecordDecl>(context));
                   parent.is_some()) {
-                auto* mdecl = clang::cast<clang::CXXMethodDecl>(decl);
                 fe.overloads[0u].method = sus::some(MethodSpecific{
                     .is_static = mdecl->isStatic(),
                     .is_volatile = mdecl->isVolatile(),
@@ -644,7 +661,9 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       // We already visited this thing, from another translation unit.
       add_overload = false;
     } else {
-      add_overload = true;
+      // The comment is ambiguous, there's another comment for the same overload
+      // set. This is an error.
+      add_overload = false;
       auto& ast_cx = decl->getASTContext();
       const auto& old_comment_element = it->second;
       ast_cx.getDiagnostics()

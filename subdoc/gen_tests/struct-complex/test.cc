@@ -6,16 +6,16 @@ struct OtherType {};
 /// Comment headline S
 struct S {
   /// Comment headline void_method
-  void void_method() const& {}
+  void void_method() const&;
   /// Comment headline static_type_method
-  static OtherType static_type_method() {}
+  static OtherType static_type_method();
   /// Comment headline type_method
-  OtherType type_method() {}
+  OtherType type_method();
   /// Comment headline static_bool_method
-  static bool static_bool_method() {}
+  static bool static_bool_method();
 
   // Overload should be grouped with the other int_method().
-  void int_method() volatile {}
+  void int_method() volatile;
 
   /// Comment headline type_field
   const OtherType type_field;
@@ -25,4 +25,9 @@ struct S {
   bool bool_field;
   /// Comment headline static_bool_member
   static bool static_bool_member;
+
+  /// Call operator with two overloads.
+  int operator()() const&;
+  bool operator()() &;
+  float operator()() &&;
 };
