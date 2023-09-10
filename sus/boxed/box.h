@@ -352,9 +352,12 @@ class [[sus_trivial_abi]] Box final {
   /// and can be used as a function type. It will forward the call through
   /// to the inner type.
   ///
-  /// `Box<`[`DynFn`]($sus::fn::DynFn)`>` satisfies [`Fn`]($sus::fn::Fn),
-  /// `Box<`[`DynFnMut`]($sus::fn::DynFnMut)`>` satisfies [`FnMut`]($sus::fn::FnMut),
-  /// and `Box<`[`DynFnOnce`]($sus::fn::DynFnOnce)`>` satisfies [`FnOnce`]($sus::fn::FnOnce).
+  /// * `Box<`[`DynFn`]($sus::fn::DynFn)`>` satisfies [`Fn`]($sus::fn::Fn).
+  /// * `Box<`[`DynFnMut`]($sus::fn::DynFnMut)`>` satisfies
+  ///   [`FnMut`]($sus::fn::FnMut).
+  /// * `Box<`[`DynFnOnce`]($sus::fn::DynFnOnce)`>` satisfies
+  ///   [`FnOnce`]($sus::fn::FnOnce).
+  ///
   /// The usual compatibility rules apply, allowing [`DynFn`]($sus::fn::DynFn)
   /// to be treated like [`DynFnMut`]($sus::fn::DynFnMut)
   /// and both of them to be treated like [`DynFnOnce`]($sus::fn::DynFnOnce).
@@ -379,10 +382,32 @@ class [[sus_trivial_abi]] Box final {
   /// // The object inside `mut_b` is now destroyed.
   /// ```
   ///
-  /// A `Box<FynFnMut>` being used as a function object. It can not be called
+  /// A `Box<DynFnMut>` being used as a function object. It can not be called
   /// on a `const Box` as it requies the ability to mutate, and `const Box`
-  /// treats its inner object as const.
+  /// treats its inner object as const:
+  /// ```
+  /// auto mut_b = Box<sus::fn::DynFnMut<usize(std::string_view)>>::from(
+  ///     &std::string_view::size);
+  /// sus::check(mut_b("hello world") == 11u);
   ///
+  /// sus::check(sus::move(mut_b)("hello world") == 11u);
+  /// // The object inside `mut_b` is now destroyed.
+  /// ```
+  ///
+  /// A `Box<DynFnOnce>` being used as a function object. It must be an rvalue
+  /// (either a return from a call or moved with [`move`]($sus::mem::move))
+  /// to call through it:
+  /// ```
+  /// auto b = Box<sus::fn::DynFnOnce<usize(std::string_view)>>::from(
+  ///     &std::string_view::size);
+  /// sus::check(sus::move(b)("hello world") == 11u);
+  ///
+  /// auto x = [] {
+  ///   return Box<sus::fn::DynFnOnce<usize(std::string_view)>>::from(
+  ///       &std::string_view::size);
+  /// };
+  /// sus::check(x()("hello world") == 11u);
+  /// ```
   // TODO: https://github.com/llvm/llvm-project/issues/65904
   // clang-format off
   template <class... Args>

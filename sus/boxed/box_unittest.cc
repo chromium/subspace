@@ -319,15 +319,23 @@ TEST(BoxDynFn, Example_Call) {
     // The object inside `mut_b` is now destroyed.
   }
   {
-    auto b = Box<sus::fn::DynFnMut<usize(std::string_view)>>::from(
+    auto mut_b = Box<sus::fn::DynFnMut<usize(std::string_view)>>::from(
         &std::string_view::size);
-    EXPECT_EQ((*b)("hello world"), 11u);
-    EXPECT_EQ(b("hello world"), 11u);
+    sus::check(mut_b("hello world") == 11u);
+
+    sus::check(sus::move(mut_b)("hello world") == 11u);
+    // The object inside `mut_b` is now destroyed.
   }
   {
     auto b = Box<sus::fn::DynFnOnce<usize(std::string_view)>>::from(
         &std::string_view::size);
-    EXPECT_EQ(sus::move(b)("hello world"), 11u);
+    sus::check(sus::move(b)("hello world") == 11u);
+
+    auto x = [] {
+      return Box<sus::fn::DynFnOnce<usize(std::string_view)>>::from(
+          &std::string_view::size);
+    };
+    sus::check(x()("hello world") == 11u);
   }
 }
 
