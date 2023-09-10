@@ -36,6 +36,14 @@ namespace sus::boxed {
 
 // TODO: Box has an allocator parameter in Rust but std::unique_ptr does not.
 // Which do we do?
+
+/// A heap allocated object.
+///
+/// # Box implements some concepts for its inner type
+/// For some concepts in the Subspace library, if `T` satisfies the concept,
+/// then `Box<T>` will as well, forwarding through to the inner heap-allocated
+/// object. Those concepts are:
+/// * [`Error`]($sus::error::Error).
 template <class T>
 class [[sus_trivial_abi]] Box final {
   static_assert(!std::is_reference_v<T>, "Box of a reference is not allowed.");
@@ -168,23 +176,28 @@ class [[sus_trivial_abi]] Box final {
     return t_;
   }
 
-  /// Satisfies the [`From<E>`]($sus::construct::From) concept for
-  /// [`Box`]($sus::boxed::Box)`<`[`DynError`]($sus::error::DynError)`>` when
-  /// `E` satisfies [`Error`]($sus::error::Error). This conversion moves and
-  /// type-erases `E` into a heap-alloocated
-  /// [`DynError`]($sus::error::DynError).
+  /// For a type-erased `DynC` of a concept `C`, `Box<DynC>` can be
+  /// constructed from a type that satisfies `C`.
   ///
-  /// #[doc.overloads=dynerror.from.error]
-  template <::sus::error::Error E>
-    requires(sus::mem::Move<E>)
-  constexpr static Box from(E e) noexcept
-    requires(std::same_as<T, ::sus::error::DynError>)
+  /// This satisfies the [`From<DynC, C>`]($sus::construct::From) concept for
+  /// constructing `Box<DynC>` from any type that satisfies the concept `C`. It
+  /// allows returning a non-templated type satisfying a concept.
+  ///
+  /// See [`DynConcept`]($sus::boxed::DynConcept) for more on type erasure of
+  /// concept-satisfying types.
+  template <sus::mem::Move U>
+  constexpr static Box from(U u) noexcept
+    requires(std::same_as<U, std::remove_cvref_t<U>> &&  //
+             DynConcept<T, U> &&                         //
+             T::template SatisfiesConcept<U>)
   {
-    using HeapError = ::sus::error::DynErrorTyped<E>;
-    auto* heap_e = new HeapError(::sus::move(e));
-    // This implicitly upcasts to the DynError.
-    return Box(FROM_POINTER, heap_e);
+    using DynTyped = T::template DynTyped<U, U>;
+    // This implicitly upcasts to the `DynConcept` type `T`.
+    return Box(FROM_POINTER, new DynTyped(::sus::move(u)));
   }
+
+  /// A `Box<DynError>` can be constructed from a string, which gets type-erased
+  /// into a type that satisfies [`Error`]($sus::error::Error).
 
   /// Satisfies the [`From<std::string>`]($sus::construct::From) concept for
   /// [`Box`]($sus::boxed::Box)`<`[`DynError`]($sus::error::DynError)`>`. This
@@ -195,7 +208,8 @@ class [[sus_trivial_abi]] Box final {
   constexpr static Box from(std::string s) noexcept
     requires(std::same_as<T, ::sus::error::DynError>)
   {
-    using HeapError = ::sus::error::DynErrorTyped<__private::StringError>;
+    using HeapError = ::sus::error::DynErrorTyped<__private::StringError,
+                                                  __private::StringError>;
     auto* heap_e = new HeapError(__private::StringError(::sus::move(s)));
     // This implicitly upcasts to the DynError.
     return Box(FROM_POINTER, heap_e);
