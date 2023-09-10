@@ -27,4 +27,39 @@ TEST(Successors, Example) {
       sus::Slice<u16>::from({1_u16, 10_u16, 100_u16, 1000_u16, 10000_u16}));
 }
 
+TEST(Successors, Some) {
+  auto empty = sus::iter::successors<i32>(
+      sus::some(2), [](i32 n) -> sus::Option<i32> { return sus::some(n + 1); });
+  EXPECT_EQ(empty.size_hint().lower, 1u);
+  EXPECT_EQ(empty.size_hint().upper, sus::none());
+  EXPECT_EQ(empty.next().unwrap(), 2);
+  EXPECT_EQ(empty.next().unwrap(), 3);
+  EXPECT_EQ(empty.next().unwrap(), 4);
+}
+
+TEST(Successors, None) {
+  auto empty = sus::iter::successors<i32>(
+      sus::none(), [](i32 n) -> sus::Option<i32> { return sus::some(n + 1); });
+  EXPECT_EQ(empty.size_hint().lower, 0u);
+  EXPECT_EQ(empty.size_hint().upper, sus::some(0u));
+  EXPECT_EQ(empty.next().is_none(), true);
+}
+
+// constexpr, and verifies that the return type can be converted to the Item
+// type.
+static_assert(sus::iter::successors<i32>(sus::some(2),
+                                         [](i32 i) -> sus::Option<i32> {
+                                           return sus::some(i + 1);
+                                         })
+                  .take(4u)
+                  .sum() == 2 + 3 + 4 + 5);
+
+// Longer iteration.
+static_assert(sus::iter::successors<i32>(sus::some(2),
+                                         [](i32 i) {
+                                           return sus::Option<i32>(i);
+                                         })
+                  .take(100u)
+                  .sum() == 2 * 100);
+
 }  // namespace

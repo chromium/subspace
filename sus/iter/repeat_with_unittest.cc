@@ -46,7 +46,8 @@ TEST(RepeatWith, NextBack) {
   EXPECT_EQ(o.next_back(), sus::some(3_u16));
 }
 
-// constexpr
+// constexpr, and verifies that the return type can be converted to the Item
+// type.
 static_assert(sus::iter::repeat_with<i32>([] { return 3; }).take(4u).sum() ==
               3 * 4);
 
