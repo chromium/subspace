@@ -211,7 +211,7 @@ TEST(Vec, GetMut) {
 }
 
 template <class T, class U>
-concept HasGetMut = requires(T t, U u) { t.get_mut(u); };
+concept HasGetMut = requires(T& t, const U& u) { t.get_mut(u); };
 
 // get_mut() is only available for mutable Vec.
 static_assert(!HasGetMut<const Vec<i32>, usize>);
@@ -233,7 +233,7 @@ TEST(Vec, GetUncheckedMut) {
 
 template <class T, class U>
 concept HasGetUncheckedMut =
-    requires(T t, U u) { t.get_unchecked_mut(unsafe_fn, u); };
+    requires(T& t, const U& u) { t.get_unchecked_mut(unsafe_fn, u); };
 
 // get_unchecked_mut() is only available for mutable Vec.
 static_assert(!HasGetUncheckedMut<const Vec<i32>, usize>);

@@ -28,7 +28,7 @@ struct NonTrivial {
 
 // clang-format off
 template <class T>
-concept can_move = requires(T t) {
+concept can_move = requires(T& t) {
   { move(t) };
 };
 // clang-format on

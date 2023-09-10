@@ -265,7 +265,7 @@ TEST(Array, GetUnchecked) {
 }
 
 template <class T, class U>
-concept HasGetMut = requires(T t, U u) { t.get_mut(u); };
+concept HasGetMut = requires(T& t, const U& u) { t.get_mut(u); };
 
 // get_mut() is only available for mutable arrays.
 static_assert(!HasGetMut<const Array<i32, 3>, usize>);
@@ -289,7 +289,7 @@ TEST(Array, GetMut) {
 
 template <class T, class U>
 concept HasGetUncheckedMut =
-    requires(T t, U u) { t.get_unchecked_mut(unsafe_fn, u); };
+    requires(T& t, const U& u) { t.get_unchecked_mut(unsafe_fn, u); };
 
 // get_unchecked_mut() is only available for mutable arrays.
 static_assert(!HasGetUncheckedMut<const Array<i32, 3>, usize>);

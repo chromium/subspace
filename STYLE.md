@@ -60,3 +60,9 @@ footguns, crashes, bugs, and UB.
   * But don't follow the IWYU rules _inside_ the library. We include the minimal internal
     headers internally to reduce the amount of textual parsing needed to satisfy
     including one public header.
+1. All types in requires clauses should be references or pointers.
+   * For mutable access always write it as `requires(T& t)` instead of
+     `requires (T t)`, as the latter will not match pure virtual types in
+     clang-16.
+   * Similarly, for const usage, write `requires (const T& t)` instead of
+     `requires (const T t)`.
