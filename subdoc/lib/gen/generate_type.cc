@@ -34,7 +34,7 @@ std::string make_title_string(TypeToStringQuery q) {
 }  // namespace
 
 void generate_type(HtmlWriter::OpenDiv& div, const LinkedType& linked_type,
-                   sus::Option<sus::fn::FnOnceRef<void(HtmlWriter::OpenDiv&)>>
+                   sus::Option<sus::fn::DynFnMut<void(HtmlWriter::OpenDiv&)>&>
                        var_name_fn) noexcept {
   auto text_fn = [&](std::string_view text) { div.write_text(text); };
   auto type_fn = [&, i_ = 0_usize](TypeToStringQuery q) mutable {
@@ -79,15 +79,17 @@ void generate_type(HtmlWriter::OpenDiv& div, const LinkedType& linked_type,
     span.write_text("volatile");
   };
   auto var_fn = [&]() { sus::move(var_name_fn).unwrap()(div); };
+  // Construct our DynFnMut reference to `var_fn` in case we need it so that
+  // it can outlive the Option holding a ref to it.
+  auto dyn_fn = sus::dyn<sus::fn::DynFnMut<void()>>(var_fn);
+  auto opt_dyn_fn = sus::Option<sus::fn::DynFnMut<void()>&>(dyn_fn);
 
-  type_to_string(linked_type.type, text_fn, type_fn, const_fn, volatile_fn,
-                 [&]() -> sus::Option<sus::fn::FnOnceRef<void(void)>> {
-                   if (var_name_fn.is_some()) {
-                     return sus::some(sus::move(var_fn));
-                   } else {
-                     return sus::none();
-                   }
-                 }());
+  type_to_string(linked_type.type,
+                 sus::dyn<sus::fn::DynFnMut<void(std::string_view)>>(text_fn),
+                 sus::dyn<sus::fn::DynFnMut<void(TypeToStringQuery)>>(type_fn),
+                 sus::dyn<sus::fn::DynFnMut<void()>>(const_fn),
+                 sus::dyn<sus::fn::DynFnMut<void()>>(volatile_fn),
+                 var_name_fn.and_that(sus::move(opt_dyn_fn)));
 }
 
 }  // namespace subdoc::gen

@@ -49,9 +49,12 @@ void generate_function_params(HtmlWriter::OpenDiv& div,
       if (p.parameter_name.empty()) {
         generate_type(div, p.type, sus::none());
       } else {
-        generate_type(div, p.type, sus::some([&](HtmlWriter::OpenDiv& div) {
-                        div.write_text(p.parameter_name);
-                      }));
+        generate_type(
+            div, p.type,
+            sus::some(sus::dyn<sus::fn::DynFnMut<void(HtmlWriter::OpenDiv&)>>(
+                [&](HtmlWriter::OpenDiv& div) {
+                  div.write_text(p.parameter_name);
+                })));
       }
 
       if (p.default_value.is_some()) {

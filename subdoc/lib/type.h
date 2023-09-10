@@ -17,7 +17,7 @@
 #include "subdoc/llvm.h"
 #include "sus/choice/choice.h"
 #include "sus/collections/vec.h"
-#include "sus/fn/fn_ref.h"
+#include "sus/fn/fn.h"
 #include "sus/prelude.h"
 
 namespace subdoc {
@@ -242,11 +242,11 @@ struct TypeToStringQuery {
 /// The `var_name_fn` is called at the place where the variable name (if any)
 /// would appear.
 void type_to_string(
-    const Type& type, sus::fn::FnMutRef<void(std::string_view)> text_fn,
-    sus::fn::FnMutRef<void(TypeToStringQuery)> type_fn,
-    sus::fn::FnMutRef<void()> const_qualifier_fn,
-    sus::fn::FnMutRef<void()> volatile_qualifier_fn,
-    sus::Option<sus::fn::FnOnceRef<void()>> var_name_fn) noexcept;
+    const Type& type, sus::fn::DynFnMut<void(std::string_view)>& text_fn,
+    sus::fn::DynFnMut<void(TypeToStringQuery)>& type_fn,
+    sus::fn::DynFnMut<void()>& const_qualifier_fn,
+    sus::fn::DynFnMut<void()>& volatile_qualifier_fn,
+    sus::Option<sus::fn::DynFnMut<void()>&> var_name_fn) noexcept;
 
 /// Like `type_to_string` but just walks through the types and does not produce
 /// any output.
