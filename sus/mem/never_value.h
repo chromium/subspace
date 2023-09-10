@@ -72,14 +72,17 @@ struct NeverValueAccess<T&> {
   static constexpr bool has_field = false;
 };
 
+/// Whether the type `T` has a never-value field.
 template <class T>
-struct NeverValueAccess {
-  /// Whether the type `T` has a never-value field.
+struct NeverValueChecker {
   static constexpr bool has_field = requires {
     std::declval<T&>()._sus_Unsafe_NeverValueIsConstructed(
         ::sus::marker::unsafe_fn);
   };
+};
 
+template <class T>
+struct NeverValueAccess {
   constexpr NeverValueAccess() = default;
 
   template <class... U>
@@ -89,7 +92,7 @@ struct NeverValueAccess {
   /// Checks if the never-value field is set to the never-value, returning false
   /// if it is.
   sus_pure constexpr sus_always_inline bool is_constructed() const noexcept
-    requires(has_field)
+    requires(NeverValueChecker<T>::has_field)
   {
     return t_._sus_Unsafe_NeverValueIsConstructed(::sus::marker::unsafe_fn);
   }
@@ -97,7 +100,7 @@ struct NeverValueAccess {
   /// Sets the never-value field to the destroy-value.
   constexpr sus_always_inline void set_destroy_value(
       ::sus::marker::UnsafeFnMarker) noexcept
-    requires(has_field)
+    requires(NeverValueChecker<T>::has_field)
   {
     t_._sus_Unsafe_NeverValueSetDestroyValue(::sus::marker::unsafe_fn);
   }
@@ -126,7 +129,7 @@ struct NeverValueAccess {
 /// the field will be set to a special destroy-value before the destructor is
 /// called.
 template <class T>
-concept NeverValueField = __private::NeverValueAccess<T>::has_field;
+concept NeverValueField = __private::NeverValueChecker<T>::has_field;
 
 }  // namespace sus::mem
 
@@ -151,6 +154,8 @@ concept NeverValueField = __private::NeverValueAccess<T>::has_field;
                                                                                \
   template <class>                                                             \
   friend struct ::sus::mem::__private::NeverValueAccess;                       \
+  template <class>                                                             \
+  friend struct ::sus::mem::__private::NeverValueChecker;                      \
                                                                                \
   sus_pure constexpr bool _sus_Unsafe_NeverValueIsConstructed(                 \
       ::sus::marker::UnsafeFnMarker) const noexcept {                          \
