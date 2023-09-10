@@ -25,7 +25,7 @@
 namespace sus::fn::callable {
 
 template <class T>
-concept FunctionPointer = requires(T t) {
+concept FunctionPointer = requires(const T& t) {
   { std::is_pointer_v<decltype(+t)> };
 };
 
@@ -42,7 +42,7 @@ concept FunctionPointerReturns = (
     std::convertible_to<std::invoke_result_t<T, Args...>, R> &&
     // We verify that `T` can be stored in a function pointer. Types must match
     // more strictly than just for invoking it.
-    requires (R(*p)(Args...), T t) {
+    requires (R(*p)(Args...), T& t) {
         { p = t };
     }
 );
@@ -63,7 +63,7 @@ concept FunctionPointerMatches = (
     FunctionPointer<T> &&
     // We verify that `T` can be stored in a function pointer. Types must match
     // more strictly than just for invoking it.
-    requires (R(*p)(Args...), T t) {
+    requires (R(*p)(Args...), T& t) {
         { p = t };
     }
 );
@@ -73,7 +73,7 @@ concept FunctionPointerMatches = (
 template <class T, class... Args>
 concept FunctionPointerWith = (
     FunctionPointer<T> &&
-    requires (T t, Args&&... args) {
+    requires (T& t, Args&&... args) {
         std::invoke(t, ::sus::mem::forward<Args>(args)...);
     }
 );
@@ -90,7 +90,7 @@ inline constexpr bool callable_const(R (T::*)(Args...) const) {
 
 template <class T, class R, class... Args>
 concept CallableObjectReturnsOnce =
-    !FunctionPointer<T> && requires(T t, Args&&... args) {
+    !FunctionPointer<T> && requires(T& t, Args&&... args) {
       {
         std::invoke(static_cast<T&&>(t), ::sus::mem::forward<Args>(args)...)
       } -> std::convertible_to<R>;

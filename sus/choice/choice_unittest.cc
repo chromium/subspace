@@ -619,12 +619,12 @@ TEST(Choice, Clone) {
 }
 
 template <class T, auto Tag>
-concept CanGetRef = requires(T t) { t.template as<Tag>(); };
+concept CanGetRef = requires(T& t) { t.template as<Tag>(); };
 template <class T, auto Tag>
-concept CanGetMut = requires(T t) { t.template as_mut<Tag>(); };
+concept CanGetMut = requires(T& t) { t.template as_mut<Tag>(); };
 template <class T, auto Tag>
 concept CanIntoInner =
-    requires(T t) { sus::move(t).template into_inner<Tag>(); };
+    requires(T& t) { sus::move(t).template into_inner<Tag>(); };
 
 TEST(Choice, Eq) {
   struct NotEq {};

@@ -105,7 +105,7 @@ TEST(Slice, Get) {
 }
 
 template <class T, class U>
-concept HasGetMut = requires(T t, U u) { t.get_mut(u); };
+concept HasGetMut = requires(T& t, const U& u) { t.get_mut(u); };
 
 // get_mut() is only available for mutable slices. A "const" mutable slice can
 // still give mutable access as the mutability is encoded in the type.
@@ -138,7 +138,7 @@ TEST(Slice, GetUnchecked) {
 
 template <class T, class U>
 concept HasGetUncheckedMut =
-    requires(T t, U u) { t.get_unchecked_mut(unsafe_fn, u); };
+    requires(T& t, const U& u) { t.get_unchecked_mut(unsafe_fn, u); };
 
 // get_unchecked_mut() is only available for mutable slices of mutable types.
 static_assert(!HasGetUncheckedMut<Slice<i32>, usize>);

@@ -29,7 +29,7 @@ namespace sus::fn::__private {
 /// and will return a value that can be stored as `R`.
 template <class F, class R, class... Args>
 concept FunctionPointer =
-    std::is_pointer_v<std::decay_t<F>> && requires(F f, Args... args) {
+    std::is_pointer_v<std::decay_t<F>> && requires(F& f, Args... args) {
       { std::invoke(*f, args...) } -> std::convertible_to<R>;
     };
 
@@ -41,7 +41,7 @@ concept IsFunctionPointer =
 /// Whether a functor `T` can convert to a function pointer, typically this
 /// means it's a captureless lambda.
 template <class F>
-concept ConvertsToFunctionPointer = requires(F f) {
+concept ConvertsToFunctionPointer = requires(F& f) {
   { +f } -> IsFunctionPointer;
 };
 

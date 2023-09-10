@@ -28,7 +28,7 @@ namespace sus::ops {
 /// `RangeBounds` is implemented by Subspace's range types, and produced by
 /// range syntax like `..`, `a..`, `..b`, `..=c`, `d..e`, or `f..=g`.
 template <class T, class I>
-concept RangeBounds = requires(const T& t, T v, I i) {
+concept RangeBounds = requires(const T& t, T& v, const I& i) {
   { t.start_bound() } -> std::same_as<::sus::option::Option<const I&>>;
   { t.end_bound() } -> std::same_as<::sus::option::Option<const I&>>;
   // Rvalue overloads must not exist as they would return a reference to a

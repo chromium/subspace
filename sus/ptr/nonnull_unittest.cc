@@ -153,7 +153,7 @@ TEST(NonNull, AsRef) {
 }
 
 template <class T>
-concept AsRefMutExists = requires(T t) { t.as_mut(); };
+concept AsRefMutExists = requires(T& t) { t.as_mut(); };
 
 TEST(NonNull, AsRefMut) {
   int i = 1;
@@ -180,7 +180,7 @@ TEST(NonNull, AsPtr) {
 }
 
 template <class T>
-concept AsPtrMutExists = requires(T t) { t.as_mut_ptr(); };
+concept AsPtrMutExists = requires(T& t) { t.as_mut_ptr(); };
 
 TEST(NonNull, AsPtrMut) {
   int i = 1;

@@ -88,7 +88,7 @@ struct InvokedFnMut {
 };
 
 template <class F, class... Ts>
-  requires requires(F f) {
+  requires requires(F& f) {
     { std::invoke(f, std::declval<Ts>()...) };
   }
 struct InvokedFnMut<F, ArgsPack<Ts...>> {
