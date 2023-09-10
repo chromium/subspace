@@ -252,6 +252,6 @@ void type_to_string(
 /// any output.
 void type_walk_types(
     const Type& type,
-    sus::fn::FnMutRef<void(TypeToStringQuery)> type_fn) noexcept;
+    sus::fn::DynFnMut<void(TypeToStringQuery)>& type_fn) noexcept;
 
 }  // namespace subdoc

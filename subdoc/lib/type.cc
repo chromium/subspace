@@ -681,7 +681,7 @@ void type_to_string_internal(
 
 void type_walk_types_internal(
     const Type& type,
-    sus::fn::FnMutRef<void(TypeToStringQuery)>& type_fn) noexcept {
+    sus::fn::DynFnMut<void(TypeToStringQuery)>& type_fn) noexcept {
   for (const TypeOrValue& tv : type.nested_names) {
     switch (tv.choice) {
       case TypeOrValueTag::Type: {
@@ -741,7 +741,7 @@ void type_to_string(
 
 void type_walk_types(
     const Type& type,
-    sus::fn::FnMutRef<void(TypeToStringQuery)> type_fn) noexcept {
+    sus::fn::DynFnMut<void(TypeToStringQuery)>& type_fn) noexcept {
   return type_walk_types_internal(type, type_fn);
 }
 
