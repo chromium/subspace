@@ -9,4 +9,4 @@ out\subdoc\subdoc -p out --out docs ^
     --project-logo logo.png ^
     --project-name Subspace ^
     --ignore-bad-code-links ^
-    subspace/sus/num/uptr
+    subspace/sus/num/uptr sus/boxed/box_
