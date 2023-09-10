@@ -18,13 +18,13 @@
 
 #include "subdoc/lib/doc_attributes.h"
 #include "subdoc/lib/friendly_names.h"
+#include "subdoc/lib/linked_type.h"
 #include "subdoc/lib/method_qualifier.h"
 #include "subdoc/lib/parse_comment.h"
 #include "subdoc/lib/path.h"
 #include "subdoc/lib/record_type.h"
 #include "subdoc/lib/requires.h"
 #include "subdoc/lib/type.h"
-#include "subdoc/lib/linked_type.h"
 #include "subdoc/lib/unique_symbol.h"
 #include "subdoc/llvm.h"
 #include "sus/assertions/check.h"
@@ -226,7 +226,7 @@ struct FunctionElement : public CommentElement {
     return sus::none();
   }
 
-  void for_each_comment(sus::fn::FnMutRef<void(Comment&)> fn) { fn(comment); }
+  void for_each_comment(sus::fn::FnMut<void(Comment&)> auto fn) { fn(comment); }
 };
 
 struct ConceptElement : public CommentElement {
@@ -262,7 +262,7 @@ struct ConceptElement : public CommentElement {
     return sus::none();
   }
 
-  void for_each_comment(sus::fn::FnMutRef<void(Comment&)> fn) { fn(comment); }
+  void for_each_comment(sus::fn::FnMut<void(Comment&)> auto fn) { fn(comment); }
 };
 
 struct FieldElement : public CommentElement {
@@ -310,7 +310,7 @@ struct FieldElement : public CommentElement {
     return sus::none();
   }
 
-  void for_each_comment(sus::fn::FnMutRef<void(Comment&)> fn) { fn(comment); }
+  void for_each_comment(sus::fn::FnMut<void(Comment&)> auto fn) { fn(comment); }
 };
 
 struct ConceptId {
@@ -552,7 +552,7 @@ struct RecordElement : public TypeElement {
     return out;
   }
 
-  void for_each_comment(sus::fn::FnMutRef<void(Comment&)> fn) {
+  void for_each_comment(sus::fn::FnMut<void(Comment&)> auto fn) {
     fn(comment);
     for (auto& [k, e] : records) e.for_each_comment(fn);
     for (auto& [k, e] : fields) e.for_each_comment(fn);
@@ -736,7 +736,7 @@ struct NamespaceElement : public CommentElement {
     return out;
   }
 
-  void for_each_comment(sus::fn::FnMutRef<void(Comment&)> fn) {
+  void for_each_comment(sus::fn::FnMut<void(Comment&)> auto fn) {
     fn(comment);
     for (auto& [k, e] : concepts) e.for_each_comment(fn);
     for (auto& [k, e] : namespaces) e.for_each_comment(fn);
@@ -777,13 +777,11 @@ struct Database {
     sus::Vec<Comment*> to_resolve;
     {
       sus::Vec<Comment*>* to_resolve_ptr = &to_resolve;
-      sus::fn::FnMutBox<void(Comment&)> fn = sus_bind_mut(
-          sus_store(sus_unsafe_pointer(to_resolve_ptr)), [&](Comment& c) {
-            if (c.attrs.inherit.is_some()) {
-              to_resolve_ptr->push(&c);
-            }
-          });
-      global.for_each_comment(fn);
+      global.for_each_comment([&](Comment& c) {
+        if (c.attrs.inherit.is_some()) {
+          to_resolve_ptr->push(&c);
+        }
+      });
     }
 
     while (!to_resolve.is_empty()) {
@@ -931,41 +929,44 @@ struct Database {
   sus::Vec<sus::Option<TypeRef>> collect_type_element_refs(
       const Type& type) const noexcept {
     sus::Vec<sus::Option<TypeRef>> vec;
-    type_walk_types(type, [&](TypeToStringQuery q) {
-      const NamespaceElement* ns_cursor = &global;
-      for (const std::string& name : q.namespace_path) {
-        auto it = ns_cursor->namespaces.find(NamespaceId(name));
-        if (it == ns_cursor->namespaces.end()) {
-          vec.push(sus::none());
-          return;
-        }
-        ns_cursor = &it->second;
-      }
-      if (q.record_path.is_empty()) {
-        vec.push(ns_cursor->get_local_type_element_ref_by_name(q.name));
-        return;
-      }
+    type_walk_types(
+        type,
+        sus::dyn<sus::fn::DynFnMut<void(TypeToStringQuery)>>(
+            [&](TypeToStringQuery q) {
+              const NamespaceElement* ns_cursor = &global;
+              for (const std::string& name : q.namespace_path) {
+                auto it = ns_cursor->namespaces.find(NamespaceId(name));
+                if (it == ns_cursor->namespaces.end()) {
+                  vec.push(sus::none());
+                  return;
+                }
+                ns_cursor = &it->second;
+              }
+              if (q.record_path.is_empty()) {
+                vec.push(ns_cursor->get_local_type_element_ref_by_name(q.name));
+                return;
+              }
 
-      const RecordElement* rec_cursor = nullptr;
-      for (const auto& [i, name] : q.record_path.iter().enumerate()) {
-        if (i == 0u) {
-          auto it = ns_cursor->records.find(RecordId(name));
-          if (it == ns_cursor->records.end()) {
-            vec.push(sus::none());
-            return;
-          }
-          rec_cursor = &it->second;
-        } else {
-          auto it = rec_cursor->records.find(RecordId(name));
-          if (it == rec_cursor->records.end()) {
-            vec.push(sus::none());
-            return;
-          }
-          rec_cursor = &it->second;
-        }
-      }
-      vec.push(rec_cursor->get_local_type_element_ref_by_name(q.name));
-    });
+              const RecordElement* rec_cursor = nullptr;
+              for (const auto& [i, name] : q.record_path.iter().enumerate()) {
+                if (i == 0u) {
+                  auto it = ns_cursor->records.find(RecordId(name));
+                  if (it == ns_cursor->records.end()) {
+                    vec.push(sus::none());
+                    return;
+                  }
+                  rec_cursor = &it->second;
+                } else {
+                  auto it = rec_cursor->records.find(RecordId(name));
+                  if (it == rec_cursor->records.end()) {
+                    vec.push(sus::none());
+                    return;
+                  }
+                  rec_cursor = &it->second;
+                }
+              }
+              vec.push(rec_cursor->get_local_type_element_ref_by_name(q.name));
+            }));
     return vec;
   }
 
