@@ -19,6 +19,7 @@
 #include <type_traits>
 
 #include "sus/boxed/__private/string_error.h"
+#include "sus/boxed/boxed.h"  // namespace docs.
 #include "sus/error/error.h"
 #include "sus/fn/fn_concepts.h"
 #include "sus/fn/fn_dyn.h"
