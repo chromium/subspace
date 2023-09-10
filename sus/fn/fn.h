@@ -20,4 +20,5 @@
 #include "sus/fn/fn_box_impl.h"
 #include "sus/fn/fn_concepts.h"
 #include "sus/fn/fn_ref.h"
+#include "sus/fn/fn_dyn.h"
 // IWYU pragma: end_exports

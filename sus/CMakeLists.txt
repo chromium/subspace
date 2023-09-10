@@ -279,6 +279,7 @@ if(${SUBSPACE_BUILD_TESTS})
         "error/error_unittest.cc"
         "fn/fn_box_unittest.cc"
         "fn/fn_concepts_unittest.cc"
+        "fn/fn_dyn_unittest.cc"
         "fn/fn_ref_unittest.cc"
         "iter/compat_ranges_unittest.cc"
         "iter/empty_unittest.cc"

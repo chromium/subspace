@@ -76,6 +76,7 @@ static_assert(C<Foo>);
 /// These act on the `C` concept but without being templated.
 i32 GiveC(const DynC& c) { return c.concept_fn(); }
 i32 GiveCMut(DynC& c) { return c.concept_fn_mut(); }
+i32 GiveCRval(DynC&& c) { return c.concept_fn_mut(); }
 Box<DynC> GiveBoxC(Box<DynC> c) { return c; }
 
 /// `DynC` satisfies `DynConcept` with an implementation of `C` (which is `Foo`
@@ -104,12 +105,16 @@ TEST(Dyn, Box) {
 }
 
 template <class DynC, class Foo, class Ref>
+concept CanGiveCFromStruct = requires(Ref r) {
+  { GiveC(Dyn<DynC, Foo>(r)) };
+};
+template <class DynC, class Foo, class Ref>
 concept CanGiveCMutFromStruct = requires(Ref r) {
   { GiveCMut(Dyn<DynC, Foo>(r)) };
 };
 template <class DynC, class Foo, class Ref>
-concept CanGiveCFromStruct = requires(Ref r) {
-  { GiveC(Dyn<DynC, Foo>(r)) };
+concept CanGiveCRvalFromStruct = requires(Ref r) {
+  { GiveCMut(Dyn<DynC, Foo>(r)) };
 };
 
 // Tests the semantics of the struct itself, though it's not used directly.
@@ -120,9 +125,12 @@ TEST(Dyn, DynStruct) {
 
     static_assert(CanGiveCFromStruct<DynC, Foo, decltype(f)>);
     static_assert(CanGiveCMutFromStruct<DynC, Foo, decltype(f)>);
+    static_assert(CanGiveCRvalFromStruct<DynC, Foo, decltype(f)>);
     static_assert(CanGiveCFromStruct<const DynC, Foo, decltype(f)>);
     // Can't give a const `DynC` to a mutable reference `DynC&`.
     static_assert(!CanGiveCMutFromStruct<const DynC, Foo, decltype(f)>);
+    // Can't give a const `DynC` to an rvalue reference `DynC&&`
+    static_assert(!CanGiveCRvalFromStruct<const DynC, Foo, decltype(f)>);
 
     EXPECT_EQ(GiveC(Dyn<DynC, Foo>(f)), 1);
     EXPECT_EQ(GiveC(Dyn<DynC, Foo>(f)), 2);
@@ -131,6 +139,8 @@ TEST(Dyn, DynStruct) {
     EXPECT_EQ(GiveC(Dyn<const DynC, Foo>(f)), 4);
     // ERROR: Can't give a const `DynC` to a mutable reference `DynC&`.
     // GiveCMut(Dyn<const DynC, Foo>(f));
+
+    EXPECT_EQ(GiveCRval(Dyn<DynC, Foo>(Foo())), 1);
   }
   // Const.
   {
@@ -140,9 +150,13 @@ TEST(Dyn, DynStruct) {
     static_assert(!CanGiveCFromStruct<DynC, Foo, decltype(f)>);
     // Can't use a const `Foo` to construct a mutable `DynC&`.
     static_assert(!CanGiveCMutFromStruct<DynC, Foo, decltype(f)>);
+    // Can't use a const `Foo` to construct an rvalue reference`DynC&&`.
+    static_assert(!CanGiveCRvalFromStruct<const DynC, Foo, decltype(f)>);
     static_assert(CanGiveCFromStruct<const DynC, Foo, decltype(f)>);
     // Can't give a const `DynC` to a mutable reference `DynC&`.
     static_assert(!CanGiveCMutFromStruct<const DynC, Foo, decltype(f)>);
+    // Can't give a const `DynC` to an rvalue reference `DynC&&`
+    static_assert(!CanGiveCRvalFromStruct<const DynC, Foo, decltype(f)>);
 
     EXPECT_EQ(GiveC(Dyn<const DynC, Foo>(f)), 1);
     EXPECT_EQ(GiveC(Dyn<const DynC, Foo>(f)), 2);
