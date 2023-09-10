@@ -23,7 +23,7 @@ namespace sus::iter {
 
 using ::sus::option::Option;
 
-template <class ItemT>
+template <class ItemT, class GenFn>
 class RepeatWith;
 
 /// Creates a new iterator that repeats elements of type `Item` endlessly by
@@ -46,40 +46,52 @@ class RepeatWith;
 /// sus::check(r.next().unwrap() == 3_u16);
 /// sus::check(r.next().unwrap() == 3_u16);
 /// ```
-template <class Item>
-inline RepeatWith<Item> repeat_with(::sus::fn::FnMutBox<Item()> gen) noexcept {
-  return RepeatWith<Item>(::sus::move(gen));
+template <class Item, ::sus::fn::FnMut<Item()> GenFn>
+constexpr inline RepeatWith<Item, GenFn> repeat_with(GenFn gen) noexcept {
+  return RepeatWith<Item, GenFn>(::sus::move(gen));
 }
 
 /// An Iterator that walks over at most a single Item.
-template <class ItemT>
-class [[nodiscard]] [[sus_trivial_abi]] RepeatWith final
-    : public IteratorBase<RepeatWith<ItemT>, ItemT> {
+template <class ItemT, class GenFn>
+class [[nodiscard]] RepeatWith final
+    : public IteratorBase<RepeatWith<ItemT, GenFn>, ItemT> {
  public:
   using Item = ItemT;
 
+  // Type is Move and (can be) Clone.
+  RepeatWith(RepeatWith&&) = default;
+  RepeatWith& operator=(RepeatWith&&) = default;
+
+  // sus::mem::Clone trait.
+  constexpr RepeatWith clone() const noexcept
+    requires(::sus::mem::Clone<GenFn>)
+  {
+    return RepeatWith(sus::clone(gen_));
+  }
+
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     return ::sus::some(::sus::fn::call_mut(gen_));
   }
   /// sus::iter::Iterator trait.
-  SizeHint size_hint() const noexcept {
+  constexpr SizeHint size_hint() const noexcept {
     return SizeHint(usize::MAX, ::sus::Option<::sus::num::usize>());
   }
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept {
+  constexpr Option<Item> next_back() noexcept {
     return ::sus::some(::sus::fn::call_mut(gen_));
   }
 
  private:
-  friend RepeatWith<Item> sus::iter::repeat_with<Item>(
-      ::sus::fn::FnMutBox<Item()> gen) noexcept;
+  friend constexpr RepeatWith<Item, GenFn> sus::iter::repeat_with<Item>(
+      GenFn gen) noexcept;
 
-  RepeatWith(::sus::fn::FnMutBox<Item()> gen) : gen_(::sus::move(gen)) {}
+  constexpr RepeatWith(GenFn gen) : gen_(::sus::move(gen)) {}
 
-  ::sus::fn::FnMutBox<Item()> gen_;
+  GenFn gen_;
 
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(gen_));
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(gen_));
 };
 
 }  // namespace sus::iter
