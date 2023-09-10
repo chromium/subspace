@@ -1515,12 +1515,12 @@ constexpr Option<Item> IteratorBase<Iter, Item>::max_by_key(
   // Compares just the keys.
   auto compare = [](const sus::Tuple<Key, Item>& x,
                     const sus::Tuple<Key, Item>& y) {
-    return x.at<0>() <=> y.at<0>();
+    return x.template at<0>() <=> y.template at<0>();
   };
 
   return static_cast<Iter&&>(*this).map(key(fn)).max_by(compare).map(
       [](auto&& key_item) -> Item {
-        return sus::move(key_item).into_inner<1>();
+        return sus::move(key_item).template into_inner<1>();
       });
 }
 
@@ -1568,12 +1568,12 @@ constexpr Option<Item> IteratorBase<Iter, Item>::min_by_key(
   // Compares just the keys.
   auto compare = [](const sus::Tuple<Key, Item>& x,
                     const sus::Tuple<Key, Item>& y) {
-    return x.at<0>() <=> y.at<0>();
+    return x.template at<0>() <=> y.template at<0>();
   };
 
   return static_cast<Iter&&>(*this).map(key(fn)).min_by(compare).map(
       [](auto&& key_item) -> Item {
-        return sus::move(key_item).into_inner<1>();
+        return sus::move(key_item).template into_inner<1>();
       });
 }
 
