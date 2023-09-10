@@ -45,7 +45,7 @@ TEST(OnceWith, NextBack) {
 }
 
 // constexpr, and verifies that the return type can be converted to the Item
-// type
+// type.
 static_assert(sus::iter::once_with<i32>([] { return 5; }).sum() == 5);
 
 }  // namespace

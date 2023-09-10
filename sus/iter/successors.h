@@ -23,7 +23,7 @@ namespace sus::iter {
 
 using ::sus::option::Option;
 
-template <class ItemT>
+template <class ItemT, class GenFn>
 class Successors;
 
 /// Creates a new iterator where each successive item is computed based on the
@@ -41,32 +41,42 @@ class Successors;
 ///     sus::move(powers_of_10).collect<Vec<u16>>() ==
 ///     sus::Slice<u16>::from({1_u16, 10_u16, 100_u16, 1000_u16, 10000_u16}));
 /// ```
-template <class Item>
-inline Successors<Item> successors(
-    Option<Item> first,
-    ::sus::fn::FnMutBox<Option<Item>(const Item&)> func) noexcept {
-  return Successors<Item>(::sus::move(first), ::sus::move(func));
+template <class Item, ::sus::fn::FnMut<Option<Item>(const Item&)> GenFn>
+constexpr inline Successors<Item, GenFn> successors(Option<Item> first,
+                                                    GenFn func) noexcept {
+  return Successors<Item, GenFn>(::sus::move(first), ::sus::move(func));
 }
 
 /// An Iterator that generates each item from a function that takes the previous
 /// item.
 ///
 /// This type is created by `sus::iter::successors()`.
-template <class ItemT>
+template <class ItemT, class GenFn>
 class [[nodiscard]] Successors final
-    : public IteratorBase<Successors<ItemT>, ItemT> {
+    : public IteratorBase<Successors<ItemT, GenFn>, ItemT> {
  public:
   using Item = ItemT;
 
+  // Type is Move and (can be) Clone.
+  Successors(Successors&&) = default;
+  Successors& operator=(Successors&&) = default;
+
+  // sus::mem::Clone trait.
+  constexpr Successors clone() const noexcept
+    requires(::sus::mem::Clone<GenFn>)
+  {
+    return Successors(sus::clone(next_), sus::clone(func_));
+  }
+
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     Option<Item> item = next_.take();
     if (item.is_some()) next_ = ::sus::fn::call_mut(func_, item.as_value());
     return item;
   }
 
   /// sus::iter::Iterator trait.
-  SizeHint size_hint() const noexcept {
+  constexpr SizeHint size_hint() const noexcept {
     if (next_.is_some())
       return SizeHint(1u, ::sus::Option<::sus::num::usize>());
     else
@@ -74,16 +84,14 @@ class [[nodiscard]] Successors final
   }
 
  private:
-  friend Successors<Item> sus::iter::successors<Item>(
-      Option<Item> first,
-      ::sus::fn::FnMutBox<Option<Item>(const Item&)> func) noexcept;
+  friend constexpr Successors<Item, GenFn> sus::iter::successors<Item>(
+      Option<Item> first, GenFn func) noexcept;
 
-  Successors(Option<Item> first,
-             ::sus::fn::FnMutBox<Option<Item>(const Item&)>&& func)
+  constexpr Successors(Option<Item> first, GenFn func)
       : next_(::sus::move(first)), func_(::sus::move(func)) {}
 
   Option<Item> next_;
-  ::sus::fn::FnMutBox<Option<Item>(const Item&)> func_;
+  GenFn func_;
 
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
                                            decltype(next_), decltype(func_));
