@@ -20,6 +20,8 @@
 
 #include "sus/boxed/__private/string_error.h"
 #include "sus/error/error.h"
+#include "sus/fn/fn_concepts.h"
+#include "sus/fn/fn_dyn.h"
 #include "sus/macros/no_unique_address.h"
 #include "sus/macros/pure.h"
 #include "sus/mem/clone.h"
@@ -268,6 +270,36 @@ class [[sus_trivial_abi]] Box final {
   constexpr T* into_raw() && noexcept {
     ::sus::check_with_message(t_, "Box used after move");
     return ::sus::mem::replace(t_, nullptr);
+  }
+
+  /// Consumes the `Box`, calling `f` with the wrapped value before destroying
+  /// it.
+  ///
+  /// This allows the caller to make use of the wrapped object as an rvalue
+  /// without moving out of the wrapped object in a way that leaves the Box with
+  /// a moved-from object within.
+  template <::sus::fn::FnOnce<sus::fn::Anything(T&&)> F>
+  constexpr ::sus::fn::ReturnOnce<F, T&&> consume(F f) && noexcept {
+    ::sus::check_with_message(t_, "Box used after move");
+    ::sus::fn::ReturnOnce<F, T&&> ret =
+        ::sus::fn::call_once(::sus::move(f), sus::move(*t_));
+    delete ::sus::mem::replace(t_, nullptr);
+    return ret;
+  }
+
+  template <class... Args>
+  constexpr sus::fn::Return<T, Args...> operator()(
+      Args&&... args) const noexcept
+    requires(
+        std::same_as<T, ::sus::fn::DynFn<sus::fn::Return<T, Args...>(Args...)>>)
+  {
+    ::sus::check_with_message(t_, "Box used after move");
+    struct Cleanup {
+      constexpr ~Cleanup() noexcept { delete t_; }
+      T* t;
+    };
+    auto cleanup = Cleanup(::sus::mem::replace(t_, nullptr));
+    return ::sus::fn::call(*cleanup.t, ::sus::forward<Args>(args)...);
   }
 
  private:

@@ -19,6 +19,7 @@
 
 #include "sus/macros/lifetimebound.h"
 #include "sus/mem/forward.h"
+#include "sus/mem/move.h"
 
 namespace sus::boxed {
 
@@ -281,6 +282,11 @@ class [[nodiscard]] Dyn {
     requires(!std::is_const_v<DynC>)
   {
     return dyn_;
+  }
+  operator DynC&&() &&
+    requires(!std::is_const_v<DynC>)
+  {
+    return ::sus::move(dyn_);
   }
 
   /// `Dyn` can not be moved.
