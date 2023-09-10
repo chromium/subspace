@@ -41,14 +41,73 @@ namespace sus::boxed {
 
 /// A heap allocated object.
 ///
+/// A `Box<T>` holds ownership of an object of type `T` on the heap. When `Box`
+/// is destroyed, or an rvalue-qualified method is called, the inner heap
+/// object is freed.
+///
+/// `Box` is similar to [`std::unique_ptr`](
+/// https://en.cppreference.com/w/cpp/memory/unique_ptr) with some differences,
+/// and should be preferred when those differences will benefit you:
+/// * Const correctness. A `const Box` treats the inner object as `const` and
+///   does not expose mutable access to it.
+/// * Never null. A `Box` always holds a value until it is moved-from. It is
+///   constructed from a value, not a pointer.
+///   A moved-from `Box` may not be used except to be assigned to or destroyed.
+///   Using a moved-from `Box` will [`panic`]($sus::assertions::panic) and
+///   terminate the program rather than operate on a null. This prevents
+///   Undefined Behaviour and memory bugs caused by dereferencing null or using
+///   null in unintended ways.
+/// * Supports up-casting (TODO: and [`down-casting`](
+///   https://github.com/chromium/subspace/issues/333)) without leaving
+///   requiring a native pointer to be pulled out of the `Box`.
+/// * No native arrays, `Box` can hold [`Array`]($sus::collection::Array) or
+///   [`std::array`](https://en.cppreference.com/w/cpp/container/array) but
+///   avoids API complexity for supporting pointers and native arrays (which
+///   decay to pointers) by rejecting native arrays.
+/// * Integration with [concept type-erasure]($sus::boxed::DynConcept) for
+///   holding and constructing from type-erased objects which satisfy a given
+///   concept in a type-safe way and without requiring inheritence. This
+///   construction is done through [`From`]($sus::construct::From) and thus
+///   can `Box<DynC>` can be constructed in a type-deduced way from any object
+///   that satisfies the concept `C` via [`sus::into()`]($sus::construct::into).
+///   This only requires that `DynC` is compatible with
+///   [`DynConcept`]($sus::boxed::DynConcept) which is the case for all
+///   type-erasable concepts in the Subspace library.
+/// * Additional integration with Subspace library concepts like
+///   [`Error`]($sus::error::Error) and [`Fn`]($sus::fn::Fn) such that `Box`
+///   [will satisfy those concepts itself](
+///   #box-implements-some-concepts-for-its-inner-type) when holding
+///   a type-erased object that satisfies those concepts.
+///
 /// # Box implements some concepts for its inner type
-/// For some concepts in the Subspace library, if `T` satisfies the concept,
-/// then `Box<T>` will as well, forwarding through to the inner heap-allocated
-/// object. Those concepts are:
-/// * [`Error`]($sus::error::Error).
+///
+/// The Subspace library provides a number of concepts which support
+/// type-erasure through [`DynConcept`]($sus::boxed::DynConcept), and when
+/// `Box` is holding these as its value, it may itself implement the concept,
+/// forwarding use of the concept through to the inner type.
+///
+/// The canonical example of this is
+/// [`Result`]($sus::result::Result)`<T, Box<`[`DynError`](
+/// $sus::error::DynError)`>>`, which allows construction via
+/// `sus::err(sus::into(e))` for any `e` that satisfies
+/// [`Error`]($sus::error::Error). The error field, now being a `Box` is still
+/// usable as an [`Error`]($sus::error::Error) allowing generic code that
+/// expects the [`Result`]($sus::result::Result) to hold an
+/// [`Error`]($sus::error::Error) to function even though the actual error has
+/// been type-erased and no longer needs the functions to be templated on it.
+///
+/// The following concepts, when type-erased in `Box` will also be satisfied
+/// by the `Box` itself, avoiding the need to unwrap the inner type and allowing
+/// the `Box` to be used in templated code requiring that concept:
+/// * [`Error`]($sus::error::Error)
+/// * [`Fn`]($sus::fn::Fn)
+/// * [`FnMut`]($sus::fn::FnMut)
+/// * [`FnOnce`]($sus::fn::FnOnce)
 template <class T>
 class [[sus_trivial_abi]] Box final {
   static_assert(!std::is_reference_v<T>, "Box of a reference is not allowed.");
+  static_assert(!std::is_array_v<T>,
+                "Box<T[N]> is not allowed, use Box<Array<T, N>>");
   static_assert(sus::mem::size_of<T>() != 0u);  // Ensure that `T` is defined.
 
  public:
@@ -287,20 +346,77 @@ class [[sus_trivial_abi]] Box final {
     return ret;
   }
 
+  /// A `Box` holding a type-erased function type will satisfy the fn concepts
+  /// and can be used as a function type. It will forward the call through
+  /// to the inner type.
+  ///
+  /// `Box<`[`DynFn`]($sus::fn::DynFn)`>` satisfies [`Fn`]($sus::fn::Fn),
+  /// `Box<`[`DynFnMut`]($sus::fn::DynFnMut)`>` satisfies [`FnMut`]($sus::fn::FnMut),
+  /// and `Box<`[`DynFnOnce`]($sus::fn::DynFnOnce)`>` satisfies [`FnOnce`]($sus::fn::FnOnce).
+  /// The usual compatibility rules apply, allowing [`DynFn`]($sus::fn::DynFn)
+  /// to be treated like [`DynFnMut`]($sus::fn::DynFnMut)
+  /// and both of them to be treated like [`DynFnOnce`]($sus::fn::DynFnOnce).
+  ///
+  /// A `Box<`[`DynFnOnce`]($sus::fn::DynFnOnce)`>` must be moved from
+  /// when called, and will destroy the
+  /// underlying function object after the call completes.
+  ///
+  /// # Examples
+  ///
+  /// A `Box<DynFn>` being used as a function object:
+  /// ```
+  /// const auto b = Box<sus::fn::DynFn<usize(std::string_view)>>::from(
+  ///     &std::string_view::size);
+  /// sus::check(b("hello world") == 11u);
+  ///
+  /// auto mut_b = Box<sus::fn::DynFn<usize(std::string_view)>>::from(
+  ///     &std::string_view::size);
+  /// sus::check(mut_b("hello world") == 11u);
+  ///
+  /// sus::check(sus::move(mut_b)("hello world") == 11u);
+  /// // The object inside `mut_b` is now destroyed.
+  /// ```
+  ///
+  /// A `Box<FynFnMut>` being used as a function object. It can not be called
+  /// on a `const Box` as it requies the ability to mutate, and `const Box`
+  /// treats its inner object as const.
+  ///
+  // TODO: https://github.com/llvm/llvm-project/issues/65904
+  // clang-format off
   template <class... Args>
-  constexpr sus::fn::Return<T, Args...> operator()(
-      Args&&... args) const noexcept
-    requires(
-        std::same_as<T, ::sus::fn::DynFn<sus::fn::Return<T, Args...>(Args...)>>)
+  constexpr sus::fn::Return<T, Args...> operator()(Args&&... args) const&
+    requires(T::IsDynFn &&
+             ::sus::fn::Fn<T, sus::fn::Return<T, Args...>(Args...)>)
+  {
+    ::sus::check_with_message(t_, "Box used after move");
+    return ::sus::fn::call(*t_, ::sus::forward<Args>(args)...);
+  }
+
+  template <class... Args>
+  constexpr sus::fn::ReturnMut<T, Args...> operator()(Args&&... args) &
+    requires(T::IsDynFn &&
+             ::sus::fn::FnMut<T, sus::fn::ReturnMut<T, Args...>(Args...)>)
+  {
+    ::sus::check_with_message(t_, "Box used after move");
+    return ::sus::fn::call_mut(*t_, ::sus::forward<Args>(args)...);
+  }
+
+  template <class... Args>
+  constexpr sus::fn::ReturnOnce<T, Args...> operator()(Args&&... args) &&
+    requires(T::IsDynFn &&  //
+             ::sus::fn::FnOnce<T, sus::fn::ReturnOnce<T, Args...>(Args...)>)
   {
     ::sus::check_with_message(t_, "Box used after move");
     struct Cleanup {
-      constexpr ~Cleanup() noexcept { delete t_; }
+      constexpr ~Cleanup() noexcept { delete t; }
       T* t;
     };
-    auto cleanup = Cleanup(::sus::mem::replace(t_, nullptr));
-    return ::sus::fn::call(*cleanup.t, ::sus::forward<Args>(args)...);
+    return ::sus::fn::call_once(
+        sus::move(*Cleanup(::sus::mem::replace(t_, nullptr)).t),
+                           ::sus::forward<Args>(args)...);
   }
+  ;
+  // clang-format on
 
  private:
   enum FromPointer { FROM_POINTER };

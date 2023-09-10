@@ -426,9 +426,7 @@ concept Error = requires(const T& t) {
 template <Error E, class Store>
 struct DynErrorTyped;
 
-/// A type-erased [`Error`]($sus::error::Error) object
-/// which satisfies [`DynConcept`]($sus::boxed::DynConcept)
-/// for all [`Error`]($sus::error::Error)s.
+/// A type-erased [`Error`]($sus::error::Error) object.
 ///
 /// `DynError` also satisfies [`Error`]($sus::error::Error) itself.
 ///
@@ -443,6 +441,9 @@ struct DynErrorTyped;
 /// and it can not be moved similar to
 /// [`Pin<T>`](https://doc.rust-lang.org/std/pin/struct.Pin.html) types in
 /// Rust.
+///
+/// See [`DynConcept`]($sus::boxed::DynConcept) for more on type erasure of
+/// concept-satisfying types.
 struct DynError {
   /// Forwards to the [`Error`]($sus::error::Error) implementation of `E`.
   virtual std::string display() const noexcept = 0;

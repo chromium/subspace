@@ -30,7 +30,7 @@ TEST(FnDyn, Fn) {
 }
 
 TEST(FnDyn, FnBox) {
-  auto x = [](sus::Box<DynFn<i32(i32, i32)>> f) { return call(*f, 1, 2); };
+  auto x = [](sus::Box<DynFn<i32(i32, i32)>> f) { return f(1, 2); };
   i32 c = x(sus::into([](i32 a, i32 b) { return a + b; }));
   EXPECT_EQ(c, 1 + 2);
   i32 d = x(sus::into([](i32 a, i32 b) { return a * b; }));
@@ -48,9 +48,7 @@ TEST(FnMutDyn, FnMut) {
 }
 
 TEST(FnMutDyn, FnMutBox) {
-  auto x = [](sus::Box<DynFnMut<i32(i32, i32)>> f) {
-    return call_mut(*f, 1, 2);
-  };
+  auto x = [](sus::Box<DynFnMut<i32(i32, i32)>> f) { return f(1, 2); };
   i32 c = x(sus::into([](i32 a, i32 b) { return a + b; }));
   EXPECT_EQ(c, 1 + 2);
   i32 d = x(sus::into([](i32 a, i32 b) { return a * b; }));
@@ -71,9 +69,7 @@ TEST(FnDyn, FnOnce) {
 
 TEST(FnOnceDyn, FnOnceBox) {
   auto x = [](sus::Box<DynFnOnce<i32(i32, i32)>> f) {
-    return sus::move(f).consume([](auto&& dynfn) {
-      return ::sus::fn::call_once(sus::move(dynfn), 1, 2);
-    });
+    return sus::move(f)(1, 2);
   };
   i32 c = x(sus::into([](i32 a, i32 b) { return a + b; }));
   EXPECT_EQ(c, 1 + 2);
