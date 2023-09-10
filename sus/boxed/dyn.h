@@ -17,6 +17,7 @@
 #include <concepts>
 #include <type_traits>
 
+#include "sus/boxed/boxed.h"  // namespace docs.
 #include "sus/macros/lifetimebound.h"
 #include "sus/mem/forward.h"
 #include "sus/mem/move.h"
@@ -64,7 +65,8 @@ namespace sus::boxed {
 /// The [`dyn`]($sus::boxed::dyn) function, and its returned type should only
 /// appear in function call arguments. The returned type
 /// [`Dyn`]($sus::boxed::Dyn) can not be moved, and it only converts a
-/// reference to a `ConcreteT` into a reference to `DynC`.
+/// reference to a type `T&` into a reference `DynC&` that also satisfies `C`
+/// but without templates.
 /// This can be used to call functions that accept a type-erased concept
 /// by reference, such as with a `const DynC&` parameter.
 ///
@@ -233,8 +235,13 @@ concept DynConcept = requires {
   requires !std::is_move_assignable_v<DynC>;
 };
 
-/// Type erases a reference to a `ConcreteT` which satisfies a concept `C`,
-/// into a reference to `DynC`. Returned from [`dyn`]($sus::boxed::dyn).
+/// A type erasure of a type satisfying a concept, which can be used as a
+/// reference without heap allocation or templates.
+/// Returned from [`dyn`]($sus::boxed::dyn).
+///
+/// This type is similar to `Box<DynC>` for purposes of type erasure but does
+/// not require heap allocation,
+/// and it converts directly to a reference to the erased type.
 ///
 /// Use [`dyn`]($sus::boxed::dyn) to convert to a `DynC` reference instead of
 /// constructing this type directly.
@@ -310,8 +317,8 @@ class [[nodiscard]] Dyn {
   typename DynC::template DynTyped<ConcreteT, ConcreteT&> dyn_;
 };
 
-/// Type erases a reference to a `ConcreteT` which satisfies a concept `C`,
-/// into a reference to `DynC`.
+/// Type erases a reference to a type `T&` which satisfies a concept `C`,
+/// into a reference `DynC&` that also satisfies `C` but without templates.
 ///
 /// Use `dyn<DynC>(x)` to convert a mutable reference to `x` into `DynC&` and
 /// `dyn<const DynC>(x)` to convert a const or mutable reference to `x` into

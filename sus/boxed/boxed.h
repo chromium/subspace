@@ -13,24 +13,13 @@
 // limitations under the License.
 
 // IWYU pragma: private
-// IWYU pragma: friend "sus/.*"
+// IWYU pragma: friend "sus/boxed/.*"
 #pragma once
 
-#include "sus/error/error.h"
-#include "sus/mem/clone.h"
+namespace sus {
 
-namespace sus::boxed::__private {
+/// The [`Box<T>`]($sus::boxed::Box) type for heap allocation and other
+/// tools for [type-erasure of concepts]($sus::boxed::DynConcept).
+namespace boxed {}
 
-struct StringError {
-  std::string s;
-};
-
-}  // namespace sus::boxed::__private
-
-template <>
-struct sus::error::ErrorImpl<sus::boxed::__private::StringError> {
-    using StringError = sus::boxed::__private::StringError;
-    constexpr static std::string display(const StringError& e) noexcept {
-        return sus::clone(e.s);
-    }
-};
+}  // namespace sus
