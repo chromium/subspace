@@ -138,7 +138,7 @@ class [[sus_trivial_abi]] Box final {
   /// Satisfies the [`From<U>`]($sus::construct::From) concept for
   /// [`Box<T>`]($sus::boxed::Box) where `U` is convertible to `T` and is not a
   /// subclass of `T`.
-  /// #[doc.overloads=from.convert]
+  /// #[doc.overloads=convert]
   template <std::convertible_to<T> U>
     requires(!::sus::ptr::SameOrSubclassOf<U*, T*>)
   constexpr static Box from(U u) noexcept
@@ -152,7 +152,7 @@ class [[sus_trivial_abi]] Box final {
   ///
   /// Satisfies the [`From<U>`]($sus::construct::From) concept for
   /// [`Box<T>`]($sus::boxed::Box) where U is `T` or a subclass of `T`.
-  /// #[doc.overloads=from.inherit]
+  /// #[doc.overloads=inherit]
   template <class U>
     requires(::sus::ptr::SameOrSubclassOf<U*, T*>)
   constexpr static Box from(U u) noexcept
@@ -246,6 +246,8 @@ class [[sus_trivial_abi]] Box final {
   ///
   /// See [`DynConcept`]($sus::boxed::DynConcept) for more on type erasure of
   /// concept-satisfying types.
+  ///
+  /// #[doc.overloads=dync]
   template <sus::mem::Move U>
   constexpr static Box from(U u) noexcept
     requires(std::same_as<U, std::remove_cvref_t<U>> &&  //
@@ -265,7 +267,7 @@ class [[sus_trivial_abi]] Box final {
   /// conversion moves and type-erases the `std::string` into a heap-alloocated
   /// [`DynError`]($sus::error::DynError).
   ///
-  /// #[doc.overloads=dynerror.from.string]
+  /// #[doc.overloads=dynerror]
   constexpr static Box from(std::string s) noexcept
     requires(std::same_as<T, ::sus::error::DynError>)
   {
