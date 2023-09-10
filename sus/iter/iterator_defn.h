@@ -1504,29 +1504,24 @@ template <
            !std::is_reference_v<Key>)
 constexpr Option<Item> IteratorBase<Iter, Item>::max_by_key(
     KeyFn fn) && noexcept {
-  auto fold = [&fn](sus::Tuple<Key, Item>&& acc, Item&& item) {
-    Key key = ::sus::fn::call_mut(fn, item);
-    if (key >= acc.template at<0>())
-      return sus::Tuple<Key, Item>(::sus::move(key),
-                                   ::sus::forward<Item>(item));
-    return ::sus::move(acc);
+  // Builds a map function that turns an Item into a Tuple<Key, Item> by using
+  // `keyfn`.
+  auto key = [](KeyFn keyfn) {
+    return [keyfn](Item&& item) {
+      return sus::Tuple<Key, Item>(keyfn(item), sus::forward<Item>(item));
+    };
   };
 
-  // TODO: We could do .map() to make the tuple and use max_by(), and not need
-  // the if statement but for that .map() would need to take a reference
-  // on/ownership of `fn` and that requires heap allocations for FnMutBox.
-  auto first = as_subclass_mut().next();
-  if (first.is_none()) return Option<Item>();
-  Key first_key = fn(first.as_value());
-  return Option<Item>(
-      // Run fold() over a Tuple<Key, Item> to find the max Key.
-      static_cast<Iter&&>(*this)
-          .fold(sus::Tuple<Key, Item>(first_key,
-                                      ::sus::move(first).unwrap_unchecked(
-                                          ::sus::marker::unsafe_fn)),
-                fold)
-          // Pull out the Item for the max Key.
-          .template into_inner<1>());
+  // Compares just the keys.
+  auto compare = [](const sus::Tuple<Key, Item>& x,
+                    const sus::Tuple<Key, Item>& y) {
+    return x.at<0>() <=> y.at<0>();
+  };
+
+  return static_cast<Iter&&>(*this).map(key(fn)).max_by(compare).map(
+      [](auto&& key_item) -> Item {
+        return sus::move(key_item).into_inner<1>();
+      });
 }
 
 template <class Iter, class Item>
@@ -1562,29 +1557,24 @@ template <
            !std::is_reference_v<Key>)
 constexpr Option<Item> IteratorBase<Iter, Item>::min_by_key(
     KeyFn fn) && noexcept {
-  auto fold = [&fn](sus::Tuple<Key, Item>&& acc, Item&& item) {
-    Key key = ::sus::fn::call_mut(fn, item);
-    if (key < acc.template at<0>())
-      return sus::Tuple<Key, Item>(::sus::move(key),
-                                   ::sus::forward<Item>(item));
-    return ::sus::move(acc);
+  // Builds a map function that turns an Item into a Tuple<Key, Item> by using
+  // `keyfn`.
+  auto key = [](KeyFn keyfn) {
+    return [keyfn](Item&& item) {
+      return sus::Tuple<Key, Item>(keyfn(item), sus::forward<Item>(item));
+    };
   };
 
-  // TODO: We could do .map() to make the tuple and use min_by(), and not need
-  // the if statement but for that .map() would need to take a reference
-  // on/ownership of `fn` and that requires heap allocations for FnMutBox.
-  auto first = as_subclass_mut().next();
-  if (first.is_none()) return Option<Item>();
-  Key first_key = fn(first.as_value());
-  return Option<Item>(
-      // Run fold() over a Tuple<Key, Item> to find the min Key.
-      static_cast<Iter&&>(*this)
-          .fold(sus::Tuple<Key, Item>(first_key,
-                                      ::sus::move(first).unwrap_unchecked(
-                                          ::sus::marker::unsafe_fn)),
-                fold)
-          // Pull out the Item for the min Key.
-          .template into_inner<1>());
+  // Compares just the keys.
+  auto compare = [](const sus::Tuple<Key, Item>& x,
+                    const sus::Tuple<Key, Item>& y) {
+    return x.at<0>() <=> y.at<0>();
+  };
+
+  return static_cast<Iter&&>(*this).map(key(fn)).min_by(compare).map(
+      [](auto&& key_item) -> Item {
+        return sus::move(key_item).into_inner<1>();
+      });
 }
 
 template <class Iter, class Item>
