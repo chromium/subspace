@@ -17,13 +17,13 @@
 #include "subdoc/lib/database.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/type.h"
-#include "sus/prelude.h"
 #include "sus/fn/fn_ref.h"
+#include "sus/prelude.h"
 
 namespace subdoc::gen {
 
-void generate_type(
-    HtmlWriter::OpenDiv& div, const LinkedType& linked_type,
-    sus::Option<sus::fn::FnOnceRef<void(HtmlWriter::OpenDiv&)>> var_name_fn) noexcept;
+void generate_type(HtmlWriter::OpenDiv& div, const LinkedType& linked_type,
+                   sus::Option<sus::fn::DynFnMut<void(HtmlWriter::OpenDiv&)>&>
+                       var_name_fn) noexcept;
 
 }  // namespace subdoc::gen

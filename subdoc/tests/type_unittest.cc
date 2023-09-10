@@ -34,14 +34,18 @@ std::string make_string(std::string_view var_name, const subdoc::Type& type) {
   auto const_fn = [&]() { str << "const"; };
   auto volatile_fn = [&]() { str << "volatile"; };
   auto var_fn = [&]() { str << var_name; };
+  // Construct our DynFnMut reference to `var_fn` in case we need it so that
+  // it can outlive the Option holding a ref to it.
+  auto dyn_fn = sus::dyn<sus::fn::DynFnMut<void()>>(var_fn);
+  sus::Option<sus::fn::DynFnMut<void()>&> opt_dyn_fn;
+  if (!var_name.empty()) opt_dyn_fn.insert(dyn_fn);
 
-  subdoc::type_to_string(type, text_fn, type_fn, const_fn, volatile_fn,
-                         [&]() -> sus::Option<sus::fn::FnOnceRef<void()>> {
-                           if (var_name.empty())
-                             return sus::none();
-                           else
-                             return sus::some(sus::move(var_fn));
-                         }());
+  subdoc::type_to_string(
+      type, sus::dyn<sus::fn::DynFnMut<void(std::string_view)>>(text_fn),
+      sus::dyn<sus::fn::DynFnMut<void(subdoc::TypeToStringQuery)>>(type_fn),
+      sus::dyn<sus::fn::DynFnMut<void()>>(const_fn),
+      sus::dyn<sus::fn::DynFnMut<void()>>(volatile_fn),
+      sus::move(opt_dyn_fn));
   return sus::move(str).str();
 }
 

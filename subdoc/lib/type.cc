@@ -528,11 +528,11 @@ Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
 namespace {
 
 void type_to_string_internal(
-    const Type& type, sus::fn::FnMutRef<void(std::string_view)>& text_fn,
-    sus::fn::FnMutRef<void(TypeToStringQuery)>& type_fn,
-    sus::fn::FnMutRef<void()>& const_qualifier_fn,
-    sus::fn::FnMutRef<void()>& volatile_qualifier_fn,
-    sus::Option<sus::fn::FnOnceRef<void()>> var_name_fn) noexcept {
+    const Type& type, sus::fn::DynFnMut<void(std::string_view)>& text_fn,
+    sus::fn::DynFnMut<void(TypeToStringQuery)>& type_fn,
+    sus::fn::DynFnMut<void()>& const_qualifier_fn,
+    sus::fn::DynFnMut<void()>& volatile_qualifier_fn,
+    sus::Option<sus::fn::DynFnMut<void()>&> var_name_fn) noexcept {
   if (type.qualifier.is_const) {
     const_qualifier_fn();
     text_fn(" ");
@@ -730,11 +730,11 @@ void type_walk_types_internal(
 }  // namespace
 
 void type_to_string(
-    const Type& type, sus::fn::FnMutRef<void(std::string_view)> text_fn,
-    sus::fn::FnMutRef<void(TypeToStringQuery)> type_fn,
-    sus::fn::FnMutRef<void()> const_qualifier_fn,
-    sus::fn::FnMutRef<void()> volatile_qualifier_fn,
-    sus::Option<sus::fn::FnOnceRef<void()>> var_name_fn) noexcept {
+    const Type& type, sus::fn::DynFnMut<void(std::string_view)>& text_fn,
+    sus::fn::DynFnMut<void(TypeToStringQuery)>& type_fn,
+    sus::fn::DynFnMut<void()>& const_qualifier_fn,
+    sus::fn::DynFnMut<void()>& volatile_qualifier_fn,
+    sus::Option<sus::fn::DynFnMut<void()>&> var_name_fn) noexcept {
   return type_to_string_internal(type, text_fn, type_fn, const_qualifier_fn,
                                  volatile_qualifier_fn, sus::move(var_name_fn));
 }
