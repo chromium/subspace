@@ -60,7 +60,7 @@ namespace sus::boxed {
 /// * Supports up-casting (TODO: and [`down-casting`](
 ///   https://github.com/chromium/subspace/issues/333)) without leaving
 ///   requiring a native pointer to be pulled out of the `Box`.
-/// * No native arrays, `Box` can hold [`Array`]($sus::collection::Array) or
+/// * No native arrays, `Box` can hold [`Array`]($sus::collections::Array) or
 ///   [`std::array`](https://en.cppreference.com/w/cpp/container/array) but
 ///   avoids API complexity for supporting pointers and native arrays (which
 ///   decay to pointers) by rejecting native arrays.
