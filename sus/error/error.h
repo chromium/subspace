@@ -455,7 +455,6 @@ struct DynError {
   constexpr DynError() = default;
   /// #[doc.hidden]
   constexpr virtual ~DynError() = default;
-  /// #[doc.hidden]
   DynError(DynError&&) = delete;
   /// #[doc.hidden]
   DynError&& operator=(DynError&&) = delete;
