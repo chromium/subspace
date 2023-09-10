@@ -277,7 +277,12 @@ class [[nodiscard]] Dyn {
       : dyn_(const_cast<ConcreteT&>(concrete)) {}
 
   /// Converts the reference to `ConcreteT` into a `DynC` reference.
-  operator const DynC&() const&& { return dyn_; }
+  operator const DynC&() const& { return dyn_; }
+  operator DynC&() &
+    requires(!std::is_const_v<DynC>)
+  {
+    return dyn_;
+  }
   operator DynC&() &&
     requires(!std::is_const_v<DynC>)
   {
