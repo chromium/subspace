@@ -305,6 +305,32 @@ TEST(BoxDynError, FromString) {
   }
 }
 
+TEST(BoxDynFn, Example_Call) {
+  {
+    const auto b = Box<sus::fn::DynFn<usize(std::string_view)>>::from(
+        &std::string_view::size);
+    sus::check(b("hello world") == 11u);
+
+    auto mut_b = Box<sus::fn::DynFn<usize(std::string_view)>>::from(
+        &std::string_view::size);
+    sus::check(mut_b("hello world") == 11u);
+
+    sus::check(sus::move(mut_b)("hello world") == 11u);
+    // The object inside `mut_b` is now destroyed.
+  }
+  {
+    auto b = Box<sus::fn::DynFnMut<usize(std::string_view)>>::from(
+        &std::string_view::size);
+    EXPECT_EQ((*b)("hello world"), 11u);
+    EXPECT_EQ(b("hello world"), 11u);
+  }
+  {
+    auto b = Box<sus::fn::DynFnOnce<usize(std::string_view)>>::from(
+        &std::string_view::size);
+    EXPECT_EQ(sus::move(b)("hello world"), 11u);
+  }
+}
+
 TEST(Box, fmt) {
   static_assert(fmt::is_formattable<Box<i32>, char>::value);
   EXPECT_EQ(fmt::format("{}", Box<i32>(12345)), "12345");
