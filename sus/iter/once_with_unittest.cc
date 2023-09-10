@@ -44,4 +44,8 @@ TEST(OnceWith, NextBack) {
   EXPECT_EQ(ow.next_back(), sus::none());
 }
 
+// constexpr, and verifies that the return type can be converted to the Item
+// type
+static_assert(sus::iter::once_with<i32>([] { return 5; }).sum() == 5);
+
 }  // namespace

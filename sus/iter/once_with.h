@@ -23,7 +23,7 @@ namespace sus::iter {
 
 using ::sus::option::Option;
 
-template <class ItemT>
+template <class ItemT, class GenFn>
 class OnceWith;
 
 /// Creates an iterator that lazily generates a value exactly once by invoking
@@ -41,45 +41,59 @@ class OnceWith;
 /// auto ow = sus::iter::once_with<u16>([]() { return 3_u16; });
 /// sus::check(ow.next().unwrap() == 3_u16);
 /// ```
-template <class Item>
-inline OnceWith<Item> once_with(::sus::fn::FnMutBox<Item()> gen) noexcept {
-  return OnceWith<Item>(::sus::move(gen));
+template <class Item, ::sus::fn::FnMut<Item()> GenFn>
+constexpr inline OnceWith<Item, GenFn> once_with(GenFn gen) noexcept {
+  return OnceWith<Item, GenFn>(::sus::move(gen));
 }
 
 /// An Iterator that walks over at most a single Item.
-template <class ItemT>
-class [[nodiscard]] [[sus_trivial_abi]] OnceWith final
-    : public IteratorBase<OnceWith<ItemT>, ItemT> {
+template <class ItemT, class GenFn>
+class [[nodiscard]] OnceWith final
+    : public IteratorBase<OnceWith<ItemT, GenFn>, ItemT> {
  public:
   using Item = ItemT;
 
+  // Type is Move and (can be) Clone.
+  OnceWith(OnceWith&&) = default;
+  OnceWith& operator=(OnceWith&&) = default;
+
+  // sus::mem::Clone trait.
+  constexpr OnceWith clone() const noexcept
+    requires(::sus::mem::Clone<GenFn>)
+  {
+    return OnceWith(sus::clone(gen_));
+  }
+
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
-    return gen_.take().map([](auto&& gen) { return ::sus::fn::call_mut(gen); });
+  constexpr Option<Item> next() noexcept {
+    return gen_.take().map(
+        [](auto&& gen) -> Item { return ::sus::fn::call_mut(gen); });
   }
   /// sus::iter::Iterator trait.
-  SizeHint size_hint() const noexcept {
+  constexpr SizeHint size_hint() const noexcept {
     ::sus::num::usize rem = gen_.is_some() ? 1u : 0u;
     return SizeHint(rem, ::sus::Option<::sus::num::usize>(rem));
   }
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept {
-    return gen_.take().map([](auto&& gen) { return ::sus::fn::call_mut(gen); });
+  constexpr Option<Item> next_back() noexcept {
+    return gen_.take().map(
+        [](auto&& gen) -> Item { return ::sus::fn::call_mut(gen); });
   }
   // sus::iter::ExactSizeIterator trait.
-  usize exact_size_hint() const noexcept { return gen_.is_some() ? 1u : 0u; }
-
- private:
-  friend OnceWith<Item> sus::iter::once_with<Item>(
-      ::sus::fn::FnMutBox<Item()> gen) noexcept;
-
-  OnceWith(::sus::fn::FnMutBox<Item()> gen)
-      : gen_(sus::Option<::sus::fn::FnMutBox<Item()>>(::sus::move(gen))) {
+  constexpr usize exact_size_hint() const noexcept {
+    return gen_.is_some() ? 1u : 0u;
   }
 
-  Option<::sus::fn::FnMutBox<Item()>> gen_;
+ private:
+  friend constexpr OnceWith<Item, GenFn> sus::iter::once_with<Item>(
+      GenFn gen) noexcept;
 
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(gen_));
+  constexpr OnceWith(GenFn gen) : gen_(sus::Option<GenFn>(::sus::move(gen))) {}
+
+  Option<GenFn> gen_;
+
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(gen_));
 };
 
 }  // namespace sus::iter
