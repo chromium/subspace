@@ -15,6 +15,7 @@
 #pragma once
 
 #include "fmt/core.h"
+#include "sus/boxed/dyn.h"
 #include "sus/macros/lifetimebound.h"
 #include "sus/option/option.h"
 
@@ -224,6 +225,9 @@ concept HasErrorSource = requires(const T& t) {
 /// single type, as does passing error types through virtual methods or dylib
 /// ABI boundaries.
 ///
+/// See [`DynConcept`]($sus::boxed::DynConcept) for more on type erasure of
+/// [`Error`]($sus::error::Error) types.
+///
 /// ## Opaque erasure
 /// When an application just wants to return an error without exposing the
 /// actual type behind it, use the [`DynError`]($sus::error::DynError) type.
@@ -239,7 +243,7 @@ concept HasErrorSource = requires(const T& t) {
 /// `error` that satisfies [`Error`]($sus::error::Error).
 ///
 /// This is similar to
-/// `&dyn Error` when working with the Rust
+/// `Box<dyn Error>` when working with the Rust
 /// [`Error`](https://doc.rust-lang.org/stable/std/error/trait.Error.html)
 /// trait. However with `DynError`, the error type can be printed/displayed but
 /// no further information can be extracted from the error. Nonetheless this is
@@ -419,7 +423,14 @@ concept Error = requires(const T& t) {
   };
 };
 
-/// A type-erased [`Error`]($sus::error::Error) object.
+template <Error E, class Store>
+struct DynErrorTyped;
+
+/// A type-erased [`Error`]($sus::error::Error) object
+/// which satisfies [`DynConcept`]($sus::boxed::DynConcept)
+/// for all [`Error`]($sus::error::Error)s.
+///
+/// `DynError` also satisfies [`Error`]($sus::error::Error) itself.
 ///
 /// Using this allows the error type to be placed in heap-allocated smart
 /// pointers without templates, and thus without knowing the concrete type.
@@ -438,10 +449,22 @@ struct DynError {
   /// Forwards to the [`Error`]($sus::error::Error) implementation of `E`.
   virtual sus::Option<const DynError&> source() const noexcept = 0;
 
+  // `DynConcept` machinery for type-erasing the `Error` concept.
+
+  /// #[doc.hidden]
   constexpr DynError() = default;
+  /// #[doc.hidden]
   constexpr virtual ~DynError() = default;
+  /// #[doc.hidden]
   DynError(DynError&&) = delete;
+  /// #[doc.hidden]
   DynError&& operator=(DynError&&) = delete;
+  /// #[doc.hidden]
+  template <class ConcreteT>
+  static constexpr bool SatisfiesConcept = Error<ConcreteT>;
+  /// #[doc.hidden]
+  template <class ConcreteT, class Store>
+  using DynTyped = DynErrorTyped<ConcreteT, Store>;
 };
 
 /// Gets a string describing the `error` from an [`Error`]($sus::error::Error)
@@ -463,10 +486,12 @@ constexpr inline sus::Option<const DynError&> error_source(
   }
 }
 
-/// The wrapper around an [`Error`]($sus::error::Error) object that allows it
-/// to be type-erased as [`DynError`]($sus::error::DynError).
-template <class E>
-struct DynErrorTyped : public DynError {
+/// The type-aware subclass of `DynError` for type-erasing an `Error` concept
+/// type through `DynConcept`.
+///
+/// #[doc.hidden]
+template <Error E, class Store>
+struct DynErrorTyped final : public DynError {
   std::string display() const noexcept override {
     return error_display(error_);
   }
@@ -474,15 +499,10 @@ struct DynErrorTyped : public DynError {
     return error_source(error_);
   }
 
-  constexpr DynErrorTyped(E&& error) : error_(::sus::move(error)) {}
-  constexpr ~DynErrorTyped() override = default;
-
-  /// Unwraps and returns the inner error type `E`, discarding the
-  /// `DynErrorTyped`.
-  constexpr E into_inner() && noexcept { return ::sus::move(error_); }
+  constexpr DynErrorTyped(Store&& c) : error_(std::forward<Store>(c)) {}
 
  private:
-  E error_;
+  Store error_;
 };
 
 }  // namespace sus::error

@@ -88,6 +88,13 @@ static_assert(sus::error::Error<SuperErrorSideKick>);
 
 namespace {
 using sus::error::Error;
+using sus::error::DynError;
+
+// Tests that DynError functions as a DynConcept.
+static_assert(sus::boxed::DynConcept<DynError, ErrorReason>);
+static_assert(sus::boxed::DynConcept<DynError, ErrorString>);
+static_assert(sus::boxed::DynConcept<DynError, SuperError>);
+static_assert(sus::boxed::DynConcept<DynError, SuperErrorSideKick>);
 
 TEST(Error, Example_ToString) {
   auto err = u32::try_from(-1).unwrap_err();
@@ -96,7 +103,7 @@ TEST(Error, Example_ToString) {
 
 TEST(Error, Example_Result) {
   auto f =
-      [](i32 i) -> sus::result::Result<void, sus::Box<sus::error::DynError>> {
+      [](i32 i) -> sus::result::Result<void, sus::Box<DynError>> {
     if (i > 10) return sus::err(sus::into(ErrorReason::SomeReason));
     if (i < -10) return sus::err(sus::into(ErrorString("too low")));
     return sus::ok();
@@ -145,11 +152,11 @@ TEST(Error, Source) {
   auto super_error = SuperError{.source = sus::into(SuperErrorSideKick())};
   decltype(auto) source = sus::error::error_source(super_error);
   static_assert(
-      std::same_as<decltype(source), sus::Option<const sus::error::DynError&>>);
+      std::same_as<decltype(source), sus::Option<const DynError&>>);
   EXPECT_EQ(source.is_some(), true);
   decltype(auto) inner_source = sus::error::error_source(source.as_value());
   static_assert(std::same_as<decltype(inner_source),
-                             sus::Option<const sus::error::DynError&>>);
+                             sus::Option<const DynError&>>);
   EXPECT_EQ(inner_source.is_some(), false);
 
   EXPECT_EQ(sus::error::error_display(*source), "SuperErrorSideKick is here!");
