@@ -1887,10 +1887,11 @@ class Option final {
   // storage from a `T` object or a `T&&` (which is received as `T&`).
   template <class U>
   static constexpr inline decltype(auto) move_to_storage(U&& t) {
-    if constexpr (std::is_reference_v<T>)
-      return StoragePointer<T>(t);
-    else
+    if constexpr (std::is_reference_v<T>) {
+      return StoragePointer<T>(::sus::forward<U>(t));
+    } else {
       return ::sus::move(t);
+    }
   }
 
   /// Constructors for `Some`.
