@@ -27,7 +27,8 @@ namespace sus::boxed {
 /// A concept for generalized type erasure of concepts, allowing use of a
 /// concept-satisfying type `T` without knowing the concrete type `T`.
 ///
-/// By providing a virtual type-erasure class that satisifies `DynConcept` along
+/// By providing a virtual type-erasure class that satisifies
+/// [`DynConcept`]($sus::boxed::DynConcept) along
 /// with a concept `C`, it allows the use of generic concept-satisfying objects
 /// without the use of templates.
 /// This means a function accepting a concept-satisying object as
@@ -40,7 +41,8 @@ namespace sus::boxed {
 /// indirection involved and the concept itself is not named.
 ///
 /// To type-erase a concept `C`, there must be a virtual class `DynC` declared
-/// that satisfies this `DynConcept` concept for all concrete types `ConcreteT`
+/// that satisfies this [`DynConcept`]($sus::boxed::DynConcept) concept
+/// for all concrete types `ConcreteT`
 /// which satisfy the concept `C` being type-erased.
 ///
 /// # Performing the type erasure
@@ -73,8 +75,8 @@ namespace sus::boxed {
 /// # Type erasure of concepts in the Subspace library
 ///
 /// Some concepts in the Subspace library come with a virtual type-erasure class
-/// that satisfies `DynConcept` and can be type-erased into `Box<DynC>` for the
-/// concept `C`:
+/// that satisfies [`DynConcept`]($sus::boxed::DynConcept) and can be
+/// type-erased into `Box<DynC>` for the concept `C`:
 /// * [`Error`]($sus::error::Error)
 /// * [`Fn`]($sus::fn::Fn)
 /// * [`FnMut`]($sus::fn::FnMut)
