@@ -14,7 +14,7 @@
 
 #include "subdoc/tests/subdoc_test.h"
 
-TEST_F(SubDocTest, InheritFunction) {
+TEST_F(SubDocTest, DocAttributesInheritFunction) {
   auto result = run_code(R"(
     /// Comment headline
     void a() {}
@@ -25,4 +25,16 @@ TEST_F(SubDocTest, InheritFunction) {
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_function_comment(db, "2:5", "<p>Comment headline</p>"));
   EXPECT_TRUE(has_function_comment(db, "4:5", "<p>Comment headline</p>"));
+}
+
+TEST_F(SubDocTest, DocAttributesSelf) {
+  auto result = run_code(R"(
+    struct S {
+      /// Comment @doc.self headline
+      void a() {}
+    };
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_method_comment(db, "3:7", "<p>Comment S headline</p>"));
 }
