@@ -16,6 +16,7 @@
 
 #include "sus/fn/fn_concepts.h"
 #include "sus/iter/iterator_concept.h"
+#include "sus/option/option.h"
 
 namespace sus::iter::__private {
 

@@ -21,7 +21,6 @@
 
 #include "sus/assertions/check.h"
 #include "sus/fn/fn_concepts.h"
-#include "sus/fn/fn_ref.h"
 #include "sus/macros/lifetimebound.h"
 #include "sus/mem/forward.h"
 

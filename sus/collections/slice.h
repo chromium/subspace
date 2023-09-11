@@ -28,7 +28,6 @@
 #include "sus/collections/join.h"
 #include "sus/construct/default.h"
 #include "sus/fn/fn_concepts.h"
-#include "sus/fn/fn_ref.h"
 #include "sus/iter/iterator_defn.h"
 #include "sus/iter/iterator_ref.h"
 #include "sus/lib/__private/forward_decl.h"

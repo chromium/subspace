@@ -34,7 +34,6 @@
 #include "sus/collections/iterators/vec_iter.h"
 #include "sus/collections/slice.h"
 #include "sus/fn/fn_concepts.h"
-#include "sus/fn/fn_ref.h"
 #include "sus/iter/adaptors/by_ref.h"
 #include "sus/iter/adaptors/enumerate.h"
 #include "sus/iter/adaptors/take.h"
