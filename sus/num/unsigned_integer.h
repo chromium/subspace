@@ -175,9 +175,11 @@ struct [[sus_trivial_abi]] uptr final {
 #define _primitive ::sus::num::__private::ptr_type<::sus::mem::size_of<uintptr_t>()>::unsigned_type
 #include "sus/num/__private/unsigned_integer_consts.inc"
 
-/// sus::num::Add<T*, usize> trait.
+/// Satisfies the [`Add`]($sus::num::Add) concept for pointers
+/// (`T*`) with [`usize`]($sus::num::usize).
 ///
-/// Adds a [`usize`]($sus::num::usize) to a pointer, returning the resulting pointer.
+/// Adds a [`usize`]($sus::num::usize) to a pointer, returning the resulting
+/// pointer.
 ///
 /// #[doc.overloads=ptr.add.usize]
 template <class T, Unsigned U>
@@ -186,9 +188,11 @@ sus_pure_const constexpr inline T* operator+(T* t, U offset) {
   return t + size_t{offset};
 }
 
-/// sus::num::AddAssign<T*, usize> trait.
+/// Satisfies the [`AddAssign`]($sus::num::AddAssign) concept for pointers
+/// (`T*`) with [`usize`]($sus::num::usize).
 ///
-/// Adds a [`usize`]($sus::num::usize) to a referenced pointer, and returns the input reference.
+/// Adds a [`usize`]($sus::num::usize) to a referenced pointer, and returns the
+/// input reference.
 ///
 /// #[doc.overloads=ptr.add.usize]
 template <class T>
@@ -197,9 +201,11 @@ constexpr inline T*& operator+=(T*& t, usize offset) {
   return t;
 }
 
-/// sus::num::Sub<T*, usize> trait.
+/// Satisfies the [`Sub`]($sus::num::Sub) concept for pointers
+/// (`T*`) with [`usize`]($sus::num::usize).
 ///
-/// Subtracts a  from a pointer, returning the resulting pointer.
+/// Subtracts a [`usize`]($sus::num::usize) from a pointer, returning the
+/// resulting pointer.
 ///
 /// #[doc.overloads=ptr.sub.usize]
 template <class T>
@@ -207,9 +213,11 @@ sus_pure_const constexpr inline T* operator-(T* t, usize offset) {
   return t - size_t{offset};
 }
 
-/// sus::num::SubAssign<T*, usize> trait.
+/// Satisfies the [`SubAssign`]($sus::num::SubAssign) concept for pointers
+/// (`T*`) with [`usize`]($sus::num::usize).
 ///
-/// Subtracts a [`usize`]($sus::num::usize) from a referenced pointer, and returns the input
+/// Subtracts a [`usize`]($sus::num::usize) from a referenced pointer, and
+/// returns the input
 /// reference.
 ///
 /// #[doc.overloads=ptr.sub.usize]
@@ -219,6 +227,9 @@ constexpr inline T*& operator-=(T*& t, usize offset) {
   return t;
 }
 
+/// Satisfies the [`Shl`]($sus::num::Shl) concept for unsigned primitive
+/// integers shifted by [`u32`]($sus::num::u32).
+/// #[doc.overloads=unsigned.prim.<<u32]
 template <class P, Integer U>
   requires((UnsignedPrimitiveInteger<P> || UnsignedPrimitiveEnum<P>) &&
            std::convertible_to<U, u32>)
@@ -227,11 +238,15 @@ template <class P, Integer U>
   // return type?
   return l << u32(r).primitive_value;
 }
+/// #[doc.overloads=unsigned.prim.<<u32]
 template <class P, Integer U>
   requires((UnsignedPrimitiveInteger<P> || UnsignedPrimitiveEnum<P>) &&
            !std::convertible_to<U, u32>)
 constexpr inline P operator<<(P l, U r) noexcept = delete;
 
+/// Satisfies the [`Shr`]($sus::num::Shr) concept for unsigned primitive
+/// integers shifted by [`u32`]($sus::num::u32).
+/// #[doc.overloads=unsigned.prim.>>u32]
 template <class P, Integer U>
   requires((UnsignedPrimitiveInteger<P> || UnsignedPrimitiveEnum<P>) &&
            std::convertible_to<U, u32>)
@@ -240,6 +255,7 @@ template <class P, Integer U>
   // return type?
   return l >> u32(r).primitive_value;
 }
+/// #[doc.overloads=unsigned.prim.>>u32]
 template <class P, Integer U>
   requires((UnsignedPrimitiveInteger<P> || UnsignedPrimitiveEnum<P>) &&
            !std::convertible_to<U, u32>)

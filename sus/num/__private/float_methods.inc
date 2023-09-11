@@ -317,7 +317,7 @@ sus_pure constexpr inline _self operator-() const {
   return _self(-primitive_value);
 }
 
-/// Satisfies the [`Add<@doc.self>`]($sus::num::Add) concept.
+/// Satisfies the [`Add`]($sus::num::Add) concept for floating point values.
 /// #[doc.overloads=float.+]
 [[nodiscard]] sus_pure friend constexpr inline _self operator+(
     _self l, _self r) noexcept {
@@ -345,7 +345,7 @@ friend constexpr inline _self operator+(_self l, U r) noexcept = delete;
 template <PrimitiveFloat U>
   requires(!std::convertible_to<U, _self>)
 friend constexpr inline _self operator+(U l, _self r) noexcept = delete;
-/// Satisfies the [`Sub<@doc.self>`]($sus::num::Sub) concept.
+/// Satisfies the [`Sub`]($sus::num::Sub) concept for floating point values.
 /// #[doc.overloads=float.-]
 [[nodiscard]] sus_pure friend constexpr inline _self operator-(
     _self l, _self r) noexcept {
@@ -373,7 +373,7 @@ friend constexpr inline _self operator-(_self l, U r) noexcept = delete;
 template <PrimitiveFloat U>
   requires(!std::convertible_to<U, _self>)
 friend constexpr inline _self operator-(U l, _self r) noexcept = delete;
-/// Satisfies the [`Mul<@doc.self>`]($sus::num::Mul) concept.
+/// Satisfies the [`Mul`]($sus::num::Mul) concept for floating point values.
 /// #[doc.overloads=float.*]
 [[nodiscard]] sus_pure friend constexpr inline _self operator*(
     _self l, _self r) noexcept {
@@ -401,7 +401,7 @@ friend constexpr inline _self operator*(_self l, U r) noexcept = delete;
 template <PrimitiveFloat U>
   requires(!std::convertible_to<U, _self>)
 friend constexpr inline _self operator*(U l, _self r) noexcept = delete;
-/// Satisfies the [`Div<@doc.self>`]($sus::num::Div) concept.
+/// Satisfies the [`Div`]($sus::num::Div) concept for floating point values.
 /// #[doc.overloads=float./]
 [[nodiscard]] sus_pure friend constexpr inline _self operator/(
     _self l, _self r) noexcept {
@@ -429,7 +429,7 @@ friend constexpr inline _self operator/(_self l, U r) noexcept = delete;
 template <PrimitiveFloat U>
   requires(!std::convertible_to<U, _self>)
 friend constexpr inline _self operator/(U l, _self r) noexcept = delete;
-/// Satisfies the [`Rem<@doc.self>`]($sus::num::Rem) concept.
+/// Satisfies the [`Rem`]($sus::num::Rem) concept for floating point values.
 ///
 /// The remainder from the division of two floats.
 ///

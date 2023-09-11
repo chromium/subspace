@@ -126,7 +126,8 @@ struct [[sus_trivial_abi]] isize final {
 #define _primitive ::sus::num::__private::addr_type<>::signed_type
 #include "sus/num/__private/signed_integer_consts.inc"
 
-/// sus::num::Add<T*, isize> trait.
+/// Satisfies the [`Add`]($sus::num::Add) concept for pointers
+/// (`T*`) with [`isize`]($sus::num::isize).
 ///
 /// Adds a [`isize`]($sus::num::isize) to a pointer, returning the resulting
 /// pointer.
@@ -138,7 +139,8 @@ sus_pure_const constexpr inline T* operator+(T* t, S offset) {
   return t + ptrdiff_t{offset};
 }
 
-/// sus::num::AddAssign<T*, isize> trait.
+/// Satisfies the [`AddAssign`]($sus::num::AddAssign) concept for pointers
+/// (`T*`) with [`isize`]($sus::num::isize).
 ///
 /// Adds a [`isize`]($sus::num::isize) to a referenced pointer, and returns
 /// the input reference.
@@ -150,7 +152,8 @@ constexpr inline T*& operator+=(T*& t, isize offset) {
   return t;
 }
 
-/// sus::num::Sub<T*, isize> trait.
+/// Satisfies the [`Sub`]($sus::num::Sub) concept for pointers
+/// (`T*`) with [`isize`]($sus::num::isize).
 ///
 /// Subtracts a [`isize`]($sus::num::isize) from a pointer, returning the
 /// resulting pointer.
@@ -161,7 +164,8 @@ sus_pure_const constexpr inline T* operator-(T* t, isize offset) {
   return t - ptrdiff_t{offset};
 }
 
-/// sus::num::SubAssign<T*, isize> trait.
+/// Satisfies the [`SubAssign`]($sus::num::SubAssign) concept for pointers
+/// (`T*`) with [`isize`]($sus::num::isize).
 ///
 /// Subtracts a [`isize`]($sus::num::isize) from a referenced pointer, and
 /// returns the input reference.
@@ -173,6 +177,9 @@ constexpr inline T*& operator-=(T*& t, isize offset) {
   return t;
 }
 
+/// Satisfies the [`Shl`]($sus::num::Shl) concept for signed primitive integers
+/// shifted by [`u32`]($sus::num::u32).
+/// #[doc.overloads=signed.prim.<<u32]
 template <class P, Integer U>
   requires((SignedPrimitiveInteger<P> || SignedPrimitiveEnum<P>) &&
            std::convertible_to<U, u32>)
@@ -181,11 +188,15 @@ template <class P, Integer U>
   // return type?
   return l << u32(r).primitive_value;
 }
+/// #[doc.overloads=signed.prim.<<u32]
 template <class P, Integer U>
   requires((SignedPrimitiveInteger<P> || SignedPrimitiveEnum<P>) &&
            !std::convertible_to<U, u32>)
 constexpr inline P operator<<(P l, U r) noexcept = delete;
 
+/// Satisfies the [`Shr`]($sus::num::Shr) concept for signed primitive integers
+/// shifted by [`u32`]($sus::num::u32).
+/// #[doc.overloads=signed.prim.>>u32]
 template <class P, Integer U>
   requires((SignedPrimitiveInteger<P> || SignedPrimitiveEnum<P>) &&
            std::convertible_to<U, u32>)
@@ -194,6 +205,7 @@ template <class P, Integer U>
   // return type?
   return l >> u32(r).primitive_value;
 }
+/// #[doc.overloads=signed.prim.>>u32]
 template <class P, Integer U>
   requires((SignedPrimitiveInteger<P> || SignedPrimitiveEnum<P>) &&
            !std::convertible_to<U, u32>)

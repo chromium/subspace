@@ -594,11 +594,12 @@ sus_pure constexpr inline _self operator~() const& noexcept {
   return _self(__private::unchecked_not(primitive_value));
 }
 
-/// Satisfies the [`Add<@doc.self>`]($sus::num::Add) concept.
+/// Satisfies the [`Add`]($sus::num::Add) concept for unsigned integers.
 ///
 /// This operation supports working with primitive unsigned integers that
-/// convert to @doc.self, as well as enums. However enum class is excluded as
-/// they require an explicit conversion to a @doc.self.
+/// convert to the safe numeric, as well as enums.
+/// However enum class is excluded as they require an explicit conversion to an
+/// integer.
 ///
 /// #[doc.overloads=unsignedint.+]
 [[nodiscard]] sus_pure friend constexpr inline _self operator+(
@@ -639,11 +640,12 @@ template <class U>
            !((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
              ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
 friend constexpr inline _self operator+(U l, _self r) noexcept = delete;
-/// Satisfies the [`Sub<@doc.self>`]($sus::num::Sub) concept.
+/// Satisfies the [`Sub`]($sus::num::Sub) concept for unsigned integers.
 ///
 /// This operation supports working with primitive unsigned integers that
-/// convert to @doc.self, as well as enums. However enum class is excluded as
-/// they require an explicit conversion to a @doc.self.
+/// convert to the safe numeric, as well as enums.
+/// However enum class is excluded as they require an explicit conversion to an
+/// integer.
 ///
 /// #[doc.overloads=unsignedint.-]
 [[nodiscard]] sus_pure friend constexpr inline _self operator-(
@@ -684,11 +686,12 @@ template <class U>
            !((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
              ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
 friend constexpr inline _self operator-(U l, _self r) noexcept = delete;
-/// Satisfies the [`Mul<@doc.self>`]($sus::num::Mul) concept.
+/// Satisfies the [`Mul`]($sus::num::Mul) concept for unsigned integers.
 ///
 /// This operation supports working with primitive unsigned integers that
-/// convert to @doc.self, as well as enums. However enum class is excluded as
-/// they require an explicit conversion to a @doc.self.
+/// convert to the safe numeric, as well as enums.
+/// However enum class is excluded as they require an explicit conversion to an
+/// integer.
 ///
 /// #[doc.overloads=unsignedint.*]
 [[nodiscard]] sus_pure friend constexpr inline _self operator*(
@@ -729,11 +732,12 @@ template <class U>
            !((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
              ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
 friend constexpr inline _self operator*(U l, _self r) noexcept = delete;
-/// Satisfies the [`Div<@doc.self>`]($sus::num::Div) concept.
+/// Satisfies the [`Div`]($sus::num::Div) concept for unsigned integers.
 ///
 /// This operation supports working with primitive unsigned integers that
-/// convert to @doc.self, as well as enums. However enum class is excluded as
-/// they require an explicit conversion to a @doc.self.
+/// convert to the safe numeric, as well as enums.
+/// However enum class is excluded as they require an explicit conversion to an
+/// integer.
 ///
 /// #[doc.overloads=unsignedint./]
 [[nodiscard]] sus_pure friend constexpr inline _self operator/(
@@ -772,11 +776,12 @@ template <class U>
            !((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
              ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
 friend constexpr inline _self operator/(U l, _self r) noexcept = delete;
-/// Satisfies the [`Rem<@doc.self>`]($sus::num::Rem) concept.
+/// Satisfies the [`Rem`]($sus::num::Rem) concept for unsigned integers.
 ///
 /// This operation supports working with primitive unsigned integers that
-/// convert to @doc.self, as well as enums. However enum class is excluded as
-/// they require an explicit conversion to a @doc.self.
+/// convert to the safe numeric, as well as enums.
+/// However enum class is excluded as they require an explicit conversion to an
+/// integer.
 ///
 /// #[doc.overloads=unsignedint.%]
 [[nodiscard]] sus_pure friend constexpr inline _self operator%(
@@ -816,11 +821,12 @@ template <class U>
              ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
 friend constexpr inline _self operator%(U l, _self r) noexcept = delete;
 
-/// Satisfies the [`BitAnd<@doc.self>`]($sus::num::BitAnd) concept.
+/// Satisfies the [`BitAnd`]($sus::num::BitAnd) concept for unsigned integers.
 ///
 /// This operation supports working with primitive unsigned integers that
-/// convert to @doc.self, as well as enums. However enum class is excluded as
-/// they require an explicit conversion to a @doc.self.
+/// convert to the safe numeric, as well as enums.
+/// However enum class is excluded as they require an explicit conversion to an
+/// integer.
 ///
 /// #[doc.overloads=unsignedint.&]
 [[nodiscard]] sus_pure friend constexpr inline _self operator&(
@@ -857,11 +863,12 @@ template <class U>
            !((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
              ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
 friend constexpr inline _self operator&(U l, _self r) noexcept = delete;
-/// Satisfies the [`BitOr<@doc.self>`]($sus::num::BitOr) concept.
+/// Satisfies the [`BitOr`]($sus::num::BitOr) concept for unsigned integers.
 ///
 /// This operation supports working with primitive unsigned integers that
-/// convert to @doc.self, as well as enums. However enum class is excluded as
-/// they require an explicit conversion to a @doc.self.
+/// convert to the safe numeric, as well as enums.
+/// However enum class is excluded as they require an explicit conversion to an
+/// integer.
 ///
 /// #[doc.overloads=unsignedint.|]
 [[nodiscard]] sus_pure friend constexpr inline _self operator|(
@@ -898,11 +905,12 @@ template <class U>
            !((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
              ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
 friend constexpr inline _self operator|(U l, _self r) noexcept = delete;
-/// Satisfies the [`BitXor<@doc.self>`]($sus::num::BitXor) concept.
+/// Satisfies the [`BitXor`]($sus::num::BitXor) concept for unsigned integers.
 ///
 /// This operation supports working with primitive unsigned integers that
-/// convert to @doc.self, as well as enums. However enum class is excluded as
-/// they require an explicit conversion to a @doc.self.
+/// convert to the safe numeric, as well as enums.
+/// However enum class is excluded as they require an explicit conversion to an
+/// integer.
 ///
 /// #[doc.overloads=unsignedint.^]
 [[nodiscard]] sus_pure friend constexpr inline _self operator^(
@@ -939,7 +947,7 @@ template <class U>
            !((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
              ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
 friend constexpr inline _self operator^(U l, _self r) noexcept = delete;
-/// Satisfies the [`Shl<@doc.self>`]($sus::num::Shl) concept.
+/// Satisfies the [`Shl`]($sus::num::Shl) concept for unsigned integers.
 ///
 /// #[doc.overloads=unsignedint.<<]
 [[nodiscard]] sus_pure friend constexpr inline _self operator<<(
@@ -954,7 +962,7 @@ template <class U>
   requires(!std::convertible_to<U, u32>)
 [[nodiscard]] sus_pure friend constexpr inline _self operator<<(
     _self l, U r) noexcept = delete;
-/// Satisfies the [`Shr<@doc.self>`]($sus::num::Shr) concept.
+/// Satisfies the [`Shr`]($sus::num::Shr) concept for unsigned integers.
 ///
 /// #[doc.overloads=unsignedint.>>]
 [[nodiscard]] sus_pure friend constexpr inline _self operator>>(
