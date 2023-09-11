@@ -90,6 +90,10 @@ static sus::Vec<std::string> collect_template_params(
   sus::Vec<std::string> template_params;
   if (clang::TemplateParameterList* params = tmpl->getTemplateParameters()) {
     for (clang::NamedDecl* n : *params) {
+      // Skip auto vars from the function parameter list, which get added as
+      // auto template parameters.
+      if (n->isImplicit()) continue;
+
       // TODO: Get the default values and the type (auto vs class).
       if (auto* parm = clang::dyn_cast<clang::TemplateTypeParmDecl>(n)) {
         std::stringstream s;
