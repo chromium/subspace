@@ -424,6 +424,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     // declaration, we are not interested in instantiations where it gets used.
     if (decl->isTemplateInstantiation()) return true;
     if (should_skip_decl(cx_, decl)) return true;
+    /// Friend functions are handled in `VisitFriendDecl`.
+    if (decl->getFriendObjectKind()) return true;
 
     // TODO: Save the linkage spec (`extern "C"`) so we can show it.
     clang::DeclContext* context = decl->getDeclContext();
@@ -473,6 +475,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         // generated only. Will the DeclContext find it?
         // return sus::some(parent->deductions);
       } else {
+        // Note: VisitFriendDecl has a copy of this same logic.
         if (sus::Option<NamespaceElement&> parent =
                 docs_db_.find_namespace_mut(find_nearest_namespace(decl));
             parent.is_some()) {
@@ -485,162 +488,196 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     if (map_and_self_name.is_some()) {
       auto&& [map, self_name] = sus::move(map_and_self_name).unwrap();
 
-      auto add_function_with_comment =
-          [&](const clang::RawComment* raw_comment) {
-            Comment comment =
-                make_db_comment(decl->getASTContext(), raw_comment, self_name);
-
-            auto params = sus::Vec<FunctionParameter>::with_capacity(
-                decl->parameters().size());
-            for (const clang::ParmVarDecl* v : decl->parameters()) {
-              auto linked_type = LinkedType::with_type(
-                  build_local_type(v->getType(),
-                                   v->getASTContext().getSourceManager(),
-                                   preprocessor_, v->getBeginLoc()),
-                  docs_db_);
-              params.emplace(sus::move(linked_type), v->getNameAsString(),
-                             sus::none()  // TODO: `v->getDefaultArg()`
-              );
-            }
-
-            sus::Vec<std::string> template_params;
-            sus::Option<RequiresConstraints> constraints;
-            if (clang::FunctionTemplateDecl* tmpl =
-                    decl->getDescribedFunctionTemplate()) {
-              template_params = collect_template_params(tmpl, preprocessor_);
-              constraints = collect_template_constraints(tmpl, preprocessor_);
-            } else {
-              constraints = collect_function_constraints(decl, preprocessor_);
-            }
-
-            std::string function_name = [&] {
-              if (auto* mdecl =
-                      clang::dyn_cast<clang::CXXConstructorDecl>(decl)) {
-                return mdecl->getThisObjectType()
-                    ->getAsRecordDecl()
-                    ->getNameAsString();
-              } else if (auto* convdecl =
-                             clang::dyn_cast<clang::CXXConversionDecl>(decl)) {
-                Type t = build_local_type(
-                    convdecl->getReturnType(),
-                    convdecl->getASTContext().getSourceManager(), preprocessor_,
-                    convdecl->getBeginLoc());
-                return std::string("operator ") + t.name;
-              } else {
-                return decl->getNameAsString();
-              }
-            }();
-
-            sus::Vec<std::string> record_path;
-            if (clang::isa<clang::CXXMethodDecl>(decl)) {
-              record_path =
-                  iter_record_path(clang::cast<clang::RecordDecl>(context))
-                      .map([](std::string_view&& v) { return std::string(v); })
-                      .collect_vec();
-            }
-
-            // Make a copy before moving `comment` to the contructor argument.
-            sus::Option<std::string> overload_set =
-                sus::clone(comment.attrs.overload_set);
-
-            std::string signature = "(";
-            for (clang::ParmVarDecl* p : decl->parameters()) {
-              signature += p->getOriginalType().getAsString();
-            }
-            signature += ")";
-            if (auto* mdecl = clang::dyn_cast<clang::CXXMethodDecl>(decl)) {
-              // Prevent a parameter and return qualifier from possibly being
-              // confused for eachother in the string by putting a delimiter in
-              // here that can't appear in the parameter list.
-              signature += " -> ";
-              signature += mdecl->getMethodQualifiers().getAsString();
-              switch (mdecl->getRefQualifier()) {
-                case clang::RefQualifierKind::RQ_None: break;
-                case clang::RefQualifierKind::RQ_LValue:
-                  signature += "&";
-                  break;
-                case clang::RefQualifierKind::RQ_RValue:
-                  signature += "&&";
-                  break;
-              }
-            }
-
-            auto linked_return_type = LinkedType::with_type(
-                build_local_type(decl->getReturnType(),
-                                 decl->getASTContext().getSourceManager(),
-                                 preprocessor_, decl->getBeginLoc()),
-                docs_db_);
-
-            auto fe = FunctionElement(
-                iter_namespace_path(decl).collect_vec(), sus::move(comment),
-                sus::move(function_name), sus::move(signature),
-                decl->isOverloadedOperator() ||
-                    decl->getLiteralIdentifier() != nullptr,
-                sus::move(linked_return_type), sus::move(constraints),
-                sus::move(template_params), decl->isDeleted(),
-                sus::move(params), sus::move(overload_set),
-                sus::move(record_path),
-                decl->getASTContext().getSourceManager().getFileOffset(
-                    decl->getLocation()));
-
-            if (auto* mdecl = clang::dyn_cast<clang::CXXMethodDecl>(decl)) {
-              sus::check(clang::isa<clang::RecordDecl>(context));
-
-              // TODO: It's possible to overload a method in a base class. What
-              // should we show then? Let's show protected virtual methods just
-              // in the classes where they are public, so we need to include
-              // them in subclasses.
-
-              if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
-                      clang::cast<clang::RecordDecl>(context));
-                  parent.is_some()) {
-                fe.overloads[0u].method = sus::some(MethodSpecific{
-                    .is_static = mdecl->isStatic(),
-                    .is_volatile = mdecl->isVolatile(),
-                    .is_virtual = mdecl->isVirtual(),
-                    .is_ctor = clang::isa<clang::CXXConstructorDecl>(decl),
-                    .is_dtor = clang::isa<clang::CXXDestructorDecl>(decl),
-                    .is_conversion = clang::isa<clang::CXXConversionDecl>(decl),
-                    .qualifier =
-                        [mdecl]() {
-                          switch (mdecl->getRefQualifier()) {
-                            case clang::RQ_None:
-                              if (mdecl->isConst())
-                                return MethodQualifier::Const;
-                              else
-                                return MethodQualifier::Mutable;
-                            case clang::RQ_LValue:
-                              if (mdecl->isConst())
-                                return MethodQualifier::ConstLValue;
-                              else
-                                return MethodQualifier::MutableLValue;
-                            case clang::RQ_RValue:
-                              if (mdecl->isConst())
-                                return MethodQualifier::ConstRValue;
-                              else
-                                return MethodQualifier::MutableRValue;
-                          }
-                          sus::unreachable();
-                        }(),
-                });
-              }
-            }
-            add_function_overload_to_db(decl, sus::move(fe), map);
-          };
-
-      add_function_with_comment(get_raw_comment(decl));
+      add_function_with_comment(decl, context, map, self_name,
+                                get_raw_comment(decl));
       // We look for comments on this function and any overridden methods.
       if (const auto* mdecl = clang::dyn_cast<clang::CXXMethodDecl>(decl)) {
         for (const clang::RawComment* raw_comment :
              sus::iter::from_range(mdecl->overridden_methods())
                  .map(get_raw_comment))
-          add_function_with_comment(raw_comment);
+          add_function_with_comment(decl, context, map, self_name, raw_comment);
       }
     }
     return true;
   }
 
+  bool VisitFriendDecl(clang::FriendDecl* decl) noexcept {
+    if (!decl->getFriendDecl()) return true;
+    if (!clang::isa<clang::FunctionDecl>(decl->getFriendDecl())) return true;
+
+    // This is a friend function which may be declared inside a class. Once
+    // we visit the FuncionDecl we can't get back to the FriendDecl to find
+    // the class. So we handle it directly here instead.
+    auto* fdecl = clang::cast<clang::FunctionDecl>(decl->getFriendDecl());
+
+    if (should_skip_decl(cx_, fdecl)) return true;
+
+    // We get the context from the FriendDecl, which is the class, **not**
+    // from the FunctionDecl for which it would be the namespace the class
+    // is in.
+    //
+    // TODO: Save the linkage spec (`extern "C"`) so we can show it.
+    clang::DeclContext* context = decl->getDeclContext();
+    while (clang::isa<clang::LinkageSpecDecl>(context))
+      context = context->getParent();
+
+    // Note: This duplicates logic from VisitFunctionDecl. The function will
+    // be visited again later, but it will already be in the db and get
+    // ignored.
+
+    std::string self_name;
+    if (sus::Option<RecordElement&> record =
+            docs_db_.find_record_mut(clang::cast<clang::RecordDecl>(context));
+        record.is_some()) {
+      self_name = record.as_value().name;
+    }
+
+    // TODO: Should we store friend functions into the `record` instead of the
+    // namespace?
+    if (sus::Option<NamespaceElement&> parent =
+            docs_db_.find_namespace_mut(find_nearest_namespace(decl));
+        parent.is_some()) {
+      add_function_with_comment(fdecl, context, parent.as_value_mut().functions,
+                                self_name, get_raw_comment(fdecl));
+    }
+    return true;
+  }
+
  private:
+  void add_function_with_comment(
+      clang::FunctionDecl* decl, clang::DeclContext* context,
+      std::unordered_map<FunctionId, FunctionElement, FunctionId::Hash>& map,
+      std::string_view self_name, const clang::RawComment* raw_comment) {
+    Comment comment =
+        make_db_comment(decl->getASTContext(), raw_comment, self_name);
+
+    auto params =
+        sus::Vec<FunctionParameter>::with_capacity(decl->parameters().size());
+    for (const clang::ParmVarDecl* v : decl->parameters()) {
+      auto linked_type = LinkedType::with_type(
+          build_local_type(v->getType(), v->getASTContext().getSourceManager(),
+                           preprocessor_, v->getBeginLoc()),
+          docs_db_);
+      params.emplace(sus::move(linked_type), v->getNameAsString(),
+                     sus::none()  // TODO: `v->getDefaultArg()`
+      );
+    }
+
+    sus::Vec<std::string> template_params;
+    sus::Option<RequiresConstraints> constraints;
+    if (clang::FunctionTemplateDecl* tmpl =
+            decl->getDescribedFunctionTemplate()) {
+      template_params = collect_template_params(tmpl, preprocessor_);
+      constraints = collect_template_constraints(tmpl, preprocessor_);
+    } else {
+      constraints = collect_function_constraints(decl, preprocessor_);
+    }
+
+    std::string function_name = [&] {
+      if (auto* mdecl = clang::dyn_cast<clang::CXXConstructorDecl>(decl)) {
+        return mdecl->getThisObjectType()->getAsRecordDecl()->getNameAsString();
+      } else if (auto* convdecl =
+                     clang::dyn_cast<clang::CXXConversionDecl>(decl)) {
+        Type t = build_local_type(convdecl->getReturnType(),
+                                  convdecl->getASTContext().getSourceManager(),
+                                  preprocessor_, convdecl->getBeginLoc());
+        return std::string("operator ") + t.name;
+      } else {
+        return decl->getNameAsString();
+      }
+    }();
+
+    sus::Vec<std::string> record_path;
+    if (clang::isa<clang::CXXMethodDecl>(decl)) {
+      record_path =
+          iter_record_path(clang::cast<clang::RecordDecl>(context))
+              .map([](std::string_view&& v) { return std::string(v); })
+              .collect_vec();
+    }
+
+    // Make a copy before moving `comment` to the contructor argument.
+    sus::Option<std::string> overload_set =
+        sus::clone(comment.attrs.overload_set);
+
+    std::string signature = "(";
+    for (clang::ParmVarDecl* p : decl->parameters()) {
+      signature += p->getOriginalType().getAsString();
+    }
+    signature += ")";
+    if (auto* mdecl = clang::dyn_cast<clang::CXXMethodDecl>(decl)) {
+      // Prevent a parameter and return qualifier from possibly being
+      // confused for eachother in the string by putting a delimiter in
+      // here that can't appear in the parameter list.
+      signature += " -> ";
+      signature += mdecl->getMethodQualifiers().getAsString();
+      switch (mdecl->getRefQualifier()) {
+        case clang::RefQualifierKind::RQ_None: break;
+        case clang::RefQualifierKind::RQ_LValue: signature += "&"; break;
+        case clang::RefQualifierKind::RQ_RValue: signature += "&&"; break;
+      }
+    }
+
+    auto linked_return_type = LinkedType::with_type(
+        build_local_type(decl->getReturnType(),
+                         decl->getASTContext().getSourceManager(),
+                         preprocessor_, decl->getBeginLoc()),
+        docs_db_);
+
+    auto fe = FunctionElement(
+        iter_namespace_path(decl).collect_vec(), sus::move(comment),
+        sus::move(function_name), sus::move(signature),
+        decl->isOverloadedOperator() || decl->getLiteralIdentifier() != nullptr,
+        sus::move(linked_return_type), sus::move(constraints),
+        sus::move(template_params), decl->isDeleted(), sus::move(params),
+        sus::move(overload_set), sus::move(record_path),
+        decl->getASTContext().getSourceManager().getFileOffset(
+            decl->getLocation()));
+
+    if (auto* mdecl = clang::dyn_cast<clang::CXXMethodDecl>(decl)) {
+      sus::check(clang::isa<clang::RecordDecl>(context));
+
+      // TODO: It's possible to overload a method in a base class. What
+      // should we show then? Let's show protected virtual methods just
+      // in the classes where they are public, so we need to include
+      // them in subclasses.
+
+      if (sus::Option<RecordElement&> parent =
+              docs_db_.find_record_mut(clang::cast<clang::RecordDecl>(context));
+          parent.is_some()) {
+        fe.overloads[0u].method = sus::some(MethodSpecific{
+            .is_static = mdecl->isStatic(),
+            .is_volatile = mdecl->isVolatile(),
+            .is_virtual = mdecl->isVirtual(),
+            .is_ctor = clang::isa<clang::CXXConstructorDecl>(decl),
+            .is_dtor = clang::isa<clang::CXXDestructorDecl>(decl),
+            .is_conversion = clang::isa<clang::CXXConversionDecl>(decl),
+            .qualifier =
+                [mdecl]() {
+                  switch (mdecl->getRefQualifier()) {
+                    case clang::RQ_None:
+                      if (mdecl->isConst())
+                        return MethodQualifier::Const;
+                      else
+                        return MethodQualifier::Mutable;
+                    case clang::RQ_LValue:
+                      if (mdecl->isConst())
+                        return MethodQualifier::ConstLValue;
+                      else
+                        return MethodQualifier::MutableLValue;
+                    case clang::RQ_RValue:
+                      if (mdecl->isConst())
+                        return MethodQualifier::ConstRValue;
+                      else
+                        return MethodQualifier::MutableRValue;
+                  }
+                  sus::unreachable();
+                }(),
+        });
+      }
+    }
+    add_function_overload_to_db(decl, sus::move(fe), map);
+  }
+
   template <class MapT>
   void add_function_overload_to_db(clang::FunctionDecl* decl,
                                    FunctionElement db_element,
