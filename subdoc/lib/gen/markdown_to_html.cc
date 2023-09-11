@@ -107,6 +107,193 @@ std::string drop_tags(std::string_view html) noexcept {
   return without_tags;
 }
 
+void apply_syntax_highlighting(std::string& str) noexcept {
+  // Never remove or reorder anything in here =). Add new stuff at the end.
+  // clang-format off
+  constexpr auto INSERTS = sus::Array<std::string_view, 7u>(
+    // </span> is first in the list, so when we sort insertions, span
+    // closers will always come before new openers at the same position.
+    "</span>",
+    "<span class=\"comment\">",
+    "<span class=\"string\">",
+    "<span class=\"char-escape\">",
+    "<span class=\"char\">",
+    "<span class=\"keyword\">",
+    "<span class=\"punct\">"
+  );
+  // clang-format on
+
+  // A set of (position, INSERTS index), which indicate the string at index
+  // should be inserted at the position in str.
+  sus::Vec<sus::Tuple<usize, usize>> inserts;
+
+  usize pos;
+  auto view = std::string_view(str);
+  while (true) {
+    pos = view.find("<pre>", pos);
+    if (pos == std::string::npos) break;
+    usize end_pos = view.find("</pre>", pos + 5u);
+    if (end_pos == std::string::npos) break;
+
+    bool in_comment = false;
+    bool in_string = false;
+    bool in_char = false;
+    while (pos < end_pos) {
+      // Comments come first, and eat everything inside them.
+      if (in_comment) {
+        if (view[pos] == '\n') {
+          in_comment = false;
+          inserts.push(sus::tuple(pos, 0u));  // End comment.
+        }
+        pos += 1u;
+        continue;  // Each everything to end of comment.
+      }
+
+      // Char escapes get highlight everywhere except in comments.
+      if (view.substr(pos, 7u) == "\\&quot;") {
+        inserts.push(sus::tuple(pos, 3u));       // Start char-escape.
+        inserts.push(sus::tuple(pos + 7u, 0u));  // End char-escape.
+        pos += 7u;
+        continue;
+      }
+      if (view[pos] == '\\' && pos < view.size() - 1u) {
+        inserts.push(sus::tuple(pos, 3u));       // Start char-escape.
+        inserts.push(sus::tuple(pos + 2u, 0u));  // End char-escape.
+        pos += 2u;
+        continue;
+      }
+
+      // Chars and string blocks each everything inside them.
+      if (in_char) {
+        if (view[pos] == '\'') {
+          in_char = false;
+          pos += 1u;
+          inserts.push(sus::tuple(pos, 0u));  // End string.
+        } else {
+          pos += 1u;
+        }
+        continue;  // Eat everything to the end of char.
+      }
+      if (in_string) {
+        if (view.substr(pos, 6u) == "&quot;") {
+          in_string = false;
+          pos += 6u;
+          inserts.push(sus::tuple(pos, 0u));  // End string.
+        } else {
+          pos += 1u;
+        }
+        continue;  // Eat everything to the end of string.
+      }
+
+      // The start of comments, strings, or chars.
+      if (view.substr(pos, 2u) == "//") {
+        in_comment = true;
+        inserts.push(sus::tuple(pos, 1u));  // Start comment.
+        pos += 2u;
+        continue;
+      }
+      if (view.substr(pos, 6u) == "&quot;") {
+        in_string = true;
+        inserts.push(sus::tuple(pos, 2u));  // Start string.
+        pos += 6u;
+        continue;
+      }
+      if (view[pos] == '\'') {
+        in_char = true;
+        inserts.push(sus::tuple(pos, 4u));  // Start char.
+        pos += 1u;
+        continue;
+      }
+
+      // There's a <pre> tag at the start so we can always look backward one
+      // char.
+      sus::check(pos > 0u);
+      char before = view[pos - 1u];
+
+      // True if `c` is a character that is a valid part of an identifier.
+      auto is_id_char = [](char c) {
+        return (c >= 'a' && c <= 'z') ||  //
+               (c >= 'A' && c <= 'Z') ||  //
+               (c >= '0' && c <= '9') ||  //
+               c == '_';
+      };
+      auto is_punct = [](char c) {
+        // The `&`, `<` and `>` are escaped so we look elsewhere for them.
+        constexpr auto PUNCTS = std::string_view("{}[](),.;!|^*%+-=");
+        return PUNCTS.find(c) != std::string_view::npos;
+      };
+
+      if (!is_id_char(before)) {
+        constexpr auto KEYWORDS = sus::Array<std::string_view, 95u>(
+            "alignas", "alignof", "and", "and_eq", "asm", "atomic_cancel",
+            "atomic_commit", "atomic_noexcept", "auto", "bitand", "bitor",
+            "bool", "break", "case", "catch", "char", "char8_t", "char16_t",
+            "char32_t", "class", "compl", "concept", "const", "consteval",
+            "constexpr", "constinit", "const_cast", "continue", "co_await",
+            "co_return", "co_yield", "decltype", "default", "delete", "do",
+            "double", "dynamic_cast", "else", "enum", "explicit", "export",
+            "extern", "false", "float", "for", "friend", "goto", "if", "inline",
+            "int", "long", "mutable", "namespace", "new", "noexcept", "not",
+            "not_eq", "nullptr", "operator", "or", "or_eq", "private",
+            "protected", "public", "register", "reinterpret_cast", "requires",
+            "return", "short", "signed", "sizeof", "static", "static_assert",
+            "static_cast", "struct", "switch", "template", "this",
+            "thread_local", "throw", "true", "try", "typedef", "typeid",
+            "typename", "union", "unsigned", "using", "virtual", "void",
+            "volatile", "wchar_t", "while", "xor", "xor_eq");
+
+        for (std::string_view k : KEYWORDS) {
+          usize len = k.size();
+          if (auto sub = view.substr(pos, len + 1u);  //
+              sub.size() == len + 1u && sub.substr(0u, len) == k &&
+              !is_id_char(sub[len])) {
+            inserts.push(sus::tuple(pos, 5u));        // Start keyword.
+            inserts.push(sus::tuple(pos + len, 0u));  // End keyword.
+            pos += len;
+            continue;
+          }
+        }
+      }
+
+      if (is_punct(view[pos])) {
+        inserts.push(sus::tuple(pos, 6u));       // Start punct.
+        inserts.push(sus::tuple(pos + 1u, 0u));  // End punct.
+        pos += 1u;
+        continue;
+      }
+      if (view.substr(pos, 5u) == "&amp;") {
+        inserts.push(sus::tuple(pos, 6u));       // Start punct.
+        inserts.push(sus::tuple(pos + 5u, 0u));  // End punct.
+        pos += 5u;
+        continue;
+      }
+      if (view.substr(pos, 4u) == "&lt;") {
+        inserts.push(sus::tuple(pos, 6u));       // Start punct.
+        inserts.push(sus::tuple(pos + 4u, 0u));  // End punct.
+        pos += 4u;
+        continue;
+      }
+      if (view.substr(pos, 4u) == "&gt;") {
+        inserts.push(sus::tuple(pos, 6u));       // Start punct.
+        inserts.push(sus::tuple(pos + 4u, 0u));  // End punct.
+        pos += 4u;
+        continue;
+      }
+
+      pos += 1u;
+    }
+  }
+
+  if (!inserts.is_empty()) {
+    inserts.sort_unstable();
+    usize chars_inserted;
+    for (auto [insert_at, index] : inserts) {
+      str.insert(insert_at + chars_inserted, INSERTS[index]);
+      chars_inserted += INSERTS[index].size();
+    }
+  }
+}
+
 }  // namespace
 
 sus::Result<MarkdownToHtml, MarkdownToHtmlError> markdown_to_html(
@@ -256,40 +443,8 @@ sus::Result<MarkdownToHtml, MarkdownToHtmlError> markdown_to_html(
     }
   }
   std::string str = sus::move(parsed).str();
-  usize pos;
-  while (true) {
-    pos = str.find("<pre>", pos);
-    if (pos == std::string::npos) break;
-    usize end_pos = str.find("</pre>", pos + 5u);
-    if (end_pos == std::string::npos) break;
+  apply_syntax_highlighting(str);
 
-    while (true) {
-      usize comment_pos = str.find("// ", pos);
-      if (comment_pos == std::string::npos) {
-        pos = str.size();
-        break;
-      }
-      if (comment_pos >= end_pos) {
-        // If we went past </pre> then back up and look for the next <pre>.
-        pos = end_pos + 6u;
-        break;
-      }
-
-      const std::string_view open = "<span class=\"comment\">";
-      const std::string_view close = "</span>";
-
-      str.insert(comment_pos, open);
-      comment_pos += open.size();
-      end_pos += open.size();
-
-      usize eol_pos = str.find("\n", comment_pos);
-      if (eol_pos == std::string::npos) eol_pos = str.size();
-      str.insert(eol_pos, close);
-      eol_pos += close.size();
-      end_pos += close.size();
-      pos = eol_pos;
-    }
-  }
   return sus::ok(MarkdownToHtml{
       .full_html = sus::clone(str),
       .summary_html = summarize_html(str),

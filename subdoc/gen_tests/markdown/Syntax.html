@@ -70,9 +70,14 @@
         </div>
         <div class="description long">
           <p>A code block with syntax highlighting.</p>
-<pre><code>A comment;  <span class="comment">// At the end of the line.</span>
+<pre><code>A <span class="string">&quot;comment&quot;</span><span class="punct">;</span>  <span class="comment">// At the end of the line.</span>
 <span class="comment">// At the start of the line.</span>
-  <span class="comment">// And after some whitespace.</span>
+  <span class="comment">// And after some whitespace with &quot;a string inside&quot;.</span>
+A <span class="char">'c'</span> <span class="keyword">char</span>  <span class="comment">// Not a 'c' char.</span>
+A <span class="string">&quot;st<span class="char-escape">\&quot;</span><span class="char-escape">\\</span>ring&quot;</span> <span class="keyword">or</span> <span class="char">'<span class="char-escape">\'</span>'</span><span class="punct">.</span>foo<span class="punct">(</span><span class="punct">)</span><span class="punct">;</span>
+<span class="keyword">auto</span> <span class="keyword">int</span><span class="punct">;</span> <span class="keyword">return</span> keywords<span class="punct">;</span>
+not_auto a keyword nor auto_<span class="punct">;</span>
+<span class="punct">[</span><span class="punct">]</span><span class="punct">(</span><span class="punct">)</span> <span class="punct">{</span> punctuation<span class="punct">[</span>0<span class="punct">]</span> <span class="punct">+</span> <span class="punct">-</span>0<span class="punct">;</span> <span class="punct">}</span>
 </code></pre>
 
         </div>
