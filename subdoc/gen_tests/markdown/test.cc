@@ -8,3 +8,11 @@ struct S {};
 /// newlines in
 /// it.
 struct N {};
+
+/// A code block with syntax highlighting.
+/// ```
+/// A comment;  // At the end of the line.
+/// // At the start of the line.
+///   // And after some whitespace.
+/// ```
+struct Syntax {};

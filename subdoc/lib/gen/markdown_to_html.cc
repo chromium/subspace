@@ -256,6 +256,40 @@ sus::Result<MarkdownToHtml, MarkdownToHtmlError> markdown_to_html(
     }
   }
   std::string str = sus::move(parsed).str();
+  usize pos;
+  while (true) {
+    pos = str.find("<pre>", pos);
+    if (pos == std::string::npos) break;
+    usize end_pos = str.find("</pre>", pos + 5u);
+    if (end_pos == std::string::npos) break;
+
+    while (true) {
+      usize comment_pos = str.find("// ", pos);
+      if (comment_pos == std::string::npos) {
+        pos = str.size();
+        break;
+      }
+      if (comment_pos >= end_pos) {
+        // If we went past </pre> then back up and look for the next <pre>.
+        pos = end_pos + 6u;
+        break;
+      }
+
+      const std::string_view open = "<span class=\"comment\">";
+      const std::string_view close = "</span>";
+
+      str.insert(comment_pos, open);
+      comment_pos += open.size();
+      end_pos += open.size();
+
+      usize eol_pos = str.find("\n", comment_pos);
+      if (eol_pos == std::string::npos) eol_pos = str.size();
+      str.insert(eol_pos, close);
+      eol_pos += close.size();
+      end_pos += close.size();
+      pos = eol_pos;
+    }
+  }
   return sus::ok(MarkdownToHtml{
       .full_html = sus::clone(str),
       .summary_html = summarize_html(str),

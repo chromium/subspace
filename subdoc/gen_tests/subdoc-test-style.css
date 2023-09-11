@@ -206,6 +206,9 @@ main {
     color:rgb(230, 230, 230);
     overflow-x: auto;
 }
+pre > code span.comment {
+    color: #3ff9bd;
+}
 
 .section-header {
     font-size: 125%;
