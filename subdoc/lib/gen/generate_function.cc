@@ -311,6 +311,7 @@ sus::Result<void, MarkdownToHtmlError> generate_function(
           auto_span.add_class("function-auto");
           auto_span.write_text("auto");
         }
+        signature_div.write_text(" ");
         {
           auto name_anchor = signature_div.open_a();
           name_anchor.add_href("#");
