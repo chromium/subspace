@@ -87,6 +87,24 @@ struct Anything {
 /// Undefined Behaviour depending on the type that is being used to satisfy
 /// `FnOnce`.
 ///
+/// # Type erasure
+///
+/// Using a concept like `FnOnce` in a function parameter requires the function
+/// to be a template. Template functions can not be virtual, they must appear
+/// in the header, and they can have a negative impact on binary size. So it can
+/// be desirable to work with a `FnOnce` without templates.
+///
+/// To do so, `FnOnce` supports being type-erased, on the heap or the stack,
+/// into a [`DynFnOnce`]($sus::fn::DynFnOnce) type.
+/// To receive ownership of a type-erased `FnOnce`, receive a
+/// [`Box`]($sus::boxed::Box)`<`[`DynFnOnce<R(Args...)>`]($sus::fn::DynFnOnce)`>`
+/// instead.
+/// To receive a reference to a type-erased `FnOnce`, receive a
+/// [`DynFnOnce<R(Args...)>&&`]($sus::fn::DynFnOnce) instead.
+///
+/// See [`DynConcept`]($sus::boxed::DynConcept) for more on type erasure of
+/// concept-satisfying types.
+///
 /// # Compatibility
 /// Any callable type that satisfies `Fn` or `FnMut` will also satisfy `FnOnce`.
 /// While a `FnOnce` should only be called once, this is compatible with the
@@ -186,6 +204,24 @@ concept FnOnce = requires {
 /// that method pointers are called correctly.
 /// A `FnMut` may be called any number of times, unlike `FnOnce`,
 /// and should not be moved when called.
+///
+/// # Type erasure
+///
+/// Using a concept like `FnMut` in a function parameter requires the function
+/// to be a template. Template functions can not be virtual, they must appear
+/// in the header, and they can have a negative impact on binary size. So it can
+/// be desirable to work with a `FnMut` without templates.
+///
+/// To do so, `FnMut` supports being type-erased, on the heap or the stack,
+/// into a [`DynFnMut`]($sus::fn::DynFnMut) type.
+/// To receive ownership of a type-erased `FnMut`, receive a
+/// [`Box`]($sus::boxed::Box)`<`[`DynFnMut<R(Args...)>`]($sus::fn::DynFnMut)`>`
+/// instead.
+/// To receive a reference to a type-erased `FnMut`, receive a
+/// [`DynFnMut<R(Args...)>&&`]($sus::fn::DynFnMut) instead.
+///
+/// See [`DynConcept`]($sus::boxed::DynConcept) for more on type erasure of
+/// concept-satisfying types.
 ///
 /// # Compatibility
 /// Any callable type that satisfies `Fn` or `FnMut` will also satisfy `FnOnce`.
@@ -291,6 +327,24 @@ concept FnMut = requires {
 /// that method pointers are called correctly.
 /// A `Fn` may be called any number of times, unlike `FnOnce`, and should not
 /// be moved when called.
+///
+/// # Type erasure
+///
+/// Using a concept like `Fn` in a function parameter requires the function
+/// to be a template. Template functions can not be virtual, they must appear
+/// in the header, and they can have a negative impact on binary size. So it can
+/// be desirable to work with a `Fn` without templates.
+///
+/// To do so, `Fn` supports being type-erased, on the heap or the stack,
+/// into a [`DynFn`]($sus::fn::DynFn) type.
+/// To receive ownership of a type-erased `Fn`, receive a
+/// [`Box`]($sus::boxed::Box)`<`[`DynFn<R(Args...)>`]($sus::fn::DynFn)`>`
+/// instead.
+/// To receive a reference to a type-erased `Fn`, receive a
+/// [`DynFn<R(Args...)>&&`]($sus::fn::DynFn) instead.
+///
+/// See [`DynConcept`]($sus::boxed::DynConcept) for more on type erasure of
+/// concept-satisfying types.
 ///
 /// # Compatibility
 /// Any callable type that satisfies `Fn` will also satisfy `FnMut` and

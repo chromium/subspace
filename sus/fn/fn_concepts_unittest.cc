@@ -471,4 +471,16 @@ TEST(FnConcepts, Example_Method) {
   sus::check(o.map(&Class::value) == sus::some(42));
 }
 
+TEST(Fn, Example_NonVoid) {
+  // Accepts a function that can be called repeatedly with `i32` and which
+  // returns something other than void. A void type would break compilation
+  // as it can not be assigned to a variable, so it rejects functions with a
+  // void return type.
+  auto func = [](FnMut<NonVoid(i32)> auto f) {
+    auto x = f(0);
+    x += 3;
+  };
+  func([](i32) { return 3; });
+}
+
 }  // namespace

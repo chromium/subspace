@@ -77,4 +77,13 @@ TEST(FnOnceDyn, FnOnceBox) {
   EXPECT_EQ(d, 1 * 2);
 }
 
+TEST(Fn, Example_NonVoidDyn) {
+  auto func = [](DynFnMut<i32(i32)>& f) {
+    auto x = f(0);
+    x += 3;
+  };
+
+  func(sus::dyn<DynFnMut<i32(i32)>>([](i32) { return 3; }));
+}
+
 }  // namespace
