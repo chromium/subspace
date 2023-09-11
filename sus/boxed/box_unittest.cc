@@ -62,6 +62,24 @@ TEST(Box, Construct) {
   }
 }
 
+TEST(Box, WithArgs) {
+  struct NoMove {
+    NoMove(i32 i) : i(i) {}
+
+    NoMove(NoMove&&) = delete;
+    NoMove& operator=(NoMove&&) = delete;
+
+    i32 i;
+  };
+  static_assert(!sus::mem::Move<NoMove>);
+
+  auto b = Box<NoMove>::with_args(3);
+  EXPECT_EQ(b->i, 3);
+
+  auto b2 = sus::move(b);
+  EXPECT_EQ(b2->i, 3);
+}
+
 TEST(Box, FromT) {
   i32 i = 3;
   {

@@ -52,7 +52,11 @@ namespace sus::boxed {
 /// * Const correctness. A `const Box` treats the inner object as `const` and
 ///   does not expose mutable access to it.
 /// * Never null. A `Box` always holds a value until it is moved-from. It is
-///   constructed from a value, not a pointer.
+///   constructed from a value, not a pointer. Alternatively it can be
+///   constructed from the constructor arguments by
+///   [`with_args`]($sus::boxed::Box::with_args), like [`std::make_unique`](
+///   https://en.cppreference.com/w/cpp/memory/unique_ptr/make_unique)
+///   but built into the type.
 ///   A moved-from `Box` may not be used except to be assigned to or destroyed.
 ///   Using a moved-from `Box` will [`panic`]($sus::assertions::panic) and
 ///   terminate the program rather than operate on a null. This prevents
@@ -130,6 +134,22 @@ class [[sus_trivial_abi]] Box final {
 
   constexpr ~Box() noexcept {
     if (t_) delete t_;
+  }
+
+  /// Constructs a Box by calling the constructor of `T` with `args`.
+  ///
+  /// This allows construction of `T` directly on the heap, which is required
+  /// for types which do not satisfy [`Move`]($sus::mem::Move). This is a common
+  /// case for virtual clases which require themselves to be heap allocated.
+  ///
+  /// For type-erasure of concept objects using [`DynConcept`](
+  /// $sus::boxed::DynConcept), such as [`DynError`]($sus::error::DynError),
+  /// the [`from`]($sus::boxed::Box::from!dync) constructor method
+  /// can be used to type erase the concept object and move it to the heap.
+  template <class... Args>
+    requires(std::constructible_from<T, Args && ...>)
+  constexpr static Box with_args(Args&&... args) noexcept {
+    return Box(FROM_POINTER, new T(::sus::forward<Args>(args)...));
   }
 
   /// Converts `U` into a [`Box<T>`]($sus::boxed::Box).
