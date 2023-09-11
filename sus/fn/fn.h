@@ -74,9 +74,9 @@ namespace sus {
 /// func([](i32) { return 3; });
 /// ```
 ///
-/// The same with [`FnMut`]($sus::fn::FnMut)
+/// The same with [`FnMut`]($sus::fn::FnMut) being
 /// [type-erased]($sus::boxed::DynConcept) as [`DynFnMut`](
-/// $(sus::fn::DynFnMut) to avoid templates. The full type must be specified
+/// $sus::fn::DynFnMut) to avoid templates. The full type must be specified
 /// when not working with templates, so [`NonVoid`]($sus::fn::NonVoid) can
 /// not be used.
 /// ```
