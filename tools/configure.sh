@@ -82,8 +82,8 @@ function run() {
 }
 
 if [[ $USE_LLVM_CLANG == true ]]; then
-    export CC=$LLVM_ROOT/bin/clang
-    export CXX=$LLVM_ROOT/bin/clang++
+    set_env CC="$LLVM_ROOT/bin/clang"
+    set_env CXX="$LLVM_ROOT/bin/clang++"
 fi
 
 if [[ $IS_MAC == true && $USE_ASAN == true ]]; then
