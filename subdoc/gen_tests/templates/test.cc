@@ -6,7 +6,6 @@ struct TemplateStruct {};
 template <class T, class... U>
 concept Concept = true;
 
-
 template <class T>
 struct S {};
 
@@ -14,7 +13,8 @@ template <class T>
 struct TemplateMethods {
   TemplateMethods();
 
-  T template_params(T t) requires(Concept<T>);
+  T template_params(T t)
+    requires(Concept<T>);
 
   template <Concept U>
   U local_template_params(T t, U u);
@@ -22,6 +22,10 @@ struct TemplateMethods {
   Concept<S> auto concept_return();
 
   void concept_param(Concept auto var);
+
+  template <class A, class B>
+    requires(Concept<A, B>)
+  void requires_func();
 
   template <class U>
   operator U();
