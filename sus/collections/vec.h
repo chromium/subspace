@@ -961,10 +961,10 @@ class Vec final {
     return iter_refs_.count_from_owner() != 0u;
   }
 
-  /// The length is set to this value when Vec is moved from. It is non-zero as
-  /// `is_moved_from()` returns true when `length > capacity`.
+  /// The length is set to this value when `Vec` is moved from. It is non-zero
+  /// as `is_moved_from()` returns true when `length > capacity`.
   static constexpr usize kMovedFromLen = 1_usize;
-  /// The capacity is set to this value when Vec is moved from. It is zero to
+  /// The capacity is set to this value when `Vec` is moved from. It is zero to
   /// signal that the Vec is unallocated, and it is less than kMovedFromLen to
   /// signal its moved-from state.
   static constexpr usize kMovedFromCapacity = 0_usize;
