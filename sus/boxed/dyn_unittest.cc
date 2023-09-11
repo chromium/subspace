@@ -338,4 +338,30 @@ TEST(Dyn, Example_Macro) {
 
 }  // namespace example_macro
 
+TEST(Dyn, Example_Stack) {
+  std::srand(sus::mog<unsigned>(std::time(nullptr)));
+
+  auto x = [](sus::Option<sus::fn::DynFn<std::string()>&> fn) {
+    if (fn.is_some())
+      return sus::move(fn).unwrap()();
+    else
+      return std::string("tails");
+  };
+
+  auto heads = [] { return std::string("heads"); };
+  // Type-erased `Fn<std::string()>` that represents `heads`. Placed on the
+  // stack to outlive its use in the `Option` and the call to `x(cb)`.
+  auto dyn_heads = sus::dyn<sus::fn::DynFn<std::string()>>(heads);
+  // Conditionally holds a type-erased reference to `heads`. This requires a
+  // type-erasure that outlives the `cb` variable.
+  auto cb = [&]() -> sus::Option<sus::fn::DynFn<std::string()>&> {
+    if (std::rand() % 2) return sus::some(dyn_heads);
+    return sus::none();
+  }();
+
+  std::string s = x(cb);
+
+  fmt::println("{}", s);  // Prints one of "heads" or "tails.
+}
+
 }  // namespace
