@@ -40,7 +40,9 @@ void generate_requires_constraints(HtmlWriter::OpenDiv& div,
           clause_line_pre.add_class("requires-constraint-line");
           clause_line_pre.write_text(constraint.as<Concept>().concept_name);
           clause_line_pre.write_text("<");
-          for (const std::string& s : constraint.as<Concept>().args) {
+          for (const auto& [i, s] :
+               constraint.as<Concept>().args.iter().enumerate()) {
+            if (i > 0u) clause_line_pre.write_text(", ");
             clause_line_pre.write_text(s);
           }
           clause_line_pre.write_text(">");
