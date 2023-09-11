@@ -209,3 +209,24 @@ TEST_F(SubDocTest, FunctionInAnonymousAndNamedNamespace) {
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_FALSE(db.has_any_comments());
 }
+
+TEST_F(SubDocTest, FunctionFriend) {
+  auto result = run_code(R"(
+    struct S {
+      /// Comment a headline
+      friend void a() {}
+
+      friend void b();
+      /// Comment c headline
+      friend void c();
+    };
+
+    /// Comment b headline
+    void b() {}
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_function_comment(db, "3:7", "<p>Comment a headline</p>"));
+  EXPECT_TRUE(has_function_comment(db, "11:5", "<p>Comment b headline</p>"));
+  EXPECT_TRUE(has_function_comment(db, "7:7", "<p>Comment c headline</p>"));
+}

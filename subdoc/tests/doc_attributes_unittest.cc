@@ -38,3 +38,15 @@ TEST_F(SubDocTest, DocAttributesSelf) {
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_method_comment(db, "3:7", "<p>Comment S headline</p>"));
 }
+
+TEST_F(SubDocTest, DocAttributesSelfOnFriend) {
+  auto result = run_code(R"(
+    struct S {
+      /// Comment @doc.self headline
+      friend void a() {}
+    };
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_function_comment(db, "3:7", "<p>Comment S headline</p>"));
+}

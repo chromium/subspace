@@ -56,6 +56,10 @@ sus::Result<ParsedComment, ParseCommentError> parse_comment(
         while (true) {
           auto pos = line.find("@doc.self");
           if (pos == std::string::npos) break;
+          if (self_name.empty()) {
+            return sus::err(ParseCommentError{
+                .message = "@doc.self used outside of a class"});
+          }
           line.replace(pos, strlen("@doc.self"), self_name);
         }
 
