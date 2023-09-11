@@ -841,7 +841,11 @@ class AstConsumer : public clang::ASTConsumer {
 
       if (!Visitor(cx_, docs_db_, preprocessor_,
                    DiagnosticIds::with_context(decl->getASTContext()))
-               .TraverseDecl(decl))
+               .TraverseDecl(decl)) {
+        return false;
+      }
+
+      if (decl->getASTContext().getDiagnostics().getNumErrors() > 0u)
         return false;
     }
     return true;

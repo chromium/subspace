@@ -118,7 +118,7 @@ sus::Result<Database, DiagnosticResults> run_files(
   if (run_value == 1) {
     return sus::err(sus::move(sus::move(diags)->results));
   }
-  if (diags->getNumErrors() > 0) {
+  if (diags->getNumErrors() > 0u) {
     return sus::err(sus::move(sus::move(diags)->results));
   }
 
