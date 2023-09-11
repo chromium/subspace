@@ -42,3 +42,11 @@ U template_function(U);
 
 /// Returns template instantiation.
 S<int> return_template();
+
+/// Has two overloads.
+template <class A, class B>
+void requires_overload(A, B) 
+  requires(Concept<A, B>);
+template <class A, class B>
+void requires_overload(A, B) 
+  requires(!Concept<A, B>);

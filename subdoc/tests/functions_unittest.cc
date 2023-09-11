@@ -230,3 +230,26 @@ TEST_F(SubDocTest, FunctionFriend) {
   EXPECT_TRUE(has_function_comment(db, "11:5", "<p>Comment b headline</p>"));
   EXPECT_TRUE(has_function_comment(db, "7:7", "<p>Comment c headline</p>"));
 }
+
+TEST_F(SubDocTest, FunctionRequiresOverload) {
+  auto result = run_code(R"(
+    template <class A, class B> concept C = true;
+
+    /// Comment headline one
+    /// #[doc.overloads=yes]
+    template <class A, class B>
+    void f() requires(C<A, B>) {}
+    
+    /// Comment headline two
+    /// #[doc.overloads=no]
+    template <class A, class B>
+    void f() requires(!C<A, B>) {}
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_function_comment(db, "4:5", "<p>Comment headline one</p>"));
+  // The second function has a different signature due to a different requires
+  // clause, so does not collide with the first function (when doc.overloads
+  // is specified).
+  EXPECT_TRUE(has_function_comment(db, "9:5", "<p>Comment headline two</p>"));
+}
