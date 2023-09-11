@@ -561,11 +561,12 @@ sus_pure constexpr inline _self operator~() const& noexcept {
       __private::unchecked_not(__private::into_unsigned(primitive_value)));
 }
 
-/// Satisfies the [`Add<@doc.self>`]($sus::num::Add) concept.
+/// Satisfies the [`Add`]($sus::num::Add) concept for signed integers.
 ///
-/// This operation supports working with primitive signed or unsigned integers
-/// that convert to `@doc.self`, as well as enums. However enum class is
-/// excluded as they require an explicit conversion to a `@doc.self`.
+/// This operation supports shifting with primitive signed or unsigned integers
+/// that convert to the safe numeric, as well as enums.
+/// However enum class is excluded as they require an explicit conversion to an
+/// integer.
 ///
 /// #[doc.overloads=signedint.+]
 [[nodiscard]] sus_pure_const friend constexpr inline _self operator+(
@@ -600,11 +601,12 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
            !std::convertible_to<U, _self>)
 friend constexpr inline _self operator+(U l, _self r) noexcept = delete;
-/// Satisfies the [`Sub<@doc.self>`]($sus::num::Sub) concept.
+/// Satisfies the [`Sub`]($sus::num::Sub) concept for signed integers.
 ///
-/// This operation supports working with primitive signed or unsigned integers
-/// that convert to `@doc.self`, as well as enums. However enum class is
-/// excluded as they require an explicit conversion to a `@doc.self`.
+/// This operation supports shifting with primitive signed or unsigned integers
+/// that convert to the safe numeric, as well as enums.
+/// However enum class is excluded as they require an explicit conversion to an
+/// integer.
 ///
 /// #[doc.overloads=signedint.-]
 [[nodiscard]] sus_pure friend constexpr inline _self operator-(
@@ -639,11 +641,12 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
            !std::convertible_to<U, _self>)
 friend constexpr inline _self operator-(U l, _self r) noexcept = delete;
-/// Satisfies the [`Mul<@doc.self>`]($sus::num::Mul) concept.
+/// Satisfies the [`Mul`]($sus::num::Mul) concept for signed integers.
 ///
-/// This operation supports working with primitive signed or unsigned integers
-/// that convert to `@doc.self`, as well as enums. However enum class is
-/// excluded as they require an explicit conversion to a `@doc.self`.
+/// This operation supports shifting with primitive signed or unsigned integers
+/// that convert to the safe numeric, as well as enums.
+/// However enum class is excluded as they require an explicit conversion to an
+/// integer.
 ///
 /// #[doc.overloads=signedint.*]
 [[nodiscard]] sus_pure friend constexpr inline _self operator*(
@@ -678,11 +681,12 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
            !std::convertible_to<U, _self>)
 friend constexpr inline _self operator*(U l, _self r) noexcept = delete;
-/// Satisfies the [`Div<@doc.self>`]($sus::num::Div) concept.
+/// Satisfies the [`Div`]($sus::num::Div) concept for signed integers.
 ///
-/// This operation supports working with primitive signed or unsigned integers
-/// that convert to `@doc.self`, as well as enums. However enum class is
-/// excluded as they require an explicit conversion to a `@doc.self`.
+/// This operation supports shifting with primitive signed or unsigned integers
+/// that convert to the safe numeric, as well as enums.
+/// However enum class is excluded as they require an explicit conversion to an
+/// integer.
 ///
 /// #[doc.overloads=signedint./]
 [[nodiscard]] sus_pure friend constexpr inline _self operator/(
@@ -717,11 +721,12 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
            !std::convertible_to<U, _self>)
 friend constexpr inline _self operator/(U l, _self r) noexcept = delete;
-/// Satisfies the [`Rem<@doc.self>`]($sus::num::Rem) concept.
+/// Satisfies the [`Rem`]($sus::num::Rem) concept for signed integers.
 ///
-/// This operation supports working with primitive signed or unsigned integers
-/// that convert to `@doc.self`, as well as enums. However enum class is
-/// excluded as they require an explicit conversion to a `@doc.self`.
+/// This operation supports shifting with primitive signed or unsigned integers
+/// that convert to the safe numeric, as well as enums.
+/// However enum class is excluded as they require an explicit conversion to an
+/// integer.
 ///
 /// #[doc.overloads=signedint.%]
 [[nodiscard]] sus_pure friend constexpr inline _self operator%(
@@ -757,11 +762,12 @@ template <class U>
            !std::convertible_to<U, _self>)
 friend constexpr inline _self operator%(U l, _self r) noexcept = delete;
 
-/// Satisfies the [`BitAnd<@doc.self>`]($sus::num::BitAnd) concept.
+/// Satisfies the [`BitAnd`]($sus::num::BitAnd) concept for signed integers.
 ///
-/// This operation supports working with primitive signed or unsigned integers
-/// that convert to `@doc.self`, as well as enums. However enum class is
-/// excluded as they require an explicit conversion to a `@doc.self`.
+/// This operation supports shifting with primitive signed or unsigned integers
+/// that convert to the safe numeric, as well as enums.
+/// However enum class is excluded as they require an explicit conversion to an
+/// integer.
 ///
 /// #[doc.overloads=signedint.&]
 [[nodiscard]] sus_pure friend constexpr inline _self operator&(
@@ -792,11 +798,12 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
            !std::convertible_to<U, _self>)
 friend constexpr inline _self operator&(U l, _self r) noexcept = delete;
-/// Satisfies the [`BitOr<@doc.self>`]($sus::num::BitOr) concept.
+/// Satisfies the [`BitOr`]($sus::num::BitOr) concept for signed integers.
 ///
-/// This operation supports working with primitive signed or unsigned integers
-/// that convert to `@doc.self`, as well as enums. However enum class is
-/// excluded as they require an explicit conversion to a `@doc.self`.
+/// This operation supports shifting with primitive signed or unsigned integers
+/// that convert to the safe numeric, as well as enums.
+/// However enum class is excluded as they require an explicit conversion to an
+/// integer.
 ///
 /// #[doc.overloads=signedint.|]
 [[nodiscard]] sus_pure friend constexpr inline _self operator|(
@@ -827,11 +834,12 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
            !std::convertible_to<U, _self>)
 friend constexpr inline _self operator|(U l, _self r) noexcept = delete;
-/// Satisfies the [`BitXor<@doc.self>`]($sus::num::BitXor) concept.
+/// Satisfies the [`BitXor`]($sus::num::BitXor) concept for signed integers.
 ///
-/// This operation supports working with primitive signed or unsigned integers
-/// that convert to `@doc.self`, as well as enums. However enum class is
-/// excluded as they require an explicit conversion to a `@doc.self`.
+/// This operation supports shifting with primitive signed or unsigned integers
+/// that convert to the safe numeric, as well as enums.
+/// However enum class is excluded as they require an explicit conversion to an
+/// integer.
 ///
 /// #[doc.overloads=signedint.^]
 [[nodiscard]] sus_pure friend constexpr inline _self operator^(
@@ -862,12 +870,14 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
            !std::convertible_to<U, _self>)
 friend constexpr inline _self operator^(U l, _self r) noexcept = delete;
-/// Satisfies the [`Shl<@doc.self>`]($sus::num::Shl) concept.
+/// Satisfies the [`Shl`]($sus::num::Shl) concept for signed integers.
 ///
 /// This operation supports shifting with primitive signed or unsigned integers
-/// that convert to `u32`, as well as enums. However enum class is excluded
-/// as they require an explicit conversion to a `u32`. Thus the bound is
-/// `std::convertible_to` (implicit conversion) instead of
+/// that convert to the safe numeric, as well as enums.
+/// However enum class is excluded as they require an explicit conversion to an
+/// integer.
+///
+/// Thus the bound is `std::convertible_to` (implicit conversion) instead of
 /// `sus::construct::From` (explicit conversion).
 ///
 /// #[doc.overloads=signedint.<<]
@@ -884,7 +894,7 @@ template <class U>
   requires(!std::convertible_to<U, u32>)
 [[nodiscard]] sus_pure friend constexpr inline _self operator<<(
     _self l, U r) noexcept = delete;
-/// Satisfies the [`Shr<@doc.self>`]($sus::num::Shr) concept.
+/// Satisfies the [`Shr`]($sus::num::Shr) concept for signed integers.
 ///
 /// #[doc.overloads=signedint.>>]
 [[nodiscard]] sus_pure friend constexpr inline _self operator>>(
