@@ -364,4 +364,23 @@ TEST(Dyn, Example_Stack) {
   fmt::println("{}", s);  // Prints one of "heads" or "tails.
 }
 
+namespace example_erase {
+// This function receives and uses a type-erased concept object.
+void use_fn(sus::Box<sus::fn::DynFn<void(i32)>> b) { b(2); }
+
+// This function receives and uses a type-erased concept object.
+void use_fn_ref(const sus::fn::DynFn<void(i32)>& b) { b(2); }
+
+TEST(Dyn, Example_Erase) {
+  auto f = [](i32 i) { fmt::println("{}", i); };
+  // Converts the lambda, which satisfies the `Fn<void(i32)>` concept
+  // into a `Box<DynFn<void(i32)>>` for the function argument.
+  use_fn(sus::into(f));
+
+  // Erases the type of the lambda, constructing a type-erased reference to a
+  // `DynFn` to pass as the function argument.
+  use_fn_ref(sus::dyn<sus::fn::DynFn<void(i32)>>(f));
+}
+}  // namespace example_erase
+
 }  // namespace

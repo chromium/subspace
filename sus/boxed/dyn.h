@@ -47,30 +47,57 @@ namespace sus::boxed {
 ///
 /// # Performing the type erasure
 ///
-/// To type-erase a concept-satisfying object into the heap, use
-/// [`Box`]($sus::boxed::Box), such as `Box<DynC>` to hold a type-erased
-/// heap-allocated object that is known to satisfy the concept `C`.
+/// To type-erase a concept-satisfying object (a "concept object")
+/// into the heap, use [`Box`]($sus::boxed::Box).
+/// For example `Box<DynC>` would hold a type-erased
+/// heap-allocated object that is known to satisfy the concept `C`. A
+/// [`Box`]($sus::boxed::Box) should
+/// always be used when storing the function object beyond the current
+/// stack frame, such as in a class data member. It can also be done
+/// for ease of working with type-erased concepts.
 ///
-/// Then, `Box<DynC>` will come with a method
-/// [`from`]($sus::boxed::Box::from!dync) that lifts any object satisfying the
-/// concept `C` into the heap and type-erases it to `DynC`. This implies that
-/// [`Box<DynC>`]($sus::boxed::Box) will satisfy the
-/// [`From`]($sus::construct::From) concept, and can be constructed with type
-/// deduction through [`sus::into()`]($sus::construct::into) or
-/// explicitly with `Box<DynC>::from(sus::move(satisfies_c))`.
+/// ```
+/// // This function receives and uses a type-erased concept object.
+/// void use_fn(sus::Box<sus::fn::DynFn<void(i32)>> b) { b(2); }
+/// ```
 ///
-/// To type-erase a concept-satisfying object into a `DynC` reference without
-/// heap allocation, use [`dyn`]($sus::boxed::dyn), such as `dyn<DynC>(x)` to
-/// construct a type-erased reference to an object `x` that is known to satisfy
-/// the concept `C`.
+/// A [`Box`]($sus::boxed::Box) holding a type-erased concept can be
+/// constructed with the
+/// [`from`]($sus::boxed::Box::from!dync) constructor method. It receives a
+/// concept object as an input, and moves it to the heap.
+/// Since this satisfies the [`From`]($sus::construct::From) concept, the
+/// `Box<DynC>` can also be constructed with type deduction through
+/// [`sus::into()`]($sus::construct::into).
 ///
-/// The [`dyn`]($sus::boxed::dyn) function, and its returned type should only
-/// appear in function call arguments. The returned type
-/// [`Dyn`]($sus::boxed::Dyn) can not be moved, and it only converts a
-/// reference to a type `T&` into a reference `DynC&` that also satisfies `C`
-/// but without templates.
-/// This can be used to call functions that accept a type-erased concept
-/// by reference, such as with a `const DynC&` parameter.
+/// ```
+/// auto f = [](i32 i) { fmt::println("{}", i); };
+/// // Converts the lambda, which satisfies the `Fn<void(i32)>` concept
+/// // into a `Box<DynFn<void(i32)>>` for the function argument.
+/// use_fn(sus::into(f));
+/// ```
+///
+/// In performance-sensitive code, it can be necessary to avoid heap
+/// allocations while working with type-erased concept objects, or to work with
+/// a concept object without taking ownership of it. It is possible
+/// to receive a type-erased concept object by reference instead of through a
+/// [`Box`]($sus::boxed::Box).
+///
+/// ```
+/// // This function receives and uses a type-erased concept object.
+/// void use_fn_ref(const sus::fn::DynFn<void(i32)>& b) { b(2); }
+/// ```
+///
+/// To get a type-erased reference from a concept object, pass it to
+/// [`sus::dyn()`]($sus::boxed::dyn). The [`sus::dyn()`]($sus::boxed::dyn)
+/// function constructs a type-erasure on the stack and automatically converts
+/// to a reference to it.
+///
+/// ```
+/// auto f = [](i32 i) { fmt::println("{}", i); };
+/// // Erases the type of the lambda, constructing a type-erased reference to a
+/// // `DynFn` to pass as the function argument.
+/// use_fn_ref(sus::dyn<sus::fn::DynFn<void(i32)>>(f));
+/// ```
 ///
 /// # Type erasure of concepts in the Subspace library
 ///
