@@ -226,7 +226,8 @@ struct TypeOrValue {
 /// Builds a Type structure from `qualtype` without looking through type
 /// aliases.
 Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
-                      clang::Preprocessor& preprocessor) noexcept;
+                      clang::Preprocessor& preprocessor,
+                      clang::SourceLocation loc) noexcept;
 
 struct TypeToStringQuery {
   sus::Slice<std::string> namespace_path;

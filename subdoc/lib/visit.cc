@@ -296,7 +296,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     auto linked_type = LinkedType::with_type(
         build_local_type(decl->getType(),
                          decl->getASTContext().getSourceManager(),
-                         preprocessor_),
+                         preprocessor_, decl->getBeginLoc()),
         docs_db_);
 
     auto fe = FieldElement(
@@ -339,7 +339,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     auto linked_type = LinkedType::with_type(
         build_local_type(decl->getType(),
                          decl->getASTContext().getSourceManager(),
-                         preprocessor_),
+                         preprocessor_, decl->getBeginLoc()),
         docs_db_);
 
     auto fe = FieldElement(
@@ -496,7 +496,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
               auto linked_type = LinkedType::with_type(
                   build_local_type(v->getType(),
                                    v->getASTContext().getSourceManager(),
-                                   preprocessor_),
+                                   preprocessor_, v->getBeginLoc()),
                   docs_db_);
               params.emplace(sus::move(linked_type), v->getNameAsString(),
                              sus::none()  // TODO: `v->getDefaultArg()`
@@ -523,8 +523,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                              clang::dyn_cast<clang::CXXConversionDecl>(decl)) {
                 Type t = build_local_type(
                     convdecl->getReturnType(),
-                    convdecl->getASTContext().getSourceManager(),
-                    preprocessor_);
+                    convdecl->getASTContext().getSourceManager(), preprocessor_,
+                    convdecl->getBeginLoc());
                 return std::string("operator ") + t.name;
               } else {
                 return decl->getNameAsString();
@@ -568,7 +568,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             auto linked_return_type = LinkedType::with_type(
                 build_local_type(decl->getReturnType(),
                                  decl->getASTContext().getSourceManager(),
-                                 preprocessor_),
+                                 preprocessor_, decl->getBeginLoc()),
                 docs_db_);
 
             auto fe = FunctionElement(

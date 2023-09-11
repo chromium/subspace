@@ -124,17 +124,19 @@ bool template_parameter_is_concept(
 
 Type build_local_type_internal(
     clang::QualType qualtype, llvm::ArrayRef<clang::NamedDecl*> template_params,
-    const clang::SourceManager& sm, clang::Preprocessor& preprocessor) noexcept;
+    const clang::SourceManager& sm, clang::Preprocessor& preprocessor,
+    clang::SourceLocation loc) noexcept;
 
 TypeOrValue build_template_param(
     const clang::TemplateArgument& arg,
     llvm::ArrayRef<clang::NamedDecl*> template_params,
-    const clang::SourceManager& sm,
-    clang::Preprocessor& preprocessor) noexcept {
+    const clang::SourceManager& sm, clang::Preprocessor& preprocessor,
+    clang::SourceLocation loc) noexcept {
   switch (arg.getKind()) {
     case clang::TemplateArgument::ArgKind::Null:
       arg.dump();
       fmt::println(stderr, "");
+      loc.dump(sm);
       sus::unreachable();
     case clang::TemplateArgument::ArgKind::Type: {
       if (auto* proto =
@@ -143,10 +145,10 @@ TypeOrValue build_template_param(
         // a single type for it.
         FunctionProtoType types;
         types.return_type = build_local_type_internal(
-            proto->getReturnType(), template_params, sm, preprocessor);
+            proto->getReturnType(), template_params, sm, preprocessor, loc);
         for (clang::QualType p : proto->param_types()) {
-          types.param_types.push(
-              build_local_type_internal(p, template_params, sm, preprocessor));
+          types.param_types.push(build_local_type_internal(
+              p, template_params, sm, preprocessor, loc));
         }
         return TypeOrValue(
             TypeOrValueChoice::with<TypeOrValueChoice::Tag::FunctionProto>(
@@ -154,16 +156,16 @@ TypeOrValue build_template_param(
       }
       return TypeOrValue(TypeOrValueChoice::with<TypeOrValueChoice::Tag::Type>(
           build_local_type_internal(arg.getAsType(), template_params, sm,
-                                    preprocessor)));
+                                    preprocessor, loc)));
     }
     case clang::TemplateArgument::ArgKind::Declaration:
       return TypeOrValue(TypeOrValueChoice::with<TypeOrValueChoice::Tag::Type>(
           build_local_type_internal(arg.getAsDecl()->getType(), template_params,
-                                    sm, preprocessor)));
+                                    sm, preprocessor, loc)));
     case clang::TemplateArgument::ArgKind::NullPtr:
       return TypeOrValue(TypeOrValueChoice::with<TypeOrValueChoice::Tag::Type>(
           build_local_type_internal(arg.getNullPtrType(), template_params, sm,
-                                    preprocessor)));
+                                    preprocessor, loc)));
     case clang::TemplateArgument::ArgKind::Integral: {
       return TypeOrValue(TypeOrValueChoice::with<TypeOrValueChoice::Tag::Value>(
           llvm_int_to_string(arg.getAsIntegral())));
@@ -184,12 +186,14 @@ TypeOrValue build_template_param(
     case clang::TemplateArgument::ArgKind::TemplateExpansion:
       arg.dump();
       fmt::println(stderr, "");
+      loc.dump(sm);
       sus::unreachable();
     case clang::TemplateArgument::ArgKind::Expression:
       return TypeOrValue(TypeOrValueChoice::with<TypeOrValueChoice::Tag::Value>(
           stmt_to_string(*arg.getAsExpr(), sm, preprocessor)));
     case clang::TemplateArgument::ArgKind::Pack:
       // Packs are handled at a higher level since they produce multiple types.
+      loc.dump(sm);
       sus::unreachable();
   }
   sus::unreachable();
@@ -218,8 +222,8 @@ clang::QualType unwrap_skipped_types(clang::QualType q) noexcept {
 Type build_local_type_internal(
     clang::QualType qualtype,
     llvm::ArrayRef<clang::NamedDecl*> template_params_from_context,
-    const clang::SourceManager& sm,
-    clang::Preprocessor& preprocessor) noexcept {
+    const clang::SourceManager& sm, clang::Preprocessor& preprocessor,
+    clang::SourceLocation loc) noexcept {
   // PackExpansionTypes wrap a QualType that has all the actual type data we
   // want on it. We just need to remember that it was a pack to add back the
   // `...`.
@@ -254,7 +258,8 @@ Type build_local_type_internal(
             TypeOrValue(TypeOrValueChoice::with<TypeOrValueTag::Type>(
                 build_local_type_internal(
                     clang::QualType(spec->getAsType(), 0u),
-                    llvm::ArrayRef<clang::NamedDecl*>(), sm, preprocessor))));
+                    llvm::ArrayRef<clang::NamedDecl*>(), sm, preprocessor,
+                    loc))));
       }
       spec = spec->getPrefix();
     }
@@ -323,7 +328,7 @@ Type build_local_type_internal(
     for (const clang::TemplateArgument& arg :
          iter_args(sus::iter::from_range(ttype->template_arguments()))) {
       template_params.push(build_template_param(
-          arg, template_params_from_context, sm, preprocessor));
+          arg, template_params_from_context, sm, preprocessor, loc));
     }
   } else if (auto* ptype =
                  clang::dyn_cast<clang::TemplateTypeParmType>(&*qualtype)) {
@@ -342,7 +347,7 @@ Type build_local_type_internal(
       for (const clang::TemplateArgument& arg :
            sus::move(it).generate(iter_args)) {
         template_params.push(build_template_param(
-            arg, template_params_from_context, sm, preprocessor));
+            arg, template_params_from_context, sm, preprocessor, loc));
       }
     }
   } else if (auto* auto_type = clang::dyn_cast<clang::AutoType>(&*qualtype)) {
@@ -351,7 +356,7 @@ Type build_local_type_internal(
     for (const clang::TemplateArgument& arg : iter_args(
              sus::iter::from_range(auto_type->getTypeConstraintArguments()))) {
       template_params.push(build_template_param(
-          arg, template_params_from_context, sm, preprocessor));
+          arg, template_params_from_context, sm, preprocessor, loc));
     }
   } else if (auto* rec_type = clang::dyn_cast<clang::RecordType>(&*qualtype)) {
     if (auto* partial =
@@ -359,6 +364,7 @@ Type build_local_type_internal(
                 rec_type->getDecl())) {
       // Partial specialization in another type?
       partial->dump();
+      loc.dump(sm);
       sus::unreachable();
     } else if (auto* full =
                    clang::dyn_cast<clang::ClassTemplateSpecializationDecl>(
@@ -369,7 +375,7 @@ Type build_local_type_internal(
       for (const clang::TemplateArgument& arg : iter_args(
                sus::iter::from_range(full->getTemplateArgs().asArray()))) {
         template_params.push(build_template_param(
-            arg, template_params_from_context, sm, preprocessor));
+            arg, template_params_from_context, sm, preprocessor, loc));
       }
     }
   } else if (auto* inj_type =
@@ -396,11 +402,13 @@ Type build_local_type_internal(
     for (const clang::TemplateArgument& arg : iter_args(sus::iter::from_range(
              inj_type->getInjectedTST()->template_arguments()))) {
       template_params.push(build_template_param(
-          arg, template_params_from_context_here, sm, preprocessor));
+          arg, template_params_from_context_here, sm, preprocessor, loc));
     }
   } else {
     // No template parameters.
     // qualtype->dump();
+    // loc.dump(sm);
+    // sus::unreachable();
   }
 
   // Find the context from which to collect the namespace/record paths.
@@ -444,6 +452,7 @@ Type build_local_type_internal(
     context = injected_type->getDecl()->getDeclContext();
   } else {
     qualtype->dump();
+    loc.dump(sm);
     sus::unreachable();  // Find the context.
   }
 
@@ -520,9 +529,10 @@ Type build_local_type_internal(
 }  // namespace
 
 Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
-                      clang::Preprocessor& preprocessor) noexcept {
+                      clang::Preprocessor& preprocessor,
+                      clang::SourceLocation loc) noexcept {
   return build_local_type_internal(
-      qualtype, llvm::ArrayRef<clang::NamedDecl*>(), sm, preprocessor);
+      qualtype, llvm::ArrayRef<clang::NamedDecl*>(), sm, preprocessor, loc);
 }
 
 namespace {
