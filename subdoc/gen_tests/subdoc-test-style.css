@@ -207,7 +207,22 @@ main {
     overflow-x: auto;
 }
 pre > code span.comment {
-    color: #3ff9bd;
+    color: #78d57f;
+}
+pre > code span.string {
+    color: #ff9696;
+}
+pre > code span.char-escape {
+    color: #ffdada;
+}
+pre > code span.char {
+    color: #ca9e9e;
+}
+pre > code span.keyword {
+    color: #9799ff;
+}
+pre > code span.punct {
+    color: #ddd721;
 }
 
 .section-header {

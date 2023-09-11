@@ -11,8 +11,13 @@ struct N {};
 
 /// A code block with syntax highlighting.
 /// ```
-/// A comment;  // At the end of the line.
+/// A "comment";  // At the end of the line.
 /// // At the start of the line.
-///   // And after some whitespace.
+///   // And after some whitespace with "a string inside".
+/// A 'c' char  // Not a 'c' char.
+/// A "st\"\\ring" or '\''.foo();
+/// auto int; return keywords;
+/// not_auto a keyword nor auto_;
+/// []() { punctuation[0] + -0; }
 /// ```
 struct Syntax {};
