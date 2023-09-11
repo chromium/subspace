@@ -44,8 +44,7 @@ std::string make_string(std::string_view var_name, const subdoc::Type& type) {
       type, sus::dyn<sus::fn::DynFnMut<void(std::string_view)>>(text_fn),
       sus::dyn<sus::fn::DynFnMut<void(subdoc::TypeToStringQuery)>>(type_fn),
       sus::dyn<sus::fn::DynFnMut<void()>>(const_fn),
-      sus::dyn<sus::fn::DynFnMut<void()>>(volatile_fn),
-      sus::move(opt_dyn_fn));
+      sus::dyn<sus::fn::DynFnMut<void()>>(volatile_fn), sus::move(opt_dyn_fn));
   return sus::move(str).str();
 }
 
@@ -70,11 +69,27 @@ sus::Option<clang::FunctionDecl&> find_function(
   return option;
 }
 
-sus::Option<clang::QualType> find_function_parm(
-    std::string_view name, clang::ASTContext& cx) noexcept {
+sus::Option<sus::Tuple<clang::QualType, clang::SourceLocation>>
+find_function_return(std::string_view name, clang::ASTContext& cx) noexcept {
   return find_function(name, cx).map([](clang::FunctionDecl& fdecl) {
-    return (*fdecl.parameters().begin())->getType();
+    return sus::Tuple<clang::QualType, clang::SourceLocation>(
+        fdecl.getReturnType(), fdecl.getBeginLoc());
   });
+}
+
+sus::Option<sus::Tuple<clang::QualType, clang::SourceLocation>>
+find_function_parm(std::string_view name, clang::ASTContext& cx,
+                   usize index = 0u) noexcept {
+  return find_function(name, cx).map(
+      [index](clang::FunctionDecl& fdecl) mutable {
+        auto it = fdecl.parameters().begin();
+        while (index > 0u) {
+          it++;
+          index -= 1u;
+        }
+        return sus::Tuple<clang::QualType, clang::SourceLocation>(
+            (*it)->getType(), (*it)->getBeginLoc());
+      });
 }
 
 struct SubDocTypeTest : public SubDocTest {
@@ -94,9 +109,9 @@ TEST_F(SubDocTypeTest, NoVarName) {
     void f(int);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
@@ -118,9 +133,9 @@ TEST_F(SubDocTypeTest, Primitive) {
     void f(int);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
@@ -142,9 +157,9 @@ TEST_F(SubDocTypeTest, Bool) {
     void f(bool);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "bool");  // Not "_Bool".
@@ -158,9 +173,9 @@ TEST_F(SubDocTypeTest, Const) {
     void f(const bool);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "bool");
@@ -177,9 +192,9 @@ TEST_F(SubDocTypeTest, Volatile) {
     void f(volatile bool);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "bool");
@@ -196,9 +211,9 @@ TEST_F(SubDocTypeTest, ConstVolatile) {
     void f(volatile const bool);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "bool");
@@ -215,9 +230,9 @@ TEST_F(SubDocTypeTest, ConstRef) {
     void f(int const&);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
@@ -234,9 +249,9 @@ TEST_F(SubDocTypeTest, MutRef) {
     void f(int &);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
@@ -253,9 +268,9 @@ TEST_F(SubDocTypeTest, ConstRRef) {
     void f(int const&&);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
@@ -272,9 +287,9 @@ TEST_F(SubDocTypeTest, MutRRef) {
     void f(int &&);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
@@ -291,9 +306,9 @@ TEST_F(SubDocTypeTest, Pointer) {
     void f(int*);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
@@ -311,9 +326,9 @@ TEST_F(SubDocTypeTest, RefToPointer) {
     void f(int* &);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
@@ -331,9 +346,9 @@ TEST_F(SubDocTypeTest, ConstRefToPointer) {
     void f(int* const&);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
@@ -351,9 +366,9 @@ TEST_F(SubDocTypeTest, ConstRefToPointerToConst) {
     void f(int const *const &);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
@@ -371,9 +386,9 @@ TEST_F(SubDocTypeTest, PointerQualifiers) {
     void f(int const * *const volatile * *volatile *);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
@@ -394,9 +409,9 @@ TEST_F(SubDocTypeTest, SizedArray) {
     void f(int s[5]);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
@@ -415,9 +430,9 @@ TEST_F(SubDocTypeTest, QualifiedArray) {
     void f(const int s[5]);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
@@ -436,9 +451,9 @@ TEST_F(SubDocTypeTest, SizedMultiArray) {
     void f(int s[5][4][3][2][1]);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
@@ -457,9 +472,9 @@ TEST_F(SubDocTypeTest, UnsizedArray) {
     void f(int s[]);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
@@ -478,9 +493,9 @@ TEST_F(SubDocTypeTest, UnsizedAndSizedArray) {
     void f(int s[][3]);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
@@ -500,9 +515,9 @@ TEST_F(SubDocTypeTest, DependentArray) {
     void f(int s[][N][3]);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
@@ -522,9 +537,9 @@ TEST_F(SubDocTypeTest, SizedArrayRef) {
     void f(const int (&s)[3]);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
@@ -544,9 +559,9 @@ TEST_F(SubDocTypeTest, SizedArrayRvalueRef) {
     void f(volatile int (&&s)[3]);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
@@ -566,9 +581,9 @@ TEST_F(SubDocTypeTest, NamespaceReference) {
     void f(const a::b::c::S&);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "S");
@@ -589,9 +604,9 @@ TEST_F(SubDocTypeTest, NamespaceTypedefReference) {
     void f(a::b::S2);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "S2");
@@ -609,9 +624,9 @@ TEST_F(SubDocTypeTest, NamespaceUsingReference) {
     void f(a::b::S2);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "S2");
@@ -627,9 +642,9 @@ TEST_F(SubDocTypeTest, Auto) {
     void f(auto);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
     EXPECT_EQ(t.name, "auto");
@@ -647,9 +662,9 @@ TEST_F(SubDocTypeTest, AutoRef) {
     void f(auto const&);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
     EXPECT_EQ(t.name, "auto");
@@ -666,9 +681,9 @@ TEST_F(SubDocTypeTest, AutoPointer) {
     void f(auto*);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
     EXPECT_EQ(t.name, "auto");
@@ -687,9 +702,9 @@ TEST_F(SubDocTypeTest, Concept) {
     void f(a::b::C auto, const a::b::C auto&);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Concept);
     EXPECT_EQ(t.name, "C");
@@ -698,14 +713,9 @@ TEST_F(SubDocTypeTest, Concept) {
     EXPECT_EQ(t.refs, subdoc::Refs::None);
     EXPECT_EQ(t.namespace_path, sus::vec("a", "b"));
 
-    sus::Option<clang::QualType> qual2 =
-        find_function("f", cx).map([](clang::FunctionDecl& fdecl) {
-          auto it = fdecl.parameters().begin();
-          it++;
-          return (*it)->getType();
-        });
-    subdoc::Type t2 =
-        subdoc::build_local_type(*qual2, cx.getSourceManager(), preprocessor);
+    auto [qual2, loc2] = find_function_parm("f", cx, 1u).unwrap();
+    subdoc::Type t2 = subdoc::build_local_type(qual2, cx.getSourceManager(),
+                                               preprocessor, loc2);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Concept);
     EXPECT_EQ(t2.name, "C");
@@ -725,10 +735,9 @@ TEST_F(SubDocTypeTest, ConceptReturn) {
     a::b::C<1 + 3> auto f();
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function("f", cx).map(
-        [](clang::FunctionDecl& fdecl) { return fdecl.getReturnType(); });
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_return("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Concept);
     EXPECT_EQ(t.name, "C");
@@ -750,10 +759,9 @@ TEST_F(SubDocTypeTest, ConceptReturnWithBody) {
     a::b::C<1 + 3> auto f() { return 1; }
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function("f", cx).map(
-        [](clang::FunctionDecl& fdecl) { return fdecl.getReturnType(); });
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_return("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Concept);
     EXPECT_EQ(t.name, "C");
@@ -775,9 +783,9 @@ TEST_F(SubDocTypeTest, ConceptWithParam) {
     void f(a::b::C<5 + 2> auto);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Concept);
     EXPECT_EQ(t.name, "C");
@@ -800,9 +808,9 @@ TEST_F(SubDocTypeTest, ConceptWithDependentTypeParam) {
     void f(a::b::C<volatile T *const&&> auto);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Concept);
     EXPECT_EQ(t.name, "C");
@@ -832,9 +840,9 @@ TEST_F(SubDocTypeTest, ConceptWithTypeParam) {
     void f(a::b::C<c::d::E volatile * const&&> auto);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Concept);
     EXPECT_EQ(t.name, "C");
@@ -864,9 +872,9 @@ TEST_F(SubDocTypeTest, ConceptWithPack) {
     void f(a::b::C<T...> auto);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Concept);
     EXPECT_EQ(t.name, "C");
@@ -897,9 +905,9 @@ TEST_F(SubDocTypeTest, AliasTemplate) {
     void f(A<T>);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "A");
@@ -927,9 +935,9 @@ TEST_F(SubDocTypeTest, NestedAliasTemplate) {
     void f(a::b::S<char>::template A<int>);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "A");
@@ -953,9 +961,9 @@ TEST_F(SubDocTypeTest, DependentTypeInTemplate) {
     void f(S<T>);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "S");
@@ -980,9 +988,9 @@ TEST_F(SubDocTypeTest, DependentTypeQualified) {
     void f(S<const T&>);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "S");
@@ -1006,9 +1014,9 @@ TEST_F(SubDocTypeTest, DependentTypePointer) {
     void f(S<T volatile*>);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "S");
@@ -1034,9 +1042,9 @@ TEST_F(SubDocTypeTest, NestedClassMultiple) {
     void f(a::b::A::B::C);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "C");
@@ -1055,9 +1063,9 @@ TEST_F(SubDocTypeTest, DependentTypeAsParam) {
     void f(T&);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
     EXPECT_EQ(t.name, "T");
@@ -1080,9 +1088,9 @@ TEST_F(SubDocTypeTest, DependentTypeFromClassAsParam) {
     };
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
     EXPECT_EQ(t.name, "T");
@@ -1106,9 +1114,9 @@ TEST_F(SubDocTypeTest, DependentTypeFromClassAsParamOnTemplateFunction) {
     };
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
     EXPECT_EQ(t.name, "T");
@@ -1131,9 +1139,9 @@ TEST_F(SubDocTypeTest, DependentTypeAsParamWithRequires) {
     void f(T&);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
     EXPECT_EQ(t.name, "T");
@@ -1155,9 +1163,9 @@ TEST_F(SubDocTypeTest, DependentTypeAsParamWithConcept) {
     void f(T&);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
     EXPECT_EQ(t.name, "T");
@@ -1175,10 +1183,9 @@ TEST_F(SubDocTypeTest, AutoReturn) {
     auto f();
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function("f", cx).map(
-        [](clang::FunctionDecl& fdecl) { return fdecl.getReturnType(); });
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_return("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
     EXPECT_EQ(t.name, "auto");
@@ -1196,10 +1203,9 @@ TEST_F(SubDocTypeTest, AutoReturnWithBody) {
     auto f() { return a::b::S(); }
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function("f", cx).map(
-        [](clang::FunctionDecl& fdecl) { return fdecl.getReturnType(); });
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_return("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
     EXPECT_EQ(t.name, "auto");
@@ -1217,10 +1223,9 @@ TEST_F(SubDocTypeTest, AutoReturnQualified) {
     auto&& f();
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function("f", cx).map(
-        [](clang::FunctionDecl& fdecl) { return fdecl.getReturnType(); });
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_return("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
     EXPECT_EQ(t.name, "auto");
@@ -1237,10 +1242,9 @@ TEST_F(SubDocTypeTest, AutoReturnPointer) {
     auto* f();
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function("f", cx).map(
-        [](clang::FunctionDecl& fdecl) { return fdecl.getReturnType(); });
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_return("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
     EXPECT_EQ(t.name, "auto");
@@ -1258,10 +1262,9 @@ TEST_F(SubDocTypeTest, AutoDecltypeReturn) {
     decltype(auto) f();
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function("f", cx).map(
-        [](clang::FunctionDecl& fdecl) { return fdecl.getReturnType(); });
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_return("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
     EXPECT_EQ(t.name, "decltype(auto)");
@@ -1279,10 +1282,9 @@ TEST_F(SubDocTypeTest, AutoDecltypeReturnWithBody) {
     decltype(auto) f() { return a::b::S(); }
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function("f", cx).map(
-        [](clang::FunctionDecl& fdecl) { return fdecl.getReturnType(); });
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_return("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
     EXPECT_EQ(t.name, "decltype(auto)");
@@ -1301,9 +1303,9 @@ TEST_F(SubDocTypeTest, DecltypeParam) {
     void f(decltype(a::b::C()));
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
     EXPECT_EQ(t.name, "decltype(a::b::C())");
@@ -1326,9 +1328,9 @@ TEST_F(SubDocTypeTest, DecltypeReturnType) {
     decltype(a::b::C()) f() { return a::b::C(); };
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::FunctionDecl&> fdecl = find_function("f", cx);
-    subdoc::Type t = subdoc::build_local_type(
-        fdecl->getReturnType(), cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_return("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
     EXPECT_EQ(t.name, "decltype(a::b::C())");
@@ -1357,10 +1359,9 @@ TEST_F(SubDocTypeTest, ConceptReturnWithTypeParam) {
     };
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function("f", cx).map(
-        [](clang::FunctionDecl& fdecl) { return fdecl.getReturnType(); });
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_return("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Concept);
     EXPECT_EQ(t.name, "C");
@@ -1376,10 +1377,9 @@ TEST_F(SubDocTypeTest, ConceptReturnWithTypeParam) {
 
     EXPECT_EQ(make_string("foo", t), "!C!<!E!> auto foo");
 
-    sus::Option<clang::QualType> qual2 = find_function("g", cx).map(
-        [](clang::FunctionDecl& fdecl) { return fdecl.getReturnType(); });
-    subdoc::Type t2 =
-        subdoc::build_local_type(*qual2, cx.getSourceManager(), preprocessor);
+    auto [qual2, loc2] = find_function_return("g", cx).unwrap();
+    subdoc::Type t2 = subdoc::build_local_type(qual2, cx.getSourceManager(),
+                                               preprocessor, loc2);
 
     EXPECT_EQ(t2.category, subdoc::TypeCategory::Concept);
     EXPECT_EQ(t2.name, "C");
@@ -1407,10 +1407,9 @@ TEST_F(SubDocTypeTest, ConceptReturnWithTemplate) {
     a::b::C<c::d::E> auto f();
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function("f", cx).map(
-        [](clang::FunctionDecl& fdecl) { return fdecl.getReturnType(); });
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_return("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Concept);
     EXPECT_EQ(t.name, "C");
@@ -1433,10 +1432,9 @@ TEST_F(SubDocTypeTest, ConceptReturnWithTemplateTemplate) {
     a::b::C<T> auto f();
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function("f", cx).map(
-        [](clang::FunctionDecl& fdecl) { return fdecl.getReturnType(); });
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_return("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Concept);
     EXPECT_EQ(t.name, "C");
@@ -1459,10 +1457,9 @@ TEST_F(SubDocTypeTest, ConceptReturnWithPack) {
     a::b::C<T...> auto f();
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function("f", cx).map(
-        [](clang::FunctionDecl& fdecl) { return fdecl.getReturnType(); });
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_return("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Concept);
     EXPECT_EQ(t.name, "C");
@@ -1489,9 +1486,9 @@ TEST_F(SubDocTypeTest, UsingType) {
     void f(c::d::S const&);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "S");
@@ -1511,9 +1508,9 @@ TEST_F(SubDocTypeTest, ConceptWithFunctionProto) {
     void f(a::b::C<c::d::R(c::d::S<c::d::R>, c::d::R)> auto);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Concept);
     EXPECT_EQ(t.name, "C");
@@ -1545,9 +1542,9 @@ TEST_F(SubDocTypeTest, StructWithFunctionProto) {
     void f(a::b::F<c::d::R(c::d::S<c::d::R>, c::d::R)>);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "F");
@@ -1580,9 +1577,9 @@ TEST_F(SubDocTypeTest, StructWithDependentFunctionProto) {
     void f(a::b::F<c::d::R(T)>);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "F");
@@ -1612,9 +1609,9 @@ TEST_F(SubDocTypeTest, StructWithVariadicFunctionProto) {
     void f(a::b::F<c::d::R(T...)>);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "F");
@@ -1649,9 +1646,9 @@ TEST_F(SubDocTypeTest, PartialSpecializationMethod) {
     };
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "F");
@@ -1686,9 +1683,9 @@ TEST_F(SubDocTypeTest, PartialSpecializationMethodInjectedClassName) {
     };
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "F");
@@ -1729,9 +1726,9 @@ TEST_F(SubDocTypeTest, PartialSpecializationMethodInNestedTemplateClass) {
     };
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "F");
@@ -1755,9 +1752,9 @@ TEST_F(SubDocTypeTest, PartialSpecializationMethodInNestedTemplateClass) {
     EXPECT_EQ(make_string("foo", t), "!F!<!S!<const T&>>& foo");
   });
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("g", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("g", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "G");
@@ -1789,9 +1786,9 @@ TEST_F(SubDocTypeTest,
     };
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "F");
@@ -1834,9 +1831,9 @@ TEST_F(SubDocTypeTest, VariadicConcept) {
     static void f(a::b::C auto *volatile *const&&...);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Concept);
     EXPECT_EQ(t.name, "C");
@@ -1860,9 +1857,9 @@ TEST_F(SubDocTypeTest, DependentNameType) {
     void f(typename R<S<T>>::RType::SType&);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
     EXPECT_EQ(t.name, "SType");
@@ -1885,9 +1882,9 @@ TEST_F(SubDocTypeTest, NullAttributeTemplate) {
     void f(_Nonnull T i);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
     EXPECT_EQ(t.name, "T");
@@ -1905,9 +1902,9 @@ TEST_F(SubDocTypeTest, NullAttributePointer) {
     void f(const int *const _Nullable *_Nonnull i);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
-    sus::Option<clang::QualType> qual = find_function_parm("f", cx);
-    subdoc::Type t =
-        subdoc::build_local_type(*qual, cx.getSourceManager(), preprocessor);
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "int");
