@@ -53,9 +53,7 @@ struct Anything {
 /// The version of a callable object that may be called only once.
 ///
 /// A `FnOnce` is typically the best fit for any callable that will
-/// only be called at most once. However when a template (or constexpr) is not
-/// required, receiving a `FnOnceRef` instead of `FnOnce auto&&` will typically
-/// produce less code by using type erasure to avoid template instantiation.
+/// only be called at most once.
 ///
 /// A type that satisfies `FnOnce` will return a type that can be converted to
 /// `R` when called with the arguments `Args...`. `FnOnce` is satisfied by
@@ -77,11 +75,15 @@ struct Anything {
 /// an lvalue in the caller.
 ///
 /// A `FnOnce` should be called by moving it with `sus::move()` when passing it
-/// to `sus::fn::call_once()` along with any arguments. It is moved-from after
-/// calling, and it should only be called once.
+/// to `sus::fn::call_once()` along with any arguments. This ensures the
+/// correct overload is called on the object and that method pointers are
+/// called correctly. It is moved-from after calling, and it should only be
+/// called once.
 ///
-/// Calling a `FnOnce` multiple times may panic or cause Undefined Behaviour.
-/// Not moving the `FnOnce` when calling it may fail to compile, panic, or cause
+/// Calling a `FnOnce` multiple times may [`panic`]($sus::assertions::panic)
+/// or cause Undefined Behaviour.
+/// Not moving the `FnOnce` when calling it may fail to compile,
+/// [`panic`]($sus::assertions::panic), or cause
 /// Undefined Behaviour depending on the type that is being used to satisfy
 /// `FnOnce`.
 ///
@@ -91,15 +93,6 @@ struct Anything {
 /// requirements of `FnMut` and `Fn` which can be called only a single time. As
 /// well, `FnOnce` is allowed to mutate internal state, but it does not have to,
 /// which is compatible with the const nature of `Fn`.
-///
-/// # Subspace types that satisfy `FnOnce`
-/// The `FnOnceRef` and `FnOnceBox` types in the Subspace library satisfy
-/// `FnOnce`. They must be moved from when called, and they panic if called more
-/// than once, as that implies a use-after-move.
-///
-/// Like the concepts, `FnRef` is convertible to `FnMutRef` is convertible to
-/// `FnOnceRef`. And `FnBox` is convertible to `FnMutBox` is convertible to
-/// `FnOnceBox`.
 ///
 /// # Examples
 /// A function that receives a `FnOnce` matching type and calls it:
@@ -165,12 +158,8 @@ concept FnOnce = requires {
 /// The version of a callable object that is allowed to mutate internal state
 /// and may be called multiple times.
 ///
-/// A `FnMut` is typically the best fit for
-/// any callable that may be called one or more times. However when a template
-/// (or constexpr) is not required, receiving a `FnMutRef` instead of `FnMut
-/// auto` will typically produce less code by using type erasure to avoid
-/// template instantiation.
-///
+/// A `FnMut` is typically the best fit for any callable that may be called one
+/// or more times.
 /// Because a `FnMut` is able to mutate internal state, it may return different
 /// values each time it is called with the same inputs.
 ///
@@ -189,13 +178,13 @@ concept FnOnce = requires {
 /// ```
 ///
 /// # Use of `FnMut`
-/// `FnMut` should be received by value typically. If received as a rvalue
-/// (universal) reference, it should be constrained by
-/// [`IsMoveRef<decltype(f)>`]($sus::mem::IsMoveRef) to avoid moving out of
-/// an lvalue in the caller.
+/// `FnMut` should be received by value typically, though it can be received by
+/// reference if mutations should be visible to the caller.
 ///
 /// A `FnMut` should be called by passing it to `sus::fn::call_mut()` along with
-/// any arguments. A `FnMut` may be called any number of times, unlike `FnOnce`,
+/// any arguments. This ensures the correct overload is called on the object and
+/// that method pointers are called correctly.
+/// A `FnMut` may be called any number of times, unlike `FnOnce`,
 /// and should not be moved when called.
 ///
 /// # Compatibility
@@ -204,15 +193,6 @@ concept FnOnce = requires {
 /// requirements of `FnMut` and `Fn` which can be called only a single time. As
 /// well, `FnOnce` is allowed to mutate internal state, but it does not have to,
 /// which is compatible with the const nature of `Fn`.
-///
-/// # Subspace types that satisfy `FnMut`
-/// The `FnMutRef` and `FnMutBox` types in the Subspace library satisfy `FnMut`
-/// (and thus `FnOnce` as well). They may be called any number of times and are
-/// able to mutate internal state.
-///
-/// Like the concepts, `FnRef` is convertible to `FnMutRef` is convertible to
-/// `FnOnceRef`. And `FnBox` is convertible to `FnMutBox` is convertible to
-/// `FnOnceBox`.
 ///
 /// # Examples
 /// A function that receives a `FnMut` matching type and calls it:
@@ -281,27 +261,25 @@ concept FnMut = requires {
 /// The version of a callable object that may be called multiple times without
 /// mutating internal state.
 ///
-/// A `Fn` is useful for a callable that is received as
-/// a const reference to indicate it and may be called one or more times and
-/// does not change between call. However when a template (or constexpr) is not
-/// required, receiving a `FnRef` instead of `const Fn auto&` will typically
-/// produce less code by using type erasure to avoid template instantiation.
+/// A `Fn` is useful for a callable that is expected to be called one or more
+/// times and whose results do not change between calls. This is of course
+/// possible to violate with `mutable` or global state, but it is discouraged
+/// as it violates the `Fn` protocol expectations of the caller.
+/// [`FnMut`]($sus::fn::FnMut) should be used when the function will
+/// mutate anything and can return different values as a result.
 ///
-/// Because a `FnMut` is able to mutate internal state, it may return different
-/// values each time it is called with the same inputs.
-///
-/// A type that satisfies `FnMut` will return a type that can be converted to
-/// `R` when called with the arguments `Args...`. `FnMut` is satisfied by
-/// being callable as an lvalue (which is done by providing an operator() that
-/// is not `&&`-qualified). Mutable and const lambdas will satisfy
-/// `FnMut`.
+/// A type that satisfies `Fn` will return a type that can be converted to
+/// `R` when called with the arguments `Args...`. `Fn` is satisfied by
+/// being callable as a const lvalue (which is done by providing an operator()
+/// that is `const`- or `const&`-qualified). Const lambdas will satisfy
+/// `Fn` but mutable ones will not.
 ///
 /// The second argument of `Fn<F, S>` is a function signature with the format
 /// `ReturnType(Args...)`, where `Args...` are the arguments that will be passed
 /// to the `Fn` and `ReturnType` is what is expected to be received back. It
 /// would appear as a matching concept as:
 /// ```
-/// void function(const Fn<ReturnType(Args...)> auto& f) { ... }
+/// void function(Fn<ReturnType(Args...)> auto f) { ... }
 /// ```
 ///
 /// # Use of `Fn`
@@ -309,9 +287,10 @@ concept FnMut = requires {
 /// const reference.
 ///
 /// A `Fn` should be called by passing it to `std::fn::call()` along with any
-/// arguments. This ensures the correct overload is called on the object. A `Fn`
-/// may be called any number of times, unlike `FnOnce`, and should not be moved
-/// when called.
+/// arguments. This ensures the correct overload is called on the object and
+/// that method pointers are called correctly.
+/// A `Fn` may be called any number of times, unlike `FnOnce`, and should not
+/// be moved when called.
 ///
 /// # Compatibility
 /// Any callable type that satisfies `Fn` will also satisfy `FnMut` and
@@ -320,21 +299,12 @@ concept FnMut = requires {
 /// are able to mutate state when run, they are not required to and a constant
 /// `Fn` satisfies them.
 ///
-/// # Subspace types that satisfy `FnMut`
-/// The `FnRef` and `FnBox` types in the Subspace library satisfy `Fn` (and thus
-/// `FnMut` and `FnOnce` as well). They may be called any number of times and
-/// are callable as a const object.
-///
-/// Like the concepts, `FnRef` is convertible to `FnMutRef` is convertible to
-/// `FnOnceRef`. And `FnBox` is convertible to `FnMutBox` is convertible to
-/// `FnOnceBox`.
-///
 /// # Examples
 /// A function that receives a `Fn` matching type and calls it:
 /// ```
 /// // Accepts any type that can be called once with (Option<i32>) and returns
 /// // i32.
-/// static i32 do_stuff(const sus::fn::Fn<i32(sus::Option<i32>)> auto& f) {
+/// static i32 do_stuff(sus::fn::Fn<i32(sus::Option<i32>)> auto f) {
 ///   return sus::fn::call(f, sus::some(400)) +
 ///          sus::fn::call(f, sus::some(100));
 /// }

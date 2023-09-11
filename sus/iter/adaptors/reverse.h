@@ -16,7 +16,7 @@
 // IWYU pragma: friend "sus/.*"
 #pragma once
 
-#include "sus/fn/fn_box_defn.h"
+#include "sus/fn/fn_concepts.h"
 #include "sus/iter/iterator_concept.h"
 #include "sus/iter/iterator_defn.h"
 #include "sus/mem/move.h"

@@ -23,7 +23,7 @@
 #include "fmt/format.h"
 #include "sus/assertions/check.h"
 #include "sus/assertions/unreachable.h"
-#include "sus/fn/fn_ref.h"
+#include "sus/fn/fn_concepts.h"
 #include "sus/iter/into_iterator.h"
 #include "sus/iter/iterator_defn.h"
 #include "sus/iter/once.h"
