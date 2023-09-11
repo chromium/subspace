@@ -616,6 +616,30 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         case clang::RefQualifierKind::RQ_RValue: signature += "&&"; break;
       }
     }
+    if (constraints.is_some()) {
+      signature += " requires ";
+      for (const auto& [i, c] : constraints->list.iter().enumerate()) {
+        if (i > 0u) signature += ",";
+        switch (c) {
+          case RequiresConstraintTag::Concept: {
+            const RequiresConceptConstraint& con =
+                c.as<RequiresConstraintTag::Concept>();
+            signature += con.concept_name;
+            signature += "<";
+            for (const auto& [j, arg] : con.args.iter().enumerate()) {
+              if (j > 0u) signature += ",";
+              signature += arg;
+            }
+            signature += ">";
+            break;
+          }
+          case RequiresConstraintTag::Text: {
+            signature += c.as<RequiresConstraintTag::Text>();
+            break;
+          }
+        }
+      }
+    }
 
     auto linked_return_type = LinkedType::with_type(
         build_local_type(decl->getReturnType(),

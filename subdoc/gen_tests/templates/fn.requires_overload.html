@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+
+<head>
+  <meta name="generator" content="subdoc"></meta>
+  <meta name="viewport" content="width=device-width, initial-scale=1"></meta>
+  <meta property="og:type" content="website"></meta>
+  <meta property="og:site_name" content="PROJECT NAME"></meta>
+  <title>requires_overload - PROJECT NAME</title>
+  <meta property="og:title" content="requires_overload - PROJECT NAME"></meta>
+  <meta name="description" content="Has two overloads."></meta>
+  <meta property="og:description" content="Has two overloads."></meta>
+  <link rel="stylesheet" href="../subdoc-test-style.css">
+  <link rel="icon" type="image/svg+xml" href="../icon.svg">
+  <link rel="alternate icon" type="image/png" href="../icon.png">
+  <meta property="og:image" content="../icon.svg"></meta>
+</head>
+
+<body>
+  <nav class="topbar">
+    <button class="sidebar-menu-button" onclick="let e = document.getElementsByClassName('sidebar')[0];e.classList.toggle('shown');">
+      ☰
+    </button>
+    <a class="topbar-logo-link" href="index.html"><div class="topbar-logo-border">
+        <img class="topbar-logo" src="PROJECT LOGO.png"></img>
+      </div></a>
+    <span class="topbar-text-area">
+      <span class="topbar-title">
+        <a href="#">requires_overload</a>
+      </span>
+    </span>
+  </nav>
+  <nav class="sidebar">
+    <a class="sidebar-logo-link" href="index.html"><div class="sidebar-logo-border">
+        <img class="sidebar-logo" src="PROJECT LOGO.png"></img>
+      </div></a>
+    <div class="sidebar-pretitle sidebar-text">
+      function
+    </div>
+    <div class="sidebar-title sidebar-text">
+      <a href="#">requires_overload</a>
+    </div>
+    <div class="sidebar-subtitle sidebar-text">
+    </div>
+    <div class="sidebar-links sidebar-text">
+      <ul>
+      </ul>
+    </div>
+  </nav>
+  <main>
+    <div class="function">
+      <div class="section overview">
+        <div class="section-header">
+          <span>
+            Function
+          </span>
+          <a class="project-name" href="index.html">PROJECT NAME</a>
+          <span class="namespace-dots">::</span>
+          <a class="function-name" href="#">requires_overload</a>
+        </div>
+        <div class="overload-set">
+          <div class="overload">
+            <div class="function-signature"><div class="template">template &lt;class A, class B&gt;</div><span class="function-auto">auto</span> <a class="function-name" href="#">requires_overload</a>(A, B) -&gt; void<div class="requires">
+                <span class="requires-keyword keyword">
+                  requires
+                </span>
+                <div class="requires-constraint"><pre class="requires-constraint-line">Concept&lt;A, B&gt;</pre></div>
+              </div></div>
+          </div>
+          <div class="overload">
+            <div class="function-signature"><div class="template">template &lt;class A, class B&gt;</div><span class="function-auto">auto</span> <a class="function-name" href="#">requires_overload</a>(A, B) -&gt; void<div class="requires">
+                <span class="requires-keyword keyword">
+                  requires
+                </span>
+                <div class="requires-constraint"><pre class="requires-constraint-line">!Concept&lt;A, B&gt;</pre></div>
+              </div></div>
+          </div>
+        </div>
+        <div class="description long">
+          <p>Has two overloads.</p>
+
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
