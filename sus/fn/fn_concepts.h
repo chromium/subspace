@@ -75,7 +75,8 @@ struct Anything {
 /// an lvalue in the caller.
 ///
 /// A `FnOnce` should be called by moving it with `sus::move()` when passing it
-/// to `sus::fn::call_once()` along with any arguments. This ensures the
+/// to [`call_once`]($sus::fn::call_once) along with any arguments.
+/// This ensures the
 /// correct overload is called on the object and that method pointers are
 /// called correctly. It is moved-from after calling, and it should only be
 /// called once.
@@ -199,8 +200,9 @@ concept FnOnce = requires {
 /// `FnMut` should be received by value typically, though it can be received by
 /// reference if mutations should be visible to the caller.
 ///
-/// A `FnMut` should be called by passing it to `sus::fn::call_mut()` along with
-/// any arguments. This ensures the correct overload is called on the object and
+/// A `FnMut` should be called by passing it to [`call_mut`]($sus::fn::call_mut)
+/// along with any arguments.
+/// This ensures the correct overload is called on the object and
 /// that method pointers are called correctly.
 /// A `FnMut` may be called any number of times, unlike `FnOnce`,
 /// and should not be moved when called.
@@ -322,8 +324,9 @@ concept FnMut = requires {
 /// `Fn` should be received by value typically, but can also be received as a
 /// const reference.
 ///
-/// A `Fn` should be called by passing it to `std::fn::call()` along with any
-/// arguments. This ensures the correct overload is called on the object and
+/// A `Fn` should be called by passing it to [`call`]($sus::fn::call) along
+/// with any arguments.
+/// This ensures the correct overload is called on the object and
 /// that method pointers are called correctly.
 /// A `Fn` may be called any number of times, unlike `FnOnce`, and should not
 /// be moved when called.
