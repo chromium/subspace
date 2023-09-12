@@ -22,6 +22,7 @@
 #include "sus/iter/generator.h"
 #include "sus/iter/iterator.h"
 #include "sus/iter/once.h"
+#include "sus/ops/range.h"
 #include "sus/ptr/as_ref.h"
 
 namespace subdoc {
@@ -138,26 +139,10 @@ TypeOrValue build_template_param(
       fmt::println(stderr, "");
       loc.dump(sm);
       sus::unreachable();
-    case clang::TemplateArgument::ArgKind::Type: {
-      if (auto* proto =
-              clang::dyn_cast<clang::FunctionProtoType>(&*arg.getAsType())) {
-        // A function proto is actually a group of types, so we can't build just
-        // a single type for it.
-        FunctionProtoType types;
-        types.return_type = build_local_type_internal(
-            proto->getReturnType(), template_params, sm, preprocessor, loc);
-        for (clang::QualType p : proto->param_types()) {
-          types.param_types.push(build_local_type_internal(
-              p, template_params, sm, preprocessor, loc));
-        }
-        return TypeOrValue(
-            TypeOrValueChoice::with<TypeOrValueChoice::Tag::FunctionProto>(
-                sus::move(types)));
-      }
+    case clang::TemplateArgument::ArgKind::Type:
       return TypeOrValue(TypeOrValueChoice::with<TypeOrValueChoice::Tag::Type>(
           build_local_type_internal(arg.getAsType(), template_params, sm,
                                     preprocessor, loc)));
-    }
     case clang::TemplateArgument::ArgKind::Declaration:
       return TypeOrValue(TypeOrValueChoice::with<TypeOrValueChoice::Tag::Type>(
           build_local_type_internal(arg.getAsDecl()->getType(), template_params,
@@ -203,18 +188,23 @@ clang::QualType unwrap_skipped_types(clang::QualType q) noexcept {
   // Arrays may already be "DecayedType", but we can get the original type from
   // it.
   if (auto* dtype = clang::dyn_cast<clang::DecayedType>(&*q))
-    q = dtype->getOriginalType();
+    return unwrap_skipped_types(dtype->getOriginalType());
+
+  // Paren types disapper, we add them back if needed (such as for arrays or
+  // function pointers) when constructing a string.
+  if (auto* ptype = clang::dyn_cast<clang::ParenType>(&*q))
+    return unwrap_skipped_types(ptype->getInnerType());
 
   // A `using A = B` is an elaborated type that names a typedef A, so unpack
   // the ElaboratedType. Template specializations can be inside an
   // ElaboratedType, so this comes first.
-  while (auto* elab = clang::dyn_cast<clang::ElaboratedType>(&*q))
-    q = elab->getNamedType();
+  if (auto* elab = clang::dyn_cast<clang::ElaboratedType>(&*q))
+    return unwrap_skipped_types(elab->getNamedType());
 
   // `AttributedType` have an attribute applied, and should be unwrapped to get
   // to the underlying type.
-  while (auto* attr = clang::dyn_cast<clang::AttributedType>(&*q))
-    q = attr->getEquivalentType();
+  if (auto* attr = clang::dyn_cast<clang::AttributedType>(&*q))
+    return unwrap_skipped_types(attr->getEquivalentType());
 
   return q;
 }
@@ -237,8 +227,8 @@ Type build_local_type_internal(
       qualtype->isLValueReferenceType()
           ? Refs::LValueRef
           : (qualtype->isRValueReferenceType() ? Refs::RValueRef : Refs::None);
-  // Grab the qualifiers on the outer type, if it's a pointer this is what we
-  // want. But for an array we will need to replace these.
+  // Grab the qualifiers on the outer type. Each time we unpack a nested type in
+  // the tree, we replace these.
   Qualifier qualifier = qualifier_from_qualtype(qualtype.getNonReferenceType());
   qualtype = unwrap_skipped_types(qualtype.getNonReferenceType());
 
@@ -266,39 +256,81 @@ Type build_local_type_internal(
   }
 
   sus::Vec<std::string> array_dims;
-  while (qualtype->isArrayType()) {
-    // The type inside a pack can not be an array.
-    sus::check(!is_pack);
+  sus::Vec<Qualifier> pointers;
+  sus::Vec<Qualifier> pointers_to_array;
 
-    // Arrays come with the var name wrapped in parens, which must be removed.
-    qualtype = qualtype.IgnoreParens();
-    sus::check(clang::isa<clang::ArrayType>(&*qualtype));
+  // It's possible to have pointers to an array, in which case inside the
+  // pointers we find an array. Then we will apply the array to the root type,
+  // and come back to look for pointers again, this time they are pointers to
+  // the type inside the array, and the original pointers are pointers to the
+  // array.
+  //
+  // While we can have pointer-to-array-of-pointer, what we can't have is
+  // array-of-pointer-to-array.
+  for (usize i : "0..2"_r) {
+    bool was_array = false;
 
-    const clang::ArrayType* const type =
-        clang::cast<clang::ArrayType>(&*qualtype);
-    if (auto* constarr = clang::dyn_cast<clang::ConstantArrayType>(type)) {
-      array_dims.push(
-          llvm_int_without_sign_to_string(constarr->getSize(), false));
-    }
-    if (auto* deparr = clang::dyn_cast<clang::DependentSizedArrayType>(type)) {
-      array_dims.push(stmt_to_string(*deparr->getSizeExpr(), sm, preprocessor));
-    }
-    if (auto* incarr = clang::dyn_cast<clang::IncompleteArrayType>(type)) {
-      array_dims.push("");
-    }
-    if (auto* vararr = clang::dyn_cast<clang::VariableArrayType>(type)) {
-      sus::unreachable();  // This is a C thing, not C++.
+    while (clang::isa<clang::ArrayType>(&*qualtype)) {
+      // The type inside a pack can not be an array.
+      if (is_pack) {
+        qualtype->dump();
+        loc.dump(sm);
+        sus::unreachable();
+      }
+
+      // Arrays come with the var name wrapped in parens, which must be removed.
+      qualtype = qualtype.IgnoreParens();
+
+      const clang::ArrayType* const type =
+          clang::cast<clang::ArrayType>(&*qualtype);
+      if (auto* constarr = clang::dyn_cast<clang::ConstantArrayType>(type)) {
+        array_dims.push(
+            llvm_int_without_sign_to_string(constarr->getSize(), false));
+      }
+      if (auto* deparr =
+              clang::dyn_cast<clang::DependentSizedArrayType>(type)) {
+        array_dims.push(
+            stmt_to_string(*deparr->getSizeExpr(), sm, preprocessor));
+      }
+      if (auto* incarr = clang::dyn_cast<clang::IncompleteArrayType>(type)) {
+        array_dims.push("");
+      }
+      if (auto* vararr = clang::dyn_cast<clang::VariableArrayType>(type)) {
+        qualtype->dump();
+        loc.dump(sm);
+        sus::unreachable();  // This is a C thing, not C++.
+      }
+
+      // For arrays the root qualifiers come from the element type.
+      qualifier = qualifier_from_qualtype(type->getElementType());
+      qualtype = unwrap_skipped_types(type->getElementType());
+      was_array = true;
     }
 
-    // For arrays the root qualifiers come from the element type.
-    qualifier = qualifier_from_qualtype(type->getElementType());
-    qualtype = unwrap_skipped_types(type->getElementType());
+    if (i == 1u && was_array) {
+      // The first level of pointers are normally to the root type, unless
+      // this is a pointer to an array. We find that out on the second pass,
+      // when we see an array inside the pointers, which lands us here. Then
+      // those pointers were to the array itself.
+      using std::swap;
+      swap(pointers_to_array, pointers);
+    }
+
+    // The array can be an array of pointers, so we look for pointers after
+    // unwrapping the array.
+    while (qualtype->isPointerType()) {
+      pointers.push(qualifier);
+      qualifier = qualifier_from_qualtype(qualtype->getPointeeType());
+      qualtype = unwrap_skipped_types(qualtype->getPointeeType());
+    }
   }
 
-  // The array can be an array of pointers, so we look for pointers after
-  // unwrapping the array.
-  sus::Vec<Qualifier> pointers;
-  while (qualtype->isPointerType()) {
+  sus::Option<sus::Box<Type>> member_pointer_type;
+  if (auto* member = clang::dyn_cast<clang::MemberPointerType>(&*qualtype)) {
+    member_pointer_type = sus::some(sus::Box<Type>(build_local_type_internal(
+        clang::QualType(member->getClass(), 0u), template_params_from_context,
+        sm, preprocessor, loc)));
+
     pointers.push(qualifier);
     qualifier = qualifier_from_qualtype(qualtype->getPointeeType());
     qualtype = unwrap_skipped_types(qualtype->getPointeeType());
@@ -423,6 +455,10 @@ Type build_local_type_internal(
     // No context.
   } else if (clang::isa<clang::DependentNameType>(&*qualtype)) {
     // No context.
+  } else if (clang::isa<clang::FunctionProtoType>(&*qualtype)) {
+    // No context.
+  } else if (clang::isa<clang::MemberPointerType>(&*qualtype)) {
+    // No context.
   } else if (auto* tag_type = clang::dyn_cast<clang::TagType>(&*qualtype)) {
     context = tag_type->getDecl()->getDeclContext();
   } else if (auto* spec_type =
@@ -468,6 +504,19 @@ Type build_local_type_internal(
     context = context->getParent();
   }
 
+  sus::Option<sus::Box<Type>> fn_return_type;
+  sus::Vec<Type> fn_param_types;
+  if (auto* proto = clang::dyn_cast<clang::FunctionProtoType>(&*qualtype)) {
+    fn_return_type = sus::some(sus::Box<Type>(build_local_type_internal(
+        proto->getReturnType(), template_params_from_context, sm, preprocessor,
+        loc)));
+
+    for (clang::QualType p : proto->param_types()) {
+      fn_param_types.push(build_local_type_internal(
+          p, template_params_from_context, sm, preprocessor, loc));
+    }
+  }
+
   auto [name, category] = [&]() -> sus::Tuple<std::string, TypeCategory> {
     if (auto* c = clang::dyn_cast<clang::TemplateTypeParmType>(&*qualtype)) {
       if (template_parameter_is_concept(*c)) {
@@ -509,6 +558,12 @@ Type build_local_type_internal(
       // TemplateVariable so it's just displayed as text.
       return sus::tuple(std::string(dep_type->getIdentifier()->getName()),
                         TypeCategory::TemplateVariable);
+    } else if (auto* proto =
+                   clang::dyn_cast<clang::FunctionProtoType>(&*qualtype)) {
+      // A function proto is actually a group of types, found in the
+      // `fn_return_type` and `fn_param_types`. The root type here is the
+      // pointer information if any (for function pointers).
+      return sus::tuple("", TypeCategory::FunctionProto);
     } else {
       return sus::tuple(name_of_type(qualtype), TypeCategory::Type);
     }
@@ -522,8 +577,10 @@ Type build_local_type_internal(
 
   return Type(category, sus::move(namespace_path), sus::move(record_path),
               sus::move(name), sus::move(nested_names), refs,
-              sus::move(qualifier), sus::move(pointers), sus::move(array_dims),
-              sus::move(template_params), is_pack);
+              sus::move(qualifier), sus::move(pointers),
+              sus::move(pointers_to_array), sus::move(member_pointer_type),
+              sus::move(array_dims), sus::move(template_params), is_pack,
+              sus::move(fn_return_type), sus::move(fn_param_types));
 }
 
 }  // namespace
@@ -535,6 +592,43 @@ Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
       qualtype, llvm::ArrayRef<clang::NamedDecl*>(), sm, preprocessor, loc);
 }
 
+/// Writes the pointers and returns if it ended with a qualifer.
+bool write_pointers(bool punctuation_last,
+                    sus::iter::Iterator<const Qualifier&> auto pointers,
+                    sus::fn::DynFnMut<void(std::string_view)>& text_fn,
+                    sus::fn::DynFnMut<void()>& const_qualifier_fn,
+                    sus::fn::DynFnMut<void()>& volatile_qualifier_fn) noexcept {
+  bool wrote_quals = false;
+  for (const Qualifier& q : pointers) {
+    // If there are quals on either side of the `*` put a space to the left
+    // of the `*.
+    //
+    // wrote_quals gives: *const[space here]*
+    // has_quals gives: *[space here]*const
+    //
+    // Except when we just wrote a puntuation, like (*const f) or S::*const,
+    // then we don't need aspace to the left of the first pointer, as there's
+    // no variable name there.
+    bool has_quals = (q.is_const || q.is_volatile) && !punctuation_last;
+    if (wrote_quals || has_quals) text_fn(" ");
+    text_fn("*");
+    wrote_quals = false;
+    punctuation_last = false;
+
+    if (q.is_const) {
+      if (wrote_quals) text_fn(" ");
+      wrote_quals = true;
+      const_qualifier_fn();
+    }
+    if (q.is_volatile) {
+      if (wrote_quals) text_fn(" ");
+      wrote_quals = true;
+      volatile_qualifier_fn();
+    }
+  }
+  return wrote_quals;
+}
+
 namespace {
 
 void type_to_string_internal(
@@ -543,6 +637,13 @@ void type_to_string_internal(
     sus::fn::DynFnMut<void()>& const_qualifier_fn,
     sus::fn::DynFnMut<void()>& volatile_qualifier_fn,
     sus::Option<sus::fn::DynFnMut<void()>&> var_name_fn) noexcept {
+  if (type.category == TypeCategory::FunctionProto) {
+    // For function proto lead with the return type.
+    type_to_string_internal(**type.fn_return_type, text_fn, type_fn,
+                            const_qualifier_fn, volatile_qualifier_fn,
+                            sus::none());
+  }
+
   if (type.qualifier.is_const) {
     const_qualifier_fn();
     text_fn(" ");
@@ -563,7 +664,6 @@ void type_to_string_internal(
       case TypeOrValueTag::Value:
         text_fn(tv.choice.as<TypeOrValueTag::Value>());
         break;
-      case TypeOrValueTag::FunctionProto: sus::unreachable();
     }
     text_fn("::");
   }
@@ -576,6 +676,9 @@ void type_to_string_internal(
           .record_path = type.record_path.as_slice(),
           .name = std::string_view(type.name),
       });
+      break;
+    case TypeCategory::FunctionProto:
+      // The FunctionProto types (return, params) are recursed on elsewhere.
       break;
     case TypeCategory::TemplateVariable:
       // For template variables, do not call the callback. They may have
@@ -596,21 +699,6 @@ void type_to_string_internal(
                                   sus::none());
           break;
         }
-        case TypeOrValueTag::FunctionProto: {
-          const FunctionProtoType& proto =
-              tv.choice.as<TypeOrValueTag::FunctionProto>();
-          type_to_string_internal(proto.return_type, text_fn, type_fn,
-                                  const_qualifier_fn, volatile_qualifier_fn,
-                                  sus::none());
-          text_fn("(");
-          for (const auto& [j, t] : proto.param_types.iter().enumerate()) {
-            if (j > 0u) text_fn(", ");
-            type_to_string_internal(t, text_fn, type_fn, const_qualifier_fn,
-                                    volatile_qualifier_fn, sus::none());
-          }
-          text_fn(")");
-          break;
-        }
         case TypeOrValueTag::Value: {
           // The type of the value isn't used here, we just write the value.
           text_fn(tv.choice.as<TypeOrValueTag::Value>());
@@ -623,29 +711,28 @@ void type_to_string_internal(
 
   if (type.category == TypeCategory::Concept) text_fn(" auto");
 
-  bool wrote_quals = false;
-  for (Qualifier q : type.pointers) {
-    bool has_quals = q.is_const || q.is_volatile;
-    // If there are quals on either side of the `*` put a space to the left
-    // of the `*.
-    //
-    // wrote_quals gives: *const[space here]*
-    // has_quals gives: *[space here]*const
-    if (wrote_quals || has_quals) text_fn(" ");
-    text_fn("*");
-    wrote_quals = false;
-
-    if (q.is_const) {
-      if (wrote_quals) text_fn(" ");
-      wrote_quals = true;
-      const_qualifier_fn();
-    }
-    if (q.is_volatile) {
-      if (wrote_quals) text_fn(" ");
-      wrote_quals = true;
-      volatile_qualifier_fn();
+  bool wrote_var_open_paren = false;
+  bool punctuation_last = false;
+  if (type.category == TypeCategory::FunctionProto) {
+    if (!type.pointers.is_empty() || var_name_fn.is_some()) {
+      text_fn(" (");  // Closed after the variable name.
+      wrote_var_open_paren = true;
+      punctuation_last = true;
     }
   }
+
+  if (type.member_pointer_type.is_some()) {
+    if (!punctuation_last) text_fn(" ");
+    type_to_string_internal(**type.member_pointer_type, text_fn, type_fn,
+                            const_qualifier_fn, volatile_qualifier_fn,
+                            sus::none());
+    text_fn("::");  // Closed after the variable name.
+    punctuation_last = true;
+  }
+
+  bool ended_with_qual =
+      write_pointers(punctuation_last, type.pointers.iter(), text_fn,
+                     const_qualifier_fn, volatile_qualifier_fn);
 
   if (type.array_dims.is_empty()) {
     switch (type.refs) {
@@ -655,14 +742,21 @@ void type_to_string_internal(
     }
     if (type.is_pack) text_fn("...");
     if (var_name_fn.is_some()) {
-      text_fn(" ");
+      // If we're in a function proto then we don't need a space
+      // before the var name, there's a `()` around it. But if there
+      // were quals then we do for separation.
+      if (ended_with_qual || !wrote_var_open_paren) text_fn(" ");
       var_name_fn.take().unwrap()();
     }
   } else {
     sus::check(!type.is_pack);
 
-    if (type.refs != Refs::None) {
+    if (type.refs != Refs::None || !type.pointers_to_array.is_empty()) {
       text_fn(" (");
+
+      write_pointers(/* punctuation_last=*/true, type.pointers_to_array.iter(),
+                     text_fn, const_qualifier_fn, volatile_qualifier_fn);
+
       switch (type.refs) {
         case Refs::None: break;
         case Refs::LValueRef: text_fn("&"); break;
@@ -687,11 +781,31 @@ void type_to_string_internal(
       }
     }
   }
+
+  if (wrote_var_open_paren) text_fn(")");
+
+  if (type.category == TypeCategory::FunctionProto) {
+    text_fn("(");
+    for (const auto& [i, arg] : type.fn_param_types.iter().enumerate()) {
+      if (i > 0u) text_fn(", ");
+      type_to_string_internal(arg, text_fn, type_fn, const_qualifier_fn,
+                              volatile_qualifier_fn, sus::none());
+    }
+    text_fn(")");
+  }
 }
 
+/// This function walks the types in the same order as
+/// `type_to_string_internal`.
+///
+/// Every call to `type_walk_types_internal` and `type_to_string_internal` must
+/// happen in the same order.
 void type_walk_types_internal(
     const Type& type,
     sus::fn::DynFnMut<void(TypeToStringQuery)>& type_fn) noexcept {
+  if (type.category == TypeCategory::FunctionProto)
+    type_walk_types_internal(**type.fn_return_type, type_fn);
+
   for (const TypeOrValue& tv : type.nested_names) {
     switch (tv.choice) {
       case TypeOrValueTag::Type: {
@@ -699,7 +813,6 @@ void type_walk_types_internal(
         break;
       }
       case TypeOrValueTag::Value: break;
-      case TypeOrValueTag::FunctionProto: sus::unreachable();
     }
   }
 
@@ -712,6 +825,7 @@ void type_walk_types_internal(
           .name = std::string_view(type.name),
       });
       break;
+    case TypeCategory::FunctionProto: break;
     case TypeCategory::TemplateVariable: break;
   }
 
@@ -722,18 +836,19 @@ void type_walk_types_internal(
         type_walk_types_internal(template_type, type_fn);
         break;
       }
-      case TypeOrValueTag::FunctionProto: {
-        const FunctionProtoType& proto =
-            tv.choice.as<TypeOrValueTag::FunctionProto>();
-        type_walk_types_internal(proto.return_type, type_fn);
-        for (const Type& t : proto.param_types)
-          type_walk_types_internal(t, type_fn);
-        break;
-      }
       case TypeOrValueTag::Value: {
         break;
       }
     }
+  }
+
+  if (type.member_pointer_type.is_some()) {
+    type_walk_types_internal(**type.member_pointer_type, type_fn);
+  }
+
+  if (type.category == TypeCategory::FunctionProto) {
+    for (const Type& arg : type.fn_param_types)
+      type_walk_types_internal(arg, type_fn);
   }
 }
 
