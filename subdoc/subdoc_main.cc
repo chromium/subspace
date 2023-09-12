@@ -87,7 +87,7 @@ int main(int argc, const char** argv) {
       llvm::cl::desc(
           "A path pattern for which documentation should be included in the "
           "generated HTML. May be specified multiple times for multiple "
-          "patterns."),
+          "patterns. This is required."),
       llvm::cl::cat(option_category));
 
   llvm::cl::list<std::string> option_exclude_paths(
@@ -173,9 +173,17 @@ int main(int argc, const char** argv) {
     return std::regex(sus::move(s).str());
   };
 
+  if (option_include_paths.empty()) {
+    fmt::println(
+        stderr,
+        "Error: Missing --include-file-pattern. Without this, subdoc would "
+        "generate docs for every library used from the source files. "
+        "Specify which path pattern(s) to generate docs for.");
+    return 1;
+  }
+
   auto run_options = subdoc::RunOptions();
-  if (!option_include_paths.empty())
-    run_options.include_path_patterns = paths_to_regex(option_include_paths);
+  run_options.include_path_patterns = paths_to_regex(option_include_paths);
   if (!option_exclude_paths.empty())
     run_options.exclude_path_patterns = paths_to_regex(option_exclude_paths);
   if (option_project_md.getNumOccurrences() > 0) {
