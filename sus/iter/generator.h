@@ -37,14 +37,27 @@ namespace sus::iter {
 ///
 /// # Example
 /// ```
-/// sus::iter::Iterator<i32> auto it =
-///     sus::iter::from_generator([]() -> Generator<i32> {
-///       co_yield 1;
-///       co_yield 5;
-///     });
-/// sus::check(it.next() == sus::some(1));
-/// sus::check(it.next() == sus::some(5));
-/// sus::check(it.next() == sus::none());
+/// auto generate_fibonacci = []() -> Generator<i32> {
+///   co_yield 0;
+///   i32 n1 = 0, n2 = 1;
+///   while (true) {
+///     i32 next = n1 + n2;
+///     n1 = n2;
+///     n2 = next;
+///     co_yield n1;
+///   }
+/// };
+///
+/// // Directly using the generator iterator, in a for loop.
+/// sus::Vec<i32> v;
+/// for (i32 i : generate_fibonacci().take(7u)) {
+///   v.push(i);
+/// }
+/// sus::check(v == sus::Vec<i32>(0, 1, 1, 2, 3, 5, 8));
+///
+/// // Using `from_generator`, with collect.
+/// sus::Vec<i32> v2 = generate_fibonacci().take(7u).collect_vec();
+/// sus::check(v2 == sus::Vec<i32>(0, 1, 1, 2, 3, 5, 8));
 /// ```
 template <::sus::fn::FnOnce<::sus::fn::NonVoid()> F, int&...,
           class R = std::invoke_result_t<F&&>>
@@ -150,14 +163,27 @@ class [[nodiscard]] [[sus_trivial_abi]] GeneratorLoop {
 ///
 /// # Example
 /// ```
-/// auto x = []() -> Generator<i32> {
-///   co_yield 1;
-///   co_yield 3;
+/// auto generate_fibonacci = []() -> Generator<i32> {
+///   co_yield 0;
+///   i32 n1 = 0, n2 = 1;
+///   while (true) {
+///     i32 next = n1 + n2;
+///     n1 = n2;
+///     n2 = next;
+///     co_yield n1;
+///   }
 /// };
-/// sus::iter::Iterator<i32> auto it = x();
-/// EXPECT_EQ(it.next(), sus::some(1));
-/// EXPECT_EQ(it.next(), sus::some(3));
-/// EXPECT_EQ(it.next(), sus::none());
+///
+/// // Directly using the generator iterator, in a for loop.
+/// sus::Vec<i32> v;
+/// for (i32 i : generate_fibonacci().take(7u)) {
+///   v.push(i);
+/// }
+/// sus::check(v == sus::Vec<i32>(0, 1, 1, 2, 3, 5, 8));
+///
+/// // Using `from_generator`, with collect.
+/// sus::Vec<i32> v2 = generate_fibonacci().take(7u).collect_vec();
+/// sus::check(v2 == sus::Vec<i32>(0, 1, 1, 2, 3, 5, 8));
 /// ```
 template <class T>
 class [[nodiscard]] [[sus_trivial_abi]] Generator final
