@@ -1518,16 +1518,16 @@ TEST_F(SubDocTypeTest, ConceptWithFunctionProto) {
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
     EXPECT_EQ(t.namespace_path, sus::vec("a", "b"));
-    const subdoc::FunctionProtoType& p =
-        t.template_params[0u]
-            .choice.as<subdoc::TypeOrValueTag::FunctionProto>();
-    const subdoc::Type& pr = p.return_type;
+    const subdoc::Type& p =
+        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
+    EXPECT_EQ(p.category, subdoc::TypeCategory::FunctionProto);
+    const subdoc::Type& pr = **p.fn_return_type;
     EXPECT_EQ(pr.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(pr.name, "R");
-    const subdoc::Type& p1 = p.param_types[0u];
+    const subdoc::Type& p1 = p.fn_param_types[0u];
     EXPECT_EQ(p1.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(p1.name, "S");
-    const subdoc::Type& p2 = p.param_types[1u];
+    const subdoc::Type& p2 = p.fn_param_types[1u];
     EXPECT_EQ(p2.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(p2.name, "R");
 
@@ -1552,16 +1552,15 @@ TEST_F(SubDocTypeTest, StructWithFunctionProto) {
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
     EXPECT_EQ(t.namespace_path, sus::vec("a", "b"));
-    const subdoc::FunctionProtoType& p =
-        t.template_params[0u]
-            .choice.as<subdoc::TypeOrValueTag::FunctionProto>();
-    const subdoc::Type& pr = p.return_type;
+    const subdoc::Type& p =
+        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
+    const subdoc::Type& pr = **p.fn_return_type;
     EXPECT_EQ(pr.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(pr.name, "R");
-    const subdoc::Type& p1 = p.param_types[0u];
+    const subdoc::Type& p1 = p.fn_param_types[0u];
     EXPECT_EQ(p1.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(p1.name, "S");
-    const subdoc::Type& p2 = p.param_types[1u];
+    const subdoc::Type& p2 = p.fn_param_types[1u];
     EXPECT_EQ(p2.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(p2.name, "R");
 
@@ -1587,13 +1586,12 @@ TEST_F(SubDocTypeTest, StructWithDependentFunctionProto) {
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
     EXPECT_EQ(t.namespace_path, sus::vec("a", "b"));
-    const subdoc::FunctionProtoType& p =
-        t.template_params[0u]
-            .choice.as<subdoc::TypeOrValueTag::FunctionProto>();
-    const subdoc::Type& pr = p.return_type;
+    const subdoc::Type& p =
+        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
+    const subdoc::Type& pr = **p.fn_return_type;
     EXPECT_EQ(pr.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(pr.name, "R");
-    const subdoc::Type& p1 = p.param_types[0u];
+    const subdoc::Type& p1 = p.fn_param_types[0u];
     EXPECT_EQ(p1.category, subdoc::TypeCategory::TemplateVariable);
     EXPECT_EQ(p1.name, "T");
 
@@ -1619,14 +1617,13 @@ TEST_F(SubDocTypeTest, StructWithVariadicFunctionProto) {
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
     EXPECT_EQ(t.namespace_path, sus::vec("a", "b"));
-    const subdoc::FunctionProtoType& p =
-        t.template_params[0u]
-            .choice.as<subdoc::TypeOrValueTag::FunctionProto>();
-    const subdoc::Type& pr = p.return_type;
+    const subdoc::Type& p =
+        t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
+    const subdoc::Type& pr = **p.fn_return_type;
     EXPECT_EQ(pr.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(pr.name, "R");
     EXPECT_EQ(pr.is_pack, false);
-    const subdoc::Type& p1 = p.param_types[0u];
+    const subdoc::Type& p1 = p.fn_param_types[0u];
     EXPECT_EQ(p1.category, subdoc::TypeCategory::TemplateVariable);
     EXPECT_EQ(p1.name, "T");
     EXPECT_EQ(p1.is_pack, true);
@@ -1802,15 +1799,15 @@ TEST_F(SubDocTypeTest,
     EXPECT_EQ(p1.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(p1.name, "S");
 
-    const subdoc::FunctionProtoType& p11 =
-        p1.template_params[0u]
-            .choice.as<subdoc::TypeOrValueTag::FunctionProto>();
-    EXPECT_EQ(p11.return_type.category, subdoc::TypeCategory::TemplateVariable);
-    EXPECT_EQ(p11.return_type.name, "A");
-    EXPECT_EQ(p11.return_type.qualifier.is_const, false);
-    EXPECT_EQ(p11.return_type.qualifier.is_volatile, false);
-    EXPECT_EQ(p11.return_type.refs, subdoc::Refs::None);
-    const subdoc::Type& parm1 = p11.param_types[0u];
+    const subdoc::Type& p11 =
+        p1.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
+    EXPECT_EQ(p11.fn_return_type.as_value()->category,
+              subdoc::TypeCategory::TemplateVariable);
+    EXPECT_EQ(p11.fn_return_type.as_value()->name, "A");
+    EXPECT_EQ(p11.fn_return_type.as_value()->qualifier.is_const, false);
+    EXPECT_EQ(p11.fn_return_type.as_value()->qualifier.is_volatile, false);
+    EXPECT_EQ(p11.fn_return_type.as_value()->refs, subdoc::Refs::None);
+    const subdoc::Type& parm1 = p11.fn_param_types[0u];
     EXPECT_EQ(parm1.category, subdoc::TypeCategory::TemplateVariable);
     EXPECT_EQ(parm1.name, "T");
     EXPECT_EQ(parm1.qualifier.is_const, false);
@@ -1914,6 +1911,281 @@ TEST_F(SubDocTypeTest, NullAttributePointer) {
                        Qualifier().set_nullness(Nullness::Disallowed)));
 
     EXPECT_EQ(make_string("foo", t), "const !int! *const * foo");
+  });
+}
+
+TEST_F(SubDocTypeTest, FunctionPointer) {
+  const char test[] = R"(
+    void f(int (*p)(float));
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::FunctionProto);
+    EXPECT_EQ(t.name, "");
+    EXPECT_EQ(t.refs, subdoc::Refs::None);
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.qualifier.nullness, Nullness::Unknown);
+
+    const subdoc::Type& tr = **t.fn_return_type;
+    EXPECT_EQ(tr.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(tr.name, "int");
+    const subdoc::Type& t1 = t.fn_param_types[0u];
+    EXPECT_EQ(t1.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t1.name, "float");
+
+    EXPECT_EQ(make_string("foo", t), "!int! (*foo)(!float!)");
+  });
+}
+
+TEST_F(SubDocTypeTest, FunctionNoPointer) {
+  const char test[] = R"(
+    void f(int p(float));
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::FunctionProto);
+    EXPECT_EQ(t.name, "");
+    EXPECT_EQ(t.refs, subdoc::Refs::None);
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.qualifier.nullness, Nullness::Unknown);
+
+    const subdoc::Type& tr = **t.fn_return_type;
+    EXPECT_EQ(tr.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(tr.name, "int");
+    const subdoc::Type& t1 = t.fn_param_types[0u];
+    EXPECT_EQ(t1.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t1.name, "float");
+
+    EXPECT_EQ(make_string("foo", t), "!int! (foo)(!float!)");
+  });
+}
+
+TEST_F(SubDocTypeTest, FunctionReference) {
+  const char test[] = R"(
+    void f(int (&p)(float));
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::FunctionProto);
+    EXPECT_EQ(t.name, "");
+    EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.qualifier.nullness, Nullness::Unknown);
+
+    const subdoc::Type& tr = **t.fn_return_type;
+    EXPECT_EQ(tr.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(tr.name, "int");
+    const subdoc::Type& t1 = t.fn_param_types[0u];
+    EXPECT_EQ(t1.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t1.name, "float");
+
+    EXPECT_EQ(make_string("foo", t), "!int! (&foo)(!float!)");
+  });
+}
+
+TEST_F(SubDocTypeTest, FunctionPointerReference) {
+  const char test[] = R"(
+    void f(int (*&p)(float));
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::FunctionProto);
+    EXPECT_EQ(t.name, "");
+    EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.qualifier.nullness, Nullness::Unknown);
+
+    const subdoc::Type& tr = **t.fn_return_type;
+    EXPECT_EQ(tr.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(tr.name, "int");
+    const subdoc::Type& t1 = t.fn_param_types[0u];
+    EXPECT_EQ(t1.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t1.name, "float");
+
+    EXPECT_EQ(make_string("foo", t), "!int! (*&foo)(!float!)");
+  });
+}
+
+TEST_F(SubDocTypeTest, FunctionPointerPointerArray) {
+  const char test[] = R"(
+    void f(int (*const *volatile p[3])(float));
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::FunctionProto);
+    EXPECT_EQ(t.name, "");
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.qualifier.nullness, Nullness::Unknown);
+
+    const subdoc::Type& tr = **t.fn_return_type;
+    EXPECT_EQ(tr.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(tr.name, "int");
+    const subdoc::Type& t1 = t.fn_param_types[0u];
+    EXPECT_EQ(t1.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t1.name, "float");
+
+    EXPECT_EQ(make_string("foo", t),
+              "!int! (*const *volatile foo[3])(!float!)");
+  });
+}
+
+TEST_F(SubDocTypeTest, MemberDataPointer) {
+  const char test[] = R"(
+    struct S { int D; };
+    void f(int S::*const *p);
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t.name, "int");
+    EXPECT_EQ(t.refs, subdoc::Refs::None);
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.qualifier.nullness, Nullness::Unknown);
+    EXPECT_EQ(t.pointers, sus::vec(Qualifier::with_const(), Qualifier()));
+    EXPECT_EQ(t.member_pointer_type.as_value()->name, "S");
+
+    EXPECT_EQ(make_string("foo", t), "!int! !S!::*const * foo");
+  });
+}
+
+TEST_F(SubDocTypeTest, MemberFunctionPointer) {
+  const char test[] = R"(
+    struct S { void M(); };
+    void f(void (S::*const*p)(float));
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::FunctionProto);
+    EXPECT_EQ(t.name, "");
+    EXPECT_EQ(t.refs, subdoc::Refs::None);
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.qualifier.nullness, Nullness::Unknown);
+    EXPECT_EQ(t.pointers, sus::vec(Qualifier::with_const(), Qualifier()));
+    EXPECT_EQ(t.member_pointer_type.as_value()->name, "S");
+
+    const subdoc::Type& tr = **t.fn_return_type;
+    EXPECT_EQ(tr.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(tr.name, "void");
+    const subdoc::Type& t1 = t.fn_param_types[0u];
+    EXPECT_EQ(t1.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t1.name, "float");
+
+    EXPECT_EQ(make_string("foo", t), "!void! (!S!::*const *foo)(!float!)");
+  });
+}
+
+TEST_F(SubDocTypeTest, ArrayAlias) {
+  const char test[] = R"(
+    using Array = char[4];
+    void f(Array& c);
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t.name, "Array");
+    EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+
+    EXPECT_EQ(make_string("foo", t), "!Array!& foo");
+  });
+}
+
+TEST_F(SubDocTypeTest, ArrayOfPointers) {
+  const char test[] = R"(
+    struct S {};
+    void f(S *const c[3]);
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t.name, "S");
+    EXPECT_EQ(t.refs, subdoc::Refs::None);
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.array_dims.len(), 1u);
+    EXPECT_EQ(t.array_dims[0u], "3");
+    EXPECT_EQ(t.pointers, sus::vec(Qualifier::with_const()));
+
+    EXPECT_EQ(make_string("foo", t), "!S! *const foo[3]");
+  });
+}
+
+TEST_F(SubDocTypeTest, PointerToArray) {
+  const char test[] = R"(
+    struct S {};
+    void f(S (*c)[3]);
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t.name, "S");
+    EXPECT_EQ(t.refs, subdoc::Refs::None);
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.array_dims.len(), 1u);
+    EXPECT_EQ(t.array_dims[0u], "3");
+
+    EXPECT_EQ(make_string("foo", t), "!S! (*foo)[3]");
+  });
+}
+
+TEST_F(SubDocTypeTest, PointerToArrayOfPointers) {
+  const char test[] = R"(
+    struct S {};
+    void f(S *volatile * (* *const *& c)[3]);
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t.name, "S");
+    EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+    EXPECT_EQ(t.array_dims.len(), 1u);
+    EXPECT_EQ(t.array_dims[0u], "3");
+
+    EXPECT_EQ(make_string("foo", t), "!S! *volatile * (* *const *&foo)[3]");
   });
 }
 

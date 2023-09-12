@@ -113,7 +113,6 @@ class [[sus_trivial_abi]] Box final {
   static_assert(!std::is_reference_v<T>, "Box of a reference is not allowed.");
   static_assert(!std::is_array_v<T>,
                 "Box<T[N]> is not allowed, use Box<Array<T, N>>");
-  static_assert(sus::mem::size_of<T>() != 0u);  // Ensure that `T` is defined.
 
  public:
   /// Constructs a Box which allocates space on the heap and moves `T` into it.

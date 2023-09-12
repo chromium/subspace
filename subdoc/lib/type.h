@@ -19,6 +19,7 @@
 #include "sus/collections/vec.h"
 #include "sus/fn/fn.h"
 #include "sus/prelude.h"
+#include "sus/boxed/box.h"
 
 namespace subdoc {
 
@@ -156,6 +157,12 @@ enum class TypeCategory {
   Concept,
   /// A reference to a template variable.
   TemplateVariable,
+  /// A function prototype, such as a function pointer, or a template `R(Args)`.
+  ///
+  /// The `Type` will be the function pointer, which has no name itself, with
+  /// the return type of the function in `return_type` and the argument
+  /// types going in `function_args`.
+  FunctionProto,
 };
 
 struct Type {
@@ -186,6 +193,14 @@ struct Type {
   /// `const T *const<1st *const<2nd *const<3rd`.
   ///
   sus::Vec<Qualifier> pointers;
+  /// It's possible to have a pointer to an array of pointers. The `pointers`
+  /// represent the root type that the array is of. This represents pointers
+  /// to that array.
+  ///
+  /// This is empty except in the case of pointer-to-an-array.
+  sus::Vec<Qualifier> pointers_to_array;
+  /// For a pointer-to-member, this is the type that member is in.
+  sus::Option<sus::Box<Type>> member_pointer_type;
   /// The dimension of each level of an array, if any. An empty string
   /// represents an unsized dimension (like `int a[]`). They are ordered left
   /// to right.
@@ -194,25 +209,23 @@ struct Type {
   sus::Vec<TypeOrValue> template_params;
   /// When true, the type is a parameter pack, and should append `...`.
   bool is_pack;
-};
 
-/// A function proto is a template parameter that names a function signature
-/// like `int(char*)` in `T<i32(char*)>`.
-struct FunctionProtoType {
-  Type return_type;
-  sus::Vec<Type> param_types;
+  /// When the `category` is `FunctionProto`, then this contains the function's
+  /// return type. Boxed to make a recursive type.
+  sus::Option<sus::Box<Type>> fn_return_type;
+  /// When the `category` is `FunctionProto`, then this contains the types of
+  /// the arguments to the function.
+  sus::Vec<Type> fn_param_types;
 };
 
 enum class TypeOrValueTag {
   Type,
-  FunctionProto,
   Value,
 };
 
 // clang-format off
 using TypeOrValueChoice = sus::Choice<sus_choice_types(
     (TypeOrValueTag::Type, Type),
-    (TypeOrValueTag::FunctionProto, FunctionProtoType),
     (TypeOrValueTag::Value, std::string /* The value as text*/))>;
 // clang-format on
 
