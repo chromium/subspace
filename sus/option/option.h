@@ -180,6 +180,8 @@ namespace sus {
 ///
 /// * `const T&` or `T&` (have the same size as `const T*` or `T*`)
 /// * [`ptr::NonNull<U>`]($sus::ptr::NonNull)
+/// * [`Box<T>`]($sus::boxed::Box)
+/// * [`Choice`]($sus::choice_type::Choice)
 ///
 /// This is called the "NeverValueField optimization", but is also called the
 /// ["null pointer optimization" or NPO in Rust](
