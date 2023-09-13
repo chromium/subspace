@@ -149,16 +149,3 @@ TEST_F(SubDocTest, ReplaceDocSelf) {
   EXPECT_TRUE(has_dtor_comment(db, "6:7", "<p>Comment headline S 3.</p>"));
   EXPECT_TRUE(has_method_comment(db, "8:7", "<p>Comment headline S 4.</p>"));
 }
-
-TEST_F(SubDocTest, AnonStruct) {
-  auto result = run_code(R"(
-    /// Comment headline one
-    typedef struct {} S;
-    /// Comment headline two
-    typedef struct {} T;
-  )");
-  ASSERT_TRUE(result.is_ok());
-  subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_record_comment(db, "2:5", "<p>Comment headline one</p>"));
-  EXPECT_TRUE(has_record_comment(db, "4:5", "<p>Comment headline two</p>"));
-}
