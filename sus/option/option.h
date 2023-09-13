@@ -187,7 +187,7 @@ namespace sus {
 /// ["null pointer optimization" or NPO in Rust](
 /// https://doc.rust-lang.org/stable/std/option/index.html#representation).
 ///
-/// # References
+/// # Reference parameters
 ///
 /// As mentioned above [`Option`]($sus::option::Option) type can hold a
 /// reference, which allows code to use `Option<const T&>` or `Option<T&>`
@@ -200,7 +200,9 @@ namespace sus {
 /// become empty/non-empty. This is a common optimization pitfall with
 /// [`std::optional`](https://en.cppreference.com/w/cpp/utility/optional).
 ///
-/// As an example, this code is optimized poorly, keeping a runtime check on
+/// As an example, this code is [optimized poorly](
+/// https://chromium-review.googlesource.com/c/chromium/src/+/4860473),
+/// keeping a runtime check on
 /// the [`Option`]($sus::option::Option). Global analysis could perhaps show it
 /// not required, but it is beyond the view of the compiler.
 /// ```
