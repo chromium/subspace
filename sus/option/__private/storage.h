@@ -84,10 +84,10 @@ struct Storage<T, false> final {
   }
 
   constexpr Storage() {}
-  constexpr Storage(const std::remove_cvref_t<T>& t) : val_(t), state_(Some) {}
-  constexpr Storage(std::remove_cvref_t<T>& t) : val_(t), state_(Some) {}
+  constexpr Storage(const std::remove_cvref_t<T>& t) : state_(Some), val_(t) {}
+  constexpr Storage(std::remove_cvref_t<T>& t) : state_(Some), val_(t) {}
   constexpr Storage(std::remove_cvref_t<T>&& t)
-      : val_(::sus::move(t)), state_(Some) {}
+      : state_(Some), val_(::sus::move(t)) {}
 
   sus_pure constexpr const T& val() const { return val_; }
   sus_pure constexpr T& val_mut() { return val_; }
@@ -98,10 +98,12 @@ struct Storage<T, false> final {
     requires(::sus::mem::Copy<T>)
   {
     std::construct_at(&val_, t);
+    // Avoid setting to `Some` during the execution of the ctor.
     state_ = Some;
   }
   constexpr inline void construct_from_none(T&& t) noexcept {
     std::construct_at(&val_, ::sus::move(t));
+    // Avoid setting to `Some` during the execution of the ctor.
     state_ = Some;
   }
 
@@ -112,6 +114,7 @@ struct Storage<T, false> final {
       construct_from_none(t);
     else
       val_ = t;
+    // Avoid setting to `Some` during the execution of the ctor.
     state_ = Some;
   }
   constexpr inline void set_some(T&& t) noexcept {
@@ -119,6 +122,7 @@ struct Storage<T, false> final {
       construct_from_none(::sus::move(t));
     else
       val_ = ::sus::move(t);
+    // Avoid setting to `Some` during the execution of the ctor.
     state_ = Some;
   }
 
@@ -127,16 +131,17 @@ struct Storage<T, false> final {
   }
 
   [[nodiscard]] constexpr inline T take_and_set_none() noexcept {
+    // Set to `None` before the execution of the dtor.
     state_ = None;
     if constexpr (::sus::mem::Move<T>) {
-      return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
-                                           val_);
+      return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn, val_);
     } else {
       return ::sus::mem::take_copy_and_destruct(::sus::marker::unsafe_fn, val_);
     }
   }
 
   constexpr inline void set_none() noexcept {
+    // Set to `None` before the execution of the dtor.
     state_ = None;
     val_.~T();
   }
@@ -144,10 +149,16 @@ struct Storage<T, false> final {
   constexpr inline void destroy() noexcept { val_.~T(); }
 
  private:
+  // The `state_` comes first because davidben@ found that this has a profound
+  // impact on binary size in Chromium ARM64. This matches `std::optional`'s
+  // order, but is the inverse of `absl::optional`'s. Since the `state_` is
+  // always read, but the `val_` is only read sometimes, the more frequent one
+  // is at offset 0. We don't know the details about _why_ it ends up smaller
+  // though.
+  State state_ = None;
   union {
     T val_;
   };
-  State state_ = None;
 
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
                                            decltype(val_));
