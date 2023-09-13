@@ -38,6 +38,14 @@
 
 #define _sus__crash_attributes _sus__not_tail_called _sus__nomerge
 
+namespace sus {
+
+/// Checking for (e.g. [`check`]($sus::assertions::check)) and handling
+/// (e.g. [`unreachable`]($sus::assertions::unreachable)) unexpected runtime
+/// conditions.
+namespace assertions {}
+}  // namespace sus
+
 namespace sus::assertions {
 
 namespace __private {
