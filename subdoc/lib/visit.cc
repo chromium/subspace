@@ -234,11 +234,18 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       }
     }
 
+    std::string name = [&]() {
+      if (auto* t = decl->getTypedefNameForAnonDecl())
+        return t->getNameAsString();
+      else
+        return decl->getNameAsString();
+    }();
+
     Comment comment =
         make_db_comment(decl->getASTContext(), raw_comment, decl->getName());
     auto re = RecordElement(
         iter_namespace_path(decl).collect_vec(), sus::move(comment),
-        decl->getNameAsString(),
+        sus::move(name),
         iter_record_path(parent_record_decl)
             .map([](std::string_view&& v) { return std::string(v); })
             .collect_vec(),
