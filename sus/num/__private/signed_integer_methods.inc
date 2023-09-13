@@ -1881,7 +1881,7 @@ sus_pure constexpr u32 log(_self base) const& noexcept {
 ///
 /// On big endian this is a no-op. On little endian the bytes are swapped.
 sus_pure static constexpr _self from_be(_self x) noexcept {
-  if constexpr (::sus::assertions::is_big_endian())
+  if constexpr (std::endian::native == std::endian::big)
     return x;
   else
     return x.swap_bytes();
@@ -1891,7 +1891,7 @@ sus_pure static constexpr _self from_be(_self x) noexcept {
 ///
 /// On little endian this is a no-op. On big endian the bytes are swapped.
 sus_pure static constexpr _self from_le(_self x) noexcept {
-  if constexpr (::sus::assertions::is_little_endian())
+  if constexpr (std::endian::native == std::endian::little)
     return x;
   else
     return x.swap_bytes();
@@ -1901,7 +1901,7 @@ sus_pure static constexpr _self from_le(_self x) noexcept {
 ///
 /// On big endian this is a no-op. On little endian the bytes are swapped.
 sus_pure constexpr _self to_be() const& noexcept {
-  if constexpr (::sus::assertions::is_big_endian())
+  if constexpr (std::endian::native == std::endian::big)
     return *this;
   else
     return swap_bytes();
@@ -1911,7 +1911,7 @@ sus_pure constexpr _self to_be() const& noexcept {
 ///
 /// On little endian this is a no-op. On big endian the bytes are swapped.
 sus_pure constexpr _self to_le() const& noexcept {
-  if constexpr (::sus::assertions::is_little_endian())
+  if constexpr (std::endian::native == std::endian::little)
     return *this;
   else
     return swap_bytes();

@@ -15,10 +15,10 @@
 #include "sus/option/option.h"
 
 #include <sstream>
+#include <bit>
 
 #include "fmt/std.h"
 #include "googletest/include/gtest/gtest.h"
-#include "sus/assertions/endian.h"
 #include "sus/collections/array.h"
 #include "sus/iter/from_iterator.h"
 #include "sus/iter/iterator.h"

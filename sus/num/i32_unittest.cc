@@ -700,12 +700,10 @@ TEST(i32, OverflowingAbs) {
             (Tuple<i32, bool>(1234567_i32, false)));
   EXPECT_EQ(i32(-1234567).overflowing_abs(),
             (Tuple<i32, bool>(1234567_i32, false)));
-  EXPECT_EQ(i32::MAX.overflowing_abs(),
-            (Tuple<i32, bool>(i32::MAX, false)));
+  EXPECT_EQ(i32::MAX.overflowing_abs(), (Tuple<i32, bool>(i32::MAX, false)));
   EXPECT_EQ((i32::MIN + 1_i32).overflowing_abs(),
             (Tuple<i32, bool>(i32::MAX, false)));
-  EXPECT_EQ((i32::MIN).overflowing_abs(),
-            (Tuple<i32, bool>(i32::MIN, true)));
+  EXPECT_EQ((i32::MIN).overflowing_abs(), (Tuple<i32, bool>(i32::MIN, true)));
 
   // lvalue.
   auto i = -9000_i32;
@@ -881,8 +879,7 @@ TEST(i32, OverflowingAdd) {
   constexpr auto a = (1_i32).overflowing_add(3_i32);
   EXPECT_EQ(a, (Tuple<i32, bool>(4_i32, false)));
 
-  EXPECT_EQ((0_i32).overflowing_add(0_i32),
-            (Tuple<i32, bool>(0_i32, false)));
+  EXPECT_EQ((0_i32).overflowing_add(0_i32), (Tuple<i32, bool>(0_i32, false)));
 
   EXPECT_EQ(i32::MAX.overflowing_add(1_i32),
             (Tuple<i32, bool>(i32::MIN, true)));
@@ -1096,8 +1093,7 @@ TEST(i32, CheckedDiv) {
 TEST(i32, OverflowingDiv) {
   [[maybe_unused]] constexpr auto a = (-1_i32).overflowing_div(3_i32);
 
-  EXPECT_EQ((0_i32).overflowing_div(123_i32),
-            (Tuple<i32, bool>(0_i32, false)));
+  EXPECT_EQ((0_i32).overflowing_div(123_i32), (Tuple<i32, bool>(0_i32, false)));
 
   // ** Signed only.
   EXPECT_EQ((-2345_i32).overflowing_div(1_i32),
@@ -1454,12 +1450,10 @@ TEST(i32, OverflowingNeg) {
   //               static_cast<decltype(i32::primitive_value)>(-123), true)));
 
   // ** Signed only.
-  EXPECT_EQ(i32::MIN.overflowing_neg(),
-            (Tuple<i32, bool>(i32::MIN, true)));
+  EXPECT_EQ(i32::MIN.overflowing_neg(), (Tuple<i32, bool>(i32::MIN, true)));
   EXPECT_EQ(i32::MAX.overflowing_neg(),
             (Tuple<i32, bool>(i32::MIN + i32(1), false)));
-  EXPECT_EQ((20_i32).overflowing_neg(),
-            (Tuple<i32, bool>(-20_i32, false)));
+  EXPECT_EQ((20_i32).overflowing_neg(), (Tuple<i32, bool>(-20_i32, false)));
 }
 
 // ** Signed only.
@@ -1608,16 +1602,14 @@ TEST(i32, OverflowingRem) {
   constexpr auto a = (5_i32).overflowing_rem(3_i32);
   EXPECT_EQ(a, (Tuple<i32, bool>(2_i32, false)));
 
-  EXPECT_EQ((0_i32).overflowing_rem(123_i32),
-            (Tuple<i32, bool>(0_i32, false)));
+  EXPECT_EQ((0_i32).overflowing_rem(123_i32), (Tuple<i32, bool>(0_i32, false)));
   EXPECT_EQ((2345_i32).overflowing_rem(4_i32),
             (Tuple<i32, bool>(1_i32, false)));
 
   // ** Signed only.
   EXPECT_EQ((-2345_i32).overflowing_rem(4_i32),
             (Tuple<i32, bool>(-1_i32, false)));
-  EXPECT_EQ(i32::MIN.overflowing_rem(-1_i32),
-            (Tuple<i32, bool>(0_i32, true)));
+  EXPECT_EQ(i32::MIN.overflowing_rem(-1_i32), (Tuple<i32, bool>(0_i32, true)));
 }
 
 TEST(i32DeathTest, OverflowingRemByZero) {
@@ -1753,15 +1745,12 @@ TEST(i32DeathTest, ShlOverflow) {
 TEST(i32, OverflowingShl) {
   [[maybe_unused]] constexpr auto a = (5_i32).overflowing_shl(1_u32);
 
-  EXPECT_EQ((2_i32).overflowing_shl(1_u32),
-            (Tuple<i32, bool>(4_i32, false)));
+  EXPECT_EQ((2_i32).overflowing_shl(1_u32), (Tuple<i32, bool>(4_i32, false)));
 
   // Masks out everything.
-  EXPECT_EQ((2_i32).overflowing_shl(32_u32),
-            (Tuple<i32, bool>(2_i32, true)));
+  EXPECT_EQ((2_i32).overflowing_shl(32_u32), (Tuple<i32, bool>(2_i32, true)));
   // Masks out everything but the 1.
-  EXPECT_EQ((2_i32).overflowing_shl(33_u32),
-            (Tuple<i32, bool>(4_i32, true)));
+  EXPECT_EQ((2_i32).overflowing_shl(33_u32), (Tuple<i32, bool>(4_i32, true)));
 
   // ** Signed only.
   EXPECT_EQ(
@@ -1781,9 +1770,9 @@ TEST(i32, CheckedShl) {
   EXPECT_EQ((2_i32).checked_shl(64_u32), None);
 
   // ** Signed only.
-  EXPECT_EQ((-2_i32).checked_shl(1_u32),
-            Option<i32>(
-                i32(static_cast<int32_t>(static_cast<uint32_t>(-2) << 1))));
+  EXPECT_EQ(
+      (-2_i32).checked_shl(1_u32),
+      Option<i32>(i32(static_cast<int32_t>(static_cast<uint32_t>(-2) << 1))));
 }
 
 TEST(i32, WrappingShl) {
@@ -1856,24 +1845,21 @@ TEST(i32, CheckedShr) {
   EXPECT_EQ((1_i32).checked_shr(64_u32), None);
 
   // ** Signed only.
-  EXPECT_EQ((-2_i32).checked_shr(1_u32),
-            Option<i32>(
-                i32(static_cast<int32_t>(static_cast<uint32_t>(-2) >> 1))));
+  EXPECT_EQ(
+      (-2_i32).checked_shr(1_u32),
+      Option<i32>(i32(static_cast<int32_t>(static_cast<uint32_t>(-2) >> 1))));
   EXPECT_EQ((-1_i32).checked_shr(32_u32), None);
 }
 
 TEST(i32, OverflowingShr) {
   [[maybe_unused]] constexpr auto a = (5_i32).overflowing_shr(1_u32);
 
-  EXPECT_EQ((4_i32).overflowing_shr(1_u32),
-            (Tuple<i32, bool>(2_i32, false)));
+  EXPECT_EQ((4_i32).overflowing_shr(1_u32), (Tuple<i32, bool>(2_i32, false)));
 
   // Masks out everything.
-  EXPECT_EQ((4_i32).overflowing_shr(32_u32),
-            (Tuple<i32, bool>(4_i32, true)));
+  EXPECT_EQ((4_i32).overflowing_shr(32_u32), (Tuple<i32, bool>(4_i32, true)));
   // Masks out everything but the 1.
-  EXPECT_EQ((4_i32).overflowing_shr(33_u32),
-            (Tuple<i32, bool>(2_i32, true)));
+  EXPECT_EQ((4_i32).overflowing_shr(33_u32), (Tuple<i32, bool>(2_i32, true)));
 
   // ** Signed only.
   EXPECT_EQ(
@@ -1980,8 +1966,7 @@ TEST(i32, OverflowingSub) {
   constexpr auto a = (5_i32).overflowing_sub(3_i32);
   EXPECT_EQ(a, (Tuple<i32, bool>(2_i32, false)));
 
-  EXPECT_EQ((0_i32).overflowing_sub(0_i32),
-            (Tuple<i32, bool>(0_i32, false)));
+  EXPECT_EQ((0_i32).overflowing_sub(0_i32), (Tuple<i32, bool>(0_i32, false)));
   EXPECT_EQ((12345_i32).overflowing_sub(12345_i32),
             (Tuple<i32, bool>(0_i32, false)));
 
@@ -2268,14 +2253,11 @@ TEST(i32DeathTest, PowOverflow) {
 TEST(i32, OverflowingPow) {
   [[maybe_unused]] constexpr auto a = (2_i32).overflowing_pow(5_u32);
 
-  EXPECT_EQ((2_i32).overflowing_pow(5_u32),
-            (Tuple<i32, bool>(32_i32, false)));
-  EXPECT_EQ((2_i32).overflowing_pow(0_u32),
-            (Tuple<i32, bool>(1_i32, false)));
+  EXPECT_EQ((2_i32).overflowing_pow(5_u32), (Tuple<i32, bool>(32_i32, false)));
+  EXPECT_EQ((2_i32).overflowing_pow(0_u32), (Tuple<i32, bool>(1_i32, false)));
   EXPECT_EQ((i32::MAX).overflowing_pow(1_u32),
             (Tuple<i32, bool>(i32::MAX, false)));
-  EXPECT_EQ((i32::MAX).overflowing_pow(2_u32),
-            (Tuple<i32, bool>(1_i32, true)));
+  EXPECT_EQ((i32::MAX).overflowing_pow(2_u32), (Tuple<i32, bool>(1_i32, true)));
 }
 
 TEST(i32, CheckedPow) {
@@ -2528,7 +2510,7 @@ TEST(i32, CheckedLog) {
 }
 
 TEST(i32, ToBe) {
-  if constexpr (sus::assertions::is_little_endian()) {
+  if constexpr (std::endian::native == std::endian::little) {
     constexpr auto a = (0x12345678_i32).to_be();
     EXPECT_EQ(a, 0x78563412_i32);
 
@@ -2552,7 +2534,7 @@ TEST(i32, ToBe) {
 }
 
 TEST(i32, FromBe) {
-  if constexpr (sus::assertions::is_little_endian()) {
+  if constexpr (std::endian::native == std::endian::little) {
     constexpr auto a = i32::from_be(0x12345678_i32);
     EXPECT_EQ(a, 0x78563412_i32);
 
@@ -2576,7 +2558,7 @@ TEST(i32, FromBe) {
 }
 
 TEST(i32, ToLe) {
-  if constexpr (sus::assertions::is_big_endian()) {
+  if constexpr (std::endian::native == std::endian::big) {
     constexpr auto a = (0x12345678_i32).to_le();
     EXPECT_EQ(a, 0x78563412_i32);
 
@@ -2600,7 +2582,7 @@ TEST(i32, ToLe) {
 }
 
 TEST(i32, FromLe) {
-  if constexpr (sus::assertions::is_big_endian()) {
+  if constexpr (std::endian::native == std::endian::big) {
     constexpr auto a = i32::from_le(0x12345678_i32);
     EXPECT_EQ(a, 0x78563412_i32);
 
@@ -2646,27 +2628,23 @@ TEST(i32, ToLeBytes) {
 }
 
 TEST(i32, ToNeBytes) {
-  if constexpr (sus::assertions::is_big_endian()) {
+  if constexpr (std::endian::native == std::endian::big) {
     {
       constexpr auto a = (0x12345678_i32).to_ne_bytes();
-      EXPECT_EQ(a,
-                (sus::Array<u8, 4>(0x12_u8, 0x34_u8, 0x56_u8, 0x78_u8)));
+      EXPECT_EQ(a, (sus::Array<u8, 4>(0x12_u8, 0x34_u8, 0x56_u8, 0x78_u8)));
     }
     {
       auto a = (0x12345678_i32).to_ne_bytes();
-      EXPECT_EQ(a,
-                (sus::Array<u8, 4>(0x12_u8, 0x34_u8, 0x56_u8, 0x78_u8)));
+      EXPECT_EQ(a, (sus::Array<u8, 4>(0x12_u8, 0x34_u8, 0x56_u8, 0x78_u8)));
     }
   } else {
     {
       constexpr auto a = (0x12345678_i32).to_ne_bytes();
-      EXPECT_EQ(a,
-                (sus::Array<u8, 4>(0x78_u8, 0x56_u8, 0x34_u8, 0x12_u8)));
+      EXPECT_EQ(a, (sus::Array<u8, 4>(0x78_u8, 0x56_u8, 0x34_u8, 0x12_u8)));
     }
     {
       auto a = (0x12345678_i32).to_ne_bytes();
-      EXPECT_EQ(a,
-                (sus::Array<u8, 4>(0x78_u8, 0x56_u8, 0x34_u8, 0x12_u8)));
+      EXPECT_EQ(a, (sus::Array<u8, 4>(0x78_u8, 0x56_u8, 0x34_u8, 0x12_u8)));
     }
   }
 }
@@ -2677,8 +2655,7 @@ TEST(i32, CheckedAddUnsigned) {
   EXPECT_EQ(a, Option<i32>(4_i32));
 
   EXPECT_EQ((-1_i32).checked_add_unsigned(2u), Option<i32>(1_i32));
-  EXPECT_EQ((i32::MIN).checked_add_unsigned(u32::MAX),
-            Option<i32>(i32::MAX));
+  EXPECT_EQ((i32::MIN).checked_add_unsigned(u32::MAX), Option<i32>(i32::MAX));
   EXPECT_EQ((i32::MIN + 1_i32).checked_add_unsigned(u32::MAX), None);
   EXPECT_EQ((i32::MIN + 1_i32).checked_add_unsigned(u32::MAX - 1_u32),
             Option<i32>(i32::MAX));
@@ -2734,8 +2711,7 @@ TEST(i32, CheckedSubUnsigned) {
   EXPECT_EQ(a, Option<i32>(-2_i32));
 
   EXPECT_EQ((-1_i32).checked_sub_unsigned(2u), Option<i32>(-3_i32));
-  EXPECT_EQ((i32::MAX).checked_sub_unsigned(u32::MAX),
-            Option<i32>(i32::MIN));
+  EXPECT_EQ((i32::MAX).checked_sub_unsigned(u32::MAX), Option<i32>(i32::MIN));
   EXPECT_EQ((i32::MAX - 1_i32).checked_sub_unsigned(u32::MAX), None);
   EXPECT_EQ((i32::MAX - 1_i32).checked_sub_unsigned(u32::MAX - 1_u32),
             Option<i32>(i32::MIN));

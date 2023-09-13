@@ -1065,7 +1065,7 @@ TEST(f32, ToLeBytes) {
 
 TEST(f32, ToNeBytes) {
   auto array = (12.5_f32).to_ne_bytes();
-  auto expected = sus::assertions::is_big_endian()
+  auto expected = std::endian::native == std::endian::big
                       ? sus::Array<u8, 4>(0x41_u8, 0x48_u8, 0x00_u8, 0x00_u8)
                       : sus::Array<u8, 4>(0x00_u8, 0x00_u8, 0x48_u8, 0x41_u8);
   EXPECT_EQ(array, expected);
@@ -1084,7 +1084,7 @@ TEST(f32, FromLeBytes) {
 }
 
 TEST(f32, FromNeBytes) {
-  if constexpr (sus::assertions::is_big_endian()) {
+  if constexpr (std::endian::native == std::endian::big) {
     auto value = f32::from_ne_bytes(
         sus::Array<u8, 4>(0x41_u8, 0x48_u8, 0x00_u8, 0x00_u8));
     EXPECT_EQ(value, 12.5_f32);

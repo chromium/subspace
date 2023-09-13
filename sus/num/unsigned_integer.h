@@ -19,12 +19,12 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <bit>
 #include <compare>
 #include <functional>  // TODO: remove this but we need to hash things > size_t.
 
 #include "fmt/format.h"
 #include "sus/assertions/check.h"
-#include "sus/assertions/endian.h"
 #include "sus/iter/iterator_concept.h"
 #include "sus/lib/__private/forward_decl.h"
 #include "sus/macros/__private/compiler_bugs.h"
@@ -130,13 +130,15 @@ struct [[sus_trivial_abi]] usize final {
 #define _self usize
 #define _pointer false
 #define _pointer_sized
-#define _primitive ::sus::num::__private::ptr_type<::sus::mem::size_of<size_t>()>::unsigned_type
+#define _primitive \
+  ::sus::num::__private::ptr_type<::sus::mem::size_of<size_t>()>::unsigned_type
 #define _signed isize
 #include "sus/num/__private/unsigned_integer_methods.inc"
 };
 #define _self usize
 #define _pointer false
-#define _primitive ::sus::num::__private::ptr_type<::sus::mem::size_of<size_t>()>::unsigned_type
+#define _primitive \
+  ::sus::num::__private::ptr_type<::sus::mem::size_of<size_t>()>::unsigned_type
 #include "sus/num/__private/unsigned_integer_consts.inc"
 
 /// A pointer-sized unsigned integer.
@@ -167,12 +169,16 @@ struct [[sus_trivial_abi]] uptr final {
 #define _self uptr
 #define _pointer true
 #define _pointer_sized ::sus::num::__private::ptr_type<>::pointer_sized_type
-#define _primitive ::sus::num::__private::ptr_type<::sus::mem::size_of<uintptr_t>()>::unsigned_type
+#define _primitive                 \
+  ::sus::num::__private::ptr_type< \
+      ::sus::mem::size_of<uintptr_t>()>::unsigned_type
 #include "sus/num/__private/unsigned_integer_methods.inc"
 };
 #define _self uptr
 #define _pointer true
-#define _primitive ::sus::num::__private::ptr_type<::sus::mem::size_of<uintptr_t>()>::unsigned_type
+#define _primitive                 \
+  ::sus::num::__private::ptr_type< \
+      ::sus::mem::size_of<uintptr_t>()>::unsigned_type
 #include "sus/num/__private/unsigned_integer_consts.inc"
 
 /// Satisfies the [`Add`]($sus::num::Add) concept for pointers
