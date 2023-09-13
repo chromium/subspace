@@ -200,6 +200,28 @@ namespace sus {
 /// become empty/non-empty. This is a common optimization pitfall with
 /// [`std::optional`](https://en.cppreference.com/w/cpp/utility/optional).
 ///
+/// As an example, this code is optimized poorly, keeping a runtime check on
+/// the [`Option`]($sus::option::Option). Global analysis could perhaps show it
+/// not required, but it is beyond the view of the compiler.
+/// ```
+/// void Foo(const Option<T>& t) {
+///   if (t.is_some()) {
+///      A();  // Compiler assumes `t` may be changed.
+///      B(t->thingy);  // Compiler has to keep the check if `t` is Some.
+///   }
+/// }
+/// ```
+/// Whereas here the compiler can elide runtime checks, and the parameter's size
+/// is still the same as a pointer.
+/// ```
+/// void Foo(Option<const T&> t) {
+///   if (t.is_some()) {
+///      A();  // Compiler knows `t` is not changed.
+///      B(t->thingy);  // Compiler drops the redundant check if `t` is Some.
+///   }
+/// }
+/// ```
+///
 /// # Querying the variant
 /// The [`is_some`]($sus::option::Option::is_some) and
 /// [`is_none`]($sus::option::Option::is_none) methods return
