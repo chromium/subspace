@@ -20,7 +20,6 @@ target_link_libraries(subspace
 target_sources(subspace PUBLIC
     "assertions/check.h"
     "assertions/debug_check.h"
-    "assertions/endian.h"
     "assertions/panic.h"
     "assertions/panic.cc"
     "assertions/unreachable.h"
@@ -242,7 +241,6 @@ if(${SUBSPACE_BUILD_TESTS})
 
     add_executable(subspace_unittests
         "assertions/check_unittest.cc"
-        "assertions/endian_unittest.cc"
         "assertions/panic_unittest.cc"
         "assertions/unreachable_unittest.cc"
         "boxed/box_unittest.cc"

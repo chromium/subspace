@@ -477,12 +477,12 @@ _self::to_ne_bytes() const& noexcept {
     auto uval = primitive_value;
     for (usize i; i < ::sus::mem::size_of<_primitive>(); i += 1u) {
       const auto last_byte = static_cast<uint8_t>(uval & 0xff);
-      if (sus::assertions::is_little_endian())
+      if (std::endian::native == std::endian::little)
         bytes[i] = last_byte;
       else
         bytes[::sus::mem::size_of<_primitive>() - 1u - i] = last_byte;
       // If _self is one byte, this shift would be UB. But it's also not needed
-      //   since the loop will not run again.
+      // since the loop will not run again.
       if constexpr (::sus::mem::size_of<_primitive>() > 1u) uval >>= 8u;
     }
     return bytes;

@@ -24,7 +24,6 @@
 
 #include "fmt/format.h"
 #include "sus/assertions/check.h"
-#include "sus/assertions/endian.h"
 #include "sus/iter/iterator_concept.h"
 #include "sus/macros/pure.h"
 #include "sus/marker/unsafe.h"
