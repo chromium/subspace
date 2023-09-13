@@ -2122,6 +2122,28 @@ TEST_F(SubDocTypeTest, ArrayAlias) {
   });
 }
 
+TEST_F(SubDocTypeTest, NamespaceAlias) {
+  const char test[] = R"(
+    namespace a { struct S {}; }
+    using namespace a;
+    void f(S& c);
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    auto [qual, loc] = find_function_parm("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
+
+    EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t.name, "S");
+    EXPECT_EQ(t.namespace_path, sus::vec("a"));
+    EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
+    EXPECT_EQ(t.qualifier.is_const, false);
+    EXPECT_EQ(t.qualifier.is_volatile, false);
+
+    EXPECT_EQ(make_string("foo", t), "!S!& foo");
+  });
+}
+
 TEST_F(SubDocTypeTest, ArrayOfPointers) {
   const char test[] = R"(
     struct S {};
