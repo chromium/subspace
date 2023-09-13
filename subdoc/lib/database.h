@@ -345,7 +345,12 @@ struct RecordId {
   explicit RecordId(std::string name) : name(sus::move(name)) {}
   explicit RecordId(std::string_view name) : name(name) {}
   explicit RecordId(const clang::RecordDecl& decl)
-      : name(decl.getNameAsString()) {}
+      : name([&]() {
+          if (auto* t = decl.getTypedefNameForAnonDecl())
+            return t->getNameAsString();
+          else
+            return decl.getNameAsString();
+        }()) {}
 
   std::string name;
 
