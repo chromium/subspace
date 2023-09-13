@@ -11,4 +11,4 @@ out/subdoc/subdoc -p out --out docs \
     --project-logo logo.png \
     --project-name Subspace \
     --ignore-bad-code-links \
-   i8_unittest
+   i8_unittest $*

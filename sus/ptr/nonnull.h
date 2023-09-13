@@ -30,11 +30,15 @@ namespace sus::ptr {
 
 /// A pointer wrapper which holds a never-null pointer.
 ///
-/// A NonNull can not be implicitly created from an array, as that would throw
+/// A `NonNull` can not be implicitly created from an array, as that would throw
 /// away the length information. Explicitly cast to a pointer to use NonNull
 /// with an array.
 ///
-/// The NonNull type is trivially copyable and moveable.
+/// The `NonNull` type is trivially copyable and moveable.
+///
+/// `NonNull` satisifes the [`NeverValueField`]($sus::mem::NeverValueField), so
+/// [`Option<NonNull<T>>`]($sus::option::Option) has the same size as `NonNull`,
+/// similar to [`Option<T&>`]($sus::option::Option).
 ///
 /// TODO: Make a NonNullArray type? https://godbolt.org/z/3vW3xsz5h
 template <class T>
@@ -88,13 +92,6 @@ class [[sus_trivial_abi]] NonNull {
 
   template <class U, size_t N>
   static constexpr inline NonNull from(U (&t)[N]) = delete;
-
-  /// `NonNull<T>` is `Copy`, so this is the copy constructor.
-  /// #[doc.overloads=ctor.copy]
-  NonNull(const NonNull&) = default;
-  /// `NonNull<T>` is `Copy`, so this is the copy assignment operator.
-  /// #[doc.overloads=assign.copy]
-  NonNull& operator=(const NonNull&) = default;
 
   /// Gives access to the object pointed to by NonNull.
   ///
