@@ -1848,10 +1848,10 @@ TEST_F(SubDocTypeTest, VariadicConcept) {
 
 TEST_F(SubDocTypeTest, DependentNameType) {
   const char test[] = R"(
-    template <class T> struct R { using RType = T; };
-    template <class T> struct S { using SType = T; };
+    namespace a { template <class T> struct R { using RType = T; }; }
+    namespace b { template <class T> struct S { using SType = T; }; }
     template <class T>
-    void f(typename R<S<T>>::RType::SType&);
+    void f(typename a::R<b::S<T>>::RType::SType&);
   )";
   run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
     auto [qual, loc] = find_function_parm("f", cx).unwrap();
@@ -1865,6 +1865,12 @@ TEST_F(SubDocTypeTest, DependentNameType) {
         t.nested_names[0u].choice.as<subdoc::TypeOrValueTag::Type>();
     EXPECT_EQ(n1.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(n1.name, "R");
+    EXPECT_EQ(n1.namespace_path, sus::vec("a"));
+    const subdoc::Type& n1p1 =
+        n1.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
+    EXPECT_EQ(n1p1.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(n1p1.name, "S");
+    EXPECT_EQ(n1p1.namespace_path, sus::vec("b"));
     const std::string& n2 =
         t.nested_names[1u].choice.as<subdoc::TypeOrValueTag::Value>();
     EXPECT_EQ(n2, "RType");
@@ -2208,6 +2214,56 @@ TEST_F(SubDocTypeTest, PointerToArrayOfPointers) {
     EXPECT_EQ(t.array_dims[0u], "3");
 
     EXPECT_EQ(make_string("foo", t), "!S! *volatile * (* *const *&foo)[3]");
+  });
+}
+
+TEST_F(SubDocTypeTest, EnableIfReturn) {
+  const char test[] = R"(
+    namespace std {
+      template<bool B, class T = void>
+      struct enable_if {};
+
+      template<class T>
+      struct enable_if<true, T> { using type = T; };
+    }
+
+    template <class... T>
+    struct C {
+      static constexpr bool value = true;
+    };
+
+    struct S {};
+    template <class T>
+    typename std::enable_if<C<T, S>::value>::type f();
+  )";
+  run_test(test, [](clang::ASTContext& cx, clang::Preprocessor& preprocessor) {
+    auto [qual, loc] = find_function_return("f", cx).unwrap();
+    subdoc::Type t = subdoc::build_local_type(qual, cx.getSourceManager(),
+                                              preprocessor, loc);
+
+    // TODO: There's things that we could do better here, by parsing the
+    // expression in the enable_if, much like we'd like to parse expressions
+    // in requires clauses.
+    // - We could pull the whole condition of enable_if<cond> out as a
+    //   constraint and show it in the requires list. So types could come with
+    //   a constraint list.
+    // - Then the return type should just be the `type` argument of the
+    //   enable_if statement, which defaults to void so is void here.
+    //
+    // Even more simply for now, without enable_if special cases, we could:
+    // - When we get to the template argument of type Expr, we could parse that
+    //   and find all the types, instead of just turning it into a string!
+    EXPECT_EQ(t.category, subdoc::TypeCategory::TemplateVariable);
+    EXPECT_EQ(t.name, "type");
+    EXPECT_EQ(t.refs, subdoc::Refs::None);
+    const subdoc::Type& t1 =
+        t.nested_names[0u].choice.as<subdoc::TypeOrValueTag::Type>();
+    EXPECT_EQ(t1.category, subdoc::TypeCategory::Type);
+    EXPECT_EQ(t1.name, "enable_if");
+    EXPECT_EQ(t1.namespace_path, sus::vec("std"));
+    EXPECT_EQ(t1.nested_names.len(), 0u);
+
+    EXPECT_EQ(make_string("foo", t), "!enable_if!<C<T, S>::value>::type foo");
   });
 }
 

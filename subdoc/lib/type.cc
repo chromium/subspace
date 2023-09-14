@@ -241,19 +241,23 @@ Type build_local_type_internal(
         nested_names.push(
             TypeOrValue(TypeOrValueChoice::with<TypeOrValueTag::Value>(
                 std::string(spec->getAsIdentifier()->getName()))));
-      } else {
-        if (kind != clang::NestedNameSpecifier::TypeSpec &&
-            kind != clang::NestedNameSpecifier::TypeSpecWithTemplate) {
-          qualtype->dump();
-          loc.dump(sm);
-          sus::unreachable();
-        }
+      } else if (kind == clang::NestedNameSpecifier::Namespace ||
+                 kind == clang::NestedNameSpecifier::NamespaceAlias) {
+        // Namespaces are consumed/used as part of the type that comes after
+        // them.
+      } else if (kind == clang::NestedNameSpecifier::TypeSpec ||
+                 kind == clang::NestedNameSpecifier::TypeSpecWithTemplate) {
         nested_names.push(
             TypeOrValue(TypeOrValueChoice::with<TypeOrValueTag::Type>(
                 build_local_type_internal(
                     clang::QualType(spec->getAsType(), 0u),
                     llvm::ArrayRef<clang::NamedDecl*>(), sm, preprocessor,
                     loc))));
+      } else {
+        qualtype->dump();
+        loc.dump(sm);
+        fmt::println(stderr, "\nkind: {}", (int)kind);
+        sus::unreachable();
       }
       spec = spec->getPrefix();
     }
