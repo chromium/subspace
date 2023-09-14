@@ -215,6 +215,8 @@ namespace sus {
 /// ```
 /// Whereas here the compiler can elide runtime checks, and the parameter's size
 /// is still the same as a pointer.
+/// Use the [`as_ref`]($sus::option::Option::as_ref) method to convert to
+/// `Option<const T&>` in the caller.
 /// ```
 /// void Foo(Option<const T&> t) {
 ///   if (t.is_some()) {
