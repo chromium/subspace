@@ -242,8 +242,12 @@ Type build_local_type_internal(
             TypeOrValue(TypeOrValueChoice::with<TypeOrValueTag::Value>(
                 std::string(spec->getAsIdentifier()->getName()))));
       } else {
-        sus::check(kind == clang::NestedNameSpecifier::TypeSpec ||
-                   kind == clang::NestedNameSpecifier::TypeSpecWithTemplate);
+        if (kind != clang::NestedNameSpecifier::TypeSpec &&
+            kind != clang::NestedNameSpecifier::TypeSpecWithTemplate) {
+          qualtype->dump();
+          loc.dump(sm);
+          sus::unreachable();
+        }
         nested_names.push(
             TypeOrValue(TypeOrValueChoice::with<TypeOrValueTag::Type>(
                 build_local_type_internal(
@@ -537,8 +541,11 @@ Type build_local_type_internal(
         // parameter.
         return sus::tuple(condecl->getNameAsString(), TypeCategory::Concept);
       } else {
-        sus::check_with_message(!auto_type->isConstrained(),
-                                "constrained auto without a concept?");
+        if (auto_type->isConstrained()) {
+          qualtype->dump();
+          loc.dump(sm);
+          sus::panic_with_message("constrained auto without a concept?");
+        }
         if (auto_type->isDecltypeAuto()) {
           return sus::tuple("decltype(auto)", TypeCategory::TemplateVariable);
         } else {
