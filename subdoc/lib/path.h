@@ -55,7 +55,15 @@ namespace __private {
 class RecordIter final
     : public sus::iter::IteratorBase<RecordIter, std::string_view> {
  public:
-  explicit RecordIter(clang::RecordDecl* decl) noexcept : next_decl_(decl) {}
+  explicit RecordIter(clang::DeclContext* decl) noexcept : next_decl_(nullptr) {
+    while (decl) {
+      if (clang::isa<clang::RecordDecl>(decl)) {
+        next_decl_ = clang::cast<clang::RecordDecl>(decl);
+        break;
+      }
+      decl = decl->getParent();
+    }
+  }
 
   sus::Option<std::string_view> next() noexcept {
     if (next_decl_) {
@@ -92,7 +100,7 @@ static_assert(::sus::iter::Iterator<RecordIter, std::string_view>);
 /// The iterator returns std::string_view references to string in the clang
 /// AST, which are valid as long as the RecordDecl's pointee is valid.
 inline sus::iter::Iterator<std::string_view> auto iter_record_path(
-    clang::RecordDecl* decl) {
+    clang::DeclContext* decl) {
   return __private::RecordIter(decl);
 }
 

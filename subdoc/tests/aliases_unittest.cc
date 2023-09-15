@@ -53,6 +53,17 @@ TEST_F(SubDocTest, AliasUsingMethod) {
   EXPECT_TRUE(has_alias_comment(db, "10:7", "<p>Alias comment headline</p>"));
 }
 
+TEST_F(SubDocTest, AliasUsingEnumInNamespace) {
+  auto result = run_code(R"(
+    namespace a { enum class E { First, Second }; }
+    /// Alias comment headline
+    using a::E;
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_alias_comment(db, "3:5", "<p>Alias comment headline</p>"));
+}
+
 TEST_F(SubDocTest, DISABLED_AliasUsingEnum) {
   auto result = run_code(R"(
     namespace a { enum class E { First, Second }; }
@@ -65,17 +76,14 @@ TEST_F(SubDocTest, DISABLED_AliasUsingEnum) {
       using a::E::First;
     };
     }
-    /// Global 1 comment headline
-    using a::E;
     using enum a::E;
-    /// Global 2 comment headline
+    /// Global comment headline
     using a::E::First;
   )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_alias_comment(db, "8:7", "<p>Alias comment headline</p>"));
-  EXPECT_TRUE(has_alias_comment(db, "12:5", "<p>Alias comment headline</p>"));
-  EXPECT_TRUE(has_alias_comment(db, "15:5", "<p>Alias comment headline</p>"));
+  EXPECT_TRUE(has_alias_comment(db, "13:5", "<p>Alias comment headline</p>"));
 }
 
 TEST_F(SubDocTest, DISABLED_AliasCommentOnUsingEnum) {
