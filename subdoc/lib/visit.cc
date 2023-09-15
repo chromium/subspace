@@ -420,13 +420,21 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     // `using enum` can pull in more than one shadow, it pulls in every constant
     // in the enum.
     for (clang::UsingShadowDecl* shadow : decl->shadows()) {
-      if (auto* rec =
-              clang::dyn_cast<clang::RecordDecl>(shadow->getTargetDecl())) {
+      sus::Vec<Namespace> target_namespace_path =
+          iter_namespace_path(shadow).collect_vec();
+      sus::Vec<std::string> target_record_path =
+          iter_record_path(shadow->getDeclContext())
+              .map([](std::string_view v) { return std::string(v); })
+              .collect_vec();
+
+      if (auto* tag =
+              clang::dyn_cast<clang::TagDecl>(shadow->getTargetDecl())) {
         auto* context =
             clang::dyn_cast<clang::NamespaceDecl>(decl->getDeclContext());
         if (!context &&
             !clang::isa<clang::TranslationUnitDecl>(decl->getDeclContext())) {
-          // The context for a using record is a namespace or translation unit.
+          // The context for a using record/enum is a namespace or translation
+          // unit.
           decl->dump();
           decl->getDeclContext()->dumpAsDecl();
           sus::unreachable();
@@ -440,21 +448,12 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                 decl->getLocation()),
             sus::vec(),
             // target info.
-            iter_namespace_path(rec).collect_vec(),
-            iter_record_path(rec)
-                .map([](std::string_view v) { return std::string(v); })
-                .collect_vec(),
-            rec->getNameAsString());
+            sus::move(target_namespace_path), sus::move(target_record_path),
+            tag->getNameAsString());
         NamespaceElement& parent =
             docs_db_.find_namespace_mut(context).unwrap();
         add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(ae),
                         parent.aliases, decl->getASTContext());
-      } else if (auto* edecl = clang::dyn_cast<clang::EnumDecl>(
-                     shadow->getTargetDecl())) {
-        edecl->dump();
-        decl->dump();
-        decl->getBeginLoc().dump(decl->getASTContext().getSourceManager());
-        sus::unreachable();
       } else if (auto* ecdecl = clang::dyn_cast<clang::EnumConstantDecl>(
                      shadow->getTargetDecl())) {
         ecdecl->dump();
@@ -462,7 +461,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         decl->getBeginLoc().dump(decl->getASTContext().getSourceManager());
         // Put these into static fields on a record, and const global variables
         //  on a namespace.
-        sus::unreachable();
+        //sus::unreachable();
       } else if (auto* method = clang::dyn_cast<clang::CXXMethodDecl>(
                      shadow->getTargetDecl())) {
         auto* context =
@@ -492,10 +491,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                 .map([](std::string_view v) { return std::string(v); })
                 .collect_vec(),
             // target info.
-            iter_namespace_path(target_context).collect_vec(),
-            iter_record_path(target_context)
-                .map([](std::string_view v) { return std::string(v); })
-                .collect_vec(),
+            sus::move(target_namespace_path), sus::move(target_record_path),
             method->getNameAsString());
         RecordElement& parent = docs_db_.find_record_mut(context).unwrap();
         add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(ae),
@@ -712,14 +708,6 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       }
     }();
 
-    sus::Vec<std::string> record_path;
-    if (clang::isa<clang::CXXMethodDecl>(decl)) {
-      record_path =
-          iter_record_path(clang::cast<clang::RecordDecl>(context))
-              .map([](std::string_view&& v) { return std::string(v); })
-              .collect_vec();
-    }
-
     // Make a copy before moving `comment` to the contructor argument.
     sus::Option<std::string> overload_set =
         sus::clone(comment.attrs.overload_set);
@@ -778,7 +766,10 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         decl->isOverloadedOperator() || decl->getLiteralIdentifier() != nullptr,
         sus::move(linked_return_type), sus::move(constraints),
         sus::move(template_params), decl->isDeleted(), sus::move(params),
-        sus::move(overload_set), sus::move(record_path),
+        sus::move(overload_set),
+        iter_record_path(decl)
+            .map([](std::string_view&& v) { return std::string(v); })
+            .collect_vec(),
         decl->getASTContext().getSourceManager().getFileOffset(
             decl->getLocation()));
 
