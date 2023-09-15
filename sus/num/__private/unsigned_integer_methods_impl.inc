@@ -477,7 +477,7 @@ _self::to_ne_bytes() const& noexcept {
     auto uval = primitive_value;
     for (usize i; i < ::sus::mem::size_of<_primitive>(); i += 1u) {
       const auto last_byte = static_cast<uint8_t>(uval & 0xff);
-      if (std::endian::native == std::endian::little)
+      if constexpr (std::endian::native == std::endian::little)
         bytes[i] = last_byte;
       else
         bytes[::sus::mem::size_of<_primitive>() - 1u - i] = last_byte;
