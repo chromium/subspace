@@ -44,9 +44,9 @@ bool path_is_private(clang::NamedDecl* decl) noexcept {
     //
     // However `namespace a { using b::S; }` brings S into `a` in a way that is
     // usable publicly from other scopes. So we accept `NoLinkage` for
-    // `UsingDecl`.
+    // `UsingDecl` and `UsingEnumDecl` (aka `BaseUsingDecl`).
     if (!(linkage == clang::Linkage::NoLinkage &&
-          clang::isa<clang::UsingDecl>(decl))) {
+          clang::isa<clang::BaseUsingDecl>(decl))) {
       return true;
     }
   }

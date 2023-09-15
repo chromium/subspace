@@ -52,3 +52,41 @@ TEST_F(SubDocTest, AliasUsingMethod) {
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_alias_comment(db, "10:7", "<p>Alias comment headline</p>"));
 }
+
+TEST_F(SubDocTest, DISABLED_AliasUsingEnum) {
+  auto result = run_code(R"(
+    namespace a { enum class E { First, Second }; }
+    namespace b {
+    struct S {
+      using enum a::E;
+    };
+    struct S2 {
+      /// Alias comment headline
+      using a::E::First;
+    };
+    }
+    /// Global 1 comment headline
+    using a::E;
+    using enum a::E;
+    /// Global 2 comment headline
+    using a::E::First;
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_alias_comment(db, "8:7", "<p>Alias comment headline</p>"));
+  EXPECT_TRUE(has_alias_comment(db, "12:5", "<p>Alias comment headline</p>"));
+  EXPECT_TRUE(has_alias_comment(db, "15:5", "<p>Alias comment headline</p>"));
+}
+
+TEST_F(SubDocTest, DISABLED_AliasCommentOnUsingEnum) {
+  auto result = run_code(R"(
+    namespace a { enum class E { First, Second }; }
+    /// Invalid comment
+    using enum a::E;
+  )");
+  ASSERT_TRUE(result.is_err());
+  auto diags = sus::move(result).unwrap_err();
+  ASSERT_EQ(diags.locations.len(), 1u);
+  // A comment on `using enum` has nowhere to display, so it's an error.
+  EXPECT_EQ(diags.locations[0u], "test.cc:3:5");
+}

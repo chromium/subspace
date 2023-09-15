@@ -44,11 +44,14 @@ struct DiagnosticIds {
             "ignored API comment, superceded by comment at %0"),
         .malformed_comment = ast_cx.getDiagnostics().getCustomDiagID(
             clang::DiagnosticsEngine::Error, "malformed API comment: %0"),
+        .misplaced_comment = ast_cx.getDiagnostics().getCustomDiagID(
+            clang::DiagnosticsEngine::Error, "API comment will be ignored, %0"),
     };
   }
 
   const unsigned int superceded_comment;
   const unsigned int malformed_comment;
+  const unsigned int misplaced_comment;
 };
 
 static bool should_skip_decl(VisitCx& cx, clang::Decl* decl) {
@@ -396,98 +399,112 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   }
 
   bool VisitUsingEnumDecl(clang::UsingEnumDecl* decl) noexcept {
-    if (should_skip_decl(cx_, decl)) return true;
-    // clang::RawComment* raw_comment = get_raw_comment(decl);
-    // if (raw_comment)
-    //   llvm::errs() << "UsingEnumDecl " << raw_comment->getKind() << "\n";
-    return true;
+    clang::RawComment* raw_comment = get_raw_comment(decl);
+    if (raw_comment) {
+      // `using enum` actually brings in each element of the enum, so a comment
+      // on the using declaration will have nowhere to appear in the generated
+      // docs.
+      decl->getASTContext()
+          .getDiagnostics()
+          .Report(raw_comment->getBeginLoc(), diag_ids_.misplaced_comment)
+          .AddString("`using enum` can not display a comment");
+    }
+
+    return VisitUsingDecl(decl);
   }
 
-  bool VisitUsingDecl(clang::UsingDecl* decl) noexcept {
+  bool VisitUsingDecl(clang::BaseUsingDecl* decl) noexcept {
     if (should_skip_decl(cx_, decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
     Comment comment = make_db_comment(decl->getASTContext(), raw_comment, "");
-    if (decl->shadow_size() != 1u) {
-      decl->dump();
-      decl->getBeginLoc().dump(decl->getASTContext().getSourceManager());
-      sus::unreachable();
-    }
-    clang::UsingShadowDecl* shadow = *decl->shadow_begin();
-    if (auto* rec =
-            clang::dyn_cast<clang::RecordDecl>(shadow->getTargetDecl())) {
-      auto* context =
-          clang::dyn_cast<clang::NamespaceDecl>(decl->getDeclContext());
-      if (!context &&
-          !clang::isa<clang::TranslationUnitDecl>(decl->getDeclContext())) {
-        // The context for a using record is a namespace or translation unit.
-        decl->dump();
-        decl->getDeclContext()->dumpAsDecl();
-        sus::unreachable();
-      }
+    // `using enum` can pull in more than one shadow, it pulls in every constant
+    // in the enum.
+    for (clang::UsingShadowDecl* shadow : decl->shadows()) {
+      if (auto* rec =
+              clang::dyn_cast<clang::RecordDecl>(shadow->getTargetDecl())) {
+        auto* context =
+            clang::dyn_cast<clang::NamespaceDecl>(decl->getDeclContext());
+        if (!context &&
+            !clang::isa<clang::TranslationUnitDecl>(decl->getDeclContext())) {
+          // The context for a using record is a namespace or translation unit.
+          decl->dump();
+          decl->getDeclContext()->dumpAsDecl();
+          sus::unreachable();
+        }
 
-      auto ae = AliasElement(
-          // alias info.
-          iter_namespace_path(decl).collect_vec(), sus::move(comment),
-          decl->getNameAsString(),
-          decl->getASTContext().getSourceManager().getFileOffset(
-              decl->getLocation()),
-          sus::vec(),
-          // target info.
-          iter_namespace_path(rec).collect_vec(),
-          iter_record_path(rec)
-              .map([](std::string_view v) { return std::string(v); })
-              .collect_vec(),
-          rec->getNameAsString());
-      NamespaceElement& parent = docs_db_.find_namespace_mut(context).unwrap();
-      add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(ae),
-                      parent.aliases, decl->getASTContext());
-    } else if (auto* edecl =
-                   clang::dyn_cast<clang::EnumDecl>(shadow->getTargetDecl())) {
-      edecl->dump();
-      decl->dump();
-      decl->getBeginLoc().dump(decl->getASTContext().getSourceManager());
-      sus::unreachable();
-    } else if (auto* method = clang::dyn_cast<clang::CXXMethodDecl>(
-                   shadow->getTargetDecl())) {
-      auto* context =
-          clang::dyn_cast<clang::RecordDecl>(decl->getDeclContext());
-      if (!context) {
-        // The context for a using record is a namespace or translation unit.
+        auto ae = AliasElement(
+            // alias info.
+            iter_namespace_path(decl).collect_vec(), sus::move(comment),
+            decl->getNameAsString(),
+            decl->getASTContext().getSourceManager().getFileOffset(
+                decl->getLocation()),
+            sus::vec(),
+            // target info.
+            iter_namespace_path(rec).collect_vec(),
+            iter_record_path(rec)
+                .map([](std::string_view v) { return std::string(v); })
+                .collect_vec(),
+            rec->getNameAsString());
+        NamespaceElement& parent =
+            docs_db_.find_namespace_mut(context).unwrap();
+        add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(ae),
+                        parent.aliases, decl->getASTContext());
+      } else if (auto* edecl = clang::dyn_cast<clang::EnumDecl>(
+                     shadow->getTargetDecl())) {
+        edecl->dump();
         decl->dump();
-        decl->getDeclContext()->dumpAsDecl();
+        decl->getBeginLoc().dump(decl->getASTContext().getSourceManager());
         sus::unreachable();
-      }
-      auto* target_context =
-          clang::dyn_cast<clang::RecordDecl>(method->getDeclContext());
-      if (!target_context) {
-        // The context for a using record is a namespace or translation unit.
+      } else if (auto* ecdecl = clang::dyn_cast<clang::EnumConstantDecl>(
+                     shadow->getTargetDecl())) {
+        ecdecl->dump();
         decl->dump();
-        decl->getDeclContext()->dumpAsDecl();
+        decl->getBeginLoc().dump(decl->getASTContext().getSourceManager());
+        // Put these into static fields on a record, and const global variables
+        //  on a namespace.
         sus::unreachable();
-      }
+      } else if (auto* method = clang::dyn_cast<clang::CXXMethodDecl>(
+                     shadow->getTargetDecl())) {
+        auto* context =
+            clang::dyn_cast<clang::RecordDecl>(decl->getDeclContext());
+        if (!context) {
+          // The context for a using record is a namespace or translation unit.
+          decl->dump();
+          decl->getDeclContext()->dumpAsDecl();
+          sus::unreachable();
+        }
+        auto* target_context =
+            clang::dyn_cast<clang::RecordDecl>(method->getDeclContext());
+        if (!target_context) {
+          // The context for a using record is a namespace or translation unit.
+          decl->dump();
+          decl->getDeclContext()->dumpAsDecl();
+          sus::unreachable();
+        }
 
-      auto ae = AliasElement(
-          // alias info.
-          iter_namespace_path(context).collect_vec(), sus::move(comment),
-          decl->getNameAsString(),
-          decl->getASTContext().getSourceManager().getFileOffset(
-              decl->getLocation()),
-          iter_record_path(context)
-              .map([](std::string_view v) { return std::string(v); })
-              .collect_vec(),
-          // target info.
-          iter_namespace_path(target_context).collect_vec(),
-          iter_record_path(target_context)
-              .map([](std::string_view v) { return std::string(v); })
-              .collect_vec(),
-          method->getNameAsString());
-      RecordElement& parent = docs_db_.find_record_mut(context).unwrap();
-      add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(ae),
-                      parent.aliases, decl->getASTContext());
-    } else {
-      decl->dump();
-      decl->getBeginLoc().dump(decl->getASTContext().getSourceManager());
-      sus::unreachable();
+        auto ae = AliasElement(
+            // alias info.
+            iter_namespace_path(context).collect_vec(), sus::move(comment),
+            decl->getNameAsString(),
+            decl->getASTContext().getSourceManager().getFileOffset(
+                decl->getLocation()),
+            iter_record_path(context)
+                .map([](std::string_view v) { return std::string(v); })
+                .collect_vec(),
+            // target info.
+            iter_namespace_path(target_context).collect_vec(),
+            iter_record_path(target_context)
+                .map([](std::string_view v) { return std::string(v); })
+                .collect_vec(),
+            method->getNameAsString());
+        RecordElement& parent = docs_db_.find_record_mut(context).unwrap();
+        add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(ae),
+                        parent.aliases, decl->getASTContext());
+      } else {
+        decl->dump();
+        decl->getBeginLoc().dump(decl->getASTContext().getSourceManager());
+        sus::unreachable();
+      }
     }
 
     return true;
