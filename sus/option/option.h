@@ -191,7 +191,7 @@ namespace sus {
 ///
 /// As mentioned above [`Option`]($sus::option::Option) type can hold a
 /// reference, which allows code to use `Option<const T&>` or `Option<T&>`
-/// as a function parameter in place of `const Option<T>&` or `Option<T&>`.
+/// as a function parameter in place of `const Option<T>&` or `Option<T>&`.
 /// This can have a positive impact on compiler optimizations (and codegen
 /// size) as the function is receiving the [`Option`]($sus::option::Option)
 /// by value and thus the compiler can reason locally about the
