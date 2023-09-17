@@ -217,6 +217,9 @@ struct Type {
   /// the arguments to the function.
   sus::Vec<Type> fn_param_types;
 };
+static_assert(std::destructible<Type>);
+static_assert(std::destructible<sus::Box<Type>>);
+static_assert(std::destructible<sus::Option<sus::Box<Type>>>);
 
 enum class TypeOrValueTag {
   Type,

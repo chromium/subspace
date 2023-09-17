@@ -20,6 +20,7 @@
 
 #include "sus/boxed/__private/string_error.h"
 #include "sus/boxed/boxed.h"  // namespace docs.
+#include "sus/construct/default.h"
 #include "sus/error/error.h"
 #include "sus/fn/fn_concepts.h"
 #include "sus/fn/fn_dyn.h"
@@ -131,8 +132,22 @@ class [[sus_trivial_abi]] Box final {
     requires(::sus::mem::Move<U>)
       : Box(FROM_POINTER, new U(::sus::move(u))) {}
 
+  /// Destroys the `Box` and frees the heap memory for the inner type `T`.
+  ///
+  /// Does nothing if the `Box` was moved-from and thus no longer owns a value.
   constexpr ~Box() noexcept {
     if (t_) delete t_;
+  }
+
+  /// Constructs `Box<T>` with the default value for the type `T`.
+  ///
+  /// `Box` can not satisfy [`Default`]($sus::construct::Default) because it
+  /// prevents C++ from using `Box` to build recursive types where `T` holds
+  /// an `Option<Box<T>>` as a member.
+  static constexpr Box with_default() noexcept
+    requires(::sus::construct::Default<T>)
+  {
+    return Box(FROM_POINTER, new T());
   }
 
   /// Constructs a Box by calling the constructor of `T` with `args`.
@@ -312,19 +327,28 @@ class [[sus_trivial_abi]] Box final {
     return Box(FROM_POINTER, raw);
   }
 
-  /// Consumes the `Box`, calling `f` with the wrapped value before destroying
-  /// it.
+  /// Converts `Box` into a mutable reference of the inner type.
+  constexpr T& as_mut() & noexcept {
+    ::sus::check_with_message(t_, "Box used after move");
+    return *t_;
+  }
+
+  /// Converts `Box` into a const reference of the inner type.
+  constexpr const T& as_ref() const& noexcept {
+    ::sus::check_with_message(t_, "Box used after move");
+    return *t_;
+  }
+  constexpr const T& as_ref() && noexcept = delete;
+
+  /// Consumes the `Box`, returning the wrapped value.
   ///
   /// This allows the caller to make use of the wrapped object as an rvalue
-  /// without moving out of the wrapped object in a way that leaves the Box with
-  /// a moved-from object within.
-  template <::sus::fn::FnOnce<sus::fn::Anything(T&&)> F>
-  constexpr ::sus::fn::ReturnOnce<F, T&&> consume(F f) && noexcept
+  /// without leaving a moved-from `T` inside the `Box`.
+  constexpr T into_inner() && noexcept
     requires(::sus::mem::Move<T>)
   {
     ::sus::check_with_message(t_, "Box used after move");
-    ::sus::fn::ReturnOnce<F, T&&> ret =
-        ::sus::fn::call_once(::sus::move(f), sus::move(*t_));
+    T ret = ::sus::move(*t_);
     delete ::sus::mem::replace(t_, nullptr);
     return ret;
   }
@@ -369,6 +393,26 @@ class [[sus_trivial_abi]] Box final {
     ::sus::check_with_message(t_, "Box used after move");
     return ::sus::mem::replace(t_, nullptr);
   }
+
+  /// Consumes and leaks the `Box`, returning a mutable reference, `T&`. Note
+  /// that the type T must outlive the returned reference.
+  ///
+  /// This function is mainly useful for data that lives for the remainder of
+  /// the program's life. Dropping the returned reference will cause a memory
+  /// leak. If this is not acceptable, the reference should first be wrapped
+  /// with the [`Box::from_raw`]($sus::boxed::Box::from_raw) method producing a
+  /// `Box`. This `Box` can then be dropped which will properly destroy `T` and
+  /// release the allocated memory.
+  ///
+  /// This method is not functionally different than [`into_raw`](
+  /// $sus::boxed::Box::into_raw) but expresses a different intent, and returns
+  /// a reference type indicating it can not ever return null.
+  ///
+  /// Note: unlike with the Rust [`Box::leak`](
+  /// https://doc.rust-lang.org/stable/std/boxed/struct.Box.html#method.leak)
+  /// this is not a static method, since `Box` can not expose the inner type's
+  /// methods directly in C++.
+  constexpr T& leak() && noexcept { return *::sus::move(*this).into_raw(); }
 
   /// A `Box` holding a type-erased function type will satisfy the fn concepts
   /// and can be used as a function type. It will forward the call through
@@ -453,14 +497,16 @@ class [[sus_trivial_abi]] Box final {
   template <class... Args>
   constexpr sus::fn::ReturnOnce<T, Args...> operator()(Args&&... args) &&
     requires(T::IsDynFn &&  //
-             ::sus::fn::FnOnce<T, sus::fn::ReturnOnce<T, Args...>(Args...)> && 
-    ::sus::mem::Move<T>)
+             ::sus::fn::FnOnce<T, sus::fn::ReturnOnce<T, Args...>(Args...)>)
   {
     ::sus::check_with_message(t_, "Box used after move");
     struct Cleanup {
       constexpr ~Cleanup() noexcept { delete t; }
       T* t;
     };
+    // Note: This function does not require `Move<T>` because while it's calling
+    // an rvalue `operator()` on `T` it is not constructing a `T` through a
+    // move.
     return ::sus::fn::call_once(
         sus::move(*Cleanup(::sus::mem::replace(t_, nullptr)).t),
                            ::sus::forward<Args>(args)...);

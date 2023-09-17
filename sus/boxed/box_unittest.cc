@@ -50,6 +50,19 @@ static_assert(sus::mem::NeverValueField<Box<i32>>);
 // For any T.
 static_assert(sus::mem::relocate_by_memcpy<Box<i32>>);
 
+TEST(Box, RecursiveType) {
+  struct Cycle {
+    sus::Option<Box<Cycle>> b;
+  };
+  // This fails (on MSVC at least) when Box is default-constructible. I suspect
+  // the compiler walks an infinite recursive loop when this is the case, though
+  // Option's default constructor does not construct a `Box<Cycle>`.
+  static_assert(std::destructible<Cycle>);
+
+  auto c = Cycle();
+  c.b.insert(Box<Cycle>(Cycle()));
+}
+
 TEST(Box, Construct) {
   i32 i = 3;
   {
@@ -60,6 +73,11 @@ TEST(Box, Construct) {
     auto b = Box<SuperType>(SubType());
     EXPECT_EQ(b->name(), "SubType");
   }
+}
+
+TEST(Box, Default) {
+  auto b = Box<i32>::with_default();
+  EXPECT_EQ(*b, 0);
 }
 
 TEST(Box, WithArgs) {
@@ -246,6 +264,58 @@ TEST(Box, MoveAssign) {
     c = sus::move(b);
     EXPECT_EQ(c->name(), "SubType");
   }
+}
+
+TEST(Box, AsRef) {
+  auto* i = new i32(3);
+  auto b = Box<i32>::from_raw(unsafe_fn, i);
+  auto&& j = b.as_ref();
+  static_assert(std::same_as<decltype(j), const i32&>);
+  EXPECT_EQ(i, &j);
+}
+
+TEST(Box, AsMut) {
+  auto* i = new i32(3);
+  auto b = Box<i32>::from_raw(unsafe_fn, i);
+  auto&& j = b.as_mut();
+  static_assert(std::same_as<decltype(j), i32&>);
+  EXPECT_EQ(i, &j);
+}
+
+TEST(Box, IntoRaw) {
+  static i32 deleted = 0;
+  struct S {
+    constexpr ~S() noexcept { deleted += 1; }
+  };
+  auto* i = new S();
+  {
+    auto b = Box<S>::from_raw(unsafe_fn, i);
+    auto* j = sus::move(b).into_raw();
+    EXPECT_EQ(i, j);
+    EXPECT_EQ(deleted, 0);
+    delete j;
+    EXPECT_EQ(deleted, 1);
+  }
+  // `b` did not delete again.
+  EXPECT_EQ(deleted, 1);
+}
+
+TEST(Box, Leak) {
+  static i32 deleted = 0;
+  struct S {
+    constexpr ~S() noexcept { deleted += 1; }
+  };
+  auto* i = new S();
+  {
+    auto b = Box<S>::from_raw(unsafe_fn, i);
+    auto& j = sus::move(b).leak();
+    EXPECT_EQ(i, &j);
+    EXPECT_EQ(deleted, 0);
+    delete i;
+    EXPECT_EQ(deleted, 1);
+  }
+  // `b` did not delete again.
+  EXPECT_EQ(deleted, 1);
 }
 
 TEST(BoxDeathTest, UseAfterMove) {
