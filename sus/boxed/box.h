@@ -312,6 +312,23 @@ class [[sus_trivial_abi]] Box final {
     return Box(FROM_POINTER, raw);
   }
 
+  /// Consumes the `Box`, calling `f` with the wrapped value before destroying
+  /// it.
+  ///
+  /// This allows the caller to make use of the wrapped object as an rvalue
+  /// without moving out of the wrapped object in a way that leaves the Box with
+  /// a moved-from object within.
+  template <::sus::fn::FnOnce<sus::fn::Anything(T&&)> F>
+  constexpr ::sus::fn::ReturnOnce<F, T&&> consume(F f) && noexcept
+    requires(::sus::mem::Move<T>)
+  {
+    ::sus::check_with_message(t_, "Box used after move");
+    ::sus::fn::ReturnOnce<F, T&&> ret =
+        ::sus::fn::call_once(::sus::move(f), sus::move(*t_));
+    delete ::sus::mem::replace(t_, nullptr);
+    return ret;
+  }
+
   /// Consumes the `Box`, returning a wrapped raw pointer.
   ///
   /// The pointer will be properly aligned and non-null.
@@ -351,21 +368,6 @@ class [[sus_trivial_abi]] Box final {
   constexpr T* into_raw() && noexcept {
     ::sus::check_with_message(t_, "Box used after move");
     return ::sus::mem::replace(t_, nullptr);
-  }
-
-  /// Consumes the `Box`, calling `f` with the wrapped value before destroying
-  /// it.
-  ///
-  /// This allows the caller to make use of the wrapped object as an rvalue
-  /// without moving out of the wrapped object in a way that leaves the Box with
-  /// a moved-from object within.
-  template <::sus::fn::FnOnce<sus::fn::Anything(T&&)> F>
-  constexpr ::sus::fn::ReturnOnce<F, T&&> consume(F f) && noexcept {
-    ::sus::check_with_message(t_, "Box used after move");
-    ::sus::fn::ReturnOnce<F, T&&> ret =
-        ::sus::fn::call_once(::sus::move(f), sus::move(*t_));
-    delete ::sus::mem::replace(t_, nullptr);
-    return ret;
   }
 
   /// A `Box` holding a type-erased function type will satisfy the fn concepts
@@ -451,7 +453,8 @@ class [[sus_trivial_abi]] Box final {
   template <class... Args>
   constexpr sus::fn::ReturnOnce<T, Args...> operator()(Args&&... args) &&
     requires(T::IsDynFn &&  //
-             ::sus::fn::FnOnce<T, sus::fn::ReturnOnce<T, Args...>(Args...)>)
+             ::sus::fn::FnOnce<T, sus::fn::ReturnOnce<T, Args...>(Args...)> && 
+    ::sus::mem::Move<T>)
   {
     ::sus::check_with_message(t_, "Box used after move");
     struct Cleanup {
