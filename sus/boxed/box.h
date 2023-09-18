@@ -32,6 +32,7 @@
 #include "sus/mem/relocate.h"
 #include "sus/mem/replace.h"
 #include "sus/mem/size_of.h"
+#include "sus/ops/eq.h"
 #include "sus/ptr/subclass.h"
 #include "sus/string/__private/any_formatter.h"
 #include "sus/string/__private/format_to_stream.h"
@@ -414,6 +415,87 @@ class [[sus_trivial_abi]] Box final {
   /// methods directly in C++.
   constexpr T& leak() && noexcept { return *::sus::move(*this).into_raw(); }
 
+  /// Compares the inner value of two `Box` objects for equality. This does not
+  /// perform pointer equality on the boxes themselves.
+  ///
+  /// Satisfies [`Eq`]($sus::ops::Eq) for `Box<T>` if `T` also satisifes [`Eq`](
+  /// $sus::ops::Eq).
+  ///
+  /// #[doc.overloads=box.eq]
+  friend constexpr bool operator==(const Box& lhs, const Box& rhs) noexcept
+    requires(::sus::ops::Eq<T>)
+  {
+    return lhs.as_ref() == rhs.as_ref();
+  }
+  /// #[doc.overloads=box.eq]
+  template <class U>
+    requires(::sus::ops::Eq<T, U>)
+  friend constexpr bool operator==(const Box<T>& lhs,
+                                   const Box<U>& rhs) noexcept {
+    return lhs.as_ref() == rhs.as_ref();
+  }
+  /// #[doc.overloads=box.eq]
+  template <class U>
+    requires(!::sus::ops::Eq<T, U>)
+  friend constexpr bool operator==(const Box<T>& lhs,
+                                   const Box<U>& rhs) noexcept = delete;
+
+  /// Compares the inner value of two `Box` objects for ordering. This compares
+  /// the values pointed to from the `Box`, not the pointers themselves.
+  ///
+  /// Satisfies the strongest of [`StrongOrd`]($sus::ops::StrongOrd),
+  /// [`Ord`]($sus::ops::Ord), or [`PartialOrd`]($sus::ops::PartialOrd), for
+  /// `Box<T>` for the strongest ordering that `T` satisifes.
+  ///
+  /// #[doc.overloads=box.ord]
+  friend constexpr std::strong_ordering operator<=>(const Box& lhs,
+                                                    const Box& rhs) noexcept
+    requires(::sus::ops::ExclusiveStrongOrd<T>)
+  {
+    return lhs.as_ref() <=> rhs.as_ref();
+  }
+  /// #[doc.overloads=box.ord]
+  template <class U>
+    requires(::sus::ops::ExclusiveStrongOrd<T, U>)
+  friend constexpr std::strong_ordering operator<=>(
+      const Box<T>& lhs, const Box<U>& rhs) noexcept {
+    return lhs.as_ref() <=> rhs.as_ref();
+  }
+  /// #[doc.overloads=box.ord]
+  friend constexpr std::weak_ordering operator<=>(const Box& lhs,
+                                                  const Box& rhs) noexcept
+    requires(::sus::ops::ExclusiveOrd<T>)
+  {
+    return lhs.as_ref() <=> rhs.as_ref();
+  }
+  /// #[doc.overloads=box.ord]
+  template <class U>
+    requires(::sus::ops::ExclusiveOrd<T, U>)
+  friend constexpr std::weak_ordering operator<=>(const Box<T>& lhs,
+                                                  const Box<U>& rhs) noexcept {
+    return lhs.as_ref() <=> rhs.as_ref();
+  }
+  /// #[doc.overloads=box.ord]
+  friend constexpr std::partial_ordering operator<=>(const Box& lhs,
+                                                     const Box& rhs) noexcept
+    requires(::sus::ops::ExclusivePartialOrd<T>)
+  {
+    return lhs.as_ref() <=> rhs.as_ref();
+  }
+  /// #[doc.overloads=box.ord]
+  template <class U>
+    requires(::sus::ops::ExclusivePartialOrd<T, U>)
+  friend constexpr std::partial_ordering operator<=>(
+      const Box<T>& lhs, const Box<U>& rhs) noexcept {
+    return lhs.as_ref() <=> rhs.as_ref();
+  }
+  // No ordering.
+  /// #[doc.overloads=box.ord]
+  template <class U>
+    requires(!::sus::ops::PartialOrd<T, U>)
+  friend constexpr auto operator<=>(const Box<T>& lhs,
+                                    const Box<U>& rhs) noexcept = delete;
+
   /// A `Box` holding a type-erased function type will satisfy the fn concepts
   /// and can be used as a function type. It will forward the call through
   /// to the inner type.
@@ -516,7 +598,7 @@ class [[sus_trivial_abi]] Box final {
 
  private:
   enum FromPointer { FROM_POINTER };
-  Box(FromPointer, T* t) : t_(t) {}
+  constexpr explicit Box(FromPointer, T* t) noexcept : t_(t) {}
 
   T* t_;
 
@@ -527,7 +609,8 @@ class [[sus_trivial_abi]] Box final {
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(t_));
   sus_class_never_value_field(::sus::marker::unsafe_fn, Box, t_, never_value(),
                               nullptr);
-  Box(::sus::mem::NeverValueConstructor) : t_(never_value()) {}
+  constexpr explicit Box(::sus::mem::NeverValueConstructor) noexcept
+      : t_(never_value()) {}
 };
 
 }  // namespace sus::boxed

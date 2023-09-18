@@ -73,11 +73,25 @@ TEST(Box, Construct) {
     auto b = Box<SuperType>(SubType());
     EXPECT_EQ(b->name(), "SubType");
   }
+
+  static_assert([] {
+    auto b = Box<i32>(3_i32);
+    return *b == 3;
+  });
+  static_assert([] {
+    auto b = Box<SuperType>(SubType());
+    return b->name() == "SubType";
+  });
 }
 
 TEST(Box, Default) {
   auto b = Box<i32>::with_default();
   EXPECT_EQ(*b, 0);
+
+  static_assert([] {
+    auto b = Box<i32>::with_default();
+    return *b == 0;
+  });
 }
 
 TEST(Box, WithArgs) {
@@ -96,6 +110,12 @@ TEST(Box, WithArgs) {
 
   auto b2 = sus::move(b);
   EXPECT_EQ(b2->i, 3);
+
+  static_assert([] {
+    auto b = Box<NoMove>::with_args(3);
+    auto b2 = sus::move(b);
+    return b2->i == 3;
+  });
 }
 
 TEST(Box, FromT) {
@@ -116,6 +136,15 @@ TEST(Box, FromT) {
     Box<SuperType> b = sus::into(SubType());
     EXPECT_EQ(b->name(), "SubType");
   }
+
+  static_assert([] {
+    auto b = Box<i32>::from(3_i32);
+    return *b == 3;
+  });
+  static_assert([] {
+    auto b = Box<SuperType>::from(SubType());
+    return b->name() == "SubType";
+  });
 }
 
 TEST(Box, Clone) {
@@ -141,6 +170,12 @@ TEST(Box, Clone) {
     EXPECT_EQ(c->i, 2);
   }
   EXPECT_EQ(cloned, 1);
+
+  static_assert([] {
+    auto b = Box<Cloneable>(Cloneable(2));
+    auto c = sus::clone(b);
+    return c->i == 2 && cloned == 1;
+  });
 }
 
 TEST(Box, CloneInto) {
@@ -176,6 +211,13 @@ TEST(Box, CloneInto) {
     EXPECT_EQ(b->i, 3);
   }
   EXPECT_EQ(cloned, 1);
+
+  static_assert([] {
+    auto b = Box<Cloneable>(Cloneable(2));
+    auto c = Box<Cloneable>(Cloneable(3));
+    sus::clone_into(b, c);
+    return b->i == 3 && cloned == 1;
+  });
 }
 
 TEST(Box, MoveConstruct) {
@@ -219,6 +261,18 @@ TEST(Box, MoveConstruct) {
     auto c = Box<SuperType>(sus::move(b));
     EXPECT_EQ(c->name(), "SubType");
   }
+
+  static_assert([] {
+    auto b = Box<Moveable>(Moveable(2));
+    auto c = sus::move(b);
+    return c->i == 2;
+  });
+
+  static_assert([] {
+    auto b = Box<SubType>(SubType());
+    auto c = Box<SuperType>(sus::move(b));
+    return c->name() == "SubType";
+  });
 }
 
 TEST(Box, MoveAssign) {
@@ -264,23 +318,42 @@ TEST(Box, MoveAssign) {
     c = sus::move(b);
     EXPECT_EQ(c->name(), "SubType");
   }
+
+  static_assert([] {
+    auto b = Box<Moveable>(Moveable(2));
+    auto c = Box<Moveable>(Moveable(3));
+    c = sus::move(b);
+    // The stack objects are destroyed and the heap object in `c` was destroyed.
+    return c->i == 2 && destroyed == 3;
+  });
+
+  static_assert([] {
+    auto b = Box<SubType>(SubType());
+    auto c = Box<SuperType>(SuperType());
+    c = sus::move(b);
+    return c->name() == "SubType";
+  });
 }
 
-TEST(Box, AsRef) {
+// === AsRef
+
+static_assert([] {
   auto* i = new i32(3);
   auto b = Box<i32>::from_raw(unsafe_fn, i);
   auto&& j = b.as_ref();
   static_assert(std::same_as<decltype(j), const i32&>);
-  EXPECT_EQ(i, &j);
-}
+  return i == &j;
+});
 
-TEST(Box, AsMut) {
+// === AsMut
+
+static_assert([] {
   auto* i = new i32(3);
   auto b = Box<i32>::from_raw(unsafe_fn, i);
   auto&& j = b.as_mut();
   static_assert(std::same_as<decltype(j), i32&>);
-  EXPECT_EQ(i, &j);
-}
+  return i == &j;
+});
 
 TEST(Box, IntoRaw) {
   static i32 deleted = 0;
@@ -332,29 +405,39 @@ TEST(BoxDeathTest, UseAfterMove) {
 #endif
 }
 
-TEST(Box, OperatorStar) {
-  auto b = Box<i32>(3);
-  EXPECT_EQ(*b, 3);
-  EXPECT_EQ((*b).wrapping_add(2), 5);
-}
+// ==== OperatorStar
+
+static_assert(std::same_as<decltype(*Box<i32>(3)), i32&>);
+static_assert(std::same_as<decltype(*static_cast<const Box<i32>&>(Box<i32>(3))),
+                           const i32&>);
+static_assert((*Box<i32>(3)).wrapping_add(2) == 5);
+
+// ==== OperatorArrow
+
+static_assert(std::same_as<decltype(Box<i32>(3).operator->()), i32*>);
+static_assert(std::same_as<
+              decltype(static_cast<const Box<i32>&>(Box<i32>(3)).operator->()),
+              const i32*>);
+static_assert(Box<i32>(3)->wrapping_add(2) == 5);
 
 TEST(Box, OperatorArrow) {
   auto b = Box<i32>(3);
   EXPECT_EQ(b->wrapping_add(2), 5);
 }
 
-TEST(Box, Error) {
-  // Box<T> is not Error for non-Error T.
-  static_assert(!sus::error::Error<Box<i32>>);
-  // Box<T> is Error for Error T.
-  static_assert(sus::error::Error<Box<MyError>>);
-  static_assert(sus::error::Error<Box<sus::error::DynError>>);
-}
+// ==== Error
+
+// Box<T> is not Error for non-Error T.
+static_assert(!sus::error::Error<Box<i32>>);
+// Box<T> is Error for Error T.
+static_assert(sus::error::Error<Box<MyError>>);
+static_assert(sus::error::Error<Box<sus::error::DynError>>);
+
+// ==== FromError
 
 TEST(BoxDynError, FromError) {
   {
     auto b = Box<sus::error::DynError>::from(MyError());
-    static_assert(sus::error::Error<decltype(b)>);
     EXPECT_EQ(sus::error::error_display(*b), "my error");
     EXPECT_EQ(sus::error::error_display(b), "my error");
   }
@@ -427,6 +510,8 @@ TEST(BoxDynFn, Example_Call) {
   }
 }
 
+// ==== fmt
+
 TEST(Box, fmt) {
   static_assert(fmt::is_formattable<Box<i32>, char>::value);
   EXPECT_EQ(fmt::format("{}", Box<i32>(12345)), "12345");
@@ -494,5 +579,50 @@ TEST(BoxDeathTest, Example_ResultCustomHierarchy) {
 // PANIC! at 'specific problem has occurred', path/to/sus/result/result.h:790:11
 #endif
 }
+
+// ==== Eq
+
+struct NotEq {};
+static_assert(sus::ops::Eq<Box<i32>>);
+static_assert(!sus::ops::Eq<Box<NotEq>>);
+
+static_assert(Box<i32>(3) == Box<i32>(3));
+static_assert(Box<i32>(3) != Box<i32>(4));
+
+// ==== Ord
+
+struct Ordered {
+  constexpr bool operator==(const Ordered&) const = default;
+  constexpr std::weak_ordering operator<=>(const Ordered& rhs) const {
+    return key <=> rhs.key;
+  }
+
+  i32 key;
+  i32 value;
+};
+
+static_assert(sus::ops::StrongOrd<Box<i32>>);
+static_assert(sus::ops::Ord<Box<Ordered>>);
+static_assert(sus::ops::PartialOrd<Box<f32>>);
+
+static_assert(!sus::ops::StrongOrd<Box<NotEq>>);
+static_assert(!sus::ops::Ord<Box<NotEq>>);
+static_assert(!sus::ops::PartialOrd<Box<NotEq>>);
+
+static_assert(Box<i32>(3) <=> Box<i32>(3) == 0);
+static_assert(Box<i32>(3) <=> Box<i32>(4) < 0);
+static_assert(
+    std::same_as<decltype(Box<i32>(3) <=> Box<i32>(3)), std::strong_ordering>);
+
+static_assert(Box<Ordered>(Ordered{1, 1}) <=> Box<Ordered>(Ordered{1, 3}) == 0);
+static_assert(Box<Ordered>(Ordered{1, 1}) <=> Box<Ordered>(Ordered{2, 1}) < 0);
+static_assert(std::same_as<decltype(Box<Ordered>(Ordered{1, 1}) <=>
+                                    Box<Ordered>(Ordered{1, 2})),
+                           std::weak_ordering>);
+
+static_assert(Box<f32>(3.f) <=> Box<f32>(3.f) == 0);
+static_assert(Box<f32>(4.f) <=> Box<f32>(3.f) > 0);
+static_assert(std::same_as<decltype(Box<f32>(3.f) <=> Box<f32>(3.f)),
+                           std::partial_ordering>);
 
 }  // namespace
