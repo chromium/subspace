@@ -217,7 +217,8 @@ constexpr inline _self& operator=(P v) noexcept {
 
 #else
 
-/// Assignment from unsigned types (u8, u16, etc.) where no bits are lost.
+/// Assignment from unsigned types ([`u8`]($sus::num::u8), [`u16`](
+/// $sus::num::u16), etc.) where no bits are lost.
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`]($sus::num::@doc.self::try_from!unsigned). For lossy conversions
@@ -232,8 +233,8 @@ constexpr inline _self& operator=(U v) noexcept {
   return *this;
 }
 
-/// Assignment from unsigned primitive types (unsigned int, unsigned long, etc.)
-/// where no bits are lost.
+/// Assignment from unsigned primitive types (`unsigned int`, `unsigned long`,
+/// etc.) where no bits are lost.
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`]($sus::num::@doc.self::try_from!unsigned.primitive). For lossy
@@ -286,7 +287,7 @@ _self with_addr(usize addr) const& noexcept {
   return _self(p);
 }
 
-/// Constructs a @doc.self from a pointer.
+/// Constructs a `@doc.self` from a pointer.
 ///
 /// #[doc.overloads=uptr.from.pointer]
 template <class U>
@@ -294,7 +295,7 @@ sus_pure static _self from(U* u) noexcept {
   return _self(reinterpret_cast<_primitive>(u));
 }
 
-/// Tries to construct a @doc.self from a pointer.
+/// Tries to construct a `@doc.self` from a pointer.
 ///
 /// This operation can not fail, so it always returns success.
 ///
@@ -304,7 +305,8 @@ sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
 try_from(U* u) noexcept;
 
-/// Constructs a @doc.self from an unsigned integer type (u8, u16, u32, etc)
+/// Constructs a `@doc.self` from an unsigned integer type ([`u8`](
+/// $sus::num::u8), [`u16`]($sus::num::u16), [`u32`]($sus::num::u32), etc)
 /// with the same size as a pointer.
 ///
 /// #[doc.overloads=unsigned.from.unsigned]
@@ -316,8 +318,9 @@ sus_pure static constexpr _self from(U u) noexcept {
   return _self(static_cast<_primitive>(u.primitive_value));
 }
 
-/// Tries to construct a @doc.self from an unsigned integer type (u8, u16, u32,
-/// etc) with the same size as a pointer.
+/// Tries to construct a `@doc.self` from an unsigned integer type ([`u8`](
+/// $sus::num::u8), [`u16`]($sus::num::u16), [`u32`]($sus::num::u32), etc.)
+/// with the same size as a pointer.
 ///
 /// As the input has the same size, this function can not return an error.
 ///
@@ -328,8 +331,8 @@ sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
 try_from(U u) noexcept;
 
-/// Constructs a @doc.self from an unsigned primitive integer type (unsigned
-/// int, unsigned long, etc) with the same size as a pointer.
+/// Constructs a `@doc.self` from an unsigned primitive integer type (`unsigned
+/// int`, `unsigned long`, etc.) with the same size as a pointer.
 ///
 /// #[doc.overloads=unsigned.from.unsignedprimitive]
 template <UnsignedPrimitiveInteger U>
@@ -340,8 +343,8 @@ sus_pure static constexpr _self from(U u) noexcept {
   return _self(static_cast<_primitive>(u));
 }
 
-/// Construct a @doc.self from an unsigned primitive integer type
-/// (unsigned int, unsigned long, etc) with the same size as a pointer.
+/// Construct a `@doc.self` from an unsigned primitive integer type
+/// (`unsigned int`, `unsigned long`, etc.) with the same size as a pointer.
 ///
 /// As the input has the same size, this function can not return an error.
 ///
@@ -354,7 +357,8 @@ try_from(U u) noexcept;
 
 #else
 
-/// Constructs a @doc.self from an unsigned integer type (u8, u16, u32, etc)
+/// Constructs a `@doc.self` from an unsigned integer type ([`u8`](
+/// $sus::num::u8), [`u16`]($sus::num::u16), [`u32`]($sus::num::u32), etc.)
 /// where no bits are lost.
 ///
 /// #[doc.overloads=unsigned.from.unsigned]
@@ -364,10 +368,10 @@ sus_pure static constexpr _self from(U u) noexcept {
   return _self(static_cast<_primitive>(u.primitive_value));
 }
 
-/// Tries to construct a @doc.self from an unsigned integer type (u8, u16, u32,
-/// etc).
+/// Tries to construct a `@doc.self` from an unsigned integer type ([`u8`](
+/// $sus::num::u8), [`u16`]($sus::num::u16), [`u32`]($sus::num::u32), etc.).
 ///
-/// Returns an error if the source value is outside of the range of @doc.self.
+/// Returns an error if the source value is outside of the range of `@doc.self`.
 ///
 /// #[doc.overloads=unsigned]
 template <Unsigned U>
@@ -375,8 +379,8 @@ sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
 try_from(U u) noexcept;
 
-/// Constructs a @doc.self from an unsigned primitive integer type (unsigned
-/// int, unsigned long, etc) where no bits are lost.
+/// Constructs a `@doc.self` from an unsigned primitive integer type (`unsigned
+/// int`, `unsigned long`, etc.) where no bits are lost.
 ///
 /// #[doc.overloads=unsigned.from.unsignedprimitive]
 template <UnsignedPrimitiveInteger U>
@@ -385,10 +389,10 @@ sus_pure static constexpr _self from(U u) noexcept {
   return _self(static_cast<_primitive>(u));
 }
 
-/// Tries to construct a @doc.self from an unsigned primitive integer type
-/// (unsigned int, unsigned long, etc).
+/// Tries to construct a `@doc.self` from an unsigned primitive integer type
+/// (`unsigned int`, `unsigned long`, etc).
 ///
-/// Returns an error if the source value is outside of the range of @doc.self.
+/// Returns an error if the source value is outside of the range of `@doc.self`.
 ///
 /// #[doc.overloads=unsigned.primitive]
 template <UnsignedPrimitiveInteger U>
@@ -396,10 +400,10 @@ sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
 try_from(U u) noexcept;
 
-/// Tries to construct a @doc.self from a signed integer type (i8, i16, i32,
-/// etc).
+/// Tries to construct a `@doc.self` from a signed integer type ([`i8`](
+/// $sus::num::i8), [`i16`]($sus::num::i16), [`i32`]($sus::num::i32), etc.).
 ///
-/// Returns an error if the source value is outside of the range of @doc.self.
+/// Returns an error if the source value is outside of the range of `@doc.self`.
 ///
 /// #[doc.overloads=signed]
 template <Signed S>
@@ -407,10 +411,10 @@ sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
 try_from(S s) noexcept;
 
-/// Tries to construct a @doc.self from a signed primitive integer type (int,
-/// long, etc).
+/// Tries to construct a `@doc.self` from a signed primitive integer type (
+/// `int`, `long`, etc.).
 ///
-/// Returns an error if the source value is outside of the range of @doc.self.
+/// Returns an error if the source value is outside of the range of `@doc.self`.
 ///
 /// #[doc.overloads=signed.primitive]
 template <SignedPrimitiveInteger S>
@@ -418,9 +422,10 @@ sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
 try_from(S s) noexcept;
 
-/// Tries to construct a @doc.self from a signed enum type (or enum class).
+/// Tries to construct a `@doc.self` from a signed `enum` type (or
+/// `enum class`).
 ///
-/// Returns an error if the source value is outside of the range of @doc.self.
+/// Returns an error if the source value is outside of the range of `@doc.self`.
 ///
 /// #[doc.overloads=signed.enum]
 template <class S>
@@ -429,8 +434,8 @@ sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
 try_from(S s) noexcept;
 
-/// Constructs a @doc.self from an unsigned enum type (or enum class) where no
-/// bits are lost.
+/// Constructs a `@doc.self` from an unsigned `enum` type (or `enum class`)
+/// where no bits are lost.
 ///
 /// #[doc.overloads=unsigned.from.unsignedenum]
 template <class U>
@@ -440,9 +445,10 @@ sus_pure static constexpr _self from(U u) noexcept {
   return _self(static_cast<std::underlying_type_t<U>>(u));
 }
 
-/// Tries to construct a @doc.self from an unsigned enum type (or enum class).
+/// Tries to construct a `@doc.self` from an unsigned `enum` type (or
+/// `enum class`).
 ///
-/// Returns an error if the source value is outside of the range of @doc.self.
+/// Returns an error if the source value is outside of the range of `@doc.self`.
 ///
 /// #[doc.overloads=unsigned.enum]
 template <class U>
@@ -453,7 +459,7 @@ try_from(U u) noexcept;
 
 #endif
 
-/// Constructs a @doc.self from an `Iterator` by computing the product of all
+/// Constructs a `@doc.self` from an `Iterator` by computing the product of all
 /// elements in the iterator.
 ///
 /// This method should rarely be called directly, as it is used to satisfy the
@@ -475,7 +481,7 @@ static constexpr _self from_product(
   return p;
 }
 
-/// Constructs a @doc.self from an `Iterator` by computing the sum of all
+/// Constructs a `@doc.self` from an `Iterator` by computing the sum of all
 /// elements in the itertor.
 ///
 /// This method should rarely be called directly, as it is used to satisfy the
@@ -1082,29 +1088,32 @@ constexpr inline void operator>>=(u32 r) & noexcept {
   primitive_value >>= r.primitive_value;
 }
 
-/// Computes the absolute difference between self and other.
-sus_pure constexpr _self abs_diff(_self r) const& noexcept {
-  if (primitive_value >= r.primitive_value)
-    return _self(__private::unchecked_sub(primitive_value, r.primitive_value));
-  else
-    return _self(__private::unchecked_sub(r.primitive_value, primitive_value));
+/// Computes the absolute difference between `self` and `other`.
+sus_pure constexpr _self abs_diff(_self other) const& noexcept {
+  if (primitive_value >= other.primitive_value) {
+    return _self(
+        __private::unchecked_sub(primitive_value, other.primitive_value));
+  } else {
+    return _self(
+        __private::unchecked_sub(other.primitive_value, primitive_value));
+  }
 }
 
-/// Checked integer addition. Computes self + rhs, returning None if overflow
-/// occurred.
+/// Checked integer addition. Computes `self + rhs`, returning `None` if
+/// overflow occurred.
 sus_pure constexpr ::sus::option::Option<_self> checked_add(
     _self rhs) const& noexcept;
 
 #if !_pointer
 
-/// Checked integer addition with an unsigned rhs. Computes self + rhs,
-/// returning None if overflow occurred.
+/// Checked integer addition with a signed `rhs`. Computes `self + rhs`,
+/// returning `None` if overflow occurred.
 sus_pure constexpr ::sus::option::Option<_self> checked_add_signed(
     _signed rhs) const& noexcept;
 
 #endif
 
-/// Calculates self + rhs
+/// Calculates `self + rhs`.
 ///
 /// Returns a tuple of the addition along with a boolean indicating whether an
 /// arithmetic overflow would occur. If an overflow would have occurred then the
@@ -1114,7 +1123,7 @@ sus_pure constexpr sus::tuple_type::Tuple<_self, bool> overflowing_add(
 
 #if !_pointer
 
-/// Calculates self + rhs with an unsigned rhs
+/// Calculates `self + rhs` with a signed `rhs`.
 ///
 /// Returns a tuple of the addition along with a boolean indicating whether an
 /// arithmetic overflow would occur. If an overflow would have occurred then the
@@ -1124,32 +1133,55 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_add_signed(
 
 #endif
 
-/// Saturating integer addition. Computes self + rhs, saturating at the numeric
-/// bounds instead of overflowing.
+/// Saturating integer addition. Computes `self + rhs`, saturating at the
+/// numeric bounds instead of overflowing.
 sus_pure constexpr _self saturating_add(_self rhs) const& noexcept {
   return _self(__private::saturating_add(primitive_value, rhs.primitive_value));
 }
 
 #if !_pointer
 
-/// Saturating integer addition with an unsigned rhs. Computes self + rhs,
+/// Saturating integer addition with a signed `rhs`. Computes `self + rhs`,
 /// saturating at the numeric bounds instead of overflowing.
 sus_pure constexpr _self saturating_add_signed(_signed rhs) const& noexcept;
+
 #endif
 
-/// Unchecked integer addition. Computes self + rhs, assuming overflow cannot
+#if !_pointer
+
+/// Unchecked integer addition. Computes `self + rhs`, assuming overflow cannot
 /// occur.
 ///
 /// # Safety
-/// This function is allowed to result in undefined behavior when `self + rhs >
-/// @doc.self::MAX` or `self + rhs < @doc.self::MIN`, i.e. when `checked_add()`
-/// would return None.
+/// This function is allowed to result in undefined behavior when
+/// `self + rhs > `[`MAX`]($sus::num::@doc.self::MAX) or
+/// `self + rhs < `[`MIN`]($sus::num::@doc.self::MIN), i.e. when
+/// [`checked_add`]($sus::num::@doc.self::checked_add)
+/// would return `None`.
 sus_pure inline constexpr _self unchecked_add(::sus::marker::UnsafeFnMarker,
                                               _self rhs) const& noexcept {
   return _self(__private::unchecked_add(primitive_value, rhs.primitive_value));
 }
 
-/// Wrapping (modular) addition. Computes self + rhs, wrapping around at the
+#else
+
+/// Unchecked integer addition. Computes `self + rhs`, assuming overflow cannot
+/// occur.
+///
+/// # Safety
+/// This function is allowed to result in undefined behavior when
+/// `self + rhs > `[`MAX_BIT_PATTERN`]($sus::num::@doc.self::MAX_BIT_PATTERN) or
+/// `self + rhs < `[`MIN`]($sus::num::@doc.self::MIN), i.e. when
+/// [`checked_add`]($sus::num::@doc.self::checked_add)
+/// would return `None`.
+sus_pure inline constexpr _self unchecked_add(::sus::marker::UnsafeFnMarker,
+                                              _self rhs) const& noexcept {
+  return _self(__private::unchecked_add(primitive_value, rhs.primitive_value));
+}
+
+#endif
+
+/// Wrapping (modular) addition. Computes `self + rhs`, wrapping around at the
 /// boundary of the type.
 sus_pure constexpr _self wrapping_add(_self rhs) const& noexcept {
   return _self(__private::wrapping_add(primitive_value, rhs.primitive_value));
@@ -1157,17 +1189,18 @@ sus_pure constexpr _self wrapping_add(_self rhs) const& noexcept {
 
 #if !_pointer
 
-/// Wrapping (modular) addition with an unsigned rhs. Computes self + rhs,
+/// Wrapping (modular) addition with an unsigned rhs. Computes `self + rhs`,
 /// wrapping around at the boundary of the type.
 sus_pure constexpr _self wrapping_add_signed(_signed rhs) const& noexcept;
 
 #endif
 
-/// Checked integer division. Computes self / rhs, returning None if `rhs == 0`.
+/// Checked integer division. Computes `self / rhs`, returning `None` if
+/// `rhs == 0`.
 sus_pure constexpr ::sus::option::Option<_self> checked_div(
     _self rhs) const& noexcept;
 
-/// Calculates the divisor when self is divided by rhs.
+/// Calculates the divisor when `self` is divided by `rhs`.
 ///
 /// Returns a tuple of the divisor along with a boolean indicating whether an
 /// arithmetic overflow would occur. Note that for unsigned integers overflow
@@ -1178,8 +1211,10 @@ sus_pure constexpr ::sus::option::Option<_self> checked_div(
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_div(
     _self rhs) const& noexcept;
 
-/// Saturating integer division. Computes self / rhs, saturating at the  numeric
-/// bounds instead of overflowing.
+/// Saturating integer division. Computes `self / rhs`, saturating at the
+/// numeric bounds instead of overflowing. Note that for unsigned integers
+/// overflow never occurs, so the value will always be strictly the result of
+/// division.
 ///
 /// # Panics
 /// This function will panic if `rhs` is 0.
@@ -1189,7 +1224,7 @@ sus_pure constexpr _self saturating_div(_self rhs) const& noexcept {
   return _self(__private::unchecked_div(primitive_value, rhs.primitive_value));
 }
 
-/// Wrapping (modular) division. Computes self / rhs. Wrapped division on
+/// Wrapping (modular) division. Computes `self / rhs`. Wrapped division on
 /// unsigned types is just normal division. There's no way wrapping could ever
 /// happen. This function exists, so that all operations are accounted for in
 /// the wrapping operations.
@@ -1202,12 +1237,12 @@ sus_pure constexpr _self wrapping_div(_self rhs) const& noexcept {
   return _self(__private::unchecked_div(primitive_value, rhs.primitive_value));
 }
 
-/// Checked integer multiplication. Computes `self * rhs`, returning None if
+/// Checked integer multiplication. Computes `self * rhs`, returning `None` if
 /// overflow occurred.
 sus_pure constexpr ::sus::option::Option<_self> checked_mul(
     _self rhs) const& noexcept;
 
-/// Calculates the multiplication of self and `rhs`.
+/// Calculates the multiplication of `self` and `rhs`.
 ///
 /// Returns a tuple of the multiplication along with a boolean indicating
 /// whether an arithmetic overflow would occur. If an overflow would have
@@ -1221,30 +1256,52 @@ sus_pure constexpr _self saturating_mul(_self rhs) const& noexcept {
   return _self(__private::saturating_mul(primitive_value, rhs.primitive_value));
 }
 
+#if !_pointer
+
 /// Unchecked integer multiplication. Computes `self * rhs`, assuming overflow
 /// cannot occur.
 ///
 /// # Safety
-/// This function is allowed to result in undefined behavior when `self * rhs >
-/// @doc.self::MAX` or `self * rhs < @doc.self::MIN`, i.e. when `checked_mul()`
-/// would return None.
+/// This function is allowed to result in undefined behavior when
+/// `self * rhs > `[`MAX`]($sus::num::@doc.self::MAX) or
+/// `self * rhs < `[`MIN`]($sus::num::@doc.self::MIN), i.e. when
+/// [`checked_mul`]($sus::num::@doc.self::checked_mul)
+/// would return `None`.
 sus_pure constexpr _self unchecked_mul(::sus::marker::UnsafeFnMarker,
                                        _self rhs) const& noexcept {
   return _self(__private::unchecked_mul(primitive_value, rhs.primitive_value));
 }
 
-/// Wrapping (modular) multiplication. Computes self * rhs, wrapping around
+#else
+
+/// Unchecked integer multiplication. Computes `self * rhs`, assuming overflow
+/// cannot occur.
+///
+/// # Safety
+/// This function is allowed to result in undefined behavior when
+/// `self * rhs > `[`MAX_BIT_PATTERN`]($sus::num::@doc.self::MAX_BIT_PATTERN) or
+/// `self * rhs < `[`MIN`]($sus::num::@doc.self::MIN), i.e. when
+/// [`checked_mul`]($sus::num::@doc.self::checked_mul)
+/// would return `None`.
+sus_pure constexpr _self unchecked_mul(::sus::marker::UnsafeFnMarker,
+                                       _self rhs) const& noexcept {
+  return _self(__private::unchecked_mul(primitive_value, rhs.primitive_value));
+}
+
+#endif
+
+/// Wrapping (modular) multiplication. Computes `self * rhs`, wrapping around
 /// at the boundary of the type.
 sus_pure constexpr _self wrapping_mul(_self rhs) const& noexcept {
   return _self(__private::wrapping_mul(primitive_value, rhs.primitive_value));
 }
 
-/// Checked negation. Computes -self, returning None unless `self == 0`.
+/// Checked negation. Computes `-self`, returning None unless `self == 0`.
 ///
 /// Note that negating any positive integer will overflow.
 sus_pure constexpr ::sus::option::Option<_self> checked_neg() const& noexcept;
 
-/// Negates self in an overflowing fashion.
+/// Negates `self` in an overflowing fashion.
 ///
 /// Returns `~self + 1` using wrapping operations to return the value that
 /// represents the negation of this unsigned value. Note that for positive
@@ -1265,12 +1322,12 @@ sus_pure constexpr _self wrapping_neg() const& noexcept {
   return (_self(_primitive{0u})).wrapping_sub(*this);
 }
 
-/// Checked integer remainder. Computes `self % rhs`, returning None if `rhs ==
-/// 0`.
+/// Checked integer remainder. Computes `self % rhs`, returning `None` if
+/// `rhs == 0`.
 sus_pure constexpr ::sus::option::Option<_self> checked_rem(
     _self rhs) const& noexcept;
 
-/// Calculates the remainder when self is divided by rhs.
+/// Calculates the remainder when `self` is divided by `rhs`.
 ///
 /// Returns a tuple of the remainder after dividing along with a boolean
 /// indicating whether an arithmetic overflow would occur. Note that for
@@ -1282,7 +1339,7 @@ sus_pure constexpr ::sus::option::Option<_self> checked_rem(
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_rem(
     _self rhs) const& noexcept;
 
-/// Wrapping (modular) remainder. Computes self % rhs. Wrapped remainder
+/// Wrapping (modular) remainder. Computes `self % rhs`. Wrapped remainder
 /// calculation on unsigned types is just the regular remainder calculation.
 ///
 /// There's no way wrapping could ever happen. This function exists, so that
@@ -1299,7 +1356,7 @@ sus_pure constexpr _self wrapping_rem(_self rhs) const& noexcept {
 /// Performs Euclidean division.
 ///
 /// Since, for the positive integers, all common definitions of division are
-/// equal, this is exactly equal to self / rhs.
+/// equal, this is exactly equal to `self / rhs`.
 ///
 /// # Panics
 /// This function will panic if `rhs` is 0.
@@ -1309,31 +1366,33 @@ sus_pure constexpr _self div_euclid(_self rhs) const& noexcept {
   return _self(__private::unchecked_div(primitive_value, rhs.primitive_value));
 }
 
-/// Checked Euclidean division. Computes self.div_euclid(rhs), returning
-/// None if rhs == 0.
+/// Checked Euclidean division. Computes `self.`[`div_euclid`](
+/// $sus::num::@doc.self::div_euclid)`(rhs)`, returning `None` if `rhs == 0`.
 sus_pure constexpr ::sus::option::Option<_self> checked_div_euclid(
     _self rhs) const& noexcept;
 
-/// Calculates the quotient of Euclidean division self.div_euclid(rhs).
+/// Calculates the quotient of Euclidean division `self.`[`div_euclid`](
+/// $sus::num::@doc.self::div_euclid)`(rhs)`.
 ///
 /// Returns a tuple of the divisor along with a boolean indicating whether an
 /// arithmetic overflow would occur. Note that for unsigned integers overflow
 /// never occurs, so the second value is always false. Since, for the positive
 /// integers, all common definitions of division are equal, this is exactly
-/// equal to self.overflowing_div(rhs).
+/// equal to `self.overflowing_div(rhs)`.
 ///
 /// # Panics
 /// This function will panic if `rhs` is 0.
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_div_euclid(
     _self rhs) const& noexcept;
 
-/// Wrapping Euclidean division. Computes self.div_euclid(rhs). Wrapped division
+/// Wrapping Euclidean division. Computes `self.`[`div_euclid`](
+/// $sus::num::@doc.self::div_euclid)`(rhs)`. Wrapped division
 /// on unsigned types is just normal division.
 ///
 /// There's no way wrapping could ever happen. This function exists so that all
 /// operations are accounted for in the wrapping operations. Since, for the
 /// positive integers, all common definitions of division are equal, this is
-/// exactly equal to self.wrapping_div(rhs).
+/// exactly equal to `self.wrapping_div(rhs)`.
 ///
 /// # Panics
 /// This function will panic if `rhs` is 0.
@@ -1343,10 +1402,10 @@ sus_pure constexpr _self wrapping_div_euclid(_self rhs) const& noexcept {
   return _self(__private::unchecked_div(primitive_value, rhs.primitive_value));
 }
 
-/// Calculates the least remainder of self (mod rhs).
+/// Calculates the least remainder of `self` (mod `rhs`).
 ///
 /// Since, for the positive integers, all common definitions of division are
-/// equal, this is exactly equal to self % rhs. \
+/// equal, this is exactly equal to `self % rhs`.
 ///
 /// # Panics
 /// This function will panic if `rhs` is 0.
@@ -1356,31 +1415,34 @@ sus_pure constexpr _self rem_euclid(_self rhs) const& noexcept {
   return _self(__private::unchecked_rem(primitive_value, rhs.primitive_value));
 }
 
-/// Checked Euclidean modulo. Computes self.rem_euclid(rhs), returning None if
+/// Checked Euclidean modulo. Computes `self.`[`rem_euclid`](
+/// $sus::num::@doc.self::rem_euclid)`(rhs)`, returning `None` if
 /// `rhs == 0`.
 sus_pure constexpr ::sus::option::Option<_self> checked_rem_euclid(
     _self rhs) const& noexcept;
 
-/// Calculates the remainder self.rem_euclid(rhs) as if by Euclidean division.
+/// Calculates the remainder `self.`[`rem_euclid`](
+/// $sus::num::@doc.self::rem_euclid)`(rhs)` as if by Euclidean division.
 ///
 /// Returns a tuple of the modulo after dividing along with a boolean indicating
 /// whether an arithmetic overflow would occur. Note that for unsigned integers
 /// overflow never occurs, so the second value is always false. Since, for the
 /// positive integers, all common definitions of division are equal, this
-/// operation is exactly equal to self.overflowing_rem(rhs).
+/// operation is exactly equal to `self.overflowing_rem(rhs)`.
 ///
 /// # Panics
 /// This function will panic if `rhs` is 0.
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_rem_euclid(
     _self rhs) const& noexcept;
 
-/// Wrapping Euclidean modulo. Computes self.rem_euclid(rhs). Wrapped modulo
+/// Wrapping Euclidean modulo. Computes `self.`[`rem_euclid`](
+/// $sus::num::@doc.self::rem_euclid)`(rhs)`. Wrapped modulo
 /// calculation on unsigned types is just the regular remainder calculation.
 ///
 /// There’s no way wrapping could ever happen. This function exists, so that all
 /// operations are accounted for in the wrapping operations. Since, for the
 /// positive integers, all common definitions of division are equal, this is
-/// exactly equal to self.wrapping_rem(rhs). \
+/// exactly equal to `self.wrapping_rem(rhs)`.
 ///
 /// # Panics
 /// This function will panic if `rhs` is 0.
@@ -1390,64 +1452,67 @@ sus_pure constexpr _self wrapping_rem_euclid(_self rhs) const& noexcept {
   return _self(__private::unchecked_rem(primitive_value, rhs.primitive_value));
 }
 
-/// Checked shift left. Computes `*this << rhs`, returning None if rhs is
-/// larger than or equal to the number of bits in self.
+/// Checked shift left. Computes `self << rhs`, returning `None` if `rhs` is
+/// larger than or equal to the number of bits in `self`.
 sus_pure constexpr ::sus::option::Option<_self> checked_shl(
     u32 rhs) const& noexcept;
 
-/// Shifts self left by rhs bits.
+/// Shifts self left by `rhs` bits.
 ///
 /// Returns a tuple of the shifted version of self along with a boolean
 /// indicating whether the shift value was larger than or equal to the number of
-/// bits. If the shift value is too large, then value is masked (N-1) where N is
-/// the number of bits, and this value is then used to perform the shift.
+/// bits. If the shift value is too large, then value is masked by `(N-1)` where
+/// `N` is the number of bits, and this value is then used to perform the shift.
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_shl(
     u32 rhs) const& noexcept;
 
-/// Panic-free bitwise shift-left; yields `*this << mask(rhs)`, where mask
+/// Panic-free bitwise shift-left; yields `self << mask(rhs)`, where mask
 /// removes any high-order bits of `rhs` that would cause the shift to exceed
 /// the bitwidth of the type.
 ///
 /// Note that this is not the same as a rotate-left; the RHS of a wrapping
 /// shift-left is restricted to the range of the type, rather than the bits
-/// shifted out of the LHS being returned to the other end. The primitive
-/// integer types all implement a rotate_left function, which may be what you
+/// shifted out of the LHS being returned to the other end. The Subspace
+/// integer types all implement a [`rotate_left`](
+/// $sus::num::@doc.self::rotate_left) function, which may be what you
 /// want instead.
 sus_pure constexpr _self wrapping_shl(u32 rhs) const& noexcept {
   return _self(
       __private::shl_with_overflow(primitive_value, rhs.primitive_value).value);
 }
 
-/// Checked shift right. Computes `*this >> rhs`, returning None if rhs is
-/// larger than or equal to the number of bits in self.
+/// Checked shift right. Computes `self >> rhs`, returning `None` if `rhs` is
+/// larger than or equal to the number of bits in `self`.
 sus_pure constexpr ::sus::option::Option<_self> checked_shr(
     u32 rhs) const& noexcept;
 
-/// Shifts self right by rhs bits.
+/// Shifts self right by `rhs` bits.
 ///
 /// Returns a tuple of the shifted version of self along with a boolean
 /// indicating whether the shift value was larger than or equal to the number of
-/// bits. If the shift value is too large, then value is masked (N-1) where N is
-/// the number of bits, and this value is then used to perform the shift.
+/// bits. If the shift value is too large, then value is masked by `(N-1)`
+/// where `N` is the number of bits, and this value is then used to perform the
+/// shift.
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_shr(
     u32 rhs) const& noexcept;
 
-/// Panic-free bitwise shift-right; yields `*this >> mask(rhs)`, where mask
+/// Panic-free bitwise shift-right; yields `self >> mask(rhs)`, where mask
 /// removes any high-order bits of `rhs` that would cause the shift to exceed
 /// the bitwidth of the type.
 ///
 /// Note that this is not the same as a rotate-right; the RHS of a wrapping
 /// shift-right is restricted to the range of the type, rather than the bits
-/// shifted out of the LHS being returned to the other end. The primitive
-/// integer types all implement a rotate_right function, which may be what you
+/// shifted out of the LHS being returned to the other end. The Subspace
+/// integer types all implement a [`rotate_right`](
+/// $sus::num::@doc.self::rotate_right) function, which may be what you
 /// want instead.
 sus_pure constexpr _self wrapping_shr(u32 rhs) const& noexcept {
   return _self(
       __private::shr_with_overflow(primitive_value, rhs.primitive_value).value);
 }
 
-/// Checked integer subtraction. Computes self - rhs, returning None if overflow
-/// occurred.
+/// Checked integer subtraction. Computes `self - rhs`, returning `None` if
+/// overflow occurred.
 sus_pure constexpr ::sus::option::Option<_self> checked_sub(_self rhs) const&;
 
 /// Calculates `self - rhs`.
@@ -1458,26 +1523,48 @@ sus_pure constexpr ::sus::option::Option<_self> checked_sub(_self rhs) const&;
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_sub(
     _self rhs) const& noexcept;
 
-/// Saturating integer subtraction. Computes self - rhs, saturating at the
+/// Saturating integer subtraction. Computes `self - rhs`, saturating at the
 /// numeric bounds instead of overflowing.
 sus_pure constexpr _self saturating_sub(_self rhs) const& {
   return _self(__private::saturating_sub(primitive_value, rhs.primitive_value));
 }
 
-/// Unchecked integer subtraction. Computes self - rhs, assuming overflow cannot
-/// occur.
+#if !_pointer
+
+/// Unchecked integer subtraction. Computes `self - rhs`, assuming overflow
+/// cannot occur.
 ///
 /// # Safety
-/// This function is allowed to result in undefined behavior when `self
-/// - rhs > @doc.self::MAX` or `self - rhs < @doc.self::MIN`, i.e. when
-/// `checked_sub()` would return None.
+/// This function is allowed to result in undefined behavior when
+/// `self - rhs > `[`MAX`]($sus::num::@doc.self::MAX) or
+/// `self - rhs < `[`MIN`]($sus::num::@doc.self::MIN), i.e. when
+/// [`checked_sub`]($sus::num::@doc.self::checked_sub)
+/// would return `None`.
 sus_pure constexpr _self unchecked_sub(::sus::marker::UnsafeFnMarker,
                                        _self rhs) const& noexcept {
   return _self(__private::unchecked_sub(primitive_value, rhs.primitive_value));
 }
 
-/// Wrapping (modular) subtraction. Computes self - rhs, wrapping around at the
-/// boundary of the type.
+#else
+
+/// Unchecked integer subtraction. Computes `self - rhs`, assuming overflow
+/// cannot occur.
+///
+/// # Safety
+/// This function is allowed to result in undefined behavior when
+/// `self - rhs > `[`MAX_BIT_PATTERN`]($sus::num::@doc.self::MAX_BIT_PATTERN) or
+/// `self - rhs < `[`MIN`]($sus::num::@doc.self::MIN), i.e. when
+/// [`checked_sub`]($sus::num::@doc.self::checked_sub)
+/// would return `None`.
+sus_pure constexpr _self unchecked_sub(::sus::marker::UnsafeFnMarker,
+                                       _self rhs) const& noexcept {
+  return _self(__private::unchecked_sub(primitive_value, rhs.primitive_value));
+}
+
+#endif
+
+/// Wrapping (modular) subtraction. Computes `self - rhs`, wrapping around at
+/// the boundary of the type.
 sus_pure constexpr _self wrapping_sub(_self rhs) const& noexcept {
   return _self(__private::wrapping_sub(primitive_value, rhs.primitive_value));
 }
@@ -1555,8 +1642,8 @@ sus_pure constexpr _self pow(u32 rhs) const& noexcept {
   return _self(out.value);
 }
 
-/// Checked exponentiation. Computes `@doc.self::pow(exp)`, returning None if
-/// overflow occurred.
+/// Checked exponentiation. Computes [`pow`]($sus::num::@doc.self::pow),
+/// returning `None` if overflow occurred.
 sus_pure constexpr ::sus::option::Option<_self> checked_pow(
     u32 rhs) const& noexcept;
 
@@ -1567,15 +1654,15 @@ sus_pure constexpr ::sus::option::Option<_self> checked_pow(
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_pow(
     u32 exp) const& noexcept;
 
-/// Wrapping (modular) exponentiation. Computes self.pow(exp), wrapping around
-/// at the boundary of the type.
+/// Wrapping (modular) exponentiation. Computes [`pow`](
+/// $sus::num::@doc.self::pow), wrapping around at the boundary of the type.
 sus_pure constexpr _self wrapping_pow(u32 exp) const& noexcept {
   return _self(__private::wrapping_pow(primitive_value, exp.primitive_value));
 }
 
 /// Returns the base 2 logarithm of the number, rounded down.
 ///
-/// Returns None if the number is zero.
+/// Returns `None` if the number is zero.
 sus_pure constexpr ::sus::option::Option<u32> checked_log2() const& noexcept;
 
 /// Returns the base 2 logarithm of the number, rounded down.
@@ -1601,16 +1688,19 @@ sus_pure constexpr u32 log10() const& noexcept;
 /// Returns None if the number is zero, or if the base is not at least 2.
 ///
 /// This method might not be optimized owing to implementation details;
-/// `checked_log2` can produce results more efficiently for base 2, and
-/// `checked_log10` can produce results more efficiently for base 10.
+/// [`checked_log2`]($sus::num::@doc.self::checked_log2) can produce results
+/// more efficiently for base 2, and
+/// [`checked_log10`]($sus::num::@doc.self::checked_log10) can produce results
+/// more efficiently for base 10.
 sus_pure constexpr ::sus::option::Option<u32> checked_log(
     _self base) const& noexcept;
 
 /// Returns the logarithm of the number with respect to an arbitrary base,
 /// rounded down.
 ///
-/// This method might not be optimized owing to implementation details; log2 can
-/// produce results more efficiently for base 2, and log10 can produce results
+/// This method might not be optimized owing to implementation details;
+/// [`log2`]($sus::num::@doc.self::log2) can produce results more efficiently
+/// for base 2, and [`log10`]($sus::num::@doc.self::log10) can produce results
 /// more efficiently for base 10.
 ///
 /// # Panics
@@ -1627,21 +1717,21 @@ sus_pure constexpr bool is_power_of_two() const& noexcept {
 ///
 /// # Panics
 /// The function panics when the return value overflows (i.e.,
-/// `self > (1 << (N-1))` for type uN).
+/// `self > (1 << (N-1))` for type `uN`).
 sus_pure constexpr _self next_power_of_two() const& noexcept {
   const auto one_less =
       __private::one_less_than_next_power_of_two(primitive_value);
   return _self(one_less) + _self(_primitive{1u});
 }
 
-/// Returns the smallest power of two greater than or equal to n.
+/// Returns the smallest power of two greater than or equal to `self`.
 ///
 /// If the next power of two is greater than the type's maximum value, None is
 /// returned, otherwise the power of two is wrapped in Some.
 sus_pure constexpr ::sus::option::Option<_self> checked_next_power_of_two()
     const& noexcept;
 
-/// Returns the smallest power of two greater than or equal to n.
+/// Returns the smallest power of two greater than or equal to `self`.
 ///
 /// If the next power of two is greater than the type's maximum value, the
 /// return value is wrapped to 0.

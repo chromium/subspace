@@ -1408,8 +1408,8 @@ sus_pure constexpr _self div_euclid(_self rhs) const& noexcept {
                                rhs.primitive_value);
 }
 
-/// Checked Euclidean division. Computes [`div_euclid`](
-/// $sus::num::@doc.self::div_euclid), returning
+/// Checked Euclidean division. Computes `self.`[`div_euclid`](
+/// $sus::num::@doc.self::div_euclid)`(rhs)`, returning
 /// `None` if `rhs == 0` or the division results in overflow.
 sus_pure constexpr Option<_self> checked_div_euclid(_self rhs) const& noexcept {
   if (__private::div_overflows(primitive_value, rhs.primitive_value))
@@ -1421,8 +1421,8 @@ sus_pure constexpr Option<_self> checked_div_euclid(_self rhs) const& noexcept {
   }
 }
 
-/// Calculates the quotient of Euclidean division [`div_euclid`](
-/// $sus::num::@doc.self::div_euclid).
+/// Calculates the quotient of Euclidean division `self.`[`div_euclid`](
+/// $sus::num::@doc.self::div_euclid)`(rhs)`.
 ///
 /// Returns a tuple of the divisor along with a boolean indicating whether an
 /// arithmetic overflow would occur. If an overflow would occur then self is
@@ -1445,8 +1445,8 @@ sus_pure constexpr Tuple overflowing_div_euclid(_self rhs) const& noexcept {
   }
 }
 
-/// Wrapping Euclidean division. Computes [`div_euclid`](
-/// $sus::num::@doc.self::div_euclid), wrapping around at the boundary of the
+/// Wrapping Euclidean division. Computes `self.`[`div_euclid`](
+/// $sus::num::@doc.self::div_euclid)`(rhs)`, wrapping around at the boundary of the
 /// type.
 ///
 /// Wrapping will only occur in `MIN / -1` on a signed type (where `MIN` is the
@@ -1484,8 +1484,8 @@ sus_pure constexpr _self rem_euclid(_self rhs) const& noexcept {
                                rhs.primitive_value);
 }
 
-/// Checked Euclidean remainder. Computes [`rem_euclid`](
-/// $sus::num::@doc.self::rem_euclid), returning
+/// Checked Euclidean remainder. Computes `self.`[`rem_euclid`](
+/// $sus::num::@doc.self::rem_euclid)`(rhs)`, returning
 /// `None` if `rhs == 0` or the division results in overflow.
 sus_pure constexpr Option<_self> checked_rem_euclid(_self rhs) const& noexcept {
   if (__private::div_overflows(primitive_value, rhs.primitive_value))
@@ -1497,8 +1497,8 @@ sus_pure constexpr Option<_self> checked_rem_euclid(_self rhs) const& noexcept {
   }
 }
 
-/// Overflowing Euclidean remainder. Calculates [`rem_euclid`](
-/// $sus::num::@doc.self::rem_euclid).
+/// Overflowing Euclidean remainder. Calculates `self.`[`rem_euclid`](
+/// $sus::num::@doc.self::rem_euclid)`(rhs)`.
 ///
 /// Returns a tuple of the remainder after dividing along with a boolean
 /// indicating whether an arithmetic overflow would occur. If an overflow
@@ -1521,8 +1521,8 @@ sus_pure constexpr Tuple overflowing_rem_euclid(_self rhs) const& noexcept {
   }
 }
 
-/// Wrapping Euclidean remainder. Computes [`rem_euclid`](
-/// $sus::num::@doc.self::rem_euclid), wrapping
+/// Wrapping Euclidean remainder. Computes `self.`[`rem_euclid`](
+/// $sus::num::@doc.self::rem_euclid)`(rhs)`, wrapping
 /// around at the boundary of the type.
 ///
 /// Wrapping will only occur in `MIN % -1` on a signed type (where `MIN` is the
