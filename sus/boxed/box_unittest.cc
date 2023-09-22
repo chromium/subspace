@@ -18,6 +18,7 @@
 #include "sus/error/error.h"
 #include "sus/iter/iterator.h"
 #include "sus/iter/once.h"
+#include "sus/ops/range.h"
 #include "sus/prelude.h"
 
 namespace test::box {
@@ -632,6 +633,8 @@ static_assert(
     sus::iter::DoubleEndedIterator<Box<decltype(sus::iter::once(2_i32))>, i32>);
 static_assert(
     sus::iter::ExactSizeIterator<Box<decltype(sus::iter::once(2_i32))>, i32>);
+static_assert(sus::iter::TrustedLen<decltype(sus::iter::once(2_i32))>);
+static_assert(sus::iter::TrustedLen<Box<decltype(sus::iter::once(2_i32))>>);
 
 TEST(Box, Iterator) {
   auto b = sus::Box<sus::ops::Range<i32>>(sus::ops::range(0_i32, 3_i32));
