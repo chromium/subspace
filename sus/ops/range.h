@@ -61,6 +61,8 @@ class RangeIter;
 template <class Final, class T>
 class RangeIter<Final, T, true> : public ::sus::iter::IteratorBase<Final, T> {
  public:
+  using Item = T;
+
   // sus::iter::Iterator trait.
   constexpr Option<T> next() noexcept {
     if (static_cast<Final*>(this)->start == static_cast<Final*>(this)->finish)
@@ -71,13 +73,18 @@ class RangeIter<Final, T, true> : public ::sus::iter::IteratorBase<Final, T> {
                                 static_cast<Final*>(this)->start)));
   }
 
-  // sus::iter::Iterator trait optional method.
+  // sus::iter::Iterator trait.
   constexpr ::sus::iter::SizeHint size_hint() const noexcept {
-    Option<::sus::num::usize> steps = ::sus::iter::__private::steps_between(
+    const usize rem = exact_size_hint();
+    return ::sus::iter::SizeHint(rem, ::sus::Option<usize>(rem));
+  }
+
+  // sus::iter::ExactSizeIterator trait.
+  constexpr usize exact_size_hint() const noexcept {
+    Option<usize> steps = ::sus::iter::__private::steps_between(
         static_cast<const Final*>(this)->start,
         static_cast<const Final*>(this)->finish);
-    const ::sus::num::usize lower = steps.is_some() ? *steps : 0_usize;
-    return ::sus::iter::SizeHint(lower, ::sus::move(steps));
+    return sus::move(steps).unwrap_or_default();
   }
 
   // sus::iter::DoubleEndedIterator trait.
@@ -110,6 +117,8 @@ template <class Final, class T>
 class RangeFromIter<Final, T, true>
     : public ::sus::iter::IteratorBase<Final, T> {
  public:
+  using Item = T;
+
   /// sus::iter::Iterator trait.
   constexpr Option<T> next() noexcept {
     return Option<T>(
@@ -119,7 +128,8 @@ class RangeFromIter<Final, T, true>
   }
   /// sus::iter::Iterator trait.
   constexpr ::sus::iter::SizeHint size_hint() const noexcept {
-    return ::sus::iter::SizeHint(0u, ::sus::Option<::sus::num::usize>());
+    return ::sus::iter::SizeHint(::sus::iter::__private::step_max<T>(),
+                                 ::sus::Option<::sus::num::usize>());
   }
 
   // TODO: Provide and test overrides of Iterator min(), max(), count(),
