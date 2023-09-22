@@ -1114,4 +1114,17 @@ TEST(f32, NextToward) {
   EXPECT_LT((0_f32).next_toward(-1_f32), 0_f32);
 }
 
+// ==== AsPtr / AsMutPtr
+
+static_assert([] {
+  f32 f;
+  static_assert(std::same_as<decltype(f.as_ptr()), const float*>);
+  return f.as_ptr() == &f.primitive_value;
+}());
+static_assert([] {
+  f32 f;
+  static_assert(std::same_as<decltype(f.as_mut_ptr()), float*>);
+  return f.as_mut_ptr() == &f.primitive_value;
+}());
+
 }  // namespace

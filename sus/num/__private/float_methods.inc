@@ -236,6 +236,23 @@ sus_pure constexpr inline operator U() const noexcept {
   return primitive_value;
 }
 
+/// Returns a mutable pointer to the underlying C++ primitive value type.
+///
+/// This allows Subspace numerics be used with APIs that expect a pointer to a
+/// C++ primitive type.
+sus_pure constexpr _primitive* as_mut_ptr() & noexcept {
+  return &primitive_value;
+}
+
+/// Returns a const pointer to the underlying C++ primitive value type.
+///
+/// This allows Subspace numerics be used with APIs that expect a pointer to a
+/// C++ primitive type.
+sus_pure constexpr const _primitive* as_ptr() const& noexcept {
+  return &primitive_value;
+}
+sus_pure constexpr const _primitive* as_ptr() && noexcept = delete;
+
 /// Satisfies the [`Eq`]($sus::ops::Eq) concept for floating point numbers.
 /// #[doc.overloads=float.eq]
 [[nodiscard]] sus_pure_const friend constexpr inline bool operator==(
