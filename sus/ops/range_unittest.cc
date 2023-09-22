@@ -53,12 +53,14 @@ static_assert(!sus::construct::Default<sus::ops::RangeTo<NoDefault>>);
 static_assert(sus::construct::Default<sus::ops::RangeFull<NoDefault>>);
 
 // Range and RangeFrom on integer types satisify Iterator, and Range satisfies
-// DoubleEndedIterator.
+// DoubleEndedIterator and ExactSizeIterator.
 static_assert(sus::iter::Iterator<sus::ops::Range<usize>, usize>);
 static_assert(sus::iter::DoubleEndedIterator<sus::ops::Range<usize>, usize>);
+static_assert(sus::iter::ExactSizeIterator<sus::ops::Range<usize>, usize>);
 static_assert(sus::iter::Iterator<sus::ops::RangeFrom<usize>, usize>);
 static_assert(
     !sus::iter::DoubleEndedIterator<sus::ops::RangeFrom<usize>, usize>);
+static_assert(!sus::iter::ExactSizeIterator<sus::ops::RangeFrom<usize>, usize>);
 static_assert(!sus::iter::Iterator<sus::ops::RangeTo<usize>, usize>);
 static_assert(!sus::iter::Iterator<sus::ops::RangeFull<usize>, usize>);
 
@@ -242,19 +244,50 @@ static_assert(
 
 TEST(Range, Iter) {
   auto it = "1..5"_r;
+  EXPECT_EQ(it.exact_size_hint(), 4u);
+  EXPECT_EQ(it.size_hint().lower, 4u);
+  EXPECT_EQ(it.size_hint().upper, sus::some(4u));
   EXPECT_EQ(it.next().unwrap(), 1u);
   EXPECT_EQ(it.next().unwrap(), 2u);
   EXPECT_EQ(it.next().unwrap(), 3u);
+  EXPECT_EQ(it.exact_size_hint(), 1u);
+  EXPECT_EQ(it.size_hint().lower, 1u);
+  EXPECT_EQ(it.size_hint().upper, sus::some(1u));
   EXPECT_EQ(it.next().unwrap(), 4u);
+  EXPECT_EQ(it.exact_size_hint(), 0u);
+  EXPECT_EQ(it.size_hint().lower, 0u);
+  EXPECT_EQ(it.size_hint().upper, sus::some(0u));
   EXPECT_EQ(it.next(), sus::None);
 
+  {
+    // uptr is special, as it does not convert from integers, and has a separate
+    // Step impl.
+    auto itp = sus::ops::range(uptr(), uptr() + 4u);
+    EXPECT_EQ(itp.size_hint().lower, 4u);
+    EXPECT_EQ(itp.size_hint().upper, sus::some(4u));
+    EXPECT_EQ(itp.exact_size_hint(), 4u);
+    EXPECT_EQ(itp.next().unwrap(), uptr());
+    EXPECT_EQ(itp.next().unwrap(), uptr() + 1u);
+  }
+
   auto it2 = "3.."_r;
+  EXPECT_EQ(it2.size_hint().lower, usize::MAX);
+  EXPECT_EQ(it2.size_hint().upper, sus::none());
   EXPECT_EQ(it2.next().unwrap(), 3u);
   EXPECT_EQ(it2.next().unwrap(), 4u);
   EXPECT_EQ(it2.next().unwrap(), 5u);
   EXPECT_EQ(it2.next().unwrap(), 6u);
   EXPECT_EQ(it2.next().unwrap(), 7u);
   // Never ends..
+
+  {
+    // uptr is special, as it has no `MAX`, but the size_hint is still right.
+    auto itp = sus::ops::range_from(uptr());
+    EXPECT_EQ(itp.size_hint().lower, uptr::MAX_BIT_PATTERN);
+    EXPECT_EQ(itp.size_hint().upper, sus::none());
+    EXPECT_EQ(itp.next().unwrap(), uptr());
+    EXPECT_EQ(itp.next().unwrap(), uptr() + 1u);
+  }
 }
 
 TEST(Range, RangeForIterator) {
