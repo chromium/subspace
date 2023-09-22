@@ -401,7 +401,7 @@ jobs:
     name: Benchmarks
     runs-on: ubuntu-latest
     env:
-      clang_version: 18
+      clang_version: 17
       installed_clang_version: 14
 
     steps:
