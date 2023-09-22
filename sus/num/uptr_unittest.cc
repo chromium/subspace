@@ -410,6 +410,21 @@ concept CantShift =
   !requires(Lhs l, Rhs r) { { l >> r }; };
 // clang-format on
 
+TEST(uptr, Operators) {
+  static_assert(CanOperator<uptr, u8>);
+  static_assert(CanOperator<uptr, u16>);
+  static_assert(CanOperator<uptr, u32>);
+  static_assert(!(sizeof(uptr) >= sizeof(u64)) ||
+                CanOperator<uptr, u64>);
+  static_assert(!(sizeof(uptr) < sizeof(u64)) ||
+                CantOperator<uptr, u64>);
+
+  static_assert(CantOperator<uptr, i8>);
+  static_assert(CantOperator<uptr, i16>);
+  static_assert(CantOperator<uptr, i32>);
+  static_assert(CantOperator<uptr, i64>);
+}
+
 TEST(uptr, OperatorsWithPrimitives) {
   static_assert(CanOperator<uptr, uint8_t>);
   static_assert(CanOperator<uptr, uint16_t>);
