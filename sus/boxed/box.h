@@ -24,6 +24,7 @@
 #include "sus/error/error.h"
 #include "sus/fn/fn_concepts.h"
 #include "sus/fn/fn_dyn.h"
+#include "sus/iter/iterator_defn.h"
 #include "sus/macros/no_unique_address.h"
 #include "sus/macros/pure.h"
 #include "sus/mem/clone.h"
@@ -38,6 +39,20 @@
 #include "sus/string/__private/format_to_stream.h"
 
 namespace sus::boxed {
+
+namespace __private {
+
+template <class Box, class T, bool = sus::iter::IteratorAny<T>>
+struct [[sus_trivial_abi]] BoxBase {};
+
+template <class Box, class T>
+struct [[sus_trivial_abi]] BoxBase<Box, T, true>
+    : public sus::iter::IteratorBase<Box,
+                                     typename std::remove_cvref_t<T>::Item> {
+  using Item = typename std::remove_cvref_t<T>::Item;
+};
+
+}  // namespace __private
 
 // TODO: Box has an allocator parameter in Rust but std::unique_ptr does not.
 // Which do we do?
@@ -110,8 +125,11 @@ namespace sus::boxed {
 /// * [`Fn`]($sus::fn::Fn)
 /// * [`FnMut`]($sus::fn::FnMut)
 /// * [`FnOnce`]($sus::fn::FnOnce)
+/// * [`Iterator`]($sus::iter::Iterator)
+/// * [`DoubleEndedIterator`]($sus::iter::DoubleEndedIterator)
+/// * [`ExactSizeIterator`]($sus::iter::ExactSizeIterator)
 template <class T>
-class [[sus_trivial_abi]] Box final {
+class [[sus_trivial_abi]] Box final : public __private::BoxBase<Box<T>, T> {
   static_assert(!std::is_reference_v<T>, "Box of a reference is not allowed.");
   static_assert(!std::is_array_v<T>,
                 "Box<T[N]> is not allowed, use Box<Array<T, N>>");
@@ -595,6 +613,39 @@ class [[sus_trivial_abi]] Box final {
   }
   ;
   // clang-format on
+
+  /// Implements [`Iterator`]($sus::iter::Iterator) if `T` is an [`Iterator`](
+  /// $sus::iter::Iterator), forwarding through to the inner `T` object.
+  auto next() noexcept
+    requires(::sus::iter::IteratorAny<T>)
+  {
+    return (**this).next();
+  }
+  /// Implements [`Iterator`]($sus::iter::Iterator) if `T` is an [`Iterator`](
+  /// $sus::iter::Iterator), forwarding through to the inner `T` object.
+  ::sus::iter::SizeHint size_hint() const noexcept
+    requires(::sus::iter::IteratorAny<T>)
+  {
+    return (**this).size_hint();
+  }
+  /// Implements [`DoubleEndedIterator`]($sus::iter::DoubleEndedIterator) if
+  /// `T` is a [`DoubleEndedIterator`]($sus::iter::DoubleEndedIterator),
+  /// forwarding through to the inner `T` object.
+  auto next_back() noexcept
+    requires(::sus::iter::IteratorAny<T> &&  //
+             ::sus::iter::DoubleEndedIterator<T, typename T::Item>)
+  {
+    return (**this).next_back();
+  }
+  /// Implements [`ExactSizeIterator`]($sus::iter::ExactSizeIterator) if
+  /// `T` is an [`ExactSizeIterator`]($sus::iter::ExactSizeIterator),
+  /// forwarding through to the inner `T` object.
+  usize exact_size_hint() const noexcept
+    requires(::sus::iter::IteratorAny<T> &&  //
+             ::sus::iter::ExactSizeIterator<T, typename T::Item>)
+  {
+    return (**this).exact_size_hint();
+  }
 
  private:
   enum FromPointer { FROM_POINTER };

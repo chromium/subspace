@@ -16,6 +16,8 @@
 
 #include "googletest/include/gtest/gtest.h"
 #include "sus/error/error.h"
+#include "sus/iter/iterator.h"
+#include "sus/iter/once.h"
 #include "sus/prelude.h"
 
 namespace test::box {
@@ -624,5 +626,24 @@ static_assert(Box<f32>(3.f) <=> Box<f32>(3.f) == 0);
 static_assert(Box<f32>(4.f) <=> Box<f32>(3.f) > 0);
 static_assert(std::same_as<decltype(Box<f32>(3.f) <=> Box<f32>(3.f)),
                            std::partial_ordering>);
+
+static_assert(sus::iter::Iterator<Box<decltype(sus::iter::once(2_i32))>, i32>);
+static_assert(
+    sus::iter::DoubleEndedIterator<Box<decltype(sus::iter::once(2_i32))>, i32>);
+static_assert(
+    sus::iter::ExactSizeIterator<Box<decltype(sus::iter::once(2_i32))>, i32>);
+
+TEST(Box, Iterator) {
+  auto b = sus::Box<sus::ops::Range<i32>>(sus::ops::range(0_i32, 3_i32));
+  EXPECT_EQ(b.exact_size_hint(), 3u);
+  EXPECT_EQ(b.next().unwrap(), 0);
+  EXPECT_EQ(b.exact_size_hint(), 2u);
+  EXPECT_EQ(b.next_back().unwrap(), 2);
+  EXPECT_EQ(b.exact_size_hint(), 1u);
+  EXPECT_EQ(b.next().unwrap(), 1);
+  EXPECT_EQ(b.exact_size_hint(), 0u);
+  EXPECT_EQ(b.next_back().is_none(), true);
+  EXPECT_EQ(b.exact_size_hint(), 0u);
+}
 
 }  // namespace
