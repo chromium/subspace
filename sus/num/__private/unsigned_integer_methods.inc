@@ -561,6 +561,23 @@ sus_pure constexpr inline operator U() const noexcept {
 
 #endif
 
+/// Returns a mutable pointer to the underlying C++ primitive value type.
+///
+/// This allows Subspace numerics be used with APIs that expect a pointer to a
+/// C++ primitive type.
+sus_pure constexpr _primitive* as_mut_ptr() & noexcept {
+  return &primitive_value;
+}
+
+/// Returns a const pointer to the underlying C++ primitive value type.
+///
+/// This allows Subspace numerics be used with APIs that expect a pointer to a
+/// C++ primitive type.
+sus_pure constexpr const _primitive* as_ptr() const& noexcept {
+  return &primitive_value;
+}
+sus_pure constexpr const _primitive* as_ptr() && noexcept = delete;
+
 /// Satisfies the [`Eq`]($sus::ops::Eq) concept for unsigned integers.
 /// #[doc.overloads=uint.eq]
 [[nodiscard]] sus_pure friend constexpr inline bool operator==(
@@ -627,8 +644,8 @@ template <Unsigned U>
 /// #[doc.overloads=unsignedint.+]
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-[[nodiscard]] sus_pure friend constexpr inline _self operator+(U l,
-                                                               _self r) noexcept {
+[[nodiscard]] sus_pure friend constexpr inline _self operator+(
+    U l, _self r) noexcept {
   return _primitive{l.primitive_value} + r;
 }
 #endif
@@ -689,8 +706,8 @@ template <Unsigned U>
 /// #[doc.overloads=unsignedint.-]
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-[[nodiscard]] sus_pure friend constexpr inline _self operator-(U l,
-                                                               _self r) noexcept {
+[[nodiscard]] sus_pure friend constexpr inline _self operator-(
+    U l, _self r) noexcept {
   return _primitive{l.primitive_value} - r;
 }
 #endif
@@ -751,8 +768,8 @@ template <Unsigned U>
 /// #[doc.overloads=unsignedint.*]
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-[[nodiscard]] sus_pure friend constexpr inline _self operator*(U l,
-                                                               _self r) noexcept {
+[[nodiscard]] sus_pure friend constexpr inline _self operator*(
+    U l, _self r) noexcept {
   return _primitive{l.primitive_value} * r;
 }
 #endif
@@ -811,8 +828,8 @@ template <Unsigned U>
 /// #[doc.overloads=unsignedint./]
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-[[nodiscard]] sus_pure friend constexpr inline _self operator/(U l,
-                                                               _self r) noexcept {
+[[nodiscard]] sus_pure friend constexpr inline _self operator/(
+    U l, _self r) noexcept {
   return _primitive{l.primitive_value} / r;
 }
 #endif
@@ -871,8 +888,8 @@ template <Unsigned U>
 /// #[doc.overloads=unsignedint.%]
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-[[nodiscard]] sus_pure friend constexpr inline _self operator%(U l,
-                                                               _self r) noexcept {
+[[nodiscard]] sus_pure friend constexpr inline _self operator%(
+    U l, _self r) noexcept {
   return _primitive{l.primitive_value} % r;
 }
 #endif
@@ -930,8 +947,8 @@ template <Unsigned U>
 /// #[doc.overloads=unsignedint.&]
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-[[nodiscard]] sus_pure friend constexpr inline _self operator&(U l,
-                                                               _self r) noexcept {
+[[nodiscard]] sus_pure friend constexpr inline _self operator&(
+    U l, _self r) noexcept {
   return _primitive{l.primitive_value} & r;
 }
 #endif
@@ -988,8 +1005,8 @@ template <Unsigned U>
 /// #[doc.overloads=unsignedint.|]
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-[[nodiscard]] sus_pure friend constexpr inline _self operator|(U l,
-                                                               _self r) noexcept {
+[[nodiscard]] sus_pure friend constexpr inline _self operator|(
+    U l, _self r) noexcept {
   return _primitive{l.primitive_value} | r;
 }
 #endif
@@ -1041,13 +1058,13 @@ template <Unsigned U>
   requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
 [[nodiscard]] sus_pure friend constexpr inline _self operator^(_self l,
                                                                U r) noexcept {
-  return l ^ _primitive{r.primitive_value};
+  return l ^ _primitive { r.primitive_value };
 }
 /// #[doc.overloads=unsignedint.^]
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-[[nodiscard]] sus_pure friend constexpr inline _self operator^(U l,
-                                                               _self r) noexcept {
+[[nodiscard]] sus_pure friend constexpr inline _self operator^(
+    U l, _self r) noexcept {
   return _primitive{l.primitive_value} ^ r;
 }
 #endif

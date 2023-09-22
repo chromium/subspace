@@ -2928,4 +2928,17 @@ TEST(i32, Stream) {
 
 TEST(i32, GTest) { EXPECT_EQ(testing::PrintToString(123_i32), "123"); }
 
+// ==== AsPtr / AsMutPtr
+
+static_assert([] {
+  i32 v;
+  static_assert(std::same_as<decltype(v.as_ptr()), const int32_t*>);
+  return v.as_ptr() == &v.primitive_value;
+}());
+static_assert([] {
+  i32 v;
+  static_assert(std::same_as<decltype(v.as_mut_ptr()), int32_t*>);
+  return v.as_mut_ptr() == &v.primitive_value;
+}());
+
 }  // namespace
