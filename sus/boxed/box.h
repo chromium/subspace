@@ -646,6 +646,15 @@ class [[sus_trivial_abi]] Box final : public __private::BoxBase<Box<T>, T> {
   {
     return (**this).exact_size_hint();
   }
+  /// sus::iter::TrustedLen trait.
+  /// #[doc.hidden]
+  constexpr ::sus::iter::__private::TrustedLenMarker trusted_len()
+      const noexcept
+    requires(::sus::iter::IteratorAny<T> &&  //
+             ::sus::iter::TrustedLen<T>)
+  {
+    return {};
+  }
 
  private:
   enum FromPointer { FROM_POINTER };
