@@ -70,6 +70,10 @@ class [[nodiscard]] Once final : public IteratorBase<Once<ItemT>, ItemT> {
   constexpr usize exact_size_hint() const noexcept {
     return single_.is_some() ? 1u : 0u;
   }
+  constexpr ::sus::iter::__private::TrustedLenMarker trusted_len()
+      const noexcept {
+    return {};
+  }
 
  private:
   friend constexpr Once<Item> sus::iter::once<Item>(Item o) noexcept;

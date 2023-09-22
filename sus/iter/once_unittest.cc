@@ -20,6 +20,11 @@
 
 namespace {
 
+static_assert(sus::iter::Iterator<sus::iter::Once<i32>, i32>);
+static_assert(sus::iter::DoubleEndedIterator<sus::iter::Once<i32>, i32>);
+static_assert(sus::iter::ExactSizeIterator<sus::iter::Once<i32>, i32>);
+static_assert(sus::iter::TrustedLen<sus::iter::Once<i32>>);
+
 TEST(Once, Example) {
   auto o = sus::iter::once<u16>(3_u16);
   sus::check(o.next().unwrap() == 3_u16);
