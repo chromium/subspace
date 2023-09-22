@@ -60,7 +60,7 @@ namespace sus::iter {
 ///   `upper = None` is correct for any iterator, but providing a more accurate
 ///   bound can benefit performance optiomizations. Returning an incorrect bound
 ///   is technically possible but is a violation of the `Iterator` protocol.
-template <class T, class Item = typename std::remove_cvref_t<T>::Item>
+template <class T, class Item>
 concept Iterator =
     requires(std::remove_cvref_t<T>& t, const std::remove_cvref_t<T>& c) {
       // Has a T::Item typename.
@@ -74,6 +74,14 @@ concept Iterator =
       { t.next() } noexcept -> std::same_as<::sus::option::Option<Item>>;
       { c.size_hint() } noexcept -> std::same_as<SizeHint>;
     };
+
+/// A concept for testing if a type `T` is an [`Iterator`]($sus::iter::Iterator)
+/// without testing its `Item` type.
+template <class T>
+concept IteratorAny = requires {
+  typename std::remove_cvref_t<T>::Item;
+  requires Iterator<T, typename std::remove_cvref_t<T>::Item>;
+};
 
 /// An [`Iterator`]($sus::iter::Iterator) able to yield elements from both ends.
 ///

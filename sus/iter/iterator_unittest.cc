@@ -80,6 +80,8 @@ using namespace sus::test::iter;
 static_assert(::sus::ops::Eq<sus::iter::SizeHint>);
 
 static_assert(
+    sus::iter::IteratorAny<sus::iter::__private::IteratorArchetype<int>>);
+static_assert(
     sus::iter::Iterator<sus::iter::__private::IteratorArchetype<int>, int>);
 static_assert(sus::iter::IntoIterator<
               sus::iter::__private::IntoIteratorArchetype<int>, int>);
