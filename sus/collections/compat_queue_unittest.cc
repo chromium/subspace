@@ -26,9 +26,9 @@ static_assert(sus::iter::FromIterator<std::priority_queue<usize>, usize>);
 
 TEST(CompatQueue, FromIterator) {
   auto in = std::vector<i32>{1, 2, 3, 4, 5, 6, 7};
-  auto out = sus::iter::from_range(sus::move(in))
+  auto out = sus::iter::from_range(in)
+                 .moved(unsafe_fn)
                  .filter([](const i32& i) { return i % 2 == 0; })
-                 .moved()
                  .collect<std::queue<i32>>();
   static_assert(std::same_as<decltype(out), std::queue<i32>>);
   sus::check(out == std::queue<i32>(std::deque<i32>{2, 4, 6}));
@@ -36,10 +36,10 @@ TEST(CompatQueue, FromIterator) {
 
 TEST(CompatQueue, FromIteratorRef) {
   auto in = std::vector<i32>{1, 2, 3, 4, 5, 6, 7};
-  auto out = sus::iter::from_range(sus::move(in))
+  auto out = sus::iter::from_range(in)
+                 .moved(unsafe_fn)
                  .filter([](const i32& i) { return i % 2 == 0; })
                  .rev()
-                 .moved()
                  .collect<std::queue<i32>>();
   static_assert(std::same_as<decltype(out), std::queue<i32>>);
   sus::check(out == std::queue<i32>(std::deque<i32>{6, 4, 2}));
@@ -47,9 +47,9 @@ TEST(CompatQueue, FromIteratorRef) {
 
 TEST(CompatPriorityQueue, FromIterator) {
   auto in = std::vector<i32>{1, 2, 3, 4, 5, 6, 7};
-  auto out = sus::iter::from_range(sus::move(in))
+  auto out = sus::iter::from_range(in)
+                 .moved(unsafe_fn)
                  .filter([](const i32& i) { return i % 2 == 0; })
-                 .moved()
                  .collect<std::priority_queue<i32>>();
   static_assert(std::same_as<decltype(out), std::priority_queue<i32>>);
   auto cmp =
@@ -65,10 +65,10 @@ TEST(CompatPriorityQueue, FromIterator) {
 
 TEST(CompatPriorityQueue, FromIteratorRef) {
   auto in = std::vector<i32>{1, 2, 3, 4, 5, 6, 7};
-  auto out = sus::iter::from_range(sus::move(in))
+  auto out = sus::iter::from_range(in)
+                 .moved(unsafe_fn)
                  .filter([](const i32& i) { return i % 2 == 0; })
                  .rev()
-                 .moved()
                  .collect<std::priority_queue<i32>>();
   static_assert(std::same_as<decltype(out), std::priority_queue<i32>>);
   auto cmp =

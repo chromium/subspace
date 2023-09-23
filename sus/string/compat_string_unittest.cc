@@ -37,36 +37,36 @@ Out construct(const Char* s) {
 
 TEST(CompatString, Char) {
   auto in = std::vector<char>{'a', 'b', 'c', 'd'};
-  auto out = sus::iter::from_range(sus::move(in))
+  auto out = sus::iter::from_range(in)
+                 .moved(unsafe_fn)
                  .filter([](char i) { return i != 'c'; })
-                 .moved()
                  .collect<std::string>();
   sus::check(out == construct<std::string>("abd"));
 }
 
 TEST(CompatString, Char8) {
   auto in = std::vector<char8_t>{'a', 'b', 'c', 'd'};
-  auto out = sus::iter::from_range(sus::move(in))
+  auto out = sus::iter::from_range(in)
+                 .moved(unsafe_fn)
                  .filter([](char8_t i) { return i != 'c'; })
-                 .moved()
                  .collect<std::u8string>();
   sus::check(out == construct<std::u8string>("abd"));
 }
 
 TEST(CompatString, Char16) {
   auto in = std::vector<char16_t>{'a', 'b', 'c', 'd'};
-  auto out = sus::iter::from_range(sus::move(in))
+  auto out = sus::iter::from_range(in)
+                 .moved(unsafe_fn)
                  .filter([](char16_t i) { return i != 'c'; })
-                 .moved()
                  .collect<std::u16string>();
   sus::check(out == construct<std::u16string>("abd"));
 }
 
 TEST(CompatString, Char32) {
   auto in = std::vector<char32_t>{'a', 'b', 'c', 'd'};
-  auto out = sus::iter::from_range(sus::move(in))
+  auto out = sus::iter::from_range(in)
+                 .moved(unsafe_fn)
                  .filter([](char32_t i) { return i != 'c'; })
-                 .moved()
                  .collect<std::u32string>();
   sus::check(out == construct<std::u32string>("abd"));
 }
