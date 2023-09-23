@@ -412,10 +412,10 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   /// See the type's top level documentation for an example.
   constexpr inline operator TagsType() const& noexcept { return which(); }
 
-  /// Returns which is the active member of the Choice.
+  /// Returns which is the active member of the `Choice`.
   ///
-  /// Typically to access the data in the Choice, a `switch` statement would be
-  /// used, so as to call the getter or setter methods with the right value
+  /// Typically to access the data in the `Choice`, a `switch` statement would
+  /// be used, so as to call the getter or setter methods with the right value
   /// specified as a template parameter. When used in a `switch` statement, the
   /// `which` method can be omitted.
   ///
@@ -468,10 +468,10 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     return tags[size_t{index_}];
   }
 
-  /// Returns a const reference to the value(s) inside the Choice.
+  /// Returns a const reference to the value(s) inside the `Choice`.
   ///
   /// The function has a template parameter specifying the tag of the active
-  /// member in the choice.
+  /// member in the `Choice`.
   ///
   /// If the active member's associated type is `void` then this method is
   /// deleted and can't be called.
@@ -494,10 +494,10 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     requires(!std::is_reference_v<StorageTypeOfTag<V>>)
   constexpr inline const StorageTypeOfTag<V>& as() && noexcept = delete;
 
-  /// Returns a mutable reference to the value(s) inside the Choice.
+  /// Returns a mutable reference to the value(s) inside the `Choice`.
   ///
   /// The function has a template parameter specifying the tag of the active
-  /// member in the choice.
+  /// member in the `Choice`.
   ///
   /// If the active member's associated type is `void` then this method is
   /// deleted and can't be called.
