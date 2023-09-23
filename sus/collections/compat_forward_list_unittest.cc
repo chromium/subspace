@@ -21,7 +21,8 @@
 namespace sus::test::compat_forward_list {
 
 template <sus::iter::Iterator<i32> Iter>
-struct SingleEnded final : public sus::iter::IteratorBase<SingleEnded<Iter>, i32> {
+struct SingleEnded final
+    : public sus::iter::IteratorBase<SingleEnded<Iter>, i32> {
   SingleEnded(Iter it) : it_(sus::move(it)) {}
 
   using Item = i32;
@@ -47,21 +48,20 @@ TEST(CompatForwardList, FromIterator) {
   auto in = std::vector<i32>{1, 2, 3, 4, 5, 6, 7};
   static_assert(sus::iter::DoubleEndedIterator<
                 decltype(sus::iter::from_range(sus::move(in))), i32&>);
-  auto out = sus::iter::from_range(sus::move(in))
+  auto out = sus::iter::from_range(in)
+                 .moved(unsafe_fn)
                  .filter([](const i32& i) { return i % 2 == 0; })
-                 .moved()
                  .collect<std::forward_list<i32>>();
   sus::check(out == std::forward_list<i32>{2, 4, 6});
 }
 
 TEST(CompatForwardList, FromIteratorNotDoubleEnded) {
   auto in = std::vector<i32>{1, 2, 3, 4, 5, 6, 7};
-  auto it = SingleEnded(sus::iter::from_range(sus::move(in)).moved());
+  auto it = SingleEnded(sus::iter::from_range(in).moved(unsafe_fn));
   static_assert(sus::iter::Iterator<decltype(it), i32>);
   static_assert(!sus::iter::DoubleEndedIterator<decltype(it), i32>);
   auto out = sus::move(it)
                  .filter([](const i32& i) { return i % 2 == 0; })
-                 .moved()
                  .collect<std::forward_list<i32>>();
   sus::check(out == std::forward_list<i32>{2, 4, 6});
 }

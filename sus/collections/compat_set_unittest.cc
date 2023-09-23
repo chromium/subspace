@@ -26,9 +26,9 @@ static_assert(sus::iter::FromIterator<std::set<usize>, usize>);
 
 TEST(CompatSet, FromIterator) {
   auto in = std::vector<i32>{3, 4, 2, 7, 6, 1, 5};
-  auto out = sus::iter::from_range(sus::move(in))
+  auto out = sus::iter::from_range(in)
+                 .moved(unsafe_fn)
                  .filter([](const i32& i) { return i % 2 == 0; })
-                 .moved()
                  .collect<std::set<i32>>();
   static_assert(std::same_as<decltype(out), std::set<i32>>);
   sus::check(out == std::set<i32>{2, 4, 6});
@@ -36,9 +36,9 @@ TEST(CompatSet, FromIterator) {
 
 TEST(CompaMultiSet, FromIterator) {
   auto in = std::vector<i32>{3, 4, 2, 7, 6, 2, 1, 5, 2};
-  auto out = sus::iter::from_range(sus::move(in))
+  auto out = sus::iter::from_range(in)
+                 .moved(unsafe_fn)
                  .filter([](const i32& i) { return i % 2 == 0; })
-                 .moved()
                  .collect<std::multiset<i32>>();
   static_assert(std::same_as<decltype(out), std::multiset<i32>>);
   sus::check(out == std::multiset<i32>{2, 2, 2, 4, 6});

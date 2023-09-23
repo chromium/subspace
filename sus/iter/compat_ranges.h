@@ -19,6 +19,7 @@
 
 #include "sus/iter/__private/iterator_end.h"
 #include "sus/iter/__private/range_begin.h"
+#include "sus/iter/adaptors/moved.h"
 #include "sus/iter/iterator.h"
 #include "sus/macros/__private/compiler_bugs.h"
 #include "sus/macros/lifetimebound.h"
@@ -45,10 +46,11 @@ class IteratorOverRange;
 /// range it produces, the references returned by iterator will be to the
 /// input container now held within the iterator. To iterator over values
 /// instead, and move those values from the iterator's references, use
-/// [`Iterator::moved`]($sus::iter::IteratorBase::moved). If the input range did
+/// [`moved`]($sus::iter::IteratorOverRange::moved). If the input range did
 /// not own the values it iterates over, using
-/// [`Iterator::moved`]($sus::iter::IteratorBase::moved) will still move from
-/// the objects being iterated over by the range.
+/// [`moved`]($sus::iter::IteratorOverRange::moved) will still move from
+/// the objects being iterated over by the range and cause use-after-move with
+/// potential Undefined Behaviour later.
 ///
 /// If the input range's iterators satisfy `std::ranges::bidiectional_iterator`,
 /// then the output `Iterator` will be a `DoubleEndedIterator`.
@@ -67,17 +69,21 @@ class IteratorOverRange;
 /// Consumes a vector and iterates over its values, not as references.
 /// ```
 /// auto v = std::vector<i32>({1, 2, 3});
-/// sus::check(sus::iter::from_range(sus::move(v)).moved().sum() == 1 + 2 + 3);
+/// sus::check(sus::iter::from_range(v).moved(unsafe_fn).sum() == 1 + 2 + 3);
+/// v.clear();
 /// ```
 template <class R>
   requires(std::ranges::input_range<R>)
-auto from_range(R&& r) noexcept {
+constexpr auto from_range(R&& r) noexcept {
   using B = decltype(std::declval<R&>().begin());
   using E = decltype(std::declval<R&>().end());
   using Item = typename std::iterator_traits<B>::reference;
   return IteratorOverRange<R, B, E, Item>(r);
 }
 
+/// The iterator created from a [`std::range`](
+/// https://en.cppreference.com/w/cpp/ranges/range) via
+/// [`from_range`]($sus::iter::from_range).
 template <class R, class B, class E, class ItemT>
 class IteratorOverRange final
     : public IteratorBase<IteratorOverRange<R, B, E, ItemT>, ItemT> {
@@ -89,10 +95,12 @@ class IteratorOverRange final
   IteratorOverRange& operator=(IteratorOverRange&&) = default;
 
   /// sus::mem::Clone trait.
-  IteratorOverRange clone() const { return IteratorOverRange(begin_, end_); }
+  constexpr IteratorOverRange clone() const {
+    return IteratorOverRange(begin_, end_);
+  }
 
   /// sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     Option<Item> out;
     if (begin_ == end_) return out;
     out.insert(*begin_);
@@ -100,7 +108,7 @@ class IteratorOverRange final
     return out;
   }
   /// sus::iter::Iterator trait.
-  SizeHint size_hint() const noexcept {
+  constexpr SizeHint size_hint() const noexcept {
     if constexpr (std::sized_sentinel_for<B, E>) {
       const auto rem = exact_size_hint();
       return {rem, sus::some(rem)};
@@ -109,7 +117,7 @@ class IteratorOverRange final
     }
   }
   /// sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept
+  constexpr Option<Item> next_back() noexcept
     requires(std::ranges::bidirectional_range<R>)
   {
     Option<Item> out;
@@ -119,7 +127,7 @@ class IteratorOverRange final
     return out;
   }
   /// sus::iter::ExactSizeIterator trait.
-  usize exact_size_hint() const noexcept
+  constexpr usize exact_size_hint() const noexcept
     requires(std::sized_sentinel_for<B, E>)
   {
     // SAFETY: `end_ > begin_` so the value is not negative and offsets in a
@@ -138,16 +146,43 @@ class IteratorOverRange final
     return {};
   }
 
+  /// Creates an iterator which moves all of its elements. If the range does not
+  /// own its elements, or the elements are used afterward, this can cause use-
+  /// after-move and Undefined Behaviour.
+  ///
+  /// If the range owns the elements being iterated over (such as with a
+  /// [`std::vector`](https://en.cppreference.com/w/cpp/container/vector)) then
+  /// the elements can be moved out of the range. This converts the iterator
+  /// from being over `T&` to being over values of type `T`.
+  ///
+  /// Subspace collections can be consumed (moved-from) to make an iterator,
+  /// which helps prevent use-after-move of the elements within, and avoids the
+  /// need for an adaptor like `moved`.
+  ///
+  /// # Safety
+  /// The elements in the view being iterated over will be moved from, and must
+  /// not be used afterward in a way that the types do not support. The range
+  /// should own the elements being iterated over, and then cleared or destroyed
+  /// after iteration.
+  constexpr Iterator<std::remove_cvref_t<Item>> auto moved(
+      ::sus::marker::UnsafeFnMarker) && noexcept
+    requires(::sus::mem::Move<Item> &&  //
+             !std::is_const_v<std::remove_reference_t<Item>>)
+  {
+    using Moved = Moved<IteratorOverRange>;
+    return Moved(::sus::move(*this));
+  }
+
   // TODO: If std::random_access_range<B> then implement more efficient nth(),
   // nth_back().
 
  private:
-  friend auto sus::iter::from_range<R>(R&&) noexcept;
+  friend constexpr auto sus::iter::from_range<R>(R&&) noexcept;
 
-  IteratorOverRange(R& r sus_lifetimebound) noexcept
+  constexpr IteratorOverRange(R& r sus_lifetimebound) noexcept
       : begin_(std::ranges::begin(r)), end_(std::ranges::end(r)) {}
 
-  IteratorOverRange(B begin, E end) : begin_(begin), end_(end) {}
+  constexpr IteratorOverRange(B begin, E end) : begin_(begin), end_(end) {}
 
   B begin_;
   E end_;

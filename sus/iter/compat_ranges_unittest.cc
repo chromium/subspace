@@ -241,7 +241,8 @@ TEST(CompatRanges, FromRange_Example) {
   {
     // An input_iterator by value.
     auto v = std::vector<i32>({1, 2, 3});
-    sus::check(sus::iter::from_range(sus::move(v)).moved().sum() == 1 + 2 + 3);
+    sus::check(sus::iter::from_range(v).moved(unsafe_fn).sum() == 1 + 2 + 3);
+    v.clear();
   }
 }
 
@@ -263,6 +264,62 @@ TEST(CompatRanges, Tr) {
   auto s = std::string("abracadabra");
   tr("abc", "ABC", s);
   EXPECT_EQ(s, "ABrACAdABrA");
+}
+
+static_assert(
+    sus::iter::Iterator<
+        decltype(sus::iter::from_range(std::vector<i32>()).moved(unsafe_fn)),
+        i32>);
+static_assert(
+    sus::iter::DoubleEndedIterator<
+        decltype(sus::iter::from_range(std::vector<i32>()).moved(unsafe_fn)),
+        i32>);
+static_assert(
+    sus::iter::ExactSizeIterator<
+        decltype(sus::iter::from_range(std::vector<i32>()).moved(unsafe_fn)),
+        i32>);
+static_assert(
+    sus::iter::TrustedLen<
+        decltype(sus::iter::from_range(std::vector<i32>()).moved(unsafe_fn))>);
+
+TEST(CompatRanges, Moved) {
+  struct Movable {
+    Movable(i32 i) : i(i) {}
+    Movable(Movable&& m) : i(m.i) { m.i += 1; }
+    Movable& operator=(Movable&& m) { return i = m.i, m.i += 1, *this; }
+    i32 i;
+
+    constexpr bool operator==(const Movable& rhs) const noexcept = default;
+  };
+
+  // Move from references.
+  {
+    auto moving = std::vector<Movable>();
+    moving.emplace_back(10);
+    moving.emplace_back(20);
+
+    auto it = sus::iter::from_range(moving).moved(unsafe_fn);
+    static_assert(std::same_as<Movable, decltype(it.next().unwrap())>);
+    EXPECT_EQ(it.size_hint().lower, 2u);
+    EXPECT_EQ(it.size_hint().upper.unwrap(), 2u);
+    EXPECT_EQ(it.exact_size_hint(), 2u);
+
+    EXPECT_EQ(moving[0].i, 10);
+    EXPECT_EQ(moving[1].i, 20);
+    EXPECT_EQ(it.next().unwrap().i, 10);
+    EXPECT_EQ(moving[0].i, 11);
+    EXPECT_EQ(moving[1].i, 20);
+    EXPECT_EQ(it.next().unwrap().i, 20);
+    EXPECT_EQ(moving[0].i, 11);
+    EXPECT_EQ(moving[1].i, 21);
+    EXPECT_EQ(it.next(), sus::None);
+    EXPECT_EQ(moving[0].i, 11);
+    EXPECT_EQ(moving[1].i, 21);
+  }
+
+  static_assert(sus::iter::from_range(std::vector<usize>({1u, 2u}))
+                    .moved(unsafe_fn)
+                    .sum() == 1u + 2u);
 }
 
 }  // namespace

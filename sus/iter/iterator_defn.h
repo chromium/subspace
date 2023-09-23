@@ -574,14 +574,6 @@ class IteratorBase {
              !std::is_reference_v<Key>)
   constexpr Option<Item> min_by_key(KeyFn fn) && noexcept;
 
-  /// Creates an iterator which moves all of its elements.
-  ///
-  /// This is useful when you have an iterator over `T&`, but you need an iterator
-  /// over `T`.
-  constexpr Iterator<std::remove_cvref_t<Item>> auto moved() && noexcept
-    requires(::sus::mem::Move<Item> &&  //
-             !std::is_const_v<std::remove_reference_t<Item>>);
-
   /// Determines if the elements of this `Iterator` are not equal to those of
   /// another.
   template <IntoIteratorAny Other, int&...,
@@ -1575,16 +1567,6 @@ constexpr Option<Item> IteratorBase<Iter, Item>::min_by_key(
       [](auto&& key_item) -> Item {
         return sus::move(key_item).template into_inner<1>();
       });
-}
-
-template <class Iter, class Item>
-Iterator<std::remove_cvref_t<Item>> auto constexpr IteratorBase<
-    Iter, Item>::moved() && noexcept
-  requires(::sus::mem::Move<Item> &&  //
-           !std::is_const_v<std::remove_reference_t<Item>>)
-{
-  using Moved = Moved<Iter>;
-  return Moved(static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>

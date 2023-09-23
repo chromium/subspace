@@ -45,7 +45,6 @@
 #include "sus/iter/adaptors/inspect.h"
 #include "sus/iter/adaptors/map.h"
 #include "sus/iter/adaptors/map_while.h"
-#include "sus/iter/adaptors/moved.h"
 #include "sus/iter/adaptors/peekable.h"
 #include "sus/iter/adaptors/reverse.h"
 #include "sus/iter/adaptors/scan.h"

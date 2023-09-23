@@ -25,11 +25,16 @@ namespace sus::iter {
 
 /// An iterator that moves from the elements of an underlying iterator.
 ///
-/// This type is returned from `Iterator::moved()`.
+/// This type is returned from [`IteratorOverRange::moved()`](
+/// $sus::iter::IteratorOverRange::moved).
 template <class InnerSizedIter>
 class [[nodiscard]] Moved final
     : public IteratorBase<Moved<InnerSizedIter>,
                           std::remove_cvref_t<typename InnerSizedIter::Item>> {
+  static_assert(
+      !std::is_const_v<std::remove_reference_t<typename InnerSizedIter::Item>>,
+      "Moved requires a mutable reference to move from");
+
  public:
   using Item = std::remove_cvref_t<typename InnerSizedIter::Item>;
 
@@ -61,7 +66,7 @@ class [[nodiscard]] Moved final
 
   // sus::iter::DoubleEndedIterator trait.
   constexpr Option<Item> next_back() noexcept
-    requires(DoubleEndedIterator<InnerSizedIter, Item>)
+    requires(DoubleEndedIterator<InnerSizedIter, typename InnerSizedIter::Item>)
   {
     return next_iter_.next_back().map(
         [](const Item& item) -> Item { return item; });
@@ -69,7 +74,7 @@ class [[nodiscard]] Moved final
 
   // sus::iter::ExactSizeIterator trait.
   constexpr usize exact_size_hint() const noexcept
-    requires(ExactSizeIterator<InnerSizedIter, Item>)
+    requires(ExactSizeIterator<InnerSizedIter, typename InnerSizedIter::Item>)
   {
     return next_iter_.exact_size_hint();
   }
@@ -83,8 +88,8 @@ class [[nodiscard]] Moved final
   }
 
  private:
-  template <class U, class V>
-  friend class IteratorBase;
+  template <class R, class B, class E, class I>
+  friend class IteratorOverRange;
 
   explicit constexpr Moved(InnerSizedIter&& next_iter)
       : next_iter_(::sus::move(next_iter)) {}
