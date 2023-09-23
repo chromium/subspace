@@ -31,7 +31,7 @@
 #include "sus/mem/never_value.h"
 #include "sus/mem/replace.h"
 #include "sus/num/overflow_integer.h"
-#include "sus/ops/eq.h"
+#include "sus/cmp/eq.h"
 #include "sus/prelude.h"
 #include "sus/test/no_copy_move.h"
 
@@ -77,7 +77,7 @@ struct sus::iter::FromIteratorImpl<sus::test::iter::CollectRefs> {
 namespace {
 using namespace sus::test::iter;
 
-static_assert(::sus::ops::Eq<sus::iter::SizeHint>);
+static_assert(::sus::cmp::Eq<sus::iter::SizeHint>);
 
 static_assert(
     sus::iter::IteratorAny<sus::iter::__private::IteratorArchetype<int>>);
@@ -1190,17 +1190,17 @@ TEST(Iterator, PartialCmpBy) {
 }
 
 template <sus::mem::Copy T>
-  requires(sus::ops::StrongOrd<T> && sus::ops::Eq<T>)
+  requires(sus::cmp::StrongOrd<T> && sus::cmp::Eq<T>)
 struct WeakT {
   sus_clang_bug_54040(constexpr inline WeakT(T a, T b) : a(a), b(b){});
 
   template <class U>
-    requires(sus::ops::Eq<U>)
+    requires(sus::cmp::Eq<U>)
   constexpr auto operator==(const WeakT<U>& o) const& noexcept {
     return a == o.a && b == o.b;
   }
   template <class U>
-    requires(sus::ops::Ord<U>)
+    requires(sus::cmp::Ord<U>)
   constexpr std::weak_ordering operator<=>(const WeakT<U>& o) const& noexcept {
     if ((a <=> o.a) == 0) return std::weak_ordering::equivalent;
     if ((a <=> o.a) < 0) return std::weak_ordering::less;
@@ -1373,8 +1373,8 @@ TEST(Iterator, Eq) {
       return i == rhs.i;
     }
   };
-  static_assert(sus::ops::Eq<E>);
-  static_assert(!sus::ops::StrongOrd<E>);
+  static_assert(sus::cmp::Eq<E>);
+  static_assert(!sus::cmp::StrongOrd<E>);
 
   {
     auto smol = sus::Vec<E>(E(1), E(2));
@@ -1430,8 +1430,8 @@ TEST(Iterator, EqBy) {
       return i == rhs.i;
     }
   };
-  static_assert(sus::ops::Eq<E>);
-  static_assert(!sus::ops::StrongOrd<E>);
+  static_assert(sus::cmp::Eq<E>);
+  static_assert(!sus::cmp::StrongOrd<E>);
 
   {
     auto bigg = sus::Vec<E>(E(1), E(1), E(1));
@@ -2887,8 +2887,8 @@ TEST(Iterator, Ne) {
       return i == rhs.i;
     }
   };
-  static_assert(sus::ops::Eq<E>);
-  static_assert(!sus::ops::StrongOrd<E>);
+  static_assert(sus::cmp::Eq<E>);
+  static_assert(!sus::cmp::StrongOrd<E>);
 
   {
     auto smol = sus::Vec<E>(E(1), E(2));
@@ -3066,7 +3066,7 @@ TEST(Iterator, Partition) {
   };
   static_assert(sus::mem::Move<S>);
   static_assert(!sus::mem::Copy<S>);
-  static_assert(sus::ops::Eq<S>);
+  static_assert(sus::cmp::Eq<S>);
 
   // Partition from into_iter() with Move and !Copy type.
   {

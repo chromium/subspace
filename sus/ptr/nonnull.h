@@ -20,8 +20,8 @@
 #include "sus/mem/addressof.h"
 #include "sus/mem/never_value.h"
 #include "sus/mem/relocate.h"
-#include "sus/ops/eq.h"
-#include "sus/ops/ord.h"
+#include "sus/cmp/eq.h"
+#include "sus/cmp/ord.h"
 #include "sus/option/option.h"
 #include "sus/ptr/subclass.h"
 #include "sus/string/__private/format_to_stream.h"
@@ -166,19 +166,19 @@ class [[sus_trivial_abi]] NonNull {
       : ptr_(nullptr) {}
 };
 
-/// Satisfies the [`Eq<NonNull<T>, NonNull<U>>`]($sus::ops::Eq) concept if the
+/// Satisfies the [`Eq<NonNull<T>, NonNull<U>>`]($sus::cmp::Eq) concept if the
 /// pointers are comparable and thus satisfy `Eq` as well.
 template <class T, class U>
-  requires(::sus::ops::Eq<const T*, const U*>)
+  requires(::sus::cmp::Eq<const T*, const U*>)
 constexpr inline bool operator==(const NonNull<T>& l,
                                  const NonNull<U>& r) noexcept {
   return l.as_ptr() == r.as_ptr();
 }
 
-/// Satisfies the [`StrongOrd<NonNull<T>>`]($sus::ops::StrongOrd) concept if the
+/// Satisfies the [`StrongOrd<NonNull<T>>`]($sus::cmp::StrongOrd) concept if the
 /// pointers are comparable and thus satisfy `StrongOrd` as well.
 template <class T, class U>
-  requires(::sus::ops::StrongOrd<const T*, const U*>)
+  requires(::sus::cmp::StrongOrd<const T*, const U*>)
 constexpr inline std::strong_ordering operator<=>(
     const NonNull<T>& l, const NonNull<U>& r) noexcept {
   return l.as_ptr() <=> r.as_ptr();

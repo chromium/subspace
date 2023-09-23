@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "sus/ops/eq.h"
+#include "sus/cmp/eq.h"
 
 #include "googletest/include/gtest/gtest.h"
 
 namespace {
 
-using sus::ops::Eq;
+using sus::cmp::Eq;
 
 struct CComp {};
 struct C {

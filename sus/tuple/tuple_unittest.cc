@@ -393,9 +393,9 @@ TEST(Tuple, IntoInner) {
 
 TEST(Tuple, Eq) {
   struct NotEq {};
-  static_assert(!sus::ops::Eq<NotEq>);
-  static_assert(sus::ops::Eq<Tuple<int>>);
-  static_assert(!sus::ops::Eq<Tuple<NotEq>>);
+  static_assert(!sus::cmp::Eq<NotEq>);
+  static_assert(sus::cmp::Eq<Tuple<int>>);
+  static_assert(!sus::cmp::Eq<Tuple<NotEq>>);
 
   EXPECT_EQ(Tuple<int>(1), Tuple<int>(1));
   EXPECT_NE(Tuple<int>(1), Tuple<int>(2));
@@ -501,14 +501,14 @@ TEST(Tuple, PartialOrder) {
 }
 
 struct NotCmp {};
-static_assert(!sus::ops::PartialOrd<NotCmp>);
+static_assert(!sus::cmp::PartialOrd<NotCmp>);
 
-static_assert(sus::ops::StrongOrd<Tuple<int>>);
-static_assert(!sus::ops::StrongOrd<Tuple<Weak>>);
-static_assert(sus::ops::Ord<Tuple<Weak>>);
-static_assert(!sus::ops::Ord<Tuple<float>>);
-static_assert(!sus::ops::Ord<Tuple<float>>);
-static_assert(!sus::ops::PartialOrd<Tuple<NotCmp>>);
+static_assert(sus::cmp::StrongOrd<Tuple<int>>);
+static_assert(!sus::cmp::StrongOrd<Tuple<Weak>>);
+static_assert(sus::cmp::Ord<Tuple<Weak>>);
+static_assert(!sus::cmp::Ord<Tuple<float>>);
+static_assert(!sus::cmp::Ord<Tuple<float>>);
+static_assert(!sus::cmp::PartialOrd<Tuple<NotCmp>>);
 
 TEST(Tuple, StructuredBinding) {
   auto t3 = Tuple<int, float, char>(2, 3.f, 'c');

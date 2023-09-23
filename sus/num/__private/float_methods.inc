@@ -253,7 +253,7 @@ sus_pure constexpr const _primitive* as_ptr() const& noexcept {
 }
 sus_pure constexpr const _primitive* as_ptr() && noexcept = delete;
 
-/// Satisfies the [`Eq`]($sus::ops::Eq) concept for floating point numbers.
+/// Satisfies the [`Eq`]($sus::cmp::Eq) concept for floating point numbers.
 /// #[doc.overloads=float.eq]
 [[nodiscard]] sus_pure_const friend constexpr inline bool operator==(
     _self l, _self r) noexcept {
@@ -270,7 +270,7 @@ sus_pure constexpr const _primitive* as_ptr() && noexcept = delete;
   return (l.primitive_value <=> r) == 0;
 }
 
-/// Satisfies the [`PartialOrd`]($sus::ops::PartialOrd) concept for floating
+/// Satisfies the [`PartialOrd`]($sus::cmp::PartialOrd) concept for floating
 /// point numbers.
 /// #[doc.overloads=float.partialord]
 [[nodiscard]] sus_pure_const friend constexpr inline std::partial_ordering
@@ -309,7 +309,7 @@ operator<=>(_self l, PrimitiveFloat auto r) noexcept {
 /// positive quiet NaN.
 ///
 /// The ordering established by this function does not always agree with the
-/// [`PartialOrd`]($sus::ops::PartialOrd) and [`Eq`]($sus::ops::Eq)
+/// [`PartialOrd`]($sus::cmp::PartialOrd) and [`Eq`]($sus::cmp::Eq)
 /// implementations of [`@doc.self`]($sus::num::@doc.self). For example, they
 /// consider negative and positive zero equal, while
 /// [`total_cmp`]($sus::num::@doc.self::total_cmp) doesn't.
@@ -322,7 +322,7 @@ operator<=>(_self l, PrimitiveFloat auto r) noexcept {
 ///
 /// This method returns
 /// [`std::weak_ordering`](https://en.cppreference.com/w/cpp/utility/compare/weak_ordering)
-/// which can be used in situations that require [`Ord`]($sus::ops::Ord)
+/// which can be used in situations that require [`Ord`]($sus::cmp::Ord)
 /// because different NaNs will be ordered equivalently.
 sus_pure constexpr std::weak_ordering total_cmp(_self other) const& noexcept {
   return __private::float_strong_ordering(primitive_value,

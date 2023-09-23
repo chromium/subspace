@@ -534,7 +534,7 @@ sus_pure constexpr _self signum() const& noexcept {
     return _primitive{primitive_value != 0};
 }
 
-/// Satisfies the [`Eq`]($sus::ops::Eq) concept for signed integers.
+/// Satisfies the [`Eq`]($sus::cmp::Eq) concept for signed integers.
 /// #[doc.overloads=int.eq]
 [[nodiscard]] sus_pure friend constexpr inline bool operator==(
     _self l, _self r) noexcept = default;
@@ -548,7 +548,7 @@ sus_pure constexpr _self signum() const& noexcept {
     _self l, SignedPrimitiveInteger auto r) noexcept {
   return l.primitive_value == r;
 }
-/// Satisfies the [`StrongOrd`]($sus::ops::StrongOrd) concept for signed
+/// Satisfies the [`StrongOrd`]($sus::cmp::StrongOrd) concept for signed
 /// integers.
 /// #[doc.overloads=int.strongord]
 [[nodiscard]] sus_pure friend constexpr inline std::strong_ordering operator<=>(

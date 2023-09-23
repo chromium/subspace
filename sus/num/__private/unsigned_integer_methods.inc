@@ -578,7 +578,7 @@ sus_pure constexpr const _primitive* as_ptr() const& noexcept {
 }
 sus_pure constexpr const _primitive* as_ptr() && noexcept = delete;
 
-/// Satisfies the [`Eq`]($sus::ops::Eq) concept for unsigned integers.
+/// Satisfies the [`Eq`]($sus::cmp::Eq) concept for unsigned integers.
 /// #[doc.overloads=uint.eq]
 [[nodiscard]] sus_pure friend constexpr inline bool operator==(
     _self l, _self r) noexcept = default;
@@ -592,7 +592,7 @@ sus_pure constexpr const _primitive* as_ptr() && noexcept = delete;
     _self l, UnsignedPrimitiveInteger auto r) noexcept {
   return l.primitive_value == r;
 }
-/// Satisfies the [`StrongOrd`]($sus::ops::StrongOrd) concept for unsigned
+/// Satisfies the [`StrongOrd`]($sus::cmp::StrongOrd) concept for unsigned
 /// integers.
 /// #[doc.overloads=uint.strongord]
 [[nodiscard]] sus_pure friend constexpr inline std::strong_ordering operator<=>(

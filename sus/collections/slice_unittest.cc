@@ -482,7 +482,7 @@ struct Sortable {
     return a.value <=> b.value;
   }
 };
-static_assert(sus::ops::Ord<Sortable>);
+static_assert(sus::cmp::Ord<Sortable>);
 
 TEST(SliceMut, Sort) {
   {
@@ -2487,15 +2487,15 @@ TEST(Slice, EndsWith) {
 
 TEST(Slice, Eq) {
   struct NotEq {};
-  static_assert(!sus::ops::Eq<NotEq>);
+  static_assert(!sus::cmp::Eq<NotEq>);
 
-  static_assert(sus::ops::Eq<Slice<int>>);
-  static_assert(!sus::ops::Eq<Slice<int>, Slice<NotEq>>);
-  static_assert(!sus::ops::Eq<Slice<NotEq>>);
+  static_assert(sus::cmp::Eq<Slice<int>>);
+  static_assert(!sus::cmp::Eq<Slice<int>, Slice<NotEq>>);
+  static_assert(!sus::cmp::Eq<Slice<NotEq>>);
 
-  static_assert(sus::ops::Eq<SliceMut<int>>);
-  static_assert(!sus::ops::Eq<SliceMut<int>, SliceMut<NotEq>>);
-  static_assert(!sus::ops::Eq<SliceMut<NotEq>>);
+  static_assert(sus::cmp::Eq<SliceMut<int>>);
+  static_assert(!sus::cmp::Eq<SliceMut<int>, SliceMut<NotEq>>);
+  static_assert(!sus::cmp::Eq<SliceMut<NotEq>>);
 
   Vec<i32> v1 = sus::vec(1, 2, 3, 4);
   EXPECT_EQ(v1.as_slice(), v1.as_slice());

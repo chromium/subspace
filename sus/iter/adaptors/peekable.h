@@ -90,7 +90,7 @@ class [[nodiscard]] Peekable final
   /// Consume and return the next item if it is equal to `expected`.
   constexpr Option<Item> next_if_eq(
       const std::remove_reference_t<Item>& expected) noexcept
-    requires(::sus::ops::Eq<Item>)
+    requires(::sus::cmp::Eq<Item>)
   {
     return next_if([&](const auto& i) { return i == expected; });
   }

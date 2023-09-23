@@ -39,8 +39,8 @@
 #include "sus/mem/never_value.h"
 #include "sus/mem/replace.h"
 #include "sus/num/__private/intrinsics.h"
-#include "sus/ops/eq.h"
-#include "sus/ops/ord.h"
+#include "sus/cmp/eq.h"
+#include "sus/cmp/ord.h"
 #include "sus/option/option.h"
 #include "sus/string/__private/any_formatter.h"
 #include "sus/string/__private/format_to_stream.h"
@@ -173,7 +173,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   // performance cliff of potentially-expensive `clone()`s.
   static_assert(::sus::mem::Copy<GccBug<TagsType>>,
                 "The tag values must be Copy.");
-  static_assert(::sus::ops::Eq<TagsType>,
+  static_assert(::sus::cmp::Eq<TagsType>,
                 "The tag values must be Eq in order to find the storage from a "
                 "tag value.");
   static_assert(
@@ -655,9 +655,9 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   }
 
   /// Compares two `Choice`s for equality if the
-  /// types inside satisfy [`Eq`]($sus::ops::Eq).
+  /// types inside satisfy [`Eq`]($sus::cmp::Eq).
   ///
-  /// Satisfies the [`Eq`]($sus::ops::Eq) concept for `Choice`.
+  /// Satisfies the [`Eq`]($sus::cmp::Eq) concept for `Choice`.
   friend constexpr bool operator==(const Choice& l, const Choice& r) noexcept
     requires(__private::ChoiceIsEq<TagsType, __private::TypeList<Ts...>,
                                    TagsType, __private::TypeList<Ts...>>)
@@ -686,8 +686,8 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   /// Compares two `Choice`s for ordering.
   ///
   /// `Choice` satisfies the strongest of [`StrongOrd`](
-  /// $sus::ops::StrongOrd), [`Ord`]($sus::ops::Ord), and [`PartialOrd`](
-  /// $sus::ops::PartialOrd) that all the values inside the `Choice` types
+  /// $sus::cmp::StrongOrd), [`Ord`]($sus::cmp::Ord), and [`PartialOrd`](
+  /// $sus::cmp::PartialOrd) that all the values inside the `Choice` types
   /// satisfy.
   friend constexpr std::strong_ordering operator<=>(const Choice& l,
                                                     const Choice& r) noexcept

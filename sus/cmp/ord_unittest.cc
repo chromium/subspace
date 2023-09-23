@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "sus/ops/ord.h"
+#include "sus/cmp/ord.h"
 
 #include "sus/macros/__private/compiler_bugs.h"
 #include "sus/num/types.h"
@@ -21,13 +21,13 @@
 
 namespace {
 
-using sus::ops::clamp;
-using sus::ops::max;
-using sus::ops::max_by;
-using sus::ops::max_by_key;
-using sus::ops::min;
-using sus::ops::min_by;
-using sus::ops::min_by_key;
+using sus::cmp::clamp;
+using sus::cmp::max;
+using sus::cmp::max_by;
+using sus::cmp::max_by_key;
+using sus::cmp::min;
+using sus::cmp::min_by;
+using sus::cmp::min_by_key;
 
 struct Strong {
   sus_clang_bug_54040(Strong(i32 i, i32 id) : i(i), id(id){});
@@ -39,7 +39,7 @@ struct Strong {
     return a.i <=> b.i;
   }
 };
-static_assert(sus::ops::StrongOrd<Strong>);
+static_assert(sus::cmp::StrongOrd<Strong>);
 
 struct NoCmp {
   sus_clang_bug_54040(NoCmp(i32 i, i32 id) : i(i), id(id){});
@@ -47,7 +47,7 @@ struct NoCmp {
   i32 i;
   i32 id;
 };
-static_assert(!sus::ops::StrongOrd<NoCmp>);
+static_assert(!sus::cmp::StrongOrd<NoCmp>);
 
 TEST(StrongOrd, Min) {
   auto low1 = Strong(1, 1);

@@ -23,8 +23,8 @@
 #include "sus/mem/never_value.h"
 #include "sus/mem/relocate.h"
 #include "sus/num/types.h"
-#include "sus/ops/eq.h"
-#include "sus/ops/ord.h"
+#include "sus/cmp/eq.h"
+#include "sus/cmp/ord.h"
 #include "sus/option/option.h"
 #include "sus/prelude.h"
 
@@ -220,8 +220,8 @@ TEST(NonNull, Downcast) {
 
 TEST(NonNull, Eq) {
   struct NotEq {};
-  static_assert(sus::ops::Eq<NonNull<int>>);
-  static_assert(!sus::ops::Eq<NonNull<int>, NonNull<NotEq>>);
+  static_assert(sus::cmp::Eq<NonNull<int>>);
+  static_assert(!sus::cmp::Eq<NonNull<int>, NonNull<NotEq>>);
 
   auto a = int();
   auto b = int();
@@ -238,9 +238,9 @@ TEST(NonNull, Eq) {
 
 TEST(NonNull, StrongOrd) {
   struct NotCmp {};
-  static_assert(sus::ops::StrongOrd<NonNull<int>>);
+  static_assert(sus::cmp::StrongOrd<NonNull<int>>);
   sus_gcc_bug_107542_else(
-      static_assert(!sus::ops::StrongOrd<NonNull<int>, NonNull<NotCmp>>));
+      static_assert(!sus::cmp::StrongOrd<NonNull<int>, NonNull<NotCmp>>));
 
   int a[] = {1, 2};
   EXPECT_LE(NonNull<int>(a[0]), NonNull<int>(a[0]));

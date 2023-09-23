@@ -17,8 +17,8 @@
 #include "googletest/include/gtest/gtest.h"
 #include "sus/collections/array.h"
 #include "sus/num/types.h"
-#include "sus/ops/eq.h"
-#include "sus/ops/ord.h"
+#include "sus/cmp/eq.h"
+#include "sus/cmp/ord.h"
 #include "sus/prelude.h"
 
 #define F64_NEAR(a, b, c) \
@@ -66,20 +66,20 @@ TEST(f64, Traits) {
   static_assert(!sus::num::Shr<f64>);
   static_assert(!sus::num::ShrAssign<f64>);
 
-  static_assert(!sus::ops::StrongOrd<f64>);
-  static_assert(!sus::ops::Ord<f64>);
-  static_assert(sus::ops::PartialOrd<f64>);
-  static_assert(sus::ops::PartialOrd<f64, f32>);
-  static_assert(sus::ops::PartialOrd<f64, float>);
-  static_assert(sus::ops::PartialOrd<f64, double>);
+  static_assert(!sus::cmp::StrongOrd<f64>);
+  static_assert(!sus::cmp::Ord<f64>);
+  static_assert(sus::cmp::PartialOrd<f64>);
+  static_assert(sus::cmp::PartialOrd<f64, f32>);
+  static_assert(sus::cmp::PartialOrd<f64, float>);
+  static_assert(sus::cmp::PartialOrd<f64, double>);
   static_assert(1_f64 >= 1_f64);
   static_assert(2_f64 > 1_f64);
   static_assert(1_f64 <= 1_f64);
   static_assert(1_f64 < 2_f64);
-  static_assert(sus::ops::Eq<f64>);
-  static_assert(sus::ops::Eq<f64, f32>);
-  static_assert(sus::ops::Eq<f64, float>);
-  static_assert(sus::ops::Eq<f64, double>);
+  static_assert(sus::cmp::Eq<f64>);
+  static_assert(sus::cmp::Eq<f64, f32>);
+  static_assert(sus::cmp::Eq<f64, float>);
+  static_assert(sus::cmp::Eq<f64, double>);
   static_assert(1_f64 == 1_f64);
   static_assert(!(1_f64 == 2_f64));
   static_assert(1_f64 != 2_f64);

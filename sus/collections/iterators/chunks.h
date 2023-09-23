@@ -49,7 +49,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] Chunks final
     if (v_.is_empty()) [[unlikely]] {
       return Option<Item>();
     } else {
-      auto chunksz = ::sus::ops::min(v_.len(), chunk_size_);
+      auto chunksz = ::sus::cmp::min(v_.len(), chunk_size_);
       auto [fst, snd] =
           v_.split_at_unchecked(::sus::marker::unsafe_fn, chunksz);
       v_ = snd;
@@ -151,7 +151,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksMut final
     if (v_.is_empty()) [[unlikely]] {
       return Option<Item>();
     } else {
-      const auto chunksz = ::sus::ops::min(v_.len(), chunk_size_);
+      const auto chunksz = ::sus::cmp::min(v_.len(), chunk_size_);
       auto [fst, snd] =
           v_.split_at_mut_unchecked(::sus::marker::unsafe_fn, chunksz);
       v_ = snd;
@@ -483,7 +483,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunks final
       return Option<Item>();
     } else {
       const auto len = v_.len();
-      const auto chunksz = ::sus::ops::min(len, chunk_size_);
+      const auto chunksz = ::sus::cmp::min(len, chunk_size_);
       // SAFETY: chunkz <= len due to min(), so len - chunksz is a non-negative
       // value <= len <= usize::MAX.
       const auto mid = len.unchecked_sub(::sus::marker::unsafe_fn, chunksz);
@@ -589,7 +589,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksMut final
       return Option<Item>();
     } else {
       const auto len = v_.len();
-      auto chunksz = ::sus::ops::min(len, chunk_size_);
+      auto chunksz = ::sus::cmp::min(len, chunk_size_);
       // SAFETY: chunkz <= len due to min(), so len - chunksz is a non-negative
       // value <= len <= usize::MAX.
       const auto mid = len.unchecked_sub(::sus::marker::unsafe_fn, chunksz);

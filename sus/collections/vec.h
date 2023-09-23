@@ -52,7 +52,7 @@
 #include "sus/num/signed_integer.h"
 #include "sus/num/transmogrify.h"
 #include "sus/num/unsigned_integer.h"
-#include "sus/ops/ord.h"
+#include "sus/cmp/ord.h"
 #include "sus/ops/range.h"
 #include "sus/option/option.h"
 #include "sus/ptr/copy.h"
@@ -391,7 +391,7 @@ class Vec final {
     } else {
       const usize lower = it.size_hint().lower;
       if (sus::Option<const T&> first = it.next(); first.is_some()) {
-        const usize r = sus::ops::max(lower, 1_usize);
+        const usize r = sus::cmp::max(lower, 1_usize);
         T* ptr = reserve_internal(r) + self_len;
         std::construct_at(ptr, sus::move(first).unwrap());
         // The `1u` accounts for `first` which was already appended.
@@ -450,7 +450,7 @@ class Vec final {
     } else {
       const usize lower = it.size_hint().lower;
       if (sus::Option<T> first = it.next(); first.is_some()) {
-        const usize r = sus::ops::max(lower, 1_usize);
+        const usize r = sus::cmp::max(lower, 1_usize);
         T* ptr = reserve_internal(r) + self_len;
         std::construct_at(ptr, sus::move(first).unwrap());
         // The `1u` accounts for `first` which was already appended.
@@ -683,34 +683,34 @@ class Vec final {
     return VecIntoIter<T>(::sus::move(*this));
   }
 
-  /// Satisfies the [`Eq<Vec<T>, Vec<U>>`]($sus::ops::Eq) concept.
+  /// Satisfies the [`Eq<Vec<T>, Vec<U>>`]($sus::cmp::Eq) concept.
   ///
   /// #[doc.overloads=vec.eq.vec]
   template <class U>
-    requires(::sus::ops::Eq<T, U>)
+    requires(::sus::cmp::Eq<T, U>)
   friend constexpr bool operator==(const Vec<T>& l, const Vec<U>& r) noexcept {
     return l.as_slice() == r.as_slice();
   }
 
   template <class U>
-    requires(!::sus::ops::Eq<T, U>)
+    requires(!::sus::cmp::Eq<T, U>)
   friend constexpr bool operator==(const Vec<T>& l, const Vec<U>& r) = delete;
 
-  /// Satisfies the [`Eq<Vec<T>, Slice<U>>`]($sus::ops::Eq) concept.
+  /// Satisfies the [`Eq<Vec<T>, Slice<U>>`]($sus::cmp::Eq) concept.
   ///
   /// #[doc.overloads=vec.eq.slice]
   template <class U>
-    requires(::sus::ops::Eq<T, U>)
+    requires(::sus::cmp::Eq<T, U>)
   friend constexpr bool operator==(const Vec<T>& l,
                                    const Slice<U>& r) noexcept {
     return l.as_slice() == r;
   }
 
-  /// Satisfies the [`Eq<Vec<T>, SliceMut<U>>`]($sus::ops::Eq) concept.
+  /// Satisfies the [`Eq<Vec<T>, SliceMut<U>>`]($sus::cmp::Eq) concept.
   ///
   /// #[doc.overloads=vec.eq.slicemut]
   template <class U>
-    requires(::sus::ops::Eq<T, U>)
+    requires(::sus::cmp::Eq<T, U>)
   friend constexpr bool operator==(const Vec<T>& l,
                                    const SliceMut<U>& r) noexcept {
     return l.as_slice() == r.as_slice();

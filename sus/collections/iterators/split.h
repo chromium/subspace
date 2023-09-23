@@ -55,10 +55,10 @@ class GenericSplitN final
   constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     auto [lower, upper_opt] = iter_.size_hint();
     const auto count = count_;
-    return {::sus::ops::min(count, lower),
+    return {::sus::cmp::min(count, lower),
             Option<usize>(
                 ::sus::move(upper_opt).map_or(count, [count](usize upper) {
-                  return ::sus::ops::min(count, upper);
+                  return ::sus::cmp::min(count, upper);
                 }))};
   }
 
@@ -143,7 +143,7 @@ class [[nodiscard]] Split final
       // matches every element, we yield `len()` one-element slices, or a single
       // empty slice.
       return {1u, ::sus::Option<::sus::num::usize>(
-                      ::sus::ops::max(1_usize, v_.len()))};
+                      ::sus::cmp::max(1_usize, v_.len()))};
     }
   }
 
@@ -258,7 +258,7 @@ class [[nodiscard]] SplitMut final
       // matches every element, we yield `len()` one-element slices, or a single
       // empty slice.
       return {1u, ::sus::Option<::sus::num::usize>(
-                      ::sus::ops::max(1_usize, v_.len()))};
+                      ::sus::cmp::max(1_usize, v_.len()))};
     }
   }
 
@@ -381,7 +381,7 @@ class [[nodiscard]] SplitInclusive final
       // matches every element, we yield `len()` one-element slices, or a single
       // empty slice.
       return {1u, ::sus::Option<::sus::num::usize>(
-                      ::sus::ops::max(1_usize, v_.len()))};
+                      ::sus::cmp::max(1_usize, v_.len()))};
     }
   }
 
@@ -492,7 +492,7 @@ class [[nodiscard]] SplitInclusiveMut final
       // matches every element, we yield `len()` one-element slices, or a single
       // empty slice.
       return {1u, ::sus::Option<::sus::num::usize>(
-                      ::sus::ops::max(1_usize, v_.len()))};
+                      ::sus::cmp::max(1_usize, v_.len()))};
     }
   }
 

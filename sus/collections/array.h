@@ -42,8 +42,8 @@
 #include "sus/num/num_concepts.h"
 #include "sus/num/signed_integer.h"
 #include "sus/num/unsigned_integer.h"
-#include "sus/ops/eq.h"
-#include "sus/ops/ord.h"
+#include "sus/cmp/eq.h"
+#include "sus/cmp/ord.h"
 #include "sus/string/__private/any_formatter.h"
 #include "sus/string/__private/format_to_stream.h"
 #include "sus/tuple/tuple.h"
@@ -332,30 +332,30 @@ class Array final {
         });
   }
 
-  /// Satisfies the [`Eq<Array<T, N>, Array<U, N>>`]($sus::ops::Eq) concept.
+  /// Satisfies the [`Eq<Array<T, N>, Array<U, N>>`]($sus::cmp::Eq) concept.
   template <class U>
-    requires(::sus::ops::Eq<T, U>)
+    requires(::sus::cmp::Eq<T, U>)
   constexpr bool operator==(const Array<U, N>& r) const& noexcept
-    requires(::sus::ops::Eq<T>)
+    requires(::sus::cmp::Eq<T>)
   {
     return eq_impl(r, std::make_index_sequence<N>());
   }
 
-  /// Satisfies the [`Eq<Array<T, N>, Slice<U>>`]($sus::ops::Eq) concept.
+  /// Satisfies the [`Eq<Array<T, N>, Slice<U>>`]($sus::cmp::Eq) concept.
   ///
   /// #[doc.overloads=array.eq.slice]
   template <class U>
-    requires(::sus::ops::Eq<T, U>)
+    requires(::sus::cmp::Eq<T, U>)
   friend constexpr bool operator==(const Array<T, N>& l,
                                    const Slice<U>& r) noexcept {
     return r.len() == N && l.eq_impl(r, std::make_index_sequence<N>());
   }
 
-  /// Satisfies the [`Eq<Array<T, N>, SliceMut<U>>`]($sus::ops::Eq) concept.
+  /// Satisfies the [`Eq<Array<T, N>, SliceMut<U>>`]($sus::cmp::Eq) concept.
   ///
   /// #[doc.overloads=array.eq.slicemut]
   template <class U>
-    requires(::sus::ops::Eq<T, U>)
+    requires(::sus::cmp::Eq<T, U>)
   friend constexpr bool operator==(const Array<T, N>& l,
                                    const SliceMut<U>& r) noexcept {
     return r.len() == N && l.eq_impl(r, std::make_index_sequence<N>());
@@ -465,7 +465,7 @@ class Array final {
 namespace __private {
 
 template <size_t I>
-constexpr inline bool array_cmp_impl(sus::ops::Ordering auto& val,
+constexpr inline bool array_cmp_impl(sus::cmp::Ordering auto& val,
                                      const auto& l, const auto& r) noexcept {
   auto cmp = l.get_unchecked(::sus::marker::unsafe_fn, I) <=>
              r.get_unchecked(::sus::marker::unsafe_fn, I);
@@ -476,7 +476,7 @@ constexpr inline bool array_cmp_impl(sus::ops::Ordering auto& val,
 };
 
 template <size_t... Is>
-constexpr inline auto array_cmp(sus::ops::Ordering auto equal, const auto& l,
+constexpr inline auto array_cmp(sus::cmp::Ordering auto equal, const auto& l,
                                 const auto& r,
                                 std::index_sequence<Is...>) noexcept {
   auto val = equal;
@@ -488,14 +488,14 @@ constexpr inline auto array_cmp(sus::ops::Ordering auto equal, const auto& l,
 
 /// Compares two Arrays.
 ///
-/// Satisfies sus::ops::StrongOrd<Array<T, N>> if sus::ops::StrongOrd<T>.
+/// Satisfies sus::cmp::StrongOrd<Array<T, N>> if sus::cmp::StrongOrd<T>.
 ///
-/// Satisfies sus::ops::Ord<Array<T, N>> if sus::ops::Ord<T>.
+/// Satisfies sus::cmp::Ord<Array<T, N>> if sus::cmp::Ord<T>.
 ///
-/// Satisfies sus::ops::PartialOrd<Array<T, N>> if sus::ops::PartialOrd<T>.
+/// Satisfies sus::cmp::PartialOrd<Array<T, N>> if sus::cmp::PartialOrd<T>.
 /// #[doc.overloads=array.cmp.array]
 template <class T, class U, size_t N>
-  requires(::sus::ops::ExclusiveStrongOrd<T, U>)
+  requires(::sus::cmp::ExclusiveStrongOrd<T, U>)
 constexpr inline std::strong_ordering operator<=>(
     const Array<T, N>& l, const Array<U, N>& r) noexcept {
   return __private::array_cmp(std::strong_ordering::equivalent, l, r,
@@ -503,7 +503,7 @@ constexpr inline std::strong_ordering operator<=>(
 }
 /// #[doc.overloads=array.cmp.array]
 template <class T, class U, size_t N>
-  requires(::sus::ops::ExclusiveOrd<T, U>)
+  requires(::sus::cmp::ExclusiveOrd<T, U>)
 constexpr inline std::weak_ordering operator<=>(const Array<T, N>& l,
                                                 const Array<U, N>& r) noexcept {
   return __private::array_cmp(std::weak_ordering::equivalent, l, r,
@@ -511,7 +511,7 @@ constexpr inline std::weak_ordering operator<=>(const Array<T, N>& l,
 }
 /// #[doc.overloads=array.cmp.array]
 template <class T, class U, size_t N>
-  requires(::sus::ops::ExclusivePartialOrd<T, U>)
+  requires(::sus::cmp::ExclusivePartialOrd<T, U>)
 constexpr inline std::partial_ordering operator<=>(
     const Array<T, N>& l, const Array<U, N>& r) noexcept {
   return __private::array_cmp(std::partial_ordering::equivalent, l, r,
@@ -520,16 +520,16 @@ constexpr inline std::partial_ordering operator<=>(
 
 /// Compares an Array and a Slice.
 ///
-/// Satisfies sus::ops::StrongOrd<Array<T, N>, Slice<T>> if
-/// sus::ops::StrongOrd<T>.
+/// Satisfies sus::cmp::StrongOrd<Array<T, N>, Slice<T>> if
+/// sus::cmp::StrongOrd<T>.
 ///
-/// Satisfies sus::ops::Ord<Array<T, N>, Slice<T>> if sus::ops::Ord<T>.
+/// Satisfies sus::cmp::Ord<Array<T, N>, Slice<T>> if sus::cmp::Ord<T>.
 ///
-/// Satisfies sus::ops::PartialOrd<Array<T, N>, Slice<T>> if
-/// sus::ops::PartialOrd<T>.
+/// Satisfies sus::cmp::PartialOrd<Array<T, N>, Slice<T>> if
+/// sus::cmp::PartialOrd<T>.
 /// #[doc.overloads=array.cmp.slice]
 template <class T, class U, size_t N>
-  requires(::sus::ops::ExclusiveStrongOrd<T, U>)
+  requires(::sus::cmp::ExclusiveStrongOrd<T, U>)
 constexpr inline std::strong_ordering operator<=>(const Array<T, N>& l,
                                                   const Slice<U>& r) noexcept {
   if (r.len() != N) return r.len() <=> N;
@@ -538,7 +538,7 @@ constexpr inline std::strong_ordering operator<=>(const Array<T, N>& l,
 }
 /// #[doc.overloads=array.cmp.slice]
 template <class T, class U, size_t N>
-  requires(::sus::ops::ExclusiveOrd<T, U>)
+  requires(::sus::cmp::ExclusiveOrd<T, U>)
 constexpr inline std::weak_ordering operator<=>(const Array<T, N>& l,
                                                 const Slice<U>& r) noexcept {
   if (r.len() != N) return r.len() <=> N;
@@ -547,7 +547,7 @@ constexpr inline std::weak_ordering operator<=>(const Array<T, N>& l,
 }
 /// #[doc.overloads=array.cmp.slice]
 template <class T, class U, size_t N>
-  requires(::sus::ops::ExclusivePartialOrd<T, U>)
+  requires(::sus::cmp::ExclusivePartialOrd<T, U>)
 constexpr inline std::partial_ordering operator<=>(const Array<T, N>& l,
                                                    const Slice<U>& r) noexcept {
   if (r.len() != N) return r.len() <=> N;
@@ -557,16 +557,16 @@ constexpr inline std::partial_ordering operator<=>(const Array<T, N>& l,
 
 /// Compares an Array and a SliceMut.
 ///
-/// Satisfies sus::ops::StrongOrd<Array<T, N>, SliceMut<T>> if
-/// sus::ops::StrongOrd<T>.
+/// Satisfies sus::cmp::StrongOrd<Array<T, N>, SliceMut<T>> if
+/// sus::cmp::StrongOrd<T>.
 ///
-/// Satisfies sus::ops::Ord<Array<T, N>, SliceMut<T>> if sus::ops::Ord<T>.
+/// Satisfies sus::cmp::Ord<Array<T, N>, SliceMut<T>> if sus::cmp::Ord<T>.
 ///
-/// Satisfies sus::ops::PartialOrd<Array<T, N>, SliceMut<T>> if
-/// sus::ops::PartialOrd<T>.
+/// Satisfies sus::cmp::PartialOrd<Array<T, N>, SliceMut<T>> if
+/// sus::cmp::PartialOrd<T>.
 /// #[doc.overloads=array.cmp.slicemut]
 template <class T, class U, size_t N>
-  requires(::sus::ops::ExclusiveStrongOrd<T, U>)
+  requires(::sus::cmp::ExclusiveStrongOrd<T, U>)
 constexpr inline std::strong_ordering operator<=>(
     const Array<T, N>& l, const SliceMut<U>& r) noexcept {
   if (r.len() != N) return r.len() <=> N;
@@ -575,7 +575,7 @@ constexpr inline std::strong_ordering operator<=>(
 }
 /// #[doc.overloads=array.cmp.slicemut]
 template <class T, class U, size_t N>
-  requires(::sus::ops::ExclusiveOrd<T, U>)
+  requires(::sus::cmp::ExclusiveOrd<T, U>)
 constexpr inline std::weak_ordering operator<=>(const Array<T, N>& l,
                                                 const SliceMut<U>& r) noexcept {
   if (r.len() != N) return r.len() <=> N;
@@ -584,7 +584,7 @@ constexpr inline std::weak_ordering operator<=>(const Array<T, N>& l,
 }
 /// #[doc.overloads=array.cmp.slicemut]
 template <class T, class U, size_t N>
-  requires(::sus::ops::ExclusivePartialOrd<T, U>)
+  requires(::sus::cmp::ExclusivePartialOrd<T, U>)
 constexpr inline std::partial_ordering operator<=>(
     const Array<T, N>& l, const SliceMut<U>& r) noexcept {
   if (r.len() != N) return r.len() <=> N;

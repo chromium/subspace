@@ -629,18 +629,18 @@ concept CanIntoInner =
 TEST(Choice, Eq) {
   struct NotEq {};
   constexpr static NotEq not_eq_v;
-  static_assert(!sus::ops::Eq<NotEq>);
+  static_assert(!sus::cmp::Eq<NotEq>);
 
   // Same types.
   static_assert(
-      sus::ops::Eq<Choice<sus_choice_types((1_i32, i32), (2_i32, i32))>>);
+      sus::cmp::Eq<Choice<sus_choice_types((1_i32, i32), (2_i32, i32))>>);
   // Eq types.
   static_assert(
-      sus::ops::Eq<Choice<sus_choice_types((1_i32, i32), (2_i32, i32))>,
+      sus::cmp::Eq<Choice<sus_choice_types((1_i32, i32), (2_i32, i32))>,
                    Choice<sus_choice_types((1_i64, i64), (2_i64, i16))>>);
   // Not Eq types.
   static_assert(
-      !sus::ops::Eq<Choice<sus_choice_types((1, NotEq), (2, NotEq))>>);
+      !sus::cmp::Eq<Choice<sus_choice_types((1, NotEq), (2, NotEq))>>);
 
   using OrderChoice =
       Choice<sus_choice_types((Order::First, u32), (Order::Second, u8))>;
@@ -727,8 +727,8 @@ struct Weak {
 TEST(Choice, WeakOrder) {
   using ChoiceWeak =
       Choice<sus_choice_types((Order::First, Weak), (Order::Second, Weak))>;
-  static_assert(!sus::ops::StrongOrd<ChoiceWeak>);
-  static_assert(sus::ops::Ord<ChoiceWeak>);
+  static_assert(!sus::cmp::StrongOrd<ChoiceWeak>);
+  static_assert(sus::cmp::Ord<ChoiceWeak>);
 
   // Same enum value and inner value.
   auto u1 = ChoiceWeak::with<Order::First>(Weak(1, 1));
@@ -745,7 +745,7 @@ TEST(Choice, WeakOrder) {
   // Weak order tags, the requirement is that they are Eq.
   constexpr Weak a(1, 2);
   constexpr Weak b(2, 3);
-  static_assert(::sus::ops::Eq<Weak>);
+  static_assert(::sus::cmp::Eq<Weak>);
   EXPECT_EQ((std::weak_order(
                 Choice<sus_choice_types((a, i32), (b, i32))>::with<a>(1),
                 Choice<sus_choice_types((a, i32), (b, i32))>::with<b>(2))),
@@ -778,7 +778,7 @@ TEST(Choice, PartialOrder) {
   // Partial order tags, the requirement is that they are Eq.
   constexpr f32 a = 0.f;
   constexpr f32 b = 1.f;
-  static_assert(::sus::ops::Eq<f32>);
+  static_assert(::sus::cmp::Eq<f32>);
   EXPECT_EQ((std::partial_order(
                 Choice<sus_choice_types((a, i32), (b, i32))>::with<a>(1),
                 Choice<sus_choice_types((a, i32), (b, i32))>::with<b>(2))),
@@ -786,19 +786,19 @@ TEST(Choice, PartialOrder) {
 }
 
 struct NotCmp {};
-static_assert(!sus::ops::PartialOrd<NotCmp>);
+static_assert(!sus::cmp::PartialOrd<NotCmp>);
 
-static_assert(::sus::ops::StrongOrd<Choice<sus_choice_types((1, int))>,
+static_assert(::sus::cmp::StrongOrd<Choice<sus_choice_types((1, int))>,
                                     Choice<sus_choice_types((1, int))>>);
-static_assert(!::sus::ops::StrongOrd<Choice<sus_choice_types((1, Weak))>,
+static_assert(!::sus::cmp::StrongOrd<Choice<sus_choice_types((1, Weak))>,
                                      Choice<sus_choice_types((1, Weak))>>);
-static_assert(::sus::ops::Ord<Choice<sus_choice_types((1, Weak))>,
+static_assert(::sus::cmp::Ord<Choice<sus_choice_types((1, Weak))>,
                               Choice<sus_choice_types((1, Weak))>>);
-static_assert(!::sus::ops::Ord<Choice<sus_choice_types((1, float))>,
+static_assert(!::sus::cmp::Ord<Choice<sus_choice_types((1, float))>,
                                Choice<sus_choice_types((1, float))>>);
-static_assert(::sus::ops::PartialOrd<Choice<sus_choice_types((1, float))>,
+static_assert(::sus::cmp::PartialOrd<Choice<sus_choice_types((1, float))>,
                                      Choice<sus_choice_types((1, float))>>);
-static_assert(!::sus::ops::PartialOrd<Choice<sus_choice_types((1, NotCmp))>,
+static_assert(!::sus::cmp::PartialOrd<Choice<sus_choice_types((1, NotCmp))>,
                                       Choice<sus_choice_types((1, NotCmp))>>);
 
 TEST(Choice, VoidValues) {
@@ -813,10 +813,10 @@ TEST(Choice, VoidValues) {
 
   static_assert(sus::mem::Copy<decltype(u1)>);
   static_assert(sus::mem::Copy<decltype(u3)>);
-  static_assert(sus::ops::Eq<decltype(u1)>);
-  static_assert(sus::ops::Eq<decltype(u3)>);
-  static_assert(sus::ops::StrongOrd<decltype(u1)>);
-  static_assert(sus::ops::StrongOrd<decltype(u3)>);
+  static_assert(sus::cmp::Eq<decltype(u1)>);
+  static_assert(sus::cmp::Eq<decltype(u3)>);
+  static_assert(sus::cmp::StrongOrd<decltype(u1)>);
+  static_assert(sus::cmp::StrongOrd<decltype(u3)>);
 
   static_assert(CanGetRef<decltype(u1), Order::First>);
   static_assert(!CanGetRef<decltype(u1), Order::Second>);
@@ -869,7 +869,7 @@ TEST(Choice, fmt) {
       return a == rhs.a;
     }
   };
-  static_assert(sus::ops::Eq<NoFormat>);
+  static_assert(sus::cmp::Eq<NoFormat>);
   static_assert(!fmt::is_formattable<NoFormat, char>::value);
 
   constexpr auto taga = NoFormat();

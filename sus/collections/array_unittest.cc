@@ -24,8 +24,8 @@
 #include "sus/mem/move.h"
 #include "sus/mem/relocate.h"
 #include "sus/num/types.h"
-#include "sus/ops/eq.h"
-#include "sus/ops/ord.h"
+#include "sus/cmp/eq.h"
+#include "sus/cmp/ord.h"
 #include "sus/prelude.h"
 #include "sus/test/ensure_use.h"
 
@@ -351,16 +351,16 @@ TEST(Array, ConvertsToSlice) {
 
 TEST(Array, Eq) {
   struct NotEq {};
-  static_assert(!sus::ops::Eq<NotEq>);
+  static_assert(!sus::cmp::Eq<NotEq>);
 
-  static_assert(sus::ops::Eq<Array<int, 3>>);
-  static_assert(!sus::ops::Eq<Array<int, 3>, Array<int, 4>>);
-  static_assert(!sus::ops::Eq<Array<NotEq, 3>>);
+  static_assert(sus::cmp::Eq<Array<int, 3>>);
+  static_assert(!sus::cmp::Eq<Array<int, 3>, Array<int, 4>>);
+  static_assert(!sus::cmp::Eq<Array<NotEq, 3>>);
 
-  static_assert(sus::ops::Eq<Array<int, 3>, Slice<int>>);
-  static_assert(!sus::ops::Eq<Array<int, 3>, Slice<NotEq>>);
-  static_assert(sus::ops::Eq<Array<int, 3>, SliceMut<int>>);
-  static_assert(!sus::ops::Eq<Array<int, 3>, SliceMut<NotEq>>);
+  static_assert(sus::cmp::Eq<Array<int, 3>, Slice<int>>);
+  static_assert(!sus::cmp::Eq<Array<int, 3>, Slice<NotEq>>);
+  static_assert(sus::cmp::Eq<Array<int, 3>, SliceMut<int>>);
+  static_assert(!sus::cmp::Eq<Array<int, 3>, SliceMut<NotEq>>);
 
   auto a = Array<int, 5>(1, 2, 3, 4, 5);
   auto b = Array<int, 5>(1, 2, 3, 4, 5);
@@ -375,12 +375,12 @@ TEST(Array, Eq) {
 
 TEST(Array, StrongOrd) {
   struct NotOrd {};
-  static_assert(!sus::ops::PartialOrd<NotOrd>);
+  static_assert(!sus::cmp::PartialOrd<NotOrd>);
 
-  static_assert(sus::ops::StrongOrd<Array<int, 3>, Slice<int>>);
-  static_assert(!sus::ops::StrongOrd<Array<int, 3>, Slice<NotOrd>>);
-  static_assert(sus::ops::StrongOrd<Array<int, 3>, SliceMut<int>>);
-  static_assert(!sus::ops::StrongOrd<Array<int, 3>, SliceMut<NotOrd>>);
+  static_assert(sus::cmp::StrongOrd<Array<int, 3>, Slice<int>>);
+  static_assert(!sus::cmp::StrongOrd<Array<int, 3>, Slice<NotOrd>>);
+  static_assert(sus::cmp::StrongOrd<Array<int, 3>, SliceMut<int>>);
+  static_assert(!sus::cmp::StrongOrd<Array<int, 3>, SliceMut<NotOrd>>);
 
   auto a = Array<int, 5>(1, 2, 3, 4, 5);
   auto b = Array<int, 5>(1, 2, 3, 4, 5);
@@ -440,18 +440,18 @@ TEST(Array, PartialOrder) {
 }
 
 struct NotCmp {};
-static_assert(!sus::ops::PartialOrd<NotCmp>);
+static_assert(!sus::cmp::PartialOrd<NotCmp>);
 
-static_assert(!sus::ops::StrongOrd<Array<int, 3>, Array<int, 4>>);
-static_assert(!sus::ops::Ord<Array<int, 3>, Array<int, 4>>);
-static_assert(!sus::ops::PartialOrd<Array<int, 3>, Array<int, 4>>);
+static_assert(!sus::cmp::StrongOrd<Array<int, 3>, Array<int, 4>>);
+static_assert(!sus::cmp::Ord<Array<int, 3>, Array<int, 4>>);
+static_assert(!sus::cmp::PartialOrd<Array<int, 3>, Array<int, 4>>);
 
-static_assert(sus::ops::StrongOrd<Array<int, 3>>);
-static_assert(!sus::ops::StrongOrd<Array<Weak, 3>>);
-static_assert(sus::ops::Ord<Array<Weak, 3>>);
-static_assert(!sus::ops::Ord<Array<float, 3>>);
-static_assert(!sus::ops::Ord<Array<float, 3>>);
-static_assert(!sus::ops::PartialOrd<Array<NotCmp, 3>>);
+static_assert(sus::cmp::StrongOrd<Array<int, 3>>);
+static_assert(!sus::cmp::StrongOrd<Array<Weak, 3>>);
+static_assert(sus::cmp::Ord<Array<Weak, 3>>);
+static_assert(!sus::cmp::Ord<Array<float, 3>>);
+static_assert(!sus::cmp::Ord<Array<float, 3>>);
+static_assert(!sus::cmp::PartialOrd<Array<NotCmp, 3>>);
 
 TEST(Array, Iter) {
   const auto a = Array<usize, 5>::with_value(3u);

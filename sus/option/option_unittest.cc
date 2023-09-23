@@ -2351,14 +2351,14 @@ TEST(Option, ImplicitIter) {
 
 TEST(Option, Eq) {
   struct NotEq {};
-  static_assert(!sus::ops::Eq<NotEq>);
+  static_assert(!sus::cmp::Eq<NotEq>);
 
   // Same types.
-  static_assert(::sus::ops::Eq<Option<i32>, Option<i32>>);
+  static_assert(::sus::cmp::Eq<Option<i32>, Option<i32>>);
   // Eq types.
-  static_assert(::sus::ops::Eq<Option<i32>, Option<i64>>);
+  static_assert(::sus::cmp::Eq<Option<i32>, Option<i64>>);
   // Not Eq types.
-  static_assert(!::sus::ops::Eq<Option<NotEq>, Option<NotEq>>);
+  static_assert(!::sus::cmp::Eq<Option<NotEq>, Option<NotEq>>);
 
   EXPECT_EQ(Option<i32>(1), Option<i32>(1));
   EXPECT_NE(Option<i32>(1), Option<i32>(2));
@@ -2395,7 +2395,7 @@ TEST(Option, StrongOrd) {
 }
 
 TEST(Option, StrongOrder) {
-  static_assert(::sus::ops::StrongOrd<Option<int>>);
+  static_assert(::sus::cmp::StrongOrd<Option<int>>);
 
   EXPECT_EQ(std::strong_order(Option<int>(12), Option<int>(12)),
             std::strong_ordering::equal);
@@ -2425,8 +2425,8 @@ struct Weak {
 };
 
 TEST(Option, WeakOrder) {
-  static_assert(!::sus::ops::StrongOrd<Option<Weak>>);
-  static_assert(::sus::ops::Ord<Option<Weak>>);
+  static_assert(!::sus::cmp::StrongOrd<Option<Weak>>);
+  static_assert(::sus::cmp::Ord<Option<Weak>>);
 
   auto x = std::weak_order(Option<Weak>(Weak(1, 2)), Option<Weak>(Weak(1, 2)));
   EXPECT_EQ(x, std::weak_ordering::equivalent);
@@ -2439,8 +2439,8 @@ TEST(Option, WeakOrder) {
 }
 
 TEST(Option, PartialOrder) {
-  static_assert(!::sus::ops::Ord<Option<float>>);
-  static_assert(::sus::ops::PartialOrd<Option<float>>);
+  static_assert(!::sus::cmp::Ord<Option<float>>);
+  static_assert(::sus::cmp::PartialOrd<Option<float>>);
 
   EXPECT_EQ(std::partial_order(Option<float>(0.f), Option<float>(-0.f)),
             std::partial_ordering::equivalent);
@@ -2468,8 +2468,8 @@ TEST(Option, PartialOrder) {
 
 TEST(Option, NoOrder) {
   struct NotCmp {};
-  static_assert(!sus::ops::PartialOrd<NotCmp>);
-  static_assert(!::sus::ops::PartialOrd<Option<NotCmp>>);
+  static_assert(!sus::cmp::PartialOrd<NotCmp>);
+  static_assert(!::sus::cmp::PartialOrd<Option<NotCmp>>);
 }
 
 TEST(Option, OkOr) {

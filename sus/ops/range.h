@@ -14,11 +14,11 @@
 
 #pragma once
 
+#include "sus/cmp/ord.h"
 #include "sus/iter/__private/step.h"
 #include "sus/iter/iterator_defn.h"
 #include "sus/mem/move.h"
 #include "sus/mem/relocate.h"
-#include "sus/ops/ord.h"
 #include "sus/option/option.h"
 #include "sus/string/__private/any_formatter.h"
 #include "sus/string/__private/format_to_stream.h"
@@ -104,8 +104,8 @@ template <class Final, class T>
 class RangeIter<Final, T, false> {
   constexpr auto begin() noexcept {
     static_assert(!std::same_as<T, T>,
-                  "Step<T> is not defined for the T that the range is over. "
-                  "Use a range over subspace numerics to iterate.");
+                  "Step<T> is not defined for the T that the range is over; "
+                  "use a range over an integer type to iterate");
   }
   constexpr auto end() noexcept {}
 };
@@ -149,8 +149,11 @@ class RangeFromIter<Final, T, false> {};
 ///
 /// A Range<usize> can be constructed as a literal as `"start..end"_r`.
 template <class T>
-  requires(::sus::ops::Ord<T>)
+  requires(::sus::cmp::Ord<T>)
 class Range final : public __private::RangeIter<Range<T>, T> {
+  static_assert(!std::is_reference_v<T>,
+                "Range must be over values, not references");
+
  public:
   /// The beginning of the range, inclusive of the given value.
   T start;
@@ -213,9 +216,10 @@ class Range final : public __private::RangeIter<Range<T>, T> {
     return Range(::sus::move(start), ::sus::move(t));
   }
 
-  // sus::ops::Eq trait
+  /// Compares two `Range` for equality, satisfying the [`Eq`]($sus::cmp::Eq)
+  /// concept if `T` satisfies [`Eq`]($sus::cmp::Eq).
   constexpr bool operator==(const Range& rhs) const noexcept
-    requires Eq<T>
+    requires(::sus::cmp::Eq<T>)
   {
     return start == rhs.start && finish == rhs.finish;
   }
@@ -239,8 +243,11 @@ class Range final : public __private::RangeIter<Range<T>, T> {
 /// next that yields the maximum value, as the range must be set to a state to
 /// yield the next value.
 template <class T>
-  requires(::sus::ops::Ord<T>)
+  requires(::sus::cmp::Ord<T>)
 class RangeFrom final : public __private::RangeFromIter<RangeFrom<T>, T> {
+  static_assert(!std::is_reference_v<T>,
+                "RangeFrom must be over values, not references");
+
  public:
   /// The beginning of the range, inclusive of the given value.
   T start;
@@ -291,9 +298,9 @@ class RangeFrom final : public __private::RangeFromIter<RangeFrom<T>, T> {
     return Range<T>(::sus::move(start), ::sus::move(t));
   }
 
-  // sus::ops::Eq trait
+  // sus::cmp::Eq trait
   constexpr bool operator==(const RangeFrom& rhs) const noexcept
-    requires Eq<T>
+    requires(::sus::cmp::Eq<T>)
   {
     return start == rhs.start;
   }
@@ -309,8 +316,11 @@ class RangeFrom final : public __private::RangeFromIter<RangeFrom<T>, T> {
 ///
 /// A RangeTo<usize> can be constructed as a literal as `"..end"_r`.
 template <class T>
-  requires(::sus::ops::Ord<T>)
+  requires(::sus::cmp::Ord<T>)
 class RangeTo final {
+  static_assert(!std::is_reference_v<T>,
+                "RangeTo must be over values, not references");
+
  public:
   /// The end of the range, exclusive of the given value.
   T finish;
@@ -359,9 +369,9 @@ class RangeTo final {
   }
   constexpr RangeTo end_at(T t) && noexcept { return RangeTo(::sus::move(t)); }
 
-  // sus::ops::Eq trait
+  // sus::cmp::Eq trait
   constexpr bool operator==(const RangeTo& rhs) const noexcept
-    requires Eq<T>
+    requires(::sus::cmp::Eq<T>)
   {
     return finish == rhs.finish;
   }
@@ -377,8 +387,11 @@ class RangeTo final {
 ///
 /// A RangeFull<usize> can be constructed as a literal as `".."_r`.
 template <class T>
-  requires(::sus::ops::Ord<T>)
+  requires(::sus::cmp::Ord<T>)
 class [[sus_trivial_abi]] RangeFull final {
+  static_assert(!std::is_reference_v<T>,
+                "RangeFull must be over values, not references");
+
  public:
   RangeFull() = default;
 
@@ -421,9 +434,9 @@ class [[sus_trivial_abi]] RangeFull final {
     return RangeTo<T>(::sus::move(t));
   }
 
-  // sus::ops::Eq trait
+  // sus::cmp::Eq trait
   constexpr bool operator==(const RangeFull& rhs) const noexcept
-    requires Eq<T>
+    requires(::sus::cmp::Eq<T>)
   {
     return true;
   }

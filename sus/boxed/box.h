@@ -33,7 +33,7 @@
 #include "sus/mem/relocate.h"
 #include "sus/mem/replace.h"
 #include "sus/mem/size_of.h"
-#include "sus/ops/eq.h"
+#include "sus/cmp/eq.h"
 #include "sus/ptr/subclass.h"
 #include "sus/string/__private/any_formatter.h"
 #include "sus/string/__private/format_to_stream.h"
@@ -436,45 +436,45 @@ class [[sus_trivial_abi]] Box final : public __private::BoxBase<Box<T>, T> {
   /// Compares the inner value of two `Box` objects for equality. This does not
   /// perform pointer equality on the boxes themselves.
   ///
-  /// Satisfies [`Eq`]($sus::ops::Eq) for `Box<T>` if `T` also satisifes [`Eq`](
-  /// $sus::ops::Eq).
+  /// Satisfies [`Eq`]($sus::cmp::Eq) for `Box<T>` if `T` also satisifes [`Eq`](
+  /// $sus::cmp::Eq).
   ///
   /// #[doc.overloads=box.eq]
   friend constexpr bool operator==(const Box& lhs, const Box& rhs) noexcept
-    requires(::sus::ops::Eq<T>)
+    requires(::sus::cmp::Eq<T>)
   {
     return lhs.as_ref() == rhs.as_ref();
   }
   /// #[doc.overloads=box.eq]
   template <class U>
-    requires(::sus::ops::Eq<T, U>)
+    requires(::sus::cmp::Eq<T, U>)
   friend constexpr bool operator==(const Box<T>& lhs,
                                    const Box<U>& rhs) noexcept {
     return lhs.as_ref() == rhs.as_ref();
   }
   /// #[doc.overloads=box.eq]
   template <class U>
-    requires(!::sus::ops::Eq<T, U>)
+    requires(!::sus::cmp::Eq<T, U>)
   friend constexpr bool operator==(const Box<T>& lhs,
                                    const Box<U>& rhs) noexcept = delete;
 
   /// Compares the inner value of two `Box` objects for ordering. This compares
   /// the values pointed to from the `Box`, not the pointers themselves.
   ///
-  /// Satisfies the strongest of [`StrongOrd`]($sus::ops::StrongOrd),
-  /// [`Ord`]($sus::ops::Ord), or [`PartialOrd`]($sus::ops::PartialOrd), for
+  /// Satisfies the strongest of [`StrongOrd`]($sus::cmp::StrongOrd),
+  /// [`Ord`]($sus::cmp::Ord), or [`PartialOrd`]($sus::cmp::PartialOrd), for
   /// `Box<T>` for the strongest ordering that `T` satisifes.
   ///
   /// #[doc.overloads=box.ord]
   friend constexpr std::strong_ordering operator<=>(const Box& lhs,
                                                     const Box& rhs) noexcept
-    requires(::sus::ops::ExclusiveStrongOrd<T>)
+    requires(::sus::cmp::ExclusiveStrongOrd<T>)
   {
     return lhs.as_ref() <=> rhs.as_ref();
   }
   /// #[doc.overloads=box.ord]
   template <class U>
-    requires(::sus::ops::ExclusiveStrongOrd<T, U>)
+    requires(::sus::cmp::ExclusiveStrongOrd<T, U>)
   friend constexpr std::strong_ordering operator<=>(
       const Box<T>& lhs, const Box<U>& rhs) noexcept {
     return lhs.as_ref() <=> rhs.as_ref();
@@ -482,13 +482,13 @@ class [[sus_trivial_abi]] Box final : public __private::BoxBase<Box<T>, T> {
   /// #[doc.overloads=box.ord]
   friend constexpr std::weak_ordering operator<=>(const Box& lhs,
                                                   const Box& rhs) noexcept
-    requires(::sus::ops::ExclusiveOrd<T>)
+    requires(::sus::cmp::ExclusiveOrd<T>)
   {
     return lhs.as_ref() <=> rhs.as_ref();
   }
   /// #[doc.overloads=box.ord]
   template <class U>
-    requires(::sus::ops::ExclusiveOrd<T, U>)
+    requires(::sus::cmp::ExclusiveOrd<T, U>)
   friend constexpr std::weak_ordering operator<=>(const Box<T>& lhs,
                                                   const Box<U>& rhs) noexcept {
     return lhs.as_ref() <=> rhs.as_ref();
@@ -496,13 +496,13 @@ class [[sus_trivial_abi]] Box final : public __private::BoxBase<Box<T>, T> {
   /// #[doc.overloads=box.ord]
   friend constexpr std::partial_ordering operator<=>(const Box& lhs,
                                                      const Box& rhs) noexcept
-    requires(::sus::ops::ExclusivePartialOrd<T>)
+    requires(::sus::cmp::ExclusivePartialOrd<T>)
   {
     return lhs.as_ref() <=> rhs.as_ref();
   }
   /// #[doc.overloads=box.ord]
   template <class U>
-    requires(::sus::ops::ExclusivePartialOrd<T, U>)
+    requires(::sus::cmp::ExclusivePartialOrd<T, U>)
   friend constexpr std::partial_ordering operator<=>(
       const Box<T>& lhs, const Box<U>& rhs) noexcept {
     return lhs.as_ref() <=> rhs.as_ref();
@@ -510,7 +510,7 @@ class [[sus_trivial_abi]] Box final : public __private::BoxBase<Box<T>, T> {
   // No ordering.
   /// #[doc.overloads=box.ord]
   template <class U>
-    requires(!::sus::ops::PartialOrd<T, U>)
+    requires(!::sus::cmp::PartialOrd<T, U>)
   friend constexpr auto operator<=>(const Box<T>& lhs,
                                     const Box<U>& rhs) noexcept = delete;
 
