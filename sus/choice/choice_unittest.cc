@@ -896,4 +896,39 @@ TEST(Choice, GTest) {
       "Choice(First, 4)");
 }
 
+TEST(Choice, Example_Construct) {
+  {
+    enum class Order { First, Second };
+    using EitherOr =
+        Choice<sus_choice_types((Order::First, u64), (Order::Second, u32))>;
+  }
+  {
+    enum class Order { First, Second };
+    using EitherOr = Choice<sus_choice_types(
+        (Order::First, void), (Order::Second, std::string, i32))>;
+    auto e1 = EitherOr::with<Order::First>();
+    auto e2 = EitherOr::with<Order::Second>(sus::tuple("hello worl", 0xd));
+  }
+
+  {
+    enum class Order { First, Second };
+    using EitherOr = Choice<sus_choice_types(
+        (Order::First, u64), (Order::Second, std::string, i32))>;
+    auto e = EitherOr::with<Order::Second>(sus::tuple("hello worl", 0xd));
+    switch (e) {
+      case Order::First: {
+        const auto& i = e.as<Order::First>();
+        fmt::println("First has u64 {}", i);
+        break;
+      }
+      case Order::Second: {
+        const auto& [s, i] = e.as<Order::Second>();
+        // Prints "Second has hello world"
+        fmt::println("Second has {}{:x}", s, i);
+        break;
+      }
+    }
+  }
+}
+
 }  // namespace

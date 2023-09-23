@@ -46,6 +46,12 @@
 #include "sus/string/__private/format_to_stream.h"
 #include "sus/tuple/tuple.h"
 
+namespace sus {
+/// The [`Choice`]($sus::choice_type::Choice) type, and the
+/// [`choice`]($sus::choice_type::choice) type-deduction constructor function.
+namespace choice_type {}
+}  // namespace sus
+
 namespace sus::choice_type {
 
 /// A helper concept that reports if the value in a `Choice` for the given `Tag`
@@ -55,6 +61,84 @@ concept ChoiceValueIsVoid = !requires(const Choice& c) {
   { c.template get<Tag>() };
 };
 
+/// A tagged union, or sum type.
+///
+/// A `Choice` is always set to one of its `Tags` values, and each tag has zero
+/// or more types attached to it as data values.
+///
+/// `Choice` can be thought of as a combination of an [`enum`](
+/// https://en.cppreference.com/w/cpp/language/enum) and a
+/// [`std::variant`](https://en.cppreference.com/w/cpp/utility/variant), and
+/// typically the `Tags` are specified to be values in an `enum`.
+///
+/// A `Choice` always has an active tag, as one must be specified at
+/// construction, and the asociated values for the tag are always set as they
+/// must be set when the tag is specified. This means a `Choice` is always in a
+/// fully specified state, or it is moved-from. Once it is moved from it may not
+/// be used except to be re-initialized.
+///
+/// Use the `sus_choice_types()` macro to specify the types in a `Choice` type.
+///
+/// To access the values in `Choice`, the current tag must be specified as a
+/// template parameter, and it will be checked for correctness. When it does not
+/// match, the `Choice` method will panic.
+/// * [`as<Tag>()`]($sus::choice_type::Choice::as) gives const access to all the
+///   values attached to the tag.
+/// * [`as_mut<Tag>()`]($sus::choice_type::Choice::as_mut) gives mutable access
+///   to all the values attached to the tag. It is only callable on mutable
+///   `Choice`.
+/// * [`into_inner<Tag>()`]($sus::choice_type::Choice::into_inner) moves all
+///   values attached to the tag out of the `Choice` and marks the `Choice` as
+///   moved-from. It is only callable on an rvalue `Choice.`
+///
+/// # Examples
+/// This `Choice` holds either a [`u64`]($sus::num::u64) with
+/// the `First` tag or a [`u32`]($sus::num::u32) with the `Second` tag.
+/// ```
+/// enum class Order { First, Second };
+/// using EitherOr = Choice<sus_choice_types(
+///     (Order::First, u64),
+///     (Order::Second, u32)
+/// )>;
+/// ```
+/// A `Choice` tag may be associated with no values by making its type `void` or
+/// may be associated with more than one type in which case all access will be
+/// done with a [`Tuple`]($sus::tuple_type::Tuple).
+/// ```
+/// enum class Order { First, Second };
+/// using EitherOr = Choice<sus_choice_types(
+///     (Order::First, void),
+///     (Order::Second, std::string, i32)
+/// )>;
+/// auto e1 = EitherOr::with<Order::First>();
+/// auto e2 = EitherOr::with<Order::Second>(sus::tuple("text", 123));
+/// ```
+/// The `Choice` type can be used in a `switch`, with each case being one of its
+/// possible tag values. Within each tag case block, the values can be pulled
+/// out of the `Choice` with [`as`]($sus::choice_type::Choice::as) in a
+/// type-safe and memory-safe way.
+/// ```
+/// enum class Order { First, Second };
+/// using EitherOr = Choice<sus_choice_types(
+///     (Order::First, u64),
+///     (Order::Second, std::string, i32)
+/// )>;
+/// auto e = EitherOr::with<Order::Second>(sus::tuple("hello worl", 0xd));
+/// switch (e) {
+///   case Order::First: {
+///     const auto& i = e.as<Order::First>();
+///     // We don't get here.
+///     fmt::println("First has u64 {}", i);
+///     break;
+///   }
+///   case Order::Second: {
+///     const auto& [s, i] = e.as<Order::Second>();
+///     // Prints "Second has hello world".
+///     fmt::println("Second has {}{:x}", s, i);
+///     break;
+///   }
+/// }
+/// ```
 template <class... Ts, auto... Tags>
 class Choice<__private::TypeList<Ts...>, Tags...> final {
   static_assert(sizeof...(Ts) > 0,
@@ -622,10 +706,13 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
       : index_(kNeverValue) {}
 };
 
-/// Used to construct a Choice with the tag and parameters as its values.
+/// Used to construct a [`Choice`]($sus::choice_type::Choice) with `Tag` as its
+/// initial state and the parameter(s) as its associated value(s).
 ///
-/// Calling make_union() produces a hint to make a Choice but does not actually
-/// construct the Choice, as the full type of the Choice include all its member
+/// Calling `choice()` produces a hint to make a [`Choice`](
+/// $sus::choice_type::Choice) with a given inital value(s) `vs`, but does not
+/// actually construct the [`Choice`]($sus::choice_type::Choice), as the full
+/// type of the [`Choice`]($sus::choice_type::Choice) including all its member
 /// types is not known here.
 template <auto Tag, class... Ts>
 [[nodiscard]] inline constexpr auto choice(
