@@ -3113,4 +3113,52 @@ TEST(Option, BooleanOperators_Example) {
   sus::check(res == sus::vec("error!", "error!", "foo", "error!", "bar"));
 }
 
+namespace no_extra_never_value_construction {
+static i32 never_constructed;
+struct S {
+  constexpr S() : f_(1) {}
+  S(const S& o) : f_(o.f_) {}
+  S& operator=(const S& o) { return f_ = o.f_, *this; }
+  S(S&& o) : f_(o.f_) {}
+  S& operator=(S&& o) { return f_ = o.f_, *this; }
+
+ private:
+  sus_class_never_value_field(unsafe_fn, S, f_, 0, 0);
+  int f_;
+  constexpr explicit S(::sus::mem::NeverValueConstructor) : f_(0) {
+    never_constructed += 1;
+  }
+};
+static_assert(!std::is_trivially_copy_constructible_v<S>);
+static_assert(!std::is_trivially_move_constructible_v<S>);
+
+TEST(Option, NoExtraNeverValueConstruction) {
+  EXPECT_EQ(never_constructed, 0);
+  auto o = sus::Option<S>();
+  EXPECT_EQ(never_constructed, 1);
+  o.insert(S());
+  EXPECT_EQ(never_constructed, 1);
+  auto o2 = o;  // Copy ctor doesn't construct NeverValue first.
+  EXPECT_EQ(never_constructed, 1);
+  auto o3 = sus::move(o);  // Move ctor doesn't construct NeverValue first.
+  EXPECT_EQ(never_constructed, 2);  // But `o` is now a NeverValue.
+  EXPECT_EQ(o.is_none(), true);
+
+  never_constructed = 0;
+  {
+    EXPECT_EQ(never_constructed, 0);
+    auto m = sus::Option<S>();
+    EXPECT_EQ(never_constructed, 1);
+    auto m2 = m;  // Copying from None produces None.
+    EXPECT_EQ(never_constructed, 2);
+    EXPECT_EQ(m.is_none(), true);
+    EXPECT_EQ(m2.is_none(), true);
+    auto m3 = sus::move(m2);  // Moving from None produces None.
+    EXPECT_EQ(never_constructed, 3);
+    EXPECT_EQ(m3.is_none(), true);
+    EXPECT_EQ(m2.is_none(), true);
+  }
+}
+}  // namespace no_extra_never_value_construction
+
 }  // namespace
