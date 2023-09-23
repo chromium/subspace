@@ -173,7 +173,7 @@ union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
       return more_.eq(index, other.more_);
     }
   }
-  inline constexpr std::strong_ordering ord(size_t index,
+  inline constexpr std::strong_ordering strong_ord(size_t index,
                                             const Storage& other) const& {
     if (index == I) {
       return std::strong_order(tuple_, other.tuple_);
@@ -285,11 +285,11 @@ union Storage<I, Nothing, Elements...> {
       return more_.eq(index, other.more_);
     }
   }
-  inline constexpr auto ord(size_t index, const Storage& other) const& {
+  inline constexpr auto strong_ord(size_t index, const Storage& other) const& {
     if (index == I) {
       return std::strong_ordering::equivalent;
     } else {
-      return more_.ord(index, other.more_);
+      return more_.strong_ord(index, other.more_);
     }
   }
   inline constexpr auto weak_ord(size_t index, const Storage& other) const& {
@@ -409,11 +409,11 @@ union Storage<I, ::sus::Tuple<T>, Elements...> {
       return more_.eq(index, other.more_);
     }
   }
-  inline constexpr auto ord(size_t index, const Storage& other) const& {
+  inline constexpr auto strong_ord(size_t index, const Storage& other) const& {
     if (index == I) {
       return std::strong_order(tuple_, other.tuple_);
     } else {
-      return more_.ord(index, other.more_);
+      return more_.strong_ord(index, other.more_);
     }
   }
   inline constexpr auto weak_ord(size_t index, const Storage& other) const& {
@@ -506,7 +506,7 @@ union Storage<I, ::sus::Tuple<Ts...>> {
     ::sus::check(index == I);
     return tuple_ == other.tuple_;
   }
-  inline constexpr auto ord(size_t index,
+  inline constexpr auto strong_ord(size_t index,
                             const Storage& other) const& noexcept {
     ::sus::check(index == I);
     return std::strong_order(tuple_, other.tuple_);
@@ -565,7 +565,7 @@ union Storage<I, Nothing> {
     ::sus::check(index == I);
     return true;
   }
-  inline constexpr auto ord(size_t index, const Storage&) const& {
+  inline constexpr auto strong_ord(size_t index, const Storage&) const& {
     ::sus::check(index == I);
     return std::strong_ordering::equivalent;
   }
@@ -642,7 +642,7 @@ union Storage<I, ::sus::Tuple<T>> {
     ::sus::check(index == I);
     return tuple_ == other.tuple_;
   }
-  inline constexpr auto ord(size_t index, const Storage& other) const& {
+  inline constexpr auto strong_ord(size_t index, const Storage& other) const& {
     ::sus::check(index == I);
     return std::strong_order(tuple_, other.tuple_);
   }

@@ -71,7 +71,7 @@ concept ChoiceValueIsVoid = !requires(const Choice& c) {
 /// [`std::variant`](https://en.cppreference.com/w/cpp/utility/variant), and
 /// typically the `Tags` are specified to be values in an `enum`.
 ///
-/// A `Choice` always has an active tag, as one must be specified at
+/// A `Choice` always has an active member, as the tag must be specified at
 /// construction, and the asociated values for the tag are always set as they
 /// must be set when the tag is specified. This means a `Choice` is always in a
 /// fully specified state, or it is moved-from. Once it is moved from it may not
@@ -90,6 +90,12 @@ concept ChoiceValueIsVoid = !requires(const Choice& c) {
 /// * [`into_inner<Tag>()`]($sus::choice_type::Choice::into_inner) moves all
 ///   values attached to the tag out of the `Choice` and marks the `Choice` as
 ///   moved-from. It is only callable on an rvalue `Choice.`
+/// * [`get<Tag>()`]($sus::choice_type::Choice::get) returns a const reference
+///   to the values attached to the tag if its currently active, and returns
+///   `None` if the tag is not active.
+/// * [`get_mut<Tag>()`]($sus::choice_type::Choice::get) returns a mutable
+///   reference to the values attached to the tag if its currently active, and
+///   returns `None` if the tag is not active.
 ///
 /// # Examples
 /// This `Choice` holds either a [`u64`]($sus::num::u64) with
@@ -242,6 +248,11 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   template <TagsType Tag>
   using TypeForTag = __private::PublicTypeForStorageType<StorageTypeOfTag<Tag>>;
 
+  /// Constructs a `Choice` with the `V` tag indicating its active member, and
+  /// with the parameters used to set the associated values.
+  ///
+  /// If the associated type of the tag is `void` then `with()` takes no
+  /// parameters.
   template <TagsType V, class U, int&...,
             __private::ValueIsNotVoid Arg = StorageTypeOfTag<V>>
     requires(std::constructible_from<Arg, U &&>)
@@ -252,7 +263,6 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
         .construct(::sus::forward<U>(values));
     return u;
   }
-
   template <TagsType V, int&...,
             __private::ValueIsVoid Arg = StorageTypeOfTag<V>>
   constexpr static Choice with() noexcept {
@@ -271,15 +281,17 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
       storage_.destroy(index_);
   }
 
+  /// Move constructor.
+  ///
+  /// `Choice` satisfies [`Move`]($sus::mem::Move) when the types it holds all
+  /// satisfy [`Move`]($sus::mem::Move).
+  /// #[doc.overloads=move]
   constexpr Choice(Choice&& o) noexcept
     requires((... && ::sus::mem::Move<Ts>) &&
              (std::is_trivially_move_constructible_v<TagsType> && ... &&
               std::is_trivially_move_constructible_v<Ts>))
   = default;
-  Choice(Choice&& o)
-    requires(!(... && ::sus::mem::Move<Ts>))
-  = delete;
-
+  /// #[doc.overloads=move]
   constexpr Choice(Choice&& o) noexcept
     requires((... && ::sus::mem::Move<Ts>) &&
              !(std::is_trivially_move_constructible_v<TagsType> && ... &&
@@ -291,16 +303,22 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     check(index_ != kUseAfterMove);
     storage_.move_construct(index_, ::sus::move(o.storage_));
   }
+  /// #[doc.overloads=move]
+  Choice(Choice&& o)
+    requires(!(... && ::sus::mem::Move<Ts>))
+  = delete;
 
+  /// Move assignment.
+  ///
+  /// `Choice` satisfies [`Move`]($sus::mem::Move) when the types it holds all
+  /// satisfy [`Move`]($sus::mem::Move).
+  /// #[doc.overloads=move]
   Choice& operator=(Choice&& o) noexcept
     requires((... && ::sus::mem::Move<Ts>) &&
              (std::is_trivially_move_assignable_v<TagsType> && ... &&
               std::is_trivially_move_assignable_v<Ts>))
   = default;
-  Choice& operator=(Choice&& o)
-    requires(!(... && ::sus::mem::Move<Ts>))
-  = delete;
-
+  /// #[doc.overloads=move]
   constexpr Choice& operator=(Choice&& o) noexcept
     requires((... && ::sus::mem::Move<Ts>) &&
              !(std::is_trivially_move_assignable_v<TagsType> && ... &&
@@ -317,16 +335,22 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     o.index_ = kUseAfterMove;
     return *this;
   }
+  /// #[doc.overloads=move]
+  Choice& operator=(Choice&& o)
+    requires(!(... && ::sus::mem::Move<Ts>))
+  = delete;
 
+  /// Copy constructor.
+  ///
+  /// `Choice` satisfies [`Copy`]($sus::mem::Copy) when the types it holds all
+  /// satisfy [`Copy`]($sus::mem::Copy).
+  /// #[doc.overloads=copy]
   constexpr Choice(const Choice& o)
     requires((... && ::sus::mem::Copy<Ts>) &&
              (std::is_trivially_copy_constructible_v<TagsType> && ... &&
               std::is_trivially_copy_constructible_v<Ts>))
   = default;
-  Choice(const Choice& o)
-    requires(!(... && ::sus::mem::Copy<Ts>))
-  = delete;
-
+  /// #[doc.overloads=copy]
   constexpr Choice(const Choice& o) noexcept
     requires((... && ::sus::mem::Copy<Ts>) &&
              !(std::is_trivially_copy_constructible_v<TagsType> && ... &&
@@ -335,16 +359,22 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     check(o.index_ != kUseAfterMove);
     storage_.copy_construct(index_, o.storage_);
   }
+  /// #[doc.overloads=copy]
+  Choice(const Choice& o)
+    requires(!(... && ::sus::mem::Copy<Ts>))
+  = delete;
 
+  /// Copy assignment.
+  ///
+  /// `Choice` satisfies [`Copy`]($sus::mem::Copy) when the types it holds all
+  /// satisfy [`Copy`]($sus::mem::Copy).
+  /// #[doc.overloads=copy]
   constexpr Choice& operator=(const Choice& o)
     requires((... && ::sus::mem::Copy<Ts>) &&
              (std::is_trivially_copy_assignable_v<TagsType> && ... &&
               std::is_trivially_copy_assignable_v<Ts>))
   = default;
-  Choice& operator=(const Choice& o)
-    requires(!(... && ::sus::mem::Copy<Ts>))
-  = delete;
-
+  /// #[doc.overloads=copy]
   constexpr Choice& operator=(const Choice& o) noexcept
     requires((... && ::sus::mem::Copy<Ts>) &&
              !(std::is_trivially_copy_assignable_v<TagsType> && ... &&
@@ -360,8 +390,14 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     }
     return *this;
   }
+  /// #[doc.overloads=copy]
+  Choice& operator=(const Choice& o)
+    requires(!(... && ::sus::mem::Copy<Ts>))
+  = delete;
 
-  // sus::mem::Clone<Choice<Ts...>> trait.
+  /// [`Clone`]($sus::mem::Clone) support.
+  /// `Choice` satisfies [`Clone`]($sus::mem::Clone) when the types it holds all
+  /// satisfy [`Clone`]($sus::mem::Clone).
   constexpr Choice clone() const& noexcept
     requires((... && ::sus::mem::Clone<Ts>) && !(... && ::sus::mem::Copy<Ts>))
   {
@@ -372,21 +408,23 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   }
 
   /// Support for using Choice in a `switch()` statment.
+  ///
+  /// See the type's top level documentation for an example.
   constexpr inline operator TagsType() const& noexcept { return which(); }
 
   /// Returns which is the active member of the Choice.
   ///
-  /// Typically to access the data in the Choice, a switch statement would be
+  /// Typically to access the data in the Choice, a `switch` statement would be
   /// used, so as to call the getter or setter methods with the right value
-  /// specified as a template parameter. When used in a switch statement, the
-  /// which() method can be omitted.
+  /// specified as a template parameter. When used in a `switch` statement, the
+  /// `which` method can be omitted.
   ///
   /// # Example
   /// ```
-  /// switch (my_union) {
-  ///   case Value1: return my_union.as<Value1>().stuff;
-  ///   case Value2: return my_union.as<Value2>().andmore;
-  ///   case Value3: return my_union.as<Value3>().stufftoo;
+  /// switch (my_choice) {
+  ///   case Value1: return my_choice.as<Value1>().stuff;
+  ///   case Value2: return my_choice.as<Value2>().andmore;
+  ///   case Value3: return my_choice.as<Value3>().stufftoo;
   /// }
   /// ```
   ///
@@ -435,6 +473,8 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   /// The function has a template parameter specifying the tag of the active
   /// member in the choice.
   ///
+  /// If the active member's associated type is `void` then this method is
+  /// deleted and can't be called.
   /// If the active member has a single value, a reference to it is returned
   /// directly, otherwise a Tuple of references is returned to all values in the
   /// active member.
@@ -459,6 +499,8 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   /// The function has a template parameter specifying the tag of the active
   /// member in the choice.
   ///
+  /// If the active member's associated type is `void` then this method is
+  /// deleted and can't be called.
   /// If the active member has a single value, a reference to it is returned
   /// directly, otherwise a Tuple of references is returned to all values in the
   /// active member.
@@ -473,14 +515,16 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     return __private::find_choice_storage_mut<index<V>>(storage_).as_mut();
   }
 
-  /// Unwraps the Choice to move out the current value(s) inside the Choice.
+  /// Unwraps the `Choice` to move out the current value(s) inside the `Choice`.
   ///
   /// The function has a template parameter specifying the tag of the active
-  /// member in the choice.
+  /// member in the `Choice`.
   ///
+  /// If the active member's associated type is `void` then this method is
+  /// deleted and can't be called.
   /// If the active member has a single value, an rvalue reference to it is
-  /// returned directly, otherwise a Tuple of rvalue references is returned to
-  /// all values in the active member.
+  /// returned directly, otherwise a [`Tuple`]($sus::tuple_type::Tuple) of
+  /// rvalue references is returned to all values in the active member.
   ///
   /// # Panics
   /// The function will panic if the active member does not match the tag value
@@ -493,14 +537,16 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     return ::sus::move(s).into_inner();
   }
 
-  /// Returns a const reference to the value(s) inside the Choice.
+  /// Returns a const reference to the value(s) inside the `Choice`.
   ///
-  /// If the template parameter does not match the active member in the Choice,
-  /// the function returns `None`.
+  /// If the template parameter does not match the active member in the
+  /// `Choice`, the function returns `None`.
   ///
+  /// If the active member's associated type is `void` then this method is
+  /// deleted and can't be called.
   /// If the active member has a single value, a reference to it is returned
-  /// directly, otherwise a Tuple of references is returned to all values in the
-  /// active member.
+  /// directly, otherwise a [`Tuple`]($sus::tuple_type::Tuple) of references is
+  /// returned to all values in the active member.
   template <TagsType V>
     requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
   constexpr inline Option<AccessTypeOfTagConst<V>> get() const& noexcept {
@@ -513,14 +559,16 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     requires(!std::is_reference_v<StorageTypeOfTag<V>>)
   constexpr inline Option<AccessTypeOfTagConst<V>> get() && noexcept = delete;
 
-  /// Returns a mutable reference to the value(s) inside the Choice.
+  /// Returns a mutable reference to the value(s) inside the `Choice`.
   ///
-  /// If the template parameter does not match the active member in the Choice,
-  /// the function returns `None`.
+  /// If the template parameter does not match the active member in the
+  /// `Choice`, the function returns `None`.
   ///
+  /// If the active member's associated type is `void` then this method is
+  /// deleted and can't be called.
   /// If the active member has a single value, a reference to it is returned
-  /// directly, otherwise a Tuple of references is returned to all values in the
-  /// active member.
+  /// directly, otherwise a [`Tuple`]($sus::tuple_type::Tuple) of references is
+  /// returned to all values in the active member.
   template <TagsType V>
     requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
   constexpr inline Option<AccessTypeOfTagMut<V>> get_mut() & noexcept {
@@ -529,6 +577,11 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
         __private::find_choice_storage_mut<index<V>>(storage_).as_mut());
   }
 
+  /// Changes the `Choice` to make the tag `V` active, and sets the associated
+  /// values of `V` from the paramters.
+  ///
+  /// If the associated type of the tag is `void` then `set()` takes no
+  /// parameters.
   template <TagsType V, class U, int&..., class Arg = StorageTypeOfTag<V>>
     requires(std::convertible_to<U &&, Arg> &&
              __private::ValueIsNotVoid<StorageTypeOfTag<V>>)
@@ -544,15 +597,25 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
           ::sus::move(values));
     }
   }
+  template <TagsType V, int&...,
+            __private::ValueIsVoid Arg = StorageTypeOfTag<V>>
+  constexpr void set() & noexcept {
+    if (index_ != index<V>) {
+      if (index_ != kUseAfterMove) storage_.destroy(index_);
+      index_ = index<V>;
+    }
+  }
 
-  /// Returns a const reference to the value(s) inside the Choice.
+  /// Returns a const reference to the value(s) inside the `Choice`.
   ///
   /// The function has a template parameter specifying the tag of the active
-  /// member in the choice.
+  /// member in the `Choice`.
   ///
+  /// If the active member's associated type is `void` then this method is
+  /// deleted and can't be called.
   /// If the active member has a single value, a reference to it is returned
-  /// directly, otherwise a Tuple of references is returned to all values in the
-  /// active member.
+  /// directly, otherwise a [`Tuple`]($sus::tuple_type::Tuple) of references is
+  /// returned to all values in the active member.
   ///
   /// # Safety
   /// If the active member does not match the tag value passed as the template
@@ -570,14 +633,16 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   constexpr inline const StorageTypeOfTag<V>& get_unchecked(
       ::sus::marker::UnsafeFnMarker) && noexcept = delete;
 
-  /// Returns a mutable reference to the value(s) inside the Choice.
+  /// Returns a mutable reference to the value(s) inside the `Choice`.
   ///
   /// The function has a template parameter specifying the tag of the active
-  /// member in the choice.
+  /// member in the `Choice`.
   ///
+  /// If the active member's associated type is `void` then this method is
+  /// deleted and can't be called.
   /// If the active member has a single value, a reference to it is returned
-  /// directly, otherwise a Tuple of references is returned to all values in the
-  /// active member.
+  /// directly, otherwise a [`Tuple`]($sus::tuple_type::Tuple) of references is
+  /// returned to all values in the active member.
   ///
   /// # Safety
   /// If the active member does not match the tag value passed as the template
@@ -589,23 +654,22 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     return __private::find_choice_storage_mut<index<V>>(storage_).as_mut();
   }
 
-  template <TagsType V, int&...,
-            __private::ValueIsVoid Arg = StorageTypeOfTag<V>>
-  constexpr void set() & noexcept {
-    if (index_ != index<V>) {
-      if (index_ != kUseAfterMove) storage_.destroy(index_);
-      index_ = index<V>;
-    }
-  }
-
-  /// Compares two [`Choice`]($sus::choice_type::Choice)s for equality if the
-  /// types inside satisfy `Eq`.
+  /// Compares two `Choice`s for equality if the
+  /// types inside satisfy [`Eq`]($sus::ops::Eq).
   ///
   /// Satisfies the [`Eq`]($sus::ops::Eq) concept for `Choice`.
+  friend constexpr bool operator==(const Choice& l, const Choice& r) noexcept
+    requires(__private::ChoiceIsEq<TagsType, __private::TypeList<Ts...>,
+                                   TagsType, __private::TypeList<Ts...>>)
+  {
+    check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
+    return l.index_ == r.index_ && l.storage_.eq(l.index_, r.storage_);
+  }
+
   template <class... Us, auto V, auto... Vs>
     requires(__private::ChoiceIsEq<TagsType, __private::TypeList<Ts...>,
                                    decltype(V), __private::TypeList<Us...>>)
-  friend inline constexpr bool operator==(
+  friend constexpr bool operator==(
       const Choice& l,
       const Choice<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
     check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
@@ -615,18 +679,35 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   template <class... Us, auto V, auto... Vs>
     requires(!__private::ChoiceIsEq<TagsType, __private::TypeList<Ts...>,
                                     decltype(V), __private::TypeList<Us...>>)
-  friend inline constexpr bool operator==(
+  friend constexpr bool operator==(
       const Choice& l,
       const Choice<__private::TypeList<Us...>, V, Vs...>& r) noexcept = delete;
 
-  /// sus::ops::StrongOrd<Choice<Ts...>, Choice<Us...>> trait.
+  /// Compares two `Choice`s for ordering.
   ///
-  /// #[doc.overloads=ord]
+  /// `Choice` satisfies the strongest of [`StrongOrd`](
+  /// $sus::ops::StrongOrd), [`Ord`]($sus::ops::Ord), and [`PartialOrd`](
+  /// $sus::ops::PartialOrd) that all the values inside the `Choice` types
+  /// satisfy.
+  friend constexpr std::strong_ordering operator<=>(const Choice& l,
+                                                    const Choice& r) noexcept
+    requires(__private::ChoiceIsStrongOrd<TagsType, __private::TypeList<Ts...>,
+                                          TagsType, __private::TypeList<Ts...>>)
+  {
+    check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
+    const auto value_order = std::strong_order(l.which(), r.which());
+    if (value_order != std::strong_ordering::equivalent) {
+      return value_order;
+    } else {
+      return l.storage_.strong_ord(l.index_, r.storage_);
+    }
+  }
+
   template <class... Us, auto V, auto... Vs>
     requires(
         __private::ChoiceIsStrongOrd<TagsType, __private::TypeList<Ts...>,
                                      decltype(V), __private::TypeList<Us...>>)
-  friend inline constexpr std::strong_ordering operator<=>(
+  friend constexpr std::strong_ordering operator<=>(
       const Choice& l,
       const Choice<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
     check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
@@ -634,17 +715,28 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     if (value_order != std::strong_ordering::equivalent) {
       return value_order;
     } else {
-      return l.storage_.ord(l.index_, r.storage_);
+      return l.storage_.strong_ord(l.index_, r.storage_);
     }
   }
 
-  /// sus::ops::Ord<Choice<Ts...>, Choice<Us...>> trait.
-  ///
-  /// #[doc.overloads=weakord]
+  friend constexpr std::weak_ordering operator<=>(const Choice& l,
+                                                  const Choice& r) noexcept
+    requires(__private::ChoiceIsOrd<TagsType, __private::TypeList<Ts...>,
+                                    TagsType, __private::TypeList<Ts...>>)
+  {
+    check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
+    const auto value_order = std::weak_order(l.which(), r.which());
+    if (value_order != std::weak_ordering::equivalent) {
+      return value_order;
+    } else {
+      return l.storage_.weak_ord(l.index_, r.storage_);
+    }
+  }
+
   template <class... Us, auto V, auto... Vs>
     requires(__private::ChoiceIsOrd<TagsType, __private::TypeList<Ts...>,
                                     decltype(V), __private::TypeList<Us...>>)
-  friend inline constexpr std::weak_ordering operator<=>(
+  friend constexpr std::weak_ordering operator<=>(
       const Choice& l,
       const Choice<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
     check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
@@ -656,14 +748,26 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     }
   }
 
-  /// sus::ops::PartialOrd<Choice<Ts...>, Choice<Us...>> trait.
-  ///
-  /// #[doc.overloads=partialord]
+  friend constexpr std::partial_ordering operator<=>(const Choice& l,
+                                                     const Choice& r) noexcept
+    requires(
+        __private::ChoiceIsPartialOrd<TagsType, __private::TypeList<Ts...>,
+                                      TagsType, __private::TypeList<Ts...>>)
+  {
+    check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
+    const auto value_order = std::partial_order(l.which(), r.which());
+    if (value_order != std::partial_ordering::equivalent) {
+      return value_order;
+    } else {
+      return l.storage_.partial_ord(l.index_, r.storage_);
+    }
+  }
+
   template <class... Us, auto V, auto... Vs>
     requires(
         __private::ChoiceIsPartialOrd<TagsType, __private::TypeList<Ts...>,
                                       decltype(V), __private::TypeList<Us...>>)
-  friend inline constexpr std::partial_ordering operator<=>(
+  friend constexpr std::partial_ordering operator<=>(
       const Choice& l,
       const Choice<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
     check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
@@ -679,13 +783,13 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     requires(!__private::ChoiceIsAnyOrd<TagsType, __private::TypeList<Ts...>,
                                         decltype(RhsTag),
                                         __private::TypeList<RhsTs...>>)
-  friend inline constexpr auto operator<=>(
+  friend constexpr auto operator<=>(
       const Choice<__private::TypeList<Ts...>, Tags...>& l,
       const Choice<__private::TypeList<RhsTs...>, RhsTag, RhsTags...>& r) =
       delete;
 
  private:
-  constexpr inline Choice(IndexType i) noexcept : index_(i) {}
+  constexpr explicit Choice(IndexType i) noexcept : index_(i) {}
 
   // TODO: We don't use `[[sus_no_unique_address]]` here as the compiler
   // overwrites the `index_` when we move-construct into the Storage union.
