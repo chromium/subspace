@@ -14,8 +14,8 @@
 
 #include "sus/option/option.h"
 
-#include <sstream>
 #include <bit>
+#include <sstream>
 
 #include "fmt/std.h"
 #include "googletest/include/gtest/gtest.h"
@@ -729,8 +729,11 @@ TEST(Option, Destructor) {
 }
 
 TEST(Option, ExpectSome) {
-  auto x = Option<int>(0).expect("hello world");
-  EXPECT_EQ(x, 0);
+  auto x = Option<i32>(2).expect("hello world");
+  EXPECT_EQ(x, 2);
+
+  auto o = Option<i32>(2);
+  EXPECT_EQ(o.expect("hello world"), 2);
 
   auto i = NoCopyMove();
   auto& xi = Option<NoCopyMove&>(i).expect("hello world");
@@ -739,14 +742,23 @@ TEST(Option, ExpectSome) {
 
 TEST(OptionDeathTest, ExpectNone) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(Option<int>().expect("hello world"), "hello world");
+  EXPECT_DEATH(Option<i32>().expect("hello world"), "hello world");
+  EXPECT_DEATH(
+      {
+        auto o = Option<i32>();
+        o.expect("hello world");
+      },
+      "hello world");
   EXPECT_DEATH(Option<NoCopyMove&>().expect("hello world"), "hello world");
 #endif
 }
 
 TEST(Option, UnwrapSome) {
-  auto x = Option<int>(0).unwrap();
-  EXPECT_EQ(x, 0);
+  auto x = Option<i32>(2).unwrap();
+  EXPECT_EQ(x, 2);
+
+  auto o = Option<i32>(2);
+  EXPECT_EQ(o.unwrap(), 2);
 
   auto i = NoCopyMove();
   auto& ix = Option<NoCopyMove&>(i).unwrap();
@@ -755,14 +767,23 @@ TEST(Option, UnwrapSome) {
 
 TEST(OptionDeathTest, UnwrapNone) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(Option<int>().unwrap(), "");
+  EXPECT_DEATH(Option<i32>().unwrap(), "");
+  EXPECT_DEATH(
+      {
+        auto o = Option<i32>();
+        o.unwrap();
+      },
+      "");
   EXPECT_DEATH(Option<NoCopyMove&>().unwrap(), "");
 #endif
 }
 
 TEST(Option, UnwrapUncheckedSome) {
-  auto x = Option<int>(0).unwrap_unchecked(unsafe_fn);
-  EXPECT_EQ(x, 0);
+  auto x = Option<i32>(2).unwrap_unchecked(unsafe_fn);
+  EXPECT_EQ(x, 2);
+
+  auto o = Option<i32>(2);
+  EXPECT_EQ(o.unwrap_unchecked(unsafe_fn), 2);
 
   auto i = NoCopyMove();
   auto& ix = Option<NoCopyMove&>(i).unwrap_unchecked(unsafe_fn);
@@ -771,14 +792,14 @@ TEST(Option, UnwrapUncheckedSome) {
 
 TEST(Option, Take) {
   {
-    auto x = Option<int>(404);
+    auto x = Option<i32>(404);
     auto y = x.take();
     // The value has moved from `x` to `y`.
     IS_NONE(x);
     IS_SOME(y);
     EXPECT_EQ(sus::move(y).unwrap(), 404);
 
-    auto n = Option<int>();
+    auto n = Option<i32>();
     auto m = n.take();
     // The None has moved from `n` to `m`, which is a no-op on `n`.
     IS_NONE(n);
@@ -808,10 +829,16 @@ TEST(Option, Take) {
 }
 
 TEST(Option, UnwrapOr) {
-  auto x = Option<int>(2).unwrap_or(3);
+  auto x = Option<i32>(2).unwrap_or(3);
   EXPECT_EQ(x, 2);
-  auto y = Option<int>().unwrap_or(3);
+  auto y = Option<i32>().unwrap_or(3);
   EXPECT_EQ(y, 3);
+
+  auto o = Option<i32>(2);
+  EXPECT_EQ(o.unwrap_or(3), 2);
+  EXPECT_EQ(o.unwrap_or(3), 2);
+  o = Option<i32>();
+  EXPECT_EQ(o.unwrap_or(3), 3);
 
   NoCopyMove i, i2;
   auto& ix = Option<NoCopyMove&>(i).unwrap_or(i2);
@@ -820,16 +847,22 @@ TEST(Option, UnwrapOr) {
   auto& iy = Option<NoCopyMove&>().unwrap_or(i2);
   EXPECT_EQ(&iy, &i2);
 
-  static_assert(Option<int>().unwrap_or(3) == 3);
+  static_assert(Option<i32>().unwrap_or(3) == 3);
   constexpr NoCopyMove ci;
   static_assert(&Option<const NoCopyMove&>().unwrap_or(ci) == &ci);
 }
 
 TEST(Option, UnwrapOrElse) {
-  auto x = Option<int>(2).unwrap_or_else([]() { return int(3); });
+  auto x = Option<i32>(2).unwrap_or_else([] { return 3; });
   EXPECT_EQ(x, 2);
-  auto y = Option<int>().unwrap_or_else([]() { return int(3); });
+  auto y = Option<i32>().unwrap_or_else([] { return 3; });
   EXPECT_EQ(y, 3);
+
+  auto o = Option<i32>(2);
+  EXPECT_EQ(o.unwrap_or_else([] { return 3; }), 2);
+  EXPECT_EQ(o.unwrap_or_else([] { return 3; }), 2);
+  o = Option<i32>();
+  EXPECT_EQ(o.unwrap_or_else([] { return 3; }), 3);
 
   NoCopyMove i, i2;
   auto& ix = Option<NoCopyMove&>(i).unwrap_or_else(
@@ -849,6 +882,11 @@ TEST(Option, UnwrapOrDefault) {
   EXPECT_EQ(x.i, 4);
   auto y = Option<DefaultConstructible>().unwrap_or_default();
   EXPECT_EQ(y.i, 2);
+
+  auto o = Option<i32>(2);
+  EXPECT_EQ(o.unwrap_or_default(), 2);
+  o = Option<i32>();
+  EXPECT_EQ(o.unwrap_or_default(), 0);
 
   static_assert(Option<i32>().unwrap_or_default() == 0_i32);
 }
@@ -1946,8 +1984,7 @@ TEST(Option, AsRef) {
   auto i = NoCopyMove();
 
   auto ix = Option<NoCopyMove&>(i);
-  static_assert(
-      std::same_as<decltype(ix.as_ref()), Option<const NoCopyMove&>>);
+  static_assert(std::same_as<decltype(ix.as_ref()), Option<const NoCopyMove&>>);
   EXPECT_EQ(&i, &ix.as_ref().unwrap());
 
   auto in = Option<NoCopyMove&>();
@@ -1961,7 +1998,7 @@ TEST(Option, AsRef) {
 
   // as_ref() on an rvalue allowed if the Option is holding a reference.
   static_assert(std::same_as<decltype(Option<NoCopyMove&>(i).as_ref()),
-                               Option<const NoCopyMove&>>);
+                             Option<const NoCopyMove&>>);
   EXPECT_EQ(&Option<NoCopyMove&>(i).as_ref().unwrap(), &i);
   EXPECT_TRUE(Option<NoCopyMove&>().as_ref().is_none());
 }
@@ -1990,7 +2027,7 @@ TEST(Option, AsMut) {
 
   // as_mut() on an rvalue allowed if the Option is holding a reference.
   static_assert(std::same_as<decltype(Option<NoCopyMove&>(i).as_mut()),
-                               Option<NoCopyMove&>>);
+                             Option<NoCopyMove&>>);
   EXPECT_EQ(&Option<NoCopyMove&>(i).as_mut().unwrap(), &i);
   EXPECT_TRUE(Option<NoCopyMove&>().as_mut().is_none());
 }
@@ -2133,9 +2170,8 @@ TEST(Option, Flatten) {
       std::same_as<decltype(Option<Option<i32>>().flatten()), Option<i32>>);
   static_assert(
       std::same_as<decltype(Option<Option<i32&>>().flatten()), Option<i32&>>);
-  static_assert(
-      std::same_as<decltype(Option<Option<Option<i32>>>().flatten()),
-                     Option<Option<i32>>>);
+  static_assert(std::same_as<decltype(Option<Option<Option<i32>>>().flatten()),
+                             Option<Option<i32>>>);
 
   // Rvalue.
   EXPECT_TRUE(Option<Option<Option<i32>>>().flatten().flatten().is_none());

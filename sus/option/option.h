@@ -791,6 +791,13 @@ class Option final {
     ::sus::check_with_message(t_.state() == Some, message);
     return ::sus::move(*this).unwrap_unchecked(::sus::marker::unsafe_fn);
   }
+  constexpr sus_nonnull_fn T expect(
+      /* TODO: string view type */ sus_nonnull_arg const char* sus_nonnull_var
+          message) const& noexcept
+    requires(::sus::mem::CopyOrRef<T>)
+  {
+    return ::sus::clone(*this).expect(message);
+  }
 
   /// Returns the contained value inside the option.
   ///
@@ -799,6 +806,11 @@ class Option final {
   constexpr T unwrap() && noexcept {
     ::sus::check(t_.state() == Some);
     return ::sus::move(*this).unwrap_unchecked(::sus::marker::unsafe_fn);
+  }
+  constexpr T unwrap() const& noexcept
+    requires(::sus::mem::CopyOrRef<T>)
+  {
+    return ::sus::clone(*this).unwrap();
   }
 
   /// Returns the contained value inside the option, if there is one. Otherwise,
@@ -814,6 +826,11 @@ class Option final {
       return default_result;
     }
   }
+  constexpr T unwrap_or(T default_result) const& noexcept
+    requires(::sus::mem::CopyOrRef<T>)
+  {
+    return ::sus::clone(*this).unwrap_or(::sus::move(default_result));
+  }
 
   /// Returns the contained value inside the Option, if there is one.
   /// Otherwise, returns the result of the given function.
@@ -824,6 +841,11 @@ class Option final {
       return ::sus::fn::call_once(::sus::move(f));
     }
   }
+  constexpr T unwrap_or_else(::sus::fn::FnOnce<T()> auto f) const& noexcept
+    requires(::sus::mem::CopyOrRef<T>)
+  {
+    return ::sus::clone(*this).unwrap_or_else(::sus::move(f));
+  }
 
   /// Returns the contained value inside the option, if there is one.
   /// Otherwise, constructs a default value for the type and returns that.
@@ -832,13 +854,21 @@ class Option final {
   /// [`Default`]($sus::construct::Default) in order to be constructed with a
   /// default value.
   constexpr T unwrap_or_default() && noexcept
-    requires(!std::is_reference_v<T> && ::sus::construct::Default<T>)
+    requires(!std::is_reference_v<T> &&  //
+             ::sus::construct::Default<T>)
   {
     if (t_.state() == Some) {
       return t_.take_and_set_none();
     } else {
       return T();
     }
+  }
+  constexpr T unwrap_or_default() const& noexcept
+    requires(!std::is_reference_v<T> &&       //
+             ::sus::construct::Default<T> &&  //
+             ::sus::mem::Copy<T>)
+  {
+    return ::sus::clone(*this).unwrap_or_default();
   }
 
   /// Returns the contained value inside the option.
@@ -854,6 +884,12 @@ class Option final {
   constexpr inline T unwrap_unchecked(
       ::sus::marker::UnsafeFnMarker) && noexcept {
     return t_.take_and_set_none();
+  }
+  constexpr inline T unwrap_unchecked(
+      ::sus::marker::UnsafeFnMarker) const& noexcept
+    requires(::sus::mem::CopyOrRef<T>)
+  {
+    return ::sus::clone(*this).t_.take_and_set_none();
   }
 
   /// Returns a const reference to the contained value inside the option.
