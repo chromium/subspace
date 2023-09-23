@@ -21,50 +21,42 @@
 
 namespace sus::iter::__private {
 
-template <::sus::num::Integer T>
-  requires(!std::same_as<T, ::sus::num::uptr>)
+template <::sus::num::IntegerNumeric T>
 constexpr T step_max() noexcept {
   return T::MAX;
 }
-template <::sus::num::Integer T>
-  requires(!std::same_as<T, ::sus::num::uptr>)
+template <::sus::num::IntegerNumeric T>
 constexpr T step_forward(T l) noexcept {
   // SAFETY: All `Integer` can hold `1`.
   return l + T::try_from(1).unwrap_unchecked(::sus::marker::unsafe_fn);
 }
-template <::sus::num::Integer T>
-  requires(!std::same_as<T, ::sus::num::uptr>)
+template <::sus::num::IntegerNumeric T>
 constexpr T step_backward(T l) noexcept {
   // SAFETY: All `Integer` can hold `1`.
   return l - T::try_from(1).unwrap_unchecked(::sus::marker::unsafe_fn);
 }
-template <::sus::num::Integer T>
-  requires(!std::same_as<T, ::sus::num::uptr>)
+template <::sus::num::IntegerNumeric T>
 constexpr ::sus::Option<::sus::num::usize> steps_between(const T& l,
                                                          const T& r) noexcept {
   return r.checked_sub(l).and_then(
       [](T steps) { return ::sus::num::usize::try_from(steps).ok(); });
 }
 
-template <::sus::num::Integer T>
-  requires(std::same_as<T, ::sus::num::uptr>)
+template <::sus::num::IntegerPointer T>
 constexpr T step_max() noexcept {
   // TODO: This is dumb, so maybe uptr::MAX should exist?
   // https://github.com/chromium/subspace/issues/238#issuecomment-1730736193
   return T::MAX_BIT_PATTERN;
 }
-template <::sus::num::Integer T>
-  requires(std::same_as<T, ::sus::num::uptr>)
+template <::sus::num::IntegerPointer T>
 constexpr T step_forward(T l) noexcept {
   return l + usize(1u);
 }
-template <::sus::num::Integer T>
-  requires(std::same_as<T, ::sus::num::uptr>)
+template <::sus::num::IntegerPointer T>
 constexpr T step_backward(T l) noexcept {
   return l - usize(1u);
 }
-template <::sus::num::Integer T>
-  requires(std::same_as<T, ::sus::num::uptr>)
+template <::sus::num::IntegerPointer T>
 constexpr ::sus::Option<::sus::num::usize> steps_between(const T& l,
                                                          const T& r) noexcept {
   return r.checked_sub(l).and_then(
