@@ -611,19 +611,8 @@ class Option final {
   ///
   /// #[doc.overloads=copy]
   constexpr Option(const Option& o)
-    requires(::sus::mem::CopyOrRef<T> && IsTrivialCopyCtorOrRef<T>)
+    requires(::sus::mem::CopyOrRef<T>)
   = default;
-
-  /// #[doc.overloads=copy]
-  constexpr Option(const Option& o) noexcept
-    requires(::sus::mem::CopyOrRef<T> && !IsTrivialCopyCtorOrRef<T>)
-  {
-    // TODO: This constructed a None value then destroys it and constructs a
-    // Some value. Optimize.
-    if (o.t_.state() == Some)
-      t_.construct_from_none(copy_to_storage(o.t_.val()));
-  }
-
   /// #[doc.overloads=copy]
   constexpr Option(const Option& o)
     requires(!::sus::mem::CopyOrRef<T>)
@@ -641,18 +630,8 @@ class Option final {
   ///
   /// #[doc.overloads=move]
   constexpr Option(Option&& o)
-    requires(::sus::mem::MoveOrRef<T> && IsTrivialMoveCtorOrRef<T>)
+    requires(::sus::mem::MoveOrRef<T>)
   = default;
-
-  /// #[doc.overloads=move]
-  constexpr Option(Option&& o) noexcept
-    requires(::sus::mem::MoveOrRef<T> && !IsTrivialMoveCtorOrRef<T>)
-  {
-    // TODO: This constructed a None value then destroys it and constructs a
-    // Some value. Optimize.
-    if (o.t_.state() == Some) t_.construct_from_none(o.t_.take_and_set_none());
-  }
-
   /// #[doc.overloads=move]
   constexpr Option(Option&& o)
     requires(!::sus::mem::MoveOrRef<T>)
@@ -668,20 +647,8 @@ class Option final {
   ///
   /// #[doc.overloads=copy]
   constexpr Option& operator=(const Option& o)
-    requires(::sus::mem::CopyOrRef<T> && IsTrivialCopyAssignOrRef<T>)
+    requires(::sus::mem::CopyOrRef<T>)
   = default;
-
-  /// #[doc.overloads=copy]
-  constexpr Option& operator=(const Option& o) noexcept
-    requires(::sus::mem::CopyOrRef<T> && !IsTrivialCopyAssignOrRef<T>)
-  {
-    if (o.t_.state() == Some)
-      t_.set_some(copy_to_storage(o.t_.val()));
-    else if (t_.state() == Some)
-      t_.set_none();
-    return *this;
-  }
-
   /// #[doc.overloads=copy]
   constexpr Option& operator=(const Option& o)
     requires(!::sus::mem::CopyOrRef<T>)
@@ -700,19 +667,8 @@ class Option final {
   ///
   /// #[doc.overloads=move]
   constexpr Option& operator=(Option&& o)
-    requires(::sus::mem::MoveOrRef<T> && IsTrivialMoveAssignOrRef<T>)
+    requires(::sus::mem::MoveOrRef<T>)
   = default;
-
-  /// #[doc.overloads=move]
-  constexpr Option& operator=(Option&& o) noexcept
-    requires(::sus::mem::MoveOrRef<T> && !IsTrivialMoveAssignOrRef<T>)
-  {
-    if (o.t_.state() == Some)
-      t_.set_some(o.t_.take_and_set_none());
-    else if (t_.state() == Some)
-      t_.set_none();
-    return *this;
-  }
 
   /// #[doc.overloads=move]
   constexpr Option& operator=(Option&& o)

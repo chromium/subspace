@@ -59,28 +59,31 @@ struct Storage<T, false> final {
     requires(std::is_trivially_move_assignable_v<T>)
   = default;
 
-  // Make the Storage have the same non-trivial copy/move characteristics, for
-  // Option to query. But these aren't used by Option, since it copies/moves the
-  // stored value itself.
-  constexpr Storage(const Storage&)
+  constexpr Storage(const Storage& o) noexcept
     requires(!std::is_trivially_copy_constructible_v<T>)
-  {
-    sus::unreachable();
+      : state_(o.state()) {
+    if (state_ == Some) std::construct_at(&val_, o.val());
   }
-  constexpr Storage& operator=(const Storage&)
+  constexpr void operator=(const Storage& o) noexcept
     requires(!std::is_trivially_copy_assignable_v<T>)
   {
-    sus::unreachable();
+    if (o.state() == Some)
+      set_some(o.val());
+    else if (state() == Some)
+      set_none();
   }
-  constexpr Storage(Storage&&)
+  constexpr Storage(Storage&& o) noexcept
     requires(!std::is_trivially_move_constructible_v<T>)
-  {
-    sus::unreachable();
+      : state_(o.state()) {
+    if (state_ == Some) std::construct_at(&val_, o.take_and_set_none());
   }
-  constexpr Storage& operator=(Storage&&)
+  constexpr void operator=(Storage&& o) noexcept
     requires(!std::is_trivially_move_assignable_v<T>)
   {
-    sus::unreachable();
+    if (o.state() == Some)
+      set_some(o.take_and_set_none());
+    else if (state() == Some)
+      set_none();
   }
 
   constexpr Storage() {}
@@ -129,8 +132,7 @@ struct Storage<T, false> final {
   [[nodiscard]] constexpr inline T take_and_set_none() noexcept {
     state_ = None;
     if constexpr (::sus::mem::Move<T>) {
-      return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
-                                           val_);
+      return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn, val_);
     } else {
       return ::sus::mem::take_copy_and_destruct(::sus::marker::unsafe_fn, val_);
     }
@@ -175,28 +177,37 @@ struct Storage<T, true> final {
     requires(std::is_trivially_move_assignable_v<T>)
   = default;
 
-  // Make the Storage have the same non-trivial copy/move characteristics, for
-  // Option to query. But these aren't used by Option, since it copies/moves the
-  // stored value itself.
-  constexpr Storage(const Storage&)
+  constexpr Storage(const Storage& o) noexcept
     requires(!std::is_trivially_copy_constructible_v<T>)
   {
-    sus::unreachable();
+    if (o.state() == Some)
+      std::construct_at(&access_, o.val());
+    else
+      std::construct_at(&access_);
   }
-  constexpr Storage& operator=(const Storage&)
+  constexpr void operator=(const Storage& o) noexcept
     requires(!std::is_trivially_copy_assignable_v<T>)
   {
-    sus::unreachable();
+    if (o.state() == Some)
+      set_some(o.val());
+    else if (state() == Some)
+      set_none();
   }
-  constexpr Storage(Storage&&)
+  constexpr Storage(Storage&& o) noexcept
     requires(!std::is_trivially_move_constructible_v<T>)
   {
-    sus::unreachable();
+    if (o.state() == Some)
+      std::construct_at(&access_, o.take_and_set_none());
+    else
+      std::construct_at(&access_);
   }
-  constexpr Storage& operator=(Storage&&)
+  constexpr void operator=(Storage&& o) noexcept
     requires(!std::is_trivially_move_assignable_v<T>)
   {
-    sus::unreachable();
+    if (o.state() == Some)
+      set_some(o.take_and_set_none());
+    else if (state() == Some)
+      set_none();
   }
 
   constexpr Storage() : access_() {}
