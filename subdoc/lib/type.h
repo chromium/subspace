@@ -73,7 +73,7 @@ struct Qualifier {
 
   friend bool operator==(const Qualifier&, const Qualifier&) = default;
 };
-static_assert(sus::ops::Eq<Qualifier>);
+static_assert(sus::cmp::Eq<Qualifier>);
 }  // namespace subdoc
 
 template <>

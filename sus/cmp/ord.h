@@ -24,7 +24,7 @@
 #include "sus/macros/lifetimebound.h"
 #include "sus/mem/forward.h"
 
-namespace sus::ops {
+namespace sus::cmp {
 
 /// Concept that combines all ordering types together.
 template <class T>
@@ -37,17 +37,17 @@ concept Ordering = (std::same_as<T, std::strong_ordering> ||
 /// Objects that sort the same for ordering must also compare as equal.
 ///
 /// # StrongOrd and Eq interations
-/// While [`StrongOrd`]($sus::ops::StrongOrd) can report equality, it does not
-/// imply that the type satisfies [`Eq`]($sus::ops::Eq), and a separate
+/// While [`StrongOrd`]($sus::cmp::StrongOrd) can report equality, it does not
+/// imply that the type satisfies [`Eq`]($sus::cmp::Eq), and a separate
 /// `operator==` is required for that concept. For correctness, types that
 /// satisfy
-/// [`StrongOrd`]($sus::ops::StrongOrd) and [`Eq`]($sus::ops::Eq) must have
+/// [`StrongOrd`]($sus::cmp::StrongOrd) and [`Eq`]($sus::cmp::Eq) must have
 /// object which compare as equivalent for ording also compare as equal with
 /// `operator==`.
 ///
 /// Generic code that requires a type to be
-/// [`StrongOrd`]($sus::ops::StrongOrd) should take care to use `operator<=>`
-/// and not `operator==` unless also requiring [`Eq`]($sus::ops::Eq).
+/// [`StrongOrd`]($sus::cmp::StrongOrd) should take care to use `operator<=>`
+/// and not `operator==` unless also requiring [`Eq`]($sus::cmp::Eq).
 template <class Lhs, class Rhs = Lhs>
 concept StrongOrd = requires(const std::remove_reference_t<Lhs>& lhs,
                              const std::remove_reference_t<Rhs>& rhs) {
@@ -57,21 +57,21 @@ concept StrongOrd = requires(const std::remove_reference_t<Lhs>& lhs,
 /// Concept for types that form a total ordering (aka
 /// [`std::weak_ordering`](https://en.cppreference.com/w/cpp/utility/compare/weak_ordering)).
 ///
-/// Types that satisfy [`Ord`]($sus::ops::Ord) can be sorted or compared and
+/// Types that satisfy [`Ord`]($sus::cmp::Ord) can be sorted or compared and
 /// always return a consistent result as all possible values are comparable.
 /// Objects that compare as equivalent for ordering may still be different
 /// internally and compare as different through `operator==`. If unique identity
-/// is required, use [`StrongOrd`]($sus::ops::StrongOrd). Otherwise, typically
-/// use [`Ord`]($sus::ops::Ord) for constraining types that will be ordered.
+/// is required, use [`StrongOrd`]($sus::cmp::StrongOrd). Otherwise, typically
+/// use [`Ord`]($sus::cmp::Ord) for constraining types that will be ordered.
 ///
 /// # How can I implement Ord?
-/// [`Ord`]($sus::ops::Ord) requires that the type has `operator<=>` which
+/// [`Ord`]($sus::cmp::Ord) requires that the type has `operator<=>` which
 /// returns
 /// [`std::weak_ordering`](https://en.cppreference.com/w/cpp/utility/compare/weak_ordering)
 /// (or
 /// [`std::strong_ordering`](https://en.cppreference.com/w/cpp/utility/compare/strong_ordering)).
-/// It will implicitly also be [`Ord`]($sus::ops::Ord) and
-/// [`PartialOrd`]($sus::ops::PartialOrd) as a result.
+/// It will implicitly also be [`Ord`]($sus::cmp::Ord) and
+/// [`PartialOrd`]($sus::cmp::PartialOrd) as a result.
 ///
 /// # Lexicographical comparison
 /// Lexicographical comparison is an operation with the following properties:
@@ -86,23 +86,23 @@ concept StrongOrd = requires(const std::remove_reference_t<Lhs>& lhs,
 /// * Two empty sequences are lexicographically equal.
 ///
 /// # Ord and Eq interations
-/// While [`Ord`]($sus::ops::Ord) can report equality, it does not imply that
-/// the type satisfies [`Eq`]($sus::ops::Eq), and a separate `operator==` is
+/// While [`Ord`]($sus::cmp::Ord) can report equality, it does not imply that
+/// the type satisfies [`Eq`]($sus::cmp::Eq), and a separate `operator==` is
 /// required for that concept. Unlike
-/// [`StrongOrd`]($sus::ops::StrongOrd), it is not required that objects which
+/// [`StrongOrd`]($sus::cmp::StrongOrd), it is not required that objects which
 /// are ordered as equivalent also compare as equal with `operator==`.
 ///
-/// Generic code that requires a type to be [`Ord`]($sus::ops::Ord) should
+/// Generic code that requires a type to be [`Ord`]($sus::cmp::Ord) should
 /// take care to use `operator<=>` and not `operator==` unless also requiring
-/// [`Eq`]($sus::ops::Eq), in which case consider requiring
-/// [`StrongOrd`]($sus::ops::StrongOrd) in place of both
-/// [`Ord`]($sus::ops::Ord) and [`Eq`]($sus::ops::Eq).
+/// [`Eq`]($sus::cmp::Eq), in which case consider requiring
+/// [`StrongOrd`]($sus::cmp::StrongOrd) in place of both
+/// [`Ord`]($sus::cmp::Ord) and [`Eq`]($sus::cmp::Eq).
 ///
 /// # Determining Ord strictly
-/// [`Ord`]($sus::ops::Ord) will be also satisfied if the types satisfy
-/// [`StrongOrd`]($sus::ops::StrongOrd). To determine if a
-/// [`Ord`]($sus::ops::Ord) is the strongest type of ordering between the
-/// types, use [`ExclusiveOrd`]($sus::ops::ExclusiveOrd).
+/// [`Ord`]($sus::cmp::Ord) will be also satisfied if the types satisfy
+/// [`StrongOrd`]($sus::cmp::StrongOrd). To determine if a
+/// [`Ord`]($sus::cmp::Ord) is the strongest type of ordering between the
+/// types, use [`ExclusiveOrd`]($sus::cmp::ExclusiveOrd).
 template <class Lhs, class Rhs = Lhs>
 concept Ord =
     StrongOrd<Lhs, Rhs> || requires(const std::remove_reference_t<Lhs>& lhs,
@@ -114,10 +114,10 @@ concept Ord =
 /// [`std::partial_ordering`](https://en.cppreference.com/w/cpp/utility/compare/partial_ordering)).
 ///
 /// # Determining PartialOrd strictly
-/// [`PartialOrd`]($sus::ops::PartialOrd) will be satisfied if the types
-/// satisfy [`StrongOrd`]($sus::ops::StrongOrd) or [`Ord`]($sus::ops::Ord).
+/// [`PartialOrd`]($sus::cmp::PartialOrd) will be satisfied if the types
+/// satisfy [`StrongOrd`]($sus::cmp::StrongOrd) or [`Ord`]($sus::cmp::Ord).
 /// To determine if a partial ordering is the strongest type of ordering between
-/// the types, use [`ExclusivePartialOrd`]($sus::ops::ExclusivePartialOrd).
+/// the types, use [`ExclusivePartialOrd`]($sus::cmp::ExclusivePartialOrd).
 template <class Lhs, class Rhs = Lhs>
 concept PartialOrd =
     Ord<Lhs, Rhs> || StrongOrd<Lhs, Rhs> ||
@@ -129,8 +129,8 @@ concept PartialOrd =
 /// [`std::strong_ordering`](https://en.cppreference.com/w/cpp/utility/compare/strong_ordering)).
 ///
 /// This is an alias for StrongOrd, but exists as a set with
-/// [`ExclusiveOrd`]($sus::ops::ExclusiveOrd) and
-/// [`ExclusivePartialOrd`]($sus::ops::ExclusivePartialOrd).
+/// [`ExclusiveOrd`]($sus::cmp::ExclusiveOrd) and
+/// [`ExclusivePartialOrd`]($sus::cmp::ExclusivePartialOrd).
 template <class Lhs, class Rhs = Lhs>
 concept ExclusiveStrongOrd = StrongOrd<Lhs, Rhs>;
 
@@ -152,12 +152,12 @@ concept ExclusivePartialOrd = (!Ord<Lhs, Rhs> && PartialOrd<Lhs, Rhs>);
 ///
 /// By default this receives and returns objects by value. To receive and return
 /// references, specify the type parameter, such as:
-/// `sus::ops::min<i32&>(a, b)`.
+/// `sus::cmp::min<i32&>(a, b)`.
 ///
 /// Note that if either input is a temporary object this can return a reference
 /// to an object past its lifetime.
 template <class T>
-  requires(::sus::ops::Ord<T>)
+  requires(::sus::cmp::Ord<T>)
 inline constexpr T min(T a sus_lifetimebound, T b sus_lifetimebound) noexcept {
   return a > b ? ::sus::forward<T>(b) : ::sus::forward<T>(a);
 }
@@ -169,7 +169,7 @@ inline constexpr T min(T a sus_lifetimebound, T b sus_lifetimebound) noexcept {
 ///
 /// By default this receives and returns objects by value. To receive and return
 /// references, specify the type parameter, such as:
-/// `sus::ops::min_by<i32&>(a, b, c)`.
+/// `sus::cmp::min_by<i32&>(a, b, c)`.
 ///
 /// Note that if either input is a temporary object this can return a reference
 /// to an object past its lifetime.
@@ -192,7 +192,7 @@ constexpr T min_by(
 ///
 /// By default this receives and returns objects by value. To receive and return
 /// references, specify the type parameter, such as:
-/// `sus::ops::min_by_key<i32&>(a, b, k)`.
+/// `sus::cmp::min_by_key<i32&>(a, b, k)`.
 ///
 /// Note that if either input is a temporary object this can return a reference
 /// to an object past its lifetime.
@@ -202,7 +202,7 @@ template <
         KeyFn,
     int&...,
     class Key = std::invoke_result_t<KeyFn&, const std::remove_reference_t<T>&>>
-  requires(::sus::ops::Ord<Key>)
+  requires(::sus::cmp::Ord<Key>)
 constexpr T min_by_key(T a sus_lifetimebound, T b sus_lifetimebound,
                        KeyFn f) noexcept {
   return ::sus::fn::call_mut(f, a) > ::sus::fn::call_mut(f, b)
@@ -216,10 +216,10 @@ constexpr T min_by_key(T a sus_lifetimebound, T b sus_lifetimebound,
 ///
 /// By default this receives and returns objects by value. To receive and return
 /// references, specify the type parameter, such as:
-/// `sus::ops::max<i32&>(a, b)`. Note that if either input is a temporary object
+/// `sus::cmp::max<i32&>(a, b)`. Note that if either input is a temporary object
 /// this can return a reference to an object past its lifetime.
 template <class T>
-  requires(::sus::ops::Ord<T>)
+  requires(::sus::cmp::Ord<T>)
 constexpr T max(T a sus_lifetimebound, T b sus_lifetimebound) noexcept {
   return a > b ? ::sus::forward<T>(a) : ::sus::forward<T>(b);
 }
@@ -231,7 +231,7 @@ constexpr T max(T a sus_lifetimebound, T b sus_lifetimebound) noexcept {
 ///
 /// By default this receives and returns objects by value. To receive and return
 /// references, specify the type parameter, such as:
-/// `sus::ops::max_by<i32&>(a, b, c)`. Note that if either input is a
+/// `sus::cmp::max_by<i32&>(a, b, c)`. Note that if either input is a
 /// temporary object this can return a reference to an object past its lifetime.
 template <class T>
 constexpr T max_by(
@@ -252,7 +252,7 @@ constexpr T max_by(
 ///
 /// By default this receives and returns objects by value. To receive and return
 /// references, specify the type parameter, such as:
-/// `sus::ops::max_by_key<i32&>(a, b, k)`. Note that if either input is a
+/// `sus::cmp::max_by_key<i32&>(a, b, k)`. Note that if either input is a
 /// temporary object this can return a reference to an object past its lifetime.
 template <
     class T,
@@ -260,7 +260,7 @@ template <
         KeyFn,
     int&...,
     class Key = std::invoke_result_t<KeyFn&, const std::remove_reference_t<T>&>>
-  requires(::sus::ops::Ord<Key>)
+  requires(::sus::cmp::Ord<Key>)
 constexpr T max_by_key(T a sus_lifetimebound, T b sus_lifetimebound,
                        KeyFn f) noexcept {
   return f(a) > f(b) ? ::sus::forward<T>(a) : ::sus::forward<T>(b);
@@ -273,13 +273,13 @@ constexpr T max_by_key(T a sus_lifetimebound, T b sus_lifetimebound,
 ///
 /// By default this receives and returns objects by value. To receive and return
 /// references, specify the type parameter, such as:
-/// `sus::ops::clamp<i32&>(a, min, max)`. Note that if any input is a temporary
+/// `sus::cmp::clamp<i32&>(a, min, max)`. Note that if any input is a temporary
 /// object this can return a reference to an object past its lifetime.
 ///
 /// # Panics
 /// Panics if `min > max`.
 template <class T>
-  requires(::sus::ops::Ord<T>)
+  requires(::sus::cmp::Ord<T>)
 constexpr T clamp(T v sus_lifetimebound, T min sus_lifetimebound,
                   T max sus_lifetimebound) noexcept {
   ::sus::check(min <= max);
@@ -287,4 +287,4 @@ constexpr T clamp(T v sus_lifetimebound, T min sus_lifetimebound,
                  : (v > max ? ::sus::forward<T>(max) : ::sus::forward<T>(v));
 }
 
-}  // namespace sus::ops
+}  // namespace sus::cmp

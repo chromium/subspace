@@ -358,7 +358,7 @@ TEST(Range, fmt) {
       return a <=> rhs.a;
     }
   };
-  static_assert(sus::ops::StrongOrd<NoFormat>);
+  static_assert(sus::cmp::StrongOrd<NoFormat>);
   static_assert(!fmt::is_formattable<NoFormat, char>::value);
   static_assert(fmt::is_formattable<sus::ops::Range<NoFormat>, char>::value);
   static_assert(

@@ -42,8 +42,8 @@
 #include "sus/num/signed_integer.h"
 #include "sus/num/transmogrify.h"
 #include "sus/num/unsigned_integer.h"
-#include "sus/ops/eq.h"
-#include "sus/ops/ord.h"
+#include "sus/cmp/eq.h"
+#include "sus/cmp/ord.h"
 #include "sus/ops/range.h"
 #include "sus/option/option.h"
 #include "sus/ptr/copy.h"
@@ -172,11 +172,11 @@ class [[sus_trivial_abi]] Slice final {
         iter_refs_.to_iter_from_view(), data_, len_);
   }
 
-  /// Satisfies the [`Eq<Slice<T>, Slice<U>>`]($sus::ops::Eq) concept.
+  /// Satisfies the [`Eq<Slice<T>, Slice<U>>`]($sus::cmp::Eq) concept.
   ///
   /// #[doc.overloads=slice.eq]
   template <class U>
-    requires(::sus::ops::Eq<T, U>)
+    requires(::sus::cmp::Eq<T, U>)
   friend constexpr inline bool operator==(const Slice<T>& l,
                                           const Slice<U>& r) noexcept {
     if (l.len() != r.len()) return false;
@@ -187,7 +187,7 @@ class [[sus_trivial_abi]] Slice final {
   }
 
   template <class U>
-    requires(!::sus::ops::Eq<T, U>)
+    requires(!::sus::cmp::Eq<T, U>)
   friend constexpr inline bool operator==(const Slice<T>& l,
                                           const Slice<U>& r) = delete;
 
@@ -387,18 +387,18 @@ class [[sus_trivial_abi]] SliceMut final {
         slice_.iter_refs_.to_iter_from_view(), slice_.data_, slice_.len_);
   }
 
-  /// Satisfies the [`Eq<SliceMut<T>, SliceMut<U>>`]($sus::ops::Eq) concept.
+  /// Satisfies the [`Eq<SliceMut<T>, SliceMut<U>>`]($sus::cmp::Eq) concept.
   ///
   /// #[doc.overloads=slicemut.eq]
   template <class U>
-    requires(::sus::ops::Eq<T, U>)
+    requires(::sus::cmp::Eq<T, U>)
   friend constexpr inline bool operator==(const SliceMut<T>& l,
                                           const SliceMut<U>& r) noexcept {
     return l.as_slice() == r.as_slice();
   }
 
   template <class U>
-    requires(!::sus::ops::Eq<T, U>)
+    requires(!::sus::cmp::Eq<T, U>)
   friend constexpr inline bool operator==(const SliceMut<T>& l,
                                           const SliceMut<U>& r) = delete;
 

@@ -20,8 +20,8 @@
 #include "sus/construct/into.h"
 #include "sus/num/__private/intrinsics.h"
 #include "sus/num/types.h"
-#include "sus/ops/eq.h"
-#include "sus/ops/ord.h"
+#include "sus/cmp/eq.h"
+#include "sus/cmp/ord.h"
 #include "sus/prelude.h"
 
 #define F32_NEAR(a, b, c) \
@@ -69,20 +69,20 @@ TEST(f32, Traits) {
   static_assert(!sus::num::Shr<f32>);
   static_assert(!sus::num::ShrAssign<f32>);
 
-  static_assert(!sus::ops::StrongOrd<f32>);
-  static_assert(!sus::ops::Ord<f32>);
-  static_assert(sus::ops::PartialOrd<f32>);
-  static_assert(sus::ops::PartialOrd<f32, f64>);
-  static_assert(sus::ops::PartialOrd<f32, float>);
-  static_assert(sus::ops::PartialOrd<f32, double>);
+  static_assert(!sus::cmp::StrongOrd<f32>);
+  static_assert(!sus::cmp::Ord<f32>);
+  static_assert(sus::cmp::PartialOrd<f32>);
+  static_assert(sus::cmp::PartialOrd<f32, f64>);
+  static_assert(sus::cmp::PartialOrd<f32, float>);
+  static_assert(sus::cmp::PartialOrd<f32, double>);
   static_assert(1_f32 >= 1_f32);
   static_assert(2_f32 > 1_f32);
   static_assert(1_f32 <= 1_f32);
   static_assert(1_f32 < 2_f32);
-  static_assert(sus::ops::Eq<f32>);
-  static_assert(sus::ops::Eq<f32, f64>);
-  static_assert(sus::ops::Eq<f32, float>);
-  static_assert(sus::ops::Eq<f32, double>);
+  static_assert(sus::cmp::Eq<f32>);
+  static_assert(sus::cmp::Eq<f32, f64>);
+  static_assert(sus::cmp::Eq<f32, float>);
+  static_assert(sus::cmp::Eq<f32, double>);
   static_assert(1_f32 == 1_f32);
   static_assert(!(1_f32 == 2_f32));
   static_assert(1_f32 != 2_f32);

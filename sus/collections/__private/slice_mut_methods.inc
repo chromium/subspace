@@ -566,7 +566,7 @@ constexpr RSplitNMut<T, Pred> rsplitn_mut(usize n,
 /// Panics when `index >= len()`, meaning it always panics on empty slices.
 ::sus::Tuple<SliceMut<T>, T&, SliceMut<T>> select_nth_unstable(
     usize index) RETURN_REF noexcept
-  requires(::sus::ops::Ord<T>)
+  requires(::sus::cmp::Ord<T>)
 {
   return select_nth_unstable_by(index,
                                 [](const T& a, const T& b) { return a <=> b; });
@@ -619,7 +619,7 @@ constexpr RSplitNMut<T, Pred> rsplitn_mut(usize n,
 /// Panics when `index >= len()`, meaning it always panics on empty slices.
 template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn, int&...,
           class Key = std::invoke_result_t<KeyFn&, const T&>>
-  requires(::sus::ops::Ord<Key>)
+  requires(::sus::cmp::Ord<Key>)
 ::sus::Tuple<SliceMut<T>, T&, SliceMut<T>> select_nth_unstable_by_key(
     usize index, KeyFn f) RETURN_REF noexcept {
   return select_nth_unstable_by(
@@ -642,7 +642,7 @@ template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn, int&...,
 /// TODO: Rust's stable sort is O(n * log(n)), so this can be improved. It can
 /// also be constexpr?
 void sort() NO_RETURN_REF noexcept
-  requires(::sus::ops::Ord<T>)
+  requires(::sus::cmp::Ord<T>)
 {
   if (len() > ::sus::num::usize(0u)) {
     std::stable_sort(as_mut_ptr(), as_mut_ptr() + len());
@@ -693,7 +693,7 @@ void sort_by(::sus::fn::FnMut<std::weak_ordering(const T&, const T&)> auto
 /// also be constexpr?
 template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn, int&...,
           class Key = std::invoke_result_t<KeyFn&, const T&>>
-  requires(::sus::ops::Ord<Key>)
+  requires(::sus::cmp::Ord<Key>)
 void sort_by_key(KeyFn f) NO_RETURN_REF noexcept {
   return sort_by([&f](const T& a, const T& b) {
     return ::sus::fn::call_mut(f, a) <=> ::sus::fn::call_mut(f, b);
@@ -702,7 +702,7 @@ void sort_by_key(KeyFn f) NO_RETURN_REF noexcept {
 
 template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn, int&...,
           class Key = std::invoke_result_t<KeyFn&, const T&>>
-  requires(::sus::ops::Ord<Key>)
+  requires(::sus::cmp::Ord<Key>)
 void sort_by_cached_key(KeyFn f) NO_RETURN_REF noexcept {
   constexpr auto sz_u8 = ::sus::mem::size_of<::sus::Tuple<Key, u8>>();
   constexpr auto sz_u16 = ::sus::mem::size_of<::sus::Tuple<Key, u16>>();
@@ -743,7 +743,7 @@ void sort_by_cached_key(KeyFn f) NO_RETURN_REF noexcept {
 /// TODO: Rust's sort is unstable (i.e., may reorder equal elements), in-place
 /// (i.e., does not allocate), and O(n * log(n)) worst-case.
 constexpr void sort_unstable() NO_RETURN_REF noexcept
-  requires(::sus::ops::Ord<T>)
+  requires(::sus::cmp::Ord<T>)
 {
   if (len() > 0u) {
     std::sort(as_mut_ptr(), as_mut_ptr() + len());
@@ -785,7 +785,7 @@ constexpr void sort_unstable_by(
 /// (i.e., does not allocate), and O(n * log(n)) worst-case.
 template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn, int&...,
           class Key = std::invoke_result_t<KeyFn&, const T&>>
-  requires(::sus::ops::Ord<Key>)
+  requires(::sus::cmp::Ord<Key>)
 void sort_unstable_by_key(KeyFn f) NO_RETURN_REF noexcept {
   return sort_unstable_by([&f](const T& a, const T& b) {
     return ::sus::fn::call_mut(f, a) <=> ::sus::fn::call_mut(f, b);
@@ -911,7 +911,7 @@ constexpr SplitNMut<T, Pred> splitn_mut(usize n,
 /// TODO: Accept a `SlicePattern<T>` concept instead of just a `Slice<T>`.
 constexpr ::sus::Option<SliceMut<T>> strip_prefix_mut(const Slice<T>& prefix)
     RETURN_REF noexcept
-  requires(::sus::ops::Eq<T>)
+  requires(::sus::cmp::Eq<T>)
 {
   const usize n = prefix.len();
   if (n <= len()) {
@@ -931,7 +931,7 @@ constexpr ::sus::Option<SliceMut<T>> strip_prefix_mut(const Slice<T>& prefix)
 /// If the slice does not end with `suffix`, returns `None`.
 constexpr ::sus::Option<SliceMut<T>> strip_suffix_mut(const Slice<T>& suffix)
     RETURN_REF noexcept
-  requires(::sus::ops::Eq<T>)
+  requires(::sus::cmp::Eq<T>)
 {
   const auto l = len();
   const auto n = suffix.len();

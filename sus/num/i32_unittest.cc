@@ -24,8 +24,8 @@
 #include "sus/num/num_concepts.h"
 #include "sus/num/signed_integer.h"
 #include "sus/num/unsigned_integer.h"
-#include "sus/ops/eq.h"
-#include "sus/ops/ord.h"
+#include "sus/cmp/eq.h"
+#include "sus/cmp/ord.h"
 #include "sus/option/option.h"
 #include "sus/prelude.h"
 #include "sus/test/ensure_use.h"
@@ -118,28 +118,28 @@ TEST(i32, Traits) {
   static_assert(sus::num::Shr<i32>);
   static_assert(sus::num::ShrAssign<i32>);
 
-  static_assert(sus::ops::StrongOrd<i32, int8_t>);
-  static_assert(sus::ops::StrongOrd<i32, int16_t>);
-  static_assert(sus::ops::StrongOrd<i32, int32_t>);
-  static_assert(sus::ops::StrongOrd<i32, int64_t>);
-  static_assert(sus::ops::StrongOrd<i32, i8>);
-  static_assert(sus::ops::StrongOrd<i32, i16>);
-  static_assert(sus::ops::StrongOrd<i32, i32>);
-  static_assert(sus::ops::StrongOrd<i32, i64>);
-  static_assert(sus::ops::StrongOrd<i32, isize>);
+  static_assert(sus::cmp::StrongOrd<i32, int8_t>);
+  static_assert(sus::cmp::StrongOrd<i32, int16_t>);
+  static_assert(sus::cmp::StrongOrd<i32, int32_t>);
+  static_assert(sus::cmp::StrongOrd<i32, int64_t>);
+  static_assert(sus::cmp::StrongOrd<i32, i8>);
+  static_assert(sus::cmp::StrongOrd<i32, i16>);
+  static_assert(sus::cmp::StrongOrd<i32, i32>);
+  static_assert(sus::cmp::StrongOrd<i32, i64>);
+  static_assert(sus::cmp::StrongOrd<i32, isize>);
   static_assert(1_i32 >= 1_i32);
   static_assert(2_i32 > 1_i32);
   static_assert(1_i32 <= 1_i32);
   static_assert(1_i32 < 2_i32);
-  static_assert(sus::ops::Eq<i32, int8_t>);
-  static_assert(sus::ops::Eq<i32, int16_t>);
-  static_assert(sus::ops::Eq<i32, int32_t>);
-  static_assert(sus::ops::Eq<i32, int64_t>);
-  static_assert(sus::ops::Eq<i32, i8>);
-  static_assert(sus::ops::Eq<i32, i16>);
-  static_assert(sus::ops::Eq<i32, i32>);
-  static_assert(sus::ops::Eq<i32, i64>);
-  static_assert(sus::ops::Eq<i32, isize>);
+  static_assert(sus::cmp::Eq<i32, int8_t>);
+  static_assert(sus::cmp::Eq<i32, int16_t>);
+  static_assert(sus::cmp::Eq<i32, int32_t>);
+  static_assert(sus::cmp::Eq<i32, int64_t>);
+  static_assert(sus::cmp::Eq<i32, i8>);
+  static_assert(sus::cmp::Eq<i32, i16>);
+  static_assert(sus::cmp::Eq<i32, i32>);
+  static_assert(sus::cmp::Eq<i32, i64>);
+  static_assert(sus::cmp::Eq<i32, isize>);
   static_assert(1_i32 == 1_i32);
   static_assert(!(1_i32 == 2_i32));
   static_assert(1_i32 != 2_i32);

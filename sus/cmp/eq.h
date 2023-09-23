@@ -12,13 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// TODO: Move all this to sus::cmp?
-
 #pragma once
 
 #include <concepts>
 
-namespace sus::ops {
+namespace sus::cmp {
 
 /// Concept for types that can be compared for equality with the `==` and `!=`
 /// operators. There is no guarantee of a full equivalence relation, and a
@@ -46,4 +44,4 @@ concept Eq = requires(const std::remove_reference_t<T>& lhs,
   { lhs != rhs } -> std::same_as<bool>;
 };
 
-}  // namespace sus::ops
+}  // namespace sus::cmp

@@ -18,25 +18,25 @@
 
 #include <type_traits>
 
-#include "sus/ops/eq.h"
-#include "sus/ops/ord.h"
+#include "sus/cmp/eq.h"
+#include "sus/cmp/ord.h"
 
-namespace sus::ops::__private {
+namespace sus::cmp::__private {
 
 template <class T, class U = T>
 concept VoidOrEq =
-    (std::is_void_v<T> && std::is_void_v<U>) || ::sus::ops::Eq<T, U>;
+    (std::is_void_v<T> && std::is_void_v<U>) || ::sus::cmp::Eq<T, U>;
 
 template <class T, class U = T>
 concept VoidOrOrd =
-    (std::is_void_v<T> && std::is_void_v<U>) || ::sus::ops::StrongOrd<T, U>;
+    (std::is_void_v<T> && std::is_void_v<U>) || ::sus::cmp::StrongOrd<T, U>;
 
 template <class T, class U = T>
 concept VoidOrWeakOrd =
-    (std::is_void_v<T> && std::is_void_v<U>) || ::sus::ops::Ord<T, U>;
+    (std::is_void_v<T> && std::is_void_v<U>) || ::sus::cmp::Ord<T, U>;
 
 template <class T, class U = T>
 concept VoidOrPartialOrd =
-    (std::is_void_v<T> && std::is_void_v<U>) || ::sus::ops::PartialOrd<T, U>;
+    (std::is_void_v<T> && std::is_void_v<U>) || ::sus::cmp::PartialOrd<T, U>;
 
-}  // namespace sus::ops::__private
+}  // namespace sus::cmp::__private

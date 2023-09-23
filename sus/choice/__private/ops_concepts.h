@@ -17,8 +17,8 @@
 #pragma once
 
 #include "sus/choice/__private/type_list.h"
-#include "sus/ops/eq.h"
-#include "sus/ops/ord.h"
+#include "sus/cmp/eq.h"
+#include "sus/cmp/ord.h"
 
 namespace sus::choice_type::__private {
 
@@ -28,8 +28,8 @@ struct ChoiceIsEqHelper;
 template <class TagType1, class... Types1, class TagType2, class... Types2>
 struct ChoiceIsEqHelper<TagType1, TypeList<Types1...>, TagType2,
                         TypeList<Types2...>> {
-  static constexpr bool value = (::sus::ops::Eq<TagType1, TagType2> && ... &&
-                                 ::sus::ops::Eq<Types1, Types2>);
+  static constexpr bool value = (::sus::cmp::Eq<TagType1, TagType2> && ... &&
+                                 ::sus::cmp::Eq<Types1, Types2>);
 };
 
 // Out of line from the requires clause, and in a struct, to work around
@@ -44,8 +44,8 @@ struct ChoiceIsStrongOrdHelper;
 template <class TagType1, class... Types1, class TagType2, class... Types2>
 struct ChoiceIsStrongOrdHelper<TagType1, TypeList<Types1...>, TagType2,
                          TypeList<Types2...>> {
-  static constexpr bool value = (::sus::ops::StrongOrd<TagType1, TagType2> && ... &&
-                                 ::sus::ops::StrongOrd<Types1, Types2>);
+  static constexpr bool value = (::sus::cmp::StrongOrd<TagType1, TagType2> && ... &&
+                                 ::sus::cmp::StrongOrd<Types1, Types2>);
 };
 
 // Out of line from the requires clause, and in a struct, to work around
@@ -62,11 +62,11 @@ struct ChoiceIsOrdHelper<TagType1, TypeList<Types1...>, TagType2,
                              TypeList<Types2...>> {
   // clang-format off
   static constexpr bool value =
-      ((!::sus::ops::StrongOrd<TagType1, TagType2> || ... ||
-        !::sus::ops::StrongOrd<Types1, Types2>)
+      ((!::sus::cmp::StrongOrd<TagType1, TagType2> || ... ||
+        !::sus::cmp::StrongOrd<Types1, Types2>)
         &&
-       (::sus::ops::Ord<TagType1, TagType2> && ... &&
-        ::sus::ops::Ord<Types1, Types2>));
+       (::sus::cmp::Ord<TagType1, TagType2> && ... &&
+        ::sus::cmp::Ord<Types1, Types2>));
   // clang-format on
 };
 
@@ -84,11 +84,11 @@ struct ChoiceIsPartialOrdHelper<TagType1, TypeList<Types1...>, TagType2,
                                 TypeList<Types2...>> {
   // clang-format off
   static constexpr bool value =
-      (!::sus::ops::Ord<TagType1, TagType2> || ... ||
-       !::sus::ops::Ord<Types1, Types2>)
+      (!::sus::cmp::Ord<TagType1, TagType2> || ... ||
+       !::sus::cmp::Ord<Types1, Types2>)
       &&
-      (::sus::ops::PartialOrd<TagType1, TagType2> && ... &&
-       ::sus::ops::PartialOrd<Types1, Types2>);
+      (::sus::cmp::PartialOrd<TagType1, TagType2> && ... &&
+       ::sus::cmp::PartialOrd<Types1, Types2>);
   // clang-format on
 };
 
@@ -106,8 +106,8 @@ struct ChoiceIsAnyOrdHelper<TagType1, TypeList<Types1...>, TagType2,
                             TypeList<Types2...>> {
   // clang-format off
   static constexpr bool value =
-      (::sus::ops::PartialOrd<TagType1, TagType2> && ... &&
-       ::sus::ops::PartialOrd<Types1, Types2>);
+      (::sus::cmp::PartialOrd<TagType1, TagType2> && ... &&
+       ::sus::cmp::PartialOrd<Types1, Types2>);
   // clang-format on
 };
 

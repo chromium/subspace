@@ -31,7 +31,7 @@
 #include "sus/iter/iterator.h"
 #include "sus/iter/once.h"
 #include "sus/mem/swap.h"
-#include "sus/ops/ord.h"
+#include "sus/cmp/ord.h"
 #include "sus/prelude.h"
 
 namespace subdoc {

@@ -444,9 +444,9 @@ TEST(OverflowInteger, MathSelfSelf) {
 }
 
 TEST(OverflowInteger, Eq) {
-  static_assert(::sus::ops::Eq<OverflowInteger<i32>, i32>);
-  static_assert(::sus::ops::Eq<i32, OverflowInteger<i32>>);
-  static_assert(::sus::ops::Eq<OverflowInteger<i32>>);
+  static_assert(::sus::cmp::Eq<OverflowInteger<i32>, i32>);
+  static_assert(::sus::cmp::Eq<i32, OverflowInteger<i32>>);
+  static_assert(::sus::cmp::Eq<OverflowInteger<i32>>);
 
   EXPECT_EQ(OverflowInteger<i32>(5), 5_i32);
   EXPECT_EQ(5_i32, OverflowInteger<i32>(5));
@@ -462,9 +462,9 @@ TEST(OverflowInteger, Eq) {
 }
 
 TEST(OverflowInteger, StrongOrd) {
-  static_assert(::sus::ops::StrongOrd<OverflowInteger<i32>>);
-  static_assert(::sus::ops::StrongOrd<OverflowInteger<i32>, i32>);
-  static_assert(::sus::ops::StrongOrd<i32, OverflowInteger<i32>>);
+  static_assert(::sus::cmp::StrongOrd<OverflowInteger<i32>>);
+  static_assert(::sus::cmp::StrongOrd<OverflowInteger<i32>, i32>);
+  static_assert(::sus::cmp::StrongOrd<i32, OverflowInteger<i32>>);
 
   EXPECT_EQ(OverflowInteger<i32>(5) <=> 4_i32, std::strong_ordering::greater);
   EXPECT_EQ(OverflowInteger<i32>(5) <=> 6_i32, std::strong_ordering::less);

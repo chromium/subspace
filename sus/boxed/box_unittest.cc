@@ -586,8 +586,8 @@ TEST(BoxDeathTest, Example_ResultCustomHierarchy) {
 // ==== Eq
 
 struct NotEq {};
-static_assert(sus::ops::Eq<Box<i32>>);
-static_assert(!sus::ops::Eq<Box<NotEq>>);
+static_assert(sus::cmp::Eq<Box<i32>>);
+static_assert(!sus::cmp::Eq<Box<NotEq>>);
 
 static_assert(Box<i32>(3) == Box<i32>(3));
 static_assert(Box<i32>(3) != Box<i32>(4));
@@ -604,13 +604,13 @@ struct Ordered {
   i32 value;
 };
 
-static_assert(sus::ops::StrongOrd<Box<i32>>);
-static_assert(sus::ops::Ord<Box<Ordered>>);
-static_assert(sus::ops::PartialOrd<Box<f32>>);
+static_assert(sus::cmp::StrongOrd<Box<i32>>);
+static_assert(sus::cmp::Ord<Box<Ordered>>);
+static_assert(sus::cmp::PartialOrd<Box<f32>>);
 
-static_assert(!sus::ops::StrongOrd<Box<NotEq>>);
-static_assert(!sus::ops::Ord<Box<NotEq>>);
-static_assert(!sus::ops::PartialOrd<Box<NotEq>>);
+static_assert(!sus::cmp::StrongOrd<Box<NotEq>>);
+static_assert(!sus::cmp::Ord<Box<NotEq>>);
+static_assert(!sus::cmp::PartialOrd<Box<NotEq>>);
 
 static_assert(Box<i32>(3) <=> Box<i32>(3) == 0);
 static_assert(Box<i32>(3) <=> Box<i32>(4) < 0);

@@ -91,7 +91,7 @@ constexpr ::sus::ops::Range<const T*> as_ptr_range() && = delete;
 /// element could be inserted while maintaining sorted order.
 constexpr ::sus::result::Result<::sus::num::usize, ::sus::num::usize>
 binary_search(const T& x) const& noexcept
-  requires(::sus::ops::Ord<T>)
+  requires(::sus::cmp::Ord<T>)
 {
   return binary_search_by([&x](const T& p) { return p <=> x; });
 }
@@ -168,7 +168,7 @@ binary_search_by(
 /// found then `sus::Err` is returned, with the index where a matching
 /// element could be inserted while maintaining sorted order.
 ///
-template <::sus::ops::StrongOrd Key>
+template <::sus::cmp::StrongOrd Key>
 ::sus::result::
     Result<::sus::num::usize, ::sus::num::usize> constexpr binary_search_by_key(
         const Key& key,
@@ -276,7 +276,7 @@ constexpr void concat_into(::sus::collections::Vec<T>& vec) const& noexcept
 ///
 /// Note that if you have a sorted slice, `binary_search()` may be faster.
 constexpr bool contains(const T& x) const& noexcept
-  requires(::sus::ops::Eq<T>)
+  requires(::sus::cmp::Eq<T>)
 {
   const auto length = len();
   const auto* const p = as_ptr();
@@ -288,7 +288,7 @@ constexpr bool contains(const T& x) const& noexcept
 
 /// Returns `true` if `suffix` is a suffix of the slice.
 constexpr bool ends_with(const Slice<T>& suffix) const& noexcept
-  requires(::sus::ops::Eq<T>)
+  requires(::sus::cmp::Eq<T>)
 {
   const auto m = len();
   const auto n = suffix.len();
@@ -804,7 +804,7 @@ constexpr Split<T, Pred> splitn(usize n, Pred pred) && = delete;
 
 /// Returns `true` if `needle` is a prefix of the slice.
 constexpr bool starts_with(const Slice<T>& needle) const&
-  requires(::sus::ops::Eq<T>)
+  requires(::sus::cmp::Eq<T>)
 {
   const auto n = needle.len();
   return len() >= n && needle == (*this)[::sus::ops::RangeTo(n)];
@@ -820,7 +820,7 @@ constexpr bool starts_with(const Slice<T>& needle) const&
 /// TODO: Accept a `SlicePattern<T>` concept instead of just a `Slice<T>`.
 constexpr ::sus::Option<Slice<T>> strip_prefix(
     const Slice<T>& prefix) const& noexcept
-  requires(::sus::ops::Eq<T>)
+  requires(::sus::cmp::Eq<T>)
 {
   const usize n = prefix.len();
   if (n <= len()) {
@@ -845,7 +845,7 @@ constexpr ::sus::Option<Slice<T>> strip_prefix(const Slice<T>& prefix) const& =
 /// If the slice does not end with `suffix`, returns `None`.
 constexpr ::sus::Option<Slice<T>> strip_suffix(
     const Slice<T>& suffix) const& noexcept
-  requires(::sus::ops::Eq<T>)
+  requires(::sus::cmp::Eq<T>)
 {
   const auto l = len();
   const auto n = suffix.len();

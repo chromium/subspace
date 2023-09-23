@@ -37,7 +37,7 @@
 #include "sus/mem/relocate.h"
 #include "sus/mem/replace.h"
 #include "sus/mem/take.h"
-#include "sus/ops/__private/void_concepts.h"
+#include "sus/cmp/__private/void_concepts.h"
 #include "sus/option/option.h"
 #include "sus/result/__private/marker.h"
 #include "sus/result/__private/result_state.h"
@@ -59,10 +59,10 @@ using ::sus::mem::__private::IsTrivialCopyCtorOrRef;
 using ::sus::mem::__private::IsTrivialDtorOrRef;
 using ::sus::mem::__private::IsTrivialMoveAssignOrRef;
 using ::sus::mem::__private::IsTrivialMoveCtorOrRef;
-using ::sus::ops::__private::VoidOrEq;
-using ::sus::ops::__private::VoidOrOrd;
-using ::sus::ops::__private::VoidOrPartialOrd;
-using ::sus::ops::__private::VoidOrWeakOrd;
+using ::sus::cmp::__private::VoidOrEq;
+using ::sus::cmp::__private::VoidOrOrd;
+using ::sus::cmp::__private::VoidOrPartialOrd;
+using ::sus::cmp::__private::VoidOrWeakOrd;
 using ::sus::option::__private::StoragePointer;
 using ::sus::result::__private::ResultState;
 using ::sus::result::__private::Storage;
@@ -1006,13 +1006,13 @@ class [[nodiscard]] Result final {
   /// Compares two [`Result`]($sus::result::Result)s for equality if the types
   /// inside satisfy `Eq`.
   ///
-  /// Satisfies the [`Eq`]($sus::ops::Eq) concept.
+  /// Satisfies the [`Eq`]($sus::cmp::Eq) concept.
   ///
   /// # Implementation Note
   /// The non-template overload allows ok/err marker types to convert to
   /// Option for comparison.
   friend constexpr bool operator==(const Result& l, const Result& r) noexcept
-    requires(VoidOrEq<T> && ::sus::ops::Eq<E>)
+    requires(VoidOrEq<T> && ::sus::cmp::Eq<E>)
   {
     ::sus::check(l.state_ != ResultState::IsMoved);
     switch (l.state_) {
@@ -1028,7 +1028,7 @@ class [[nodiscard]] Result final {
     ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
   template <class U, class F>
-    requires(VoidOrEq<T, U> && ::sus::ops::Eq<E, F>)
+    requires(VoidOrEq<T, U> && ::sus::cmp::Eq<E, F>)
   friend constexpr bool operator==(const Result& l,
                                    const Result<U, F>& r) noexcept {
     ::sus::check(l.state_ != ResultState::IsMoved);
@@ -1045,16 +1045,16 @@ class [[nodiscard]] Result final {
     ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
   template <class U, class F>
-    requires(!(VoidOrEq<T, U> && ::sus::ops::Eq<E, F>))
+    requires(!(VoidOrEq<T, U> && ::sus::cmp::Eq<E, F>))
   friend constexpr bool operator==(const Result& l,
                                    const Result<U, F>& r) = delete;
 
   /// Compares two [`Result`]($sus::result::Result)s for their ordering if the
   /// types inside can be compared.
   ///
-  /// Satisfies the [`StrongOrd`]($sus::ops::StrongOrd),
-  /// [`Ord`]($sus::ops::Ord), or
-  /// [`PartialOrd`]($sus::ops::PartialOrd) concept, depending on whether the
+  /// Satisfies the [`StrongOrd`]($sus::cmp::StrongOrd),
+  /// [`Ord`]($sus::cmp::Ord), or
+  /// [`PartialOrd`]($sus::cmp::PartialOrd) concept, depending on whether the
   /// internal types do. The `Result` will satisfy the strongest possible
   /// ordering.
   ///
@@ -1063,7 +1063,7 @@ class [[nodiscard]] Result final {
   /// Option for comparison.
   friend constexpr std::strong_ordering operator<=>(const Result& l,
                                                     const Result& r) noexcept
-    requires(VoidOrOrd<T> && ::sus::ops::StrongOrd<E>)
+    requires(VoidOrOrd<T> && ::sus::cmp::StrongOrd<E>)
   {
     ::sus::check(l.state_ != ResultState::IsMoved);
     switch (l.state_) {
@@ -1086,7 +1086,7 @@ class [[nodiscard]] Result final {
     ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
   template <class U, class F>
-    requires(VoidOrOrd<T, U> && ::sus::ops::StrongOrd<E, F>)
+    requires(VoidOrOrd<T, U> && ::sus::cmp::StrongOrd<E, F>)
   friend constexpr std::strong_ordering operator<=>(
       const Result& l, const Result<U, F>& r) noexcept {
     ::sus::check(l.state_ != ResultState::IsMoved);
@@ -1110,11 +1110,11 @@ class [[nodiscard]] Result final {
     ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
 
-  // sus::ops::Ord<Result<T, E>> trait.
+  // sus::cmp::Ord<Result<T, E>> trait.
   friend constexpr std::weak_ordering operator<=>(const Result& l,
                                                   const Result& r) noexcept
-    requires((!VoidOrOrd<T> || !::sus::ops::StrongOrd<E>) && VoidOrWeakOrd<T> &&
-             ::sus::ops::Ord<E>)
+    requires((!VoidOrOrd<T> || !::sus::cmp::StrongOrd<E>) && VoidOrWeakOrd<T> &&
+             ::sus::cmp::Ord<E>)
   {
     ::sus::check(l.state_ != ResultState::IsMoved);
     switch (l.state_) {
@@ -1137,8 +1137,8 @@ class [[nodiscard]] Result final {
     ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
   template <class U, class F>
-    requires((!VoidOrOrd<T, U> || !::sus::ops::StrongOrd<E, F>) &&
-             VoidOrWeakOrd<T, U> && ::sus::ops::Ord<E, F>)
+    requires((!VoidOrOrd<T, U> || !::sus::cmp::StrongOrd<E, F>) &&
+             VoidOrWeakOrd<T, U> && ::sus::cmp::Ord<E, F>)
   friend constexpr std::weak_ordering operator<=>(
       const Result& l, const Result<U, F>& r) noexcept {
     ::sus::check(l.state_ != ResultState::IsMoved);
@@ -1162,11 +1162,11 @@ class [[nodiscard]] Result final {
     ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
 
-  // sus::ops::PartialOrd<Result<T, E>> trait.
+  // sus::cmp::PartialOrd<Result<T, E>> trait.
   friend constexpr std::partial_ordering operator<=>(const Result& l,
                                                      const Result& r) noexcept
-    requires((!VoidOrWeakOrd<T> || !::sus::ops::Ord<E>) &&
-             VoidOrPartialOrd<T> && ::sus::ops::PartialOrd<E>)
+    requires((!VoidOrWeakOrd<T> || !::sus::cmp::Ord<E>) &&
+             VoidOrPartialOrd<T> && ::sus::cmp::PartialOrd<E>)
   {
     ::sus::check(l.state_ != ResultState::IsMoved);
     switch (l.state_) {
@@ -1189,8 +1189,8 @@ class [[nodiscard]] Result final {
     ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
   template <class U, class F>
-    requires((!VoidOrWeakOrd<T, U> || !::sus::ops::Ord<E, F>) &&
-             VoidOrPartialOrd<T, U> && ::sus::ops::PartialOrd<E, F>)
+    requires((!VoidOrWeakOrd<T, U> || !::sus::cmp::Ord<E, F>) &&
+             VoidOrPartialOrd<T, U> && ::sus::cmp::PartialOrd<E, F>)
   friend constexpr std::partial_ordering operator<=>(
       const Result& l, const Result<U, F>& r) noexcept {
     ::sus::check(l.state_ != ResultState::IsMoved);
@@ -1215,7 +1215,7 @@ class [[nodiscard]] Result final {
   }
 
   template <class U, class F>
-    requires(!VoidOrPartialOrd<T, U> || !::sus::ops::PartialOrd<E, F>)
+    requires(!VoidOrPartialOrd<T, U> || !::sus::cmp::PartialOrd<E, F>)
   friend constexpr auto operator<=>(const Result& l,
                                     const Result<U, F>& r) noexcept = delete;
 
@@ -1438,7 +1438,7 @@ struct std::hash<::sus::result::Result<T, E>> {
   }
 };
 template <class T, class E>
-  requires(::sus::ops::Eq<::sus::result::Result<T, E>>)
+  requires(::sus::cmp::Eq<::sus::result::Result<T, E>>)
 struct std::equal_to<::sus::result::Result<T, E>> {
   constexpr auto operator()(
       const ::sus::result::Result<T, E>& l,

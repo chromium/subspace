@@ -53,11 +53,11 @@ inline constexpr SizeHint size_hints(auto& iters) noexcept {
   } else {
     SizeHint left = iters.template at<I>().size_hint();
     SizeHint right = size_hints<I + 1, N>(iters);
-    usize lower = ::sus::ops::min(left.lower, right.lower);
+    usize lower = ::sus::cmp::min(left.lower, right.lower);
     if (left.upper.is_some() && right.upper.is_some()) {
       usize lu = left.upper.as_value();
       usize ru = right.upper.as_value();
-      return SizeHint(lower, ::sus::some(::sus::ops::min(lu, ru)));
+      return SizeHint(lower, ::sus::some(::sus::cmp::min(lu, ru)));
     } else if (left.upper.is_some()) {
       return SizeHint(lower, left.upper);
     } else if (right.upper.is_some()) {
@@ -75,7 +75,7 @@ inline constexpr usize exact_size_hints(auto& iters) noexcept {
   } else {
     usize left = iters.template at<I>().exact_size_hint();
     usize right = exact_size_hints<I + 1, N>(iters);
-    return ::sus::ops::min(left, right);
+    return ::sus::cmp::min(left, right);
   }
 }
 

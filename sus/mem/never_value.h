@@ -24,7 +24,7 @@
 #include "sus/marker/unsafe.h"
 #include "sus/mem/forward.h"
 #include "sus/mem/relocate.h"
-#include "sus/ops/eq.h"
+#include "sus/cmp/eq.h"
 
 namespace sus::mem {
 
@@ -166,7 +166,7 @@ concept NeverValueField = __private::NeverValueChecker<T>::has_field;
   }                                                                            \
   constexpr void _sus_Unsafe_NeverValueSetDestroyValue(                        \
       ::sus::marker::UnsafeFnMarker) noexcept {                                \
-    static_assert(::sus::ops::Eq<decltype(field_name), decltype(never_value)>, \
+    static_assert(::sus::cmp::Eq<decltype(field_name), decltype(never_value)>, \
                   "The `never_value` must be comparable to the named field."); \
     field_name = destroy_value;                                                \
   }                                                                            \

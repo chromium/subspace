@@ -21,8 +21,8 @@
 #include "sus/num/num_concepts.h"
 #include "sus/num/signed_integer.h"
 #include "sus/num/unsigned_integer.h"
-#include "sus/ops/eq.h"
-#include "sus/ops/ord.h"
+#include "sus/cmp/eq.h"
+#include "sus/cmp/ord.h"
 #include "sus/prelude.h"
 #include "sus/tuple/tuple.h"
 
@@ -112,30 +112,30 @@ TEST(u16, Traits) {
   static_assert(sus::num::Shr<u16>);
   static_assert(sus::num::ShrAssign<u16>);
 
-  static_assert(sus::ops::StrongOrd<u16, uint8_t>);
-  static_assert(sus::ops::StrongOrd<u16, uint16_t>);
-  static_assert(sus::ops::StrongOrd<u16, uint32_t>);
-  static_assert(sus::ops::StrongOrd<u16, uint64_t>);
-  static_assert(sus::ops::StrongOrd<u16, size_t>);
-  static_assert(sus::ops::StrongOrd<u16, u8>);
-  static_assert(sus::ops::StrongOrd<u16, u16>);
-  static_assert(sus::ops::StrongOrd<u16, u32>);
-  static_assert(sus::ops::StrongOrd<u16, u64>);
-  static_assert(sus::ops::StrongOrd<u16, usize>);
+  static_assert(sus::cmp::StrongOrd<u16, uint8_t>);
+  static_assert(sus::cmp::StrongOrd<u16, uint16_t>);
+  static_assert(sus::cmp::StrongOrd<u16, uint32_t>);
+  static_assert(sus::cmp::StrongOrd<u16, uint64_t>);
+  static_assert(sus::cmp::StrongOrd<u16, size_t>);
+  static_assert(sus::cmp::StrongOrd<u16, u8>);
+  static_assert(sus::cmp::StrongOrd<u16, u16>);
+  static_assert(sus::cmp::StrongOrd<u16, u32>);
+  static_assert(sus::cmp::StrongOrd<u16, u64>);
+  static_assert(sus::cmp::StrongOrd<u16, usize>);
   static_assert(1_u16 >= 1_u16);
   static_assert(2_u16 > 1_u16);
   static_assert(1_u16 <= 1_u16);
   static_assert(1_u16 < 2_u16);
-  static_assert(sus::ops::Eq<u16, uint8_t>);
-  static_assert(sus::ops::Eq<u16, uint16_t>);
-  static_assert(sus::ops::Eq<u16, uint32_t>);
-  static_assert(sus::ops::Eq<u16, uint64_t>);
-  static_assert(sus::ops::Eq<u16, size_t>);
-  static_assert(sus::ops::Eq<u16, u8>);
-  static_assert(sus::ops::Eq<u16, u16>);
-  static_assert(sus::ops::Eq<u16, u32>);
-  static_assert(sus::ops::Eq<u16, u64>);
-  static_assert(sus::ops::Eq<u16, usize>);
+  static_assert(sus::cmp::Eq<u16, uint8_t>);
+  static_assert(sus::cmp::Eq<u16, uint16_t>);
+  static_assert(sus::cmp::Eq<u16, uint32_t>);
+  static_assert(sus::cmp::Eq<u16, uint64_t>);
+  static_assert(sus::cmp::Eq<u16, size_t>);
+  static_assert(sus::cmp::Eq<u16, u8>);
+  static_assert(sus::cmp::Eq<u16, u16>);
+  static_assert(sus::cmp::Eq<u16, u32>);
+  static_assert(sus::cmp::Eq<u16, u64>);
+  static_assert(sus::cmp::Eq<u16, usize>);
   static_assert(1_u16 == 1_u16);
   static_assert(!(1_u16 == 2_u16));
   static_assert(1_u16 != 2_u16);

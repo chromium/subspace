@@ -62,9 +62,9 @@ class [[nodiscard]] Take final
 
     auto [lower, upper] = next_iter_.size_hint();
 
-    lower = ::sus::ops::min(lower, n_);
+    lower = ::sus::cmp::min(lower, n_);
     upper = ::sus::move(upper)
-                .map([this](usize upper) { return ::sus::ops::min(upper, n_); })
+                .map([this](usize upper) { return ::sus::cmp::min(upper, n_); })
                 .or_else([this] { return ::sus::some(n_); });
 
     return {lower, upper};
@@ -91,7 +91,7 @@ class [[nodiscard]] Take final
 
   // sus::iter::ExactSizeIterator trait.
   constexpr usize exact_size_hint() const noexcept {
-    return ::sus::ops::min(next_iter_.exact_size_hint(), n_);
+    return ::sus::cmp::min(next_iter_.exact_size_hint(), n_);
   }
 
   /// sus::iter::TrustedLen trait.

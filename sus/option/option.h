@@ -42,8 +42,8 @@
 #include "sus/mem/relocate.h"
 #include "sus/mem/replace.h"
 #include "sus/mem/take.h"
-#include "sus/ops/eq.h"
-#include "sus/ops/ord.h"
+#include "sus/cmp/eq.h"
+#include "sus/cmp/ord.h"
 #include "sus/ops/try.h"
 #include "sus/option/__private/is_option_type.h"
 #include "sus/option/__private/is_tuple_type.h"
@@ -1649,13 +1649,13 @@ class Option final {
   constexpr OptionIter<T> into_iter() const& noexcept
     requires(::sus::mem::CopyOrRef<T>);
 
-  /// Satisfies the [`Eq<Option<U>>`]($sus::ops::Eq) concept.
+  /// Satisfies the [`Eq<Option<U>>`]($sus::cmp::Eq) concept.
   ///
   /// The non-template overload allows some/none marker types to convert to
   /// Option for comparison.
   friend constexpr inline bool operator==(const Option& l,
                                           const Option& r) noexcept
-    requires(::sus::ops::Eq<T>)
+    requires(::sus::cmp::Eq<T>)
   {
     switch (l) {
       case Some:
@@ -1666,7 +1666,7 @@ class Option final {
     ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
   template <class U>
-    requires(::sus::ops::Eq<T, U>)
+    requires(::sus::cmp::Eq<T, U>)
   friend constexpr inline bool operator==(const Option<T>& l,
                                           const Option<U>& r) noexcept {
     switch (l) {
@@ -1679,26 +1679,26 @@ class Option final {
   }
 
   template <class U>
-    requires(!::sus::ops::Eq<T, U>)
+    requires(!::sus::cmp::Eq<T, U>)
   friend constexpr inline bool operator==(const Option<T>& l,
                                           const Option<U>& r) = delete;
 
   /// Compares two options.
   ///
-  /// * Satisfies [`StrongOrd<Option<T>>`]($sus::ops::StrongOrd) if
-  ///   [`StrongOrd<T>`]($sus::ops::StrongOrd).
-  /// * Satisfies [`Ord<Option<T>>`]($sus::ops::Ord) if
-  ///   [`Ord<T>`]($sus::ops::Ord).
-  /// * Satisfies [`PartialOrd<Option<T>>`]($sus::ops::PartialOrd) if
-  ///   [`PartialOrd<T>`]($sus::ops::PartialOrd).
+  /// * Satisfies [`StrongOrd<Option<T>>`]($sus::cmp::StrongOrd) if
+  ///   [`StrongOrd<T>`]($sus::cmp::StrongOrd).
+  /// * Satisfies [`Ord<Option<T>>`]($sus::cmp::Ord) if
+  ///   [`Ord<T>`]($sus::cmp::Ord).
+  /// * Satisfies [`PartialOrd<Option<T>>`]($sus::cmp::PartialOrd) if
+  ///   [`PartialOrd<T>`]($sus::cmp::PartialOrd).
   ///
   /// The non-template overloads allow some/none marker types to convert to
   /// an option for comparison.
   //
-  // sus::ops::StrongOrd<Option<U>> trait.
+  // sus::cmp::StrongOrd<Option<U>> trait.
   friend constexpr inline std::strong_ordering operator<=>(
       const Option& l, const Option& r) noexcept
-    requires(::sus::ops::ExclusiveStrongOrd<T>)
+    requires(::sus::cmp::ExclusiveStrongOrd<T>)
   {
     switch (l) {
       case Some:
@@ -1717,7 +1717,7 @@ class Option final {
     ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
   template <class U>
-    requires(::sus::ops::ExclusiveStrongOrd<T, U>)
+    requires(::sus::cmp::ExclusiveStrongOrd<T, U>)
   friend constexpr inline std::strong_ordering operator<=>(
       const Option<T>& l, const Option<U>& r) noexcept {
     switch (l) {
@@ -1737,10 +1737,10 @@ class Option final {
     ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
 
-  // sus::ops::Ord<Option<U>> trait.
+  // sus::cmp::Ord<Option<U>> trait.
   friend constexpr inline std::weak_ordering operator<=>(
       const Option& l, const Option& r) noexcept
-    requires(::sus::ops::ExclusiveOrd<T>)
+    requires(::sus::cmp::ExclusiveOrd<T>)
   {
     switch (l) {
       case Some:
@@ -1759,7 +1759,7 @@ class Option final {
     ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
   template <class U>
-    requires(::sus::ops::ExclusiveOrd<T, U>)
+    requires(::sus::cmp::ExclusiveOrd<T, U>)
   friend constexpr inline std::weak_ordering operator<=>(
       const Option<T>& l, const Option<U>& r) noexcept {
     switch (l) {
@@ -1779,9 +1779,9 @@ class Option final {
     ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
 
-  // sus::ops::PartialOrd<Option<U>> trait.
+  // sus::cmp::PartialOrd<Option<U>> trait.
   template <class U>
-    requires(::sus::ops::ExclusivePartialOrd<T, U>)
+    requires(::sus::cmp::ExclusivePartialOrd<T, U>)
   friend constexpr inline std::partial_ordering operator<=>(
       const Option<T>& l, const Option<U>& r) noexcept {
     switch (l) {
@@ -1802,7 +1802,7 @@ class Option final {
   }
   friend constexpr inline std::partial_ordering operator<=>(
       const Option& l, const Option& r) noexcept
-    requires(::sus::ops::ExclusivePartialOrd<T>)
+    requires(::sus::cmp::ExclusivePartialOrd<T>)
   {
     switch (l) {
       case Some:
@@ -1822,7 +1822,7 @@ class Option final {
   }
 
   template <class U>
-    requires(!::sus::ops::PartialOrd<T, U>)
+    requires(!::sus::cmp::PartialOrd<T, U>)
   friend constexpr inline auto operator<=>(
       const Option<T>& l, const Option<U>& r) noexcept = delete;
 
@@ -2026,7 +2026,7 @@ struct std::hash<::sus::option::Option<T>> {
   }
 };
 template <class T>
-  requires(::sus::ops::Eq<T>)
+  requires(::sus::cmp::Eq<T>)
 struct std::equal_to<::sus::option::Option<T>> {
   constexpr auto operator()(const ::sus::option::Option<T>& l,
                             const ::sus::option::Option<T>& r) const noexcept {

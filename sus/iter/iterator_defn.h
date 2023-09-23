@@ -36,7 +36,7 @@
 #include "sus/mem/move.h"
 #include "sus/mem/size_of.h"
 #include "sus/num/unsigned_integer.h"
-#include "sus/ops/eq.h"
+#include "sus/cmp/eq.h"
 #include "sus/ops/try.h"
 #include "sus/option/option.h"
 #include "sus/tuple/tuple.h"
@@ -142,14 +142,14 @@ class IteratorBase {
   constexpr Iterator<std::remove_cvref_t<Item>> auto cloned() && noexcept
     requires(::sus::mem::Clone<Item>);
 
-  /// [Lexicographically]($sus::ops::Ord#how-can-i-implement-ord?)
+  /// [Lexicographically]($sus::cmp::Ord#how-can-i-implement-ord?)
   /// compares the elements of this `Iterator` with those of another.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
-    requires(::sus::ops::Ord<ItemT, OtherItem>)
+    requires(::sus::cmp::Ord<ItemT, OtherItem>)
   constexpr std::weak_ordering cmp(Other&& other) && noexcept;
 
-  /// [Lexicographically]($sus::ops::Ord#how-can-i-implement-ord?)
+  /// [Lexicographically]($sus::cmp::Ord#how-can-i-implement-ord?)
   /// compares the elements of this `Iterator` with those of another with
   /// respect to the specified comparison function.
   template <IntoIteratorAny Other, int&...,
@@ -219,7 +219,7 @@ class IteratorBase {
   /// another.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
-    requires(::sus::ops::Eq<ItemT, OtherItem>)
+    requires(::sus::cmp::Eq<ItemT, OtherItem>)
   constexpr bool eq(Other&& other) && noexcept;
 
   /// Determines if the elements of this `Iterator` are equal to those of
@@ -391,19 +391,19 @@ class IteratorBase {
   Iterator<GenR> auto generate(GenFn generator_fn) && noexcept;
 
   /// Determines if the elements of this Iterator are
-  /// [lexicographically]($sus::ops::Ord#how-can-i-implement-ord?)
+  /// [lexicographically]($sus::cmp::Ord#how-can-i-implement-ord?)
   /// greater than or equal to those of another.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
-    requires(::sus::ops::PartialOrd<ItemT, OtherItem>)
+    requires(::sus::cmp::PartialOrd<ItemT, OtherItem>)
   constexpr bool ge(Other&& other) && noexcept;
 
   /// Determines if the elements of this Iterator are
-  /// [lexicographically]($sus::ops::Ord#how-can-i-implement-ord?)
+  /// [lexicographically]($sus::cmp::Ord#how-can-i-implement-ord?)
   /// greater than those of another.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
-    requires(::sus::ops::PartialOrd<ItemT, OtherItem>)
+    requires(::sus::cmp::PartialOrd<ItemT, OtherItem>)
   constexpr bool gt(Other&& other) && noexcept;
 
   /// Does something with each element of an iterator, passing the value on.
@@ -425,7 +425,7 @@ class IteratorBase {
   /// `a <= b` is true. If the iterator yields exactly zero or one element, true
   /// is returned.
   constexpr bool is_sorted() noexcept
-    requires(::sus::ops::Ord<Item>);
+    requires(::sus::cmp::Ord<Item>);
 
   /// Checks if the elements of this iterator are sorted using the given
   /// comparator function.
@@ -439,19 +439,19 @@ class IteratorBase {
           const std::remove_reference_t<Item>&)> auto compare) noexcept;
 
   /// Determines if the elements of this Iterator are
-  /// [lexicographically]($sus::ops::Ord#how-can-i-implement-ord?)
+  /// [lexicographically]($sus::cmp::Ord#how-can-i-implement-ord?)
   /// less than or equal to those of another.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
-    requires(::sus::ops::PartialOrd<ItemT, OtherItem>)
+    requires(::sus::cmp::PartialOrd<ItemT, OtherItem>)
   constexpr bool le(Other&& other) && noexcept;
 
   /// Determines if the elements of this Iterator are
-  /// [lexicographically]($sus::ops::Ord#how-can-i-implement-ord?)
+  /// [lexicographically]($sus::cmp::Ord#how-can-i-implement-ord?)
   /// less than those of another.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
-    requires(::sus::ops::PartialOrd<ItemT, OtherItem>)
+    requires(::sus::cmp::PartialOrd<ItemT, OtherItem>)
   constexpr bool lt(Other&& other) && noexcept;
 
   /// Consumes the iterator, returning the last element.
@@ -501,7 +501,7 @@ class IteratorBase {
   /// );
   /// ```
   constexpr Option<Item> max() && noexcept
-    requires(::sus::ops::Ord<Item>);
+    requires(::sus::cmp::Ord<Item>);
 
   /// Returns the element that gives the maximum value with respect to the
   /// specified comparison function.
@@ -524,7 +524,7 @@ class IteratorBase {
             int&...,
             class Key = std::invoke_result_t<
                 KeyFn&, const std::remove_reference_t<ItemT>&>>
-    requires(::sus::ops::Ord<Key> &&  //
+    requires(::sus::cmp::Ord<Key> &&  //
              !std::is_reference_v<Key>)
   constexpr Option<Item> max_by_key(KeyFn fn) && noexcept;
 
@@ -547,7 +547,7 @@ class IteratorBase {
   /// );
   /// ```
   constexpr Option<Item> min() && noexcept
-    requires(::sus::ops::Ord<Item>);
+    requires(::sus::cmp::Ord<Item>);
 
   /// Returns the element that gives the minimum value with respect to the
   /// specified comparison function.
@@ -570,7 +570,7 @@ class IteratorBase {
             int&...,
             class Key = std::invoke_result_t<
                 KeyFn&, const std::remove_reference_t<ItemT>&>>
-    requires(::sus::ops::Ord<Key> &&  //
+    requires(::sus::cmp::Ord<Key> &&  //
              !std::is_reference_v<Key>)
   constexpr Option<Item> min_by_key(KeyFn fn) && noexcept;
 
@@ -586,7 +586,7 @@ class IteratorBase {
   /// another.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
-    requires(::sus::ops::Eq<ItemT, OtherItem>)
+    requires(::sus::cmp::Eq<ItemT, OtherItem>)
   constexpr bool ne(Other&& other) && noexcept;
 
   /// Returns the nth element of the iterator.
@@ -621,7 +621,7 @@ class IteratorBase {
   constexpr Option<Item> nth_back(usize n) noexcept
     requires(DoubleEndedIterator<Iter, Item>);
 
-  /// [Lexicographically]($sus::ops::Ord#how-can-i-implement-ord?)
+  /// [Lexicographically]($sus::cmp::Ord#how-can-i-implement-ord?)
   /// compares the elements of this `Iterator` with those of another.
   ///
   /// The comparison works like short-circuit evaluation, returning a result
@@ -632,10 +632,10 @@ class IteratorBase {
   /// result in `std::partial_ordering::unordered` when compared.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
-    requires(::sus::ops::PartialOrd<ItemT, OtherItem>)
+    requires(::sus::cmp::PartialOrd<ItemT, OtherItem>)
   constexpr std::partial_ordering partial_cmp(Other&& other) && noexcept;
 
-  /// [Lexicographically]($sus::ops::Ord#how-can-i-implement-ord?)
+  /// [Lexicographically]($sus::cmp::Ord#how-can-i-implement-ord?)
   /// compares the elements of this `Iterator` with those of another with
   /// respect to the specified comparison function.
   template <IntoIteratorAny Other, int&...,
@@ -896,7 +896,7 @@ class IteratorBase {
   /// of 1 returns every element.
   constexpr Iterator<Item> auto step_by(usize step) && noexcept;
 
-  /// [Lexicographically]($sus::ops::Ord#how-can-i-implement-ord?)
+  /// [Lexicographically]($sus::cmp::Ord#how-can-i-implement-ord?)
   /// compares the elements of this `Iterator` with those of another.
   ///
   /// Strong ordering requires each item being compared that compares equal to
@@ -909,10 +909,10 @@ class IteratorBase {
   /// determined, the evaluation stops and a result is returned.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
-    requires(::sus::ops::StrongOrd<ItemT, OtherItem>)
+    requires(::sus::cmp::StrongOrd<ItemT, OtherItem>)
   constexpr std::strong_ordering strong_cmp(Other&& other) && noexcept;
 
-  /// [Lexicographically]($sus::ops::Ord#how-can-i-implement-ord?)
+  /// [Lexicographically]($sus::cmp::Ord#how-can-i-implement-ord?)
   /// compares the elements of this `Iterator` with those of another with
   /// respect to the specified comparison function.
   template <IntoIteratorAny Other, int&...,
@@ -1190,7 +1190,7 @@ IteratorBase<Iter, Item>::cloned() && noexcept
 
 template <class Iter, class Item>
 template <IntoIteratorAny Other, int&..., class OtherItem>
-  requires(::sus::ops::Ord<Item, OtherItem>)
+  requires(::sus::cmp::Ord<Item, OtherItem>)
 constexpr std::weak_ordering IteratorBase<Iter, Item>::cmp(
     Other&& other) && noexcept {
   return static_cast<Iter&&>(*this).cmp_by(
@@ -1243,7 +1243,7 @@ constexpr auto IteratorBase<Iter, Item>::enumerate() && noexcept {
 
 template <class Iter, class Item>
 template <IntoIteratorAny Other, int&..., class OtherItem>
-  requires(::sus::ops::Eq<Item, OtherItem>)
+  requires(::sus::cmp::Eq<Item, OtherItem>)
 constexpr bool IteratorBase<Iter, Item>::eq(Other&& other) && noexcept {
   return static_cast<Iter&&>(*this).eq_by(
       ::sus::move(other),
@@ -1375,14 +1375,14 @@ Iterator<GenR> auto IteratorBase<Iter, Item>::generate(
 
 template <class Iter, class Item>
 template <IntoIteratorAny Other, int&..., class OtherItem>
-  requires(::sus::ops::PartialOrd<Item, OtherItem>)
+  requires(::sus::cmp::PartialOrd<Item, OtherItem>)
 constexpr bool IteratorBase<Iter, Item>::ge(Other&& other) && noexcept {
   return static_cast<Iter&&>(*this).partial_cmp(::sus::move(other)) >= 0;
 }
 
 template <class Iter, class Item>
 template <IntoIteratorAny Other, int&..., class OtherItem>
-  requires(::sus::ops::PartialOrd<Item, OtherItem>)
+  requires(::sus::cmp::PartialOrd<Item, OtherItem>)
 constexpr bool IteratorBase<Iter, Item>::gt(Other&& other) && noexcept {
   return static_cast<Iter&&>(*this).partial_cmp(::sus::move(other)) > 0;
 }
@@ -1397,7 +1397,7 @@ constexpr Iterator<Item> auto IteratorBase<Iter, Item>::inspect(
 
 template <class Iter, class Item>
 constexpr bool IteratorBase<Iter, Item>::is_sorted() noexcept
-  requires(::sus::ops::Ord<Item>)
+  requires(::sus::cmp::Ord<Item>)
 {
   return is_sorted_by(
       [](const std::remove_reference_t<Item>& a,
@@ -1435,14 +1435,14 @@ constexpr bool IteratorBase<Iter, Item>::is_sorted_by(
 
 template <class Iter, class Item>
 template <IntoIteratorAny Other, int&..., class OtherItem>
-  requires(::sus::ops::PartialOrd<Item, OtherItem>)
+  requires(::sus::cmp::PartialOrd<Item, OtherItem>)
 constexpr bool IteratorBase<Iter, Item>::le(Other&& other) && noexcept {
   return static_cast<Iter&&>(*this).partial_cmp(::sus::move(other)) <= 0;
 }
 
 template <class Iter, class Item>
 template <IntoIteratorAny Other, int&..., class OtherItem>
-  requires(::sus::ops::PartialOrd<Item, OtherItem>)
+  requires(::sus::cmp::PartialOrd<Item, OtherItem>)
 constexpr bool IteratorBase<Iter, Item>::lt(Other&& other) && noexcept {
   return static_cast<Iter&&>(*this).partial_cmp(::sus::move(other)) < 0;
 }
@@ -1473,7 +1473,7 @@ constexpr Iterator<InnerR> auto IteratorBase<Iter, Item>::map_while(
 
 template <class Iter, class Item>
 constexpr Option<Item> IteratorBase<Iter, Item>::max() && noexcept
-  requires(::sus::ops::Ord<Item>)
+  requires(::sus::cmp::Ord<Item>)
 {
   return static_cast<Iter&&>(*this).max_by(
       [](const std::remove_reference_t<Item>& a,
@@ -1500,7 +1500,7 @@ template <
         KeyFn,
     int&...,
     class Key>
-  requires(::sus::ops::Ord<Key> &&  //
+  requires(::sus::cmp::Ord<Key> &&  //
            !std::is_reference_v<Key>)
 constexpr Option<Item> IteratorBase<Iter, Item>::max_by_key(
     KeyFn fn) && noexcept {
@@ -1526,7 +1526,7 @@ constexpr Option<Item> IteratorBase<Iter, Item>::max_by_key(
 
 template <class Iter, class Item>
 constexpr Option<Item> IteratorBase<Iter, Item>::min() && noexcept
-  requires(::sus::ops::Ord<Item>)
+  requires(::sus::cmp::Ord<Item>)
 {
   return static_cast<Iter&&>(*this).min_by(
       [](const std::remove_reference_t<Item>& a,
@@ -1553,7 +1553,7 @@ template <
         KeyFn,
     int&...,
     class Key>
-  requires(::sus::ops::Ord<Key> &&  //
+  requires(::sus::cmp::Ord<Key> &&  //
            !std::is_reference_v<Key>)
 constexpr Option<Item> IteratorBase<Iter, Item>::min_by_key(
     KeyFn fn) && noexcept {
@@ -1589,7 +1589,7 @@ Iterator<std::remove_cvref_t<Item>> auto constexpr IteratorBase<
 
 template <class Iter, class Item>
 template <IntoIteratorAny Other, int&..., class OtherItem>
-  requires(::sus::ops::Eq<Item, OtherItem>)
+  requires(::sus::cmp::Eq<Item, OtherItem>)
 constexpr bool IteratorBase<Iter, Item>::ne(Other&& other) && noexcept {
   return !static_cast<Iter&&>(*this).eq(::sus::move(other));
 }
@@ -1616,7 +1616,7 @@ constexpr Option<Item> IteratorBase<Iter, Item>::nth_back(usize n) noexcept
 
 template <class Iter, class Item>
 template <IntoIteratorAny Other, int&..., class OtherItem>
-  requires(::sus::ops::PartialOrd<Item, OtherItem>)
+  requires(::sus::cmp::PartialOrd<Item, OtherItem>)
 constexpr std::partial_ordering IteratorBase<Iter, Item>::partial_cmp(
     Other&& other) && noexcept {
   return static_cast<Iter&&>(*this).partial_cmp_by(
@@ -1801,7 +1801,7 @@ constexpr Iterator<Item> auto IteratorBase<Iter, Item>::step_by(
 
 template <class Iter, class Item>
 template <IntoIteratorAny Other, int&..., class OtherItem>
-  requires(::sus::ops::StrongOrd<Item, OtherItem>)
+  requires(::sus::cmp::StrongOrd<Item, OtherItem>)
 constexpr std::strong_ordering IteratorBase<Iter, Item>::strong_cmp(
     Other&& other) && noexcept {
   return static_cast<Iter&&>(*this).strong_cmp_by(

@@ -1015,16 +1015,16 @@ TEST(Vec, ConvertsToSlice) {
 
 TEST(Vec, Eq) {
   struct NotEq {};
-  static_assert(!sus::ops::Eq<NotEq>);
+  static_assert(!sus::cmp::Eq<NotEq>);
 
-  static_assert(sus::ops::Eq<Vec<int>>);
-  static_assert(!sus::ops::Eq<Vec<int>, Vec<NotEq>>);
-  static_assert(!sus::ops::Eq<Vec<NotEq>>);
+  static_assert(sus::cmp::Eq<Vec<int>>);
+  static_assert(!sus::cmp::Eq<Vec<int>, Vec<NotEq>>);
+  static_assert(!sus::cmp::Eq<Vec<NotEq>>);
 
-  static_assert(sus::ops::Eq<Vec<int>, Slice<int>>);
-  static_assert(!sus::ops::Eq<Vec<int>, Slice<NotEq>>);
-  static_assert(sus::ops::Eq<Vec<int>, SliceMut<int>>);
-  static_assert(!sus::ops::Eq<Vec<int>, SliceMut<NotEq>>);
+  static_assert(sus::cmp::Eq<Vec<int>, Slice<int>>);
+  static_assert(!sus::cmp::Eq<Vec<int>, Slice<NotEq>>);
+  static_assert(sus::cmp::Eq<Vec<int>, SliceMut<int>>);
+  static_assert(!sus::cmp::Eq<Vec<int>, SliceMut<NotEq>>);
 
   auto a = sus::Vec<i32>(1, 2, 3, 4);
   auto b = sus::Vec<i32>(1, 2, 3, 4);
@@ -1179,9 +1179,9 @@ TEST(Vec, Drain_NonTriviallyRelocatable) {
     i32 i;
   };
   static_assert(sus::mem::Move<S>);
-  static_assert(sus::ops::Eq<S>);
-  static_assert(sus::ops::Eq<S, i32>);
-  static_assert(sus::ops::Eq<S, int>);
+  static_assert(sus::cmp::Eq<S>);
+  static_assert(sus::cmp::Eq<S, i32>);
+  static_assert(sus::cmp::Eq<S, int>);
   static_assert(!sus::mem::relocate_by_memcpy<S>);
 
   // Drain in the middle.

@@ -21,8 +21,8 @@
 #include "sus/num/num_concepts.h"
 #include "sus/num/signed_integer.h"
 #include "sus/num/unsigned_integer.h"
-#include "sus/ops/eq.h"
-#include "sus/ops/ord.h"
+#include "sus/cmp/eq.h"
+#include "sus/cmp/ord.h"
 #include "sus/prelude.h"
 #include "sus/tuple/tuple.h"
 
@@ -112,30 +112,30 @@ TEST(uptr, Traits) {
   static_assert(sus::num::Shr<uptr>);
   static_assert(sus::num::ShrAssign<uptr>);
 
-  static_assert(sus::ops::StrongOrd<uptr, uint8_t>);
-  static_assert(sus::ops::StrongOrd<uptr, uint16_t>);
-  static_assert(sus::ops::StrongOrd<uptr, uint64_t>);
-  static_assert(sus::ops::StrongOrd<uptr, uint64_t>);
-  static_assert(sus::ops::StrongOrd<uptr, size_t>);
-  static_assert(sus::ops::StrongOrd<uptr, u8>);
-  static_assert(sus::ops::StrongOrd<uptr, u16>);
-  static_assert(sus::ops::StrongOrd<uptr, u32>);
-  static_assert(sus::ops::StrongOrd<uptr, u64>);
-  static_assert(sus::ops::StrongOrd<uptr, uptr>);
+  static_assert(sus::cmp::StrongOrd<uptr, uint8_t>);
+  static_assert(sus::cmp::StrongOrd<uptr, uint16_t>);
+  static_assert(sus::cmp::StrongOrd<uptr, uint64_t>);
+  static_assert(sus::cmp::StrongOrd<uptr, uint64_t>);
+  static_assert(sus::cmp::StrongOrd<uptr, size_t>);
+  static_assert(sus::cmp::StrongOrd<uptr, u8>);
+  static_assert(sus::cmp::StrongOrd<uptr, u16>);
+  static_assert(sus::cmp::StrongOrd<uptr, u32>);
+  static_assert(sus::cmp::StrongOrd<uptr, u64>);
+  static_assert(sus::cmp::StrongOrd<uptr, uptr>);
   static_assert(uptr(uintptr_t{1}) >= uptr(uintptr_t{1}));
   static_assert(uptr(uintptr_t{2}) > uptr(uintptr_t{1}));
   static_assert(uptr(uintptr_t{1}) <= uptr(uintptr_t{1}));
   static_assert(uptr(uintptr_t{1}) < uptr(uintptr_t{2}));
-  static_assert(sus::ops::Eq<uptr, uint8_t>);
-  static_assert(sus::ops::Eq<uptr, uint16_t>);
-  static_assert(sus::ops::Eq<uptr, uint64_t>);
-  static_assert(sus::ops::Eq<uptr, uint64_t>);
-  static_assert(sus::ops::Eq<uptr, size_t>);
-  static_assert(sus::ops::Eq<uptr, u8>);
-  static_assert(sus::ops::Eq<uptr, u16>);
-  static_assert(sus::ops::Eq<uptr, u32>);
-  static_assert(sus::ops::Eq<uptr, u64>);
-  static_assert(sus::ops::Eq<uptr, uptr>);
+  static_assert(sus::cmp::Eq<uptr, uint8_t>);
+  static_assert(sus::cmp::Eq<uptr, uint16_t>);
+  static_assert(sus::cmp::Eq<uptr, uint64_t>);
+  static_assert(sus::cmp::Eq<uptr, uint64_t>);
+  static_assert(sus::cmp::Eq<uptr, size_t>);
+  static_assert(sus::cmp::Eq<uptr, u8>);
+  static_assert(sus::cmp::Eq<uptr, u16>);
+  static_assert(sus::cmp::Eq<uptr, u32>);
+  static_assert(sus::cmp::Eq<uptr, u64>);
+  static_assert(sus::cmp::Eq<uptr, uptr>);
   static_assert(uptr(uintptr_t{1}) == uptr(uintptr_t{1}));
   static_assert(!(uptr(uintptr_t{1}) == uptr(uintptr_t{2})));
   static_assert(uptr(uintptr_t{1}) != uptr(uintptr_t{2}));
