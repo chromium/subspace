@@ -66,3 +66,8 @@ footguns, crashes, bugs, and UB.
      clang-16.
    * Similarly, for const usage, write `requires (const T& t)` instead of
      `requires (const T t)`.
+1. When writing `operator==` or `operator<=>`, always provide a non-templated overload
+   even if it looks redundant with a templated one. Example
+   `operator==(Option, Option)` and `operator==(Option<T>, Option<U>)` look redundant
+   but they are not, as the former allows conversions to Option for the rhs to happen
+   while the latter does not (it would have to deduce `U` and fails).
