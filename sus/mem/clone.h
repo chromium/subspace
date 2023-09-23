@@ -40,22 +40,32 @@ concept HasCloneFromMethod = requires(T& self, const T& source) {
 
 /// A `Clone` type can make a new copy of itself.
 ///
-/// A type `T` is `Clone` if one of the following holds:
-/// * Is `Copy`. Meaning it has a copy constructor and assignment.
-/// * Has a `clone() const -> T` method, and is `Move`.
+/// When a type is small enough to be passed in registers
+/// (typically at most the size of two pointers) and copying is the same as
+/// moving, prefer to make the type [`Copy`]($sus::mem::Copy), which also
+/// implies `Clone`.
 ///
-/// This concept tests the object type of `T`, not a reference type `T&` or
-/// `const T&`.
+/// A type `T` is `Clone` if one of the following holds:
+/// * Is [`Copy`]($sus::mem::Copy). Meaning it has a copy constructor and
+///   assignment.
+/// * Has a `clone() const -> T` method, and is [`Move`]($sus::mem::Move).
+///
+/// This concept tests the object type of `T`, looking through reference types
+/// `T&` or `const T&`.
+/// To test the reference types themselves (which can always be copied as a
+/// pointer) in generic code that can handle reference types and won't copy
+/// the objects behind them, use [`CloneOrRef`]($sus::mem::CloneOrRef).
 ///
 /// A `Clone` type may also provide a `clone_from(const T& source)` method
 /// to have `sus::mem::clone_into()` perform copy-assignment from `source`, in
 /// order to reuse its resources and avoid allocations. In this case the type is
-/// also `CloneInto`.
+/// also [`CloneFrom`]($sus::mem::CloneFrom).
 ///
-/// It is not valid to be `Copy` and also have a `clone()` method, as it becomes
-/// ambiguous. One outcome of this is a collection type should only implement a
-/// clone() method if the type within is (Clone && !Copy), and should implement
-/// copy constructors if the type within is Copy.
+/// It is not valid to be [`Copy`]($sus::mem::Copy) and also have a `clone()`
+/// method, as it becomes ambiguous.
+/// One outcome of this is a collection type should only implement a
+/// `clone()` method if the type `T` within is `(Clone<T> && !Copy<T>)`, and
+/// should only implement copy constructors if the type `T` within is `Copy<T>`.
 template <class T>
 concept Clone =
     (Copy<T> && !__private::HasCloneMethod<
@@ -111,7 +121,9 @@ template <Clone T>
 }
 
 /// Clones the input either by copying or cloning, producing an object of type
-/// T.
+/// `T`. As with [`forward`]($sus::mem::forward), the template argument `T`
+/// must always be specified when calling this function to deduce the correct
+/// return type.
 ///
 /// If `T` is a reference type, it copies and returns the reference instead of
 /// the underlying object.
