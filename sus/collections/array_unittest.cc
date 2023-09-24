@@ -18,14 +18,14 @@
 #include <type_traits>
 
 #include "googletest/include/gtest/gtest.h"
+#include "sus/cmp/eq.h"
+#include "sus/cmp/ord.h"
 #include "sus/construct/into.h"
 #include "sus/iter/iterator.h"
 #include "sus/marker/unsafe.h"
 #include "sus/mem/move.h"
 #include "sus/mem/relocate.h"
 #include "sus/num/types.h"
-#include "sus/cmp/eq.h"
-#include "sus/cmp/ord.h"
 #include "sus/prelude.h"
 #include "sus/test/ensure_use.h"
 
@@ -158,28 +158,28 @@ TEST(Array, WithValues) {
 TEST(Array, ConstructorFunction) {
   {
     // All parameters match the array type.
-    Array<u32, 3> a = sus::array(1_u32, 2_u32, 3_u32);
+    auto a = Array<u32, 3>(1_u32, 2_u32, 3_u32);
     EXPECT_EQ(a[0u], 1_u32);
     EXPECT_EQ(a[1u], 2_u32);
     EXPECT_EQ(a[2u], 3_u32);
   }
   {
     // Some parameters convert to u32.
-    Array<u32, 3> a = sus::array(1_u32, 2u, 3_u32);
+    auto a = Array<u32, 3>(1_u32, 2u, 3_u32);
     EXPECT_EQ(a[0u], 1_u32);
     EXPECT_EQ(a[1u], 2_u32);
     EXPECT_EQ(a[2u], 3_u32);
   }
   {
     // All parameters convert to u32.
-    Array<u32, 3> a = sus::array(1u, 2u, 3u);
+    auto a = Array<u32, 3>(1u, 2u, 3u);
     EXPECT_EQ(a[0u], 1_u32);
     EXPECT_EQ(a[1u], 2_u32);
     EXPECT_EQ(a[2u], 3_u32);
   }
   {
     // into() as an input to the array.
-    Array<u32, 3> a = sus::array(1_u32, sus::into(2_u16), 3_u32);
+    auto a = Array<u32, 3>(1_u32, sus::into(2_u16), 3_u32);
     EXPECT_EQ(a[0u], 1_u32);
     EXPECT_EQ(a[1u], 2_u32);
     EXPECT_EQ(a[2u], 3_u32);
@@ -188,7 +188,7 @@ TEST(Array, ConstructorFunction) {
     // Copies the lvalue and const lvalue.
     auto i = 1_u32;
     const auto j = 2_u32;
-    Array<u32, 3> a = sus::array(i, j, 3_u32);
+    auto a = Array<u32, 3>(i, j, 3_u32);
     EXPECT_EQ(a[0u], 1_u32);
     EXPECT_EQ(a[1u], 2_u32);
     EXPECT_EQ(a[2u], 3_u32);
@@ -196,41 +196,10 @@ TEST(Array, ConstructorFunction) {
   {
     // Copies the rvalue reference.
     auto i = 1_u32;
-    Array<u32, 3> a = sus::array(sus::move(i), 2_u32, 3_u32);
+    auto a = Array<u32, 3>(sus::move(i), 2_u32, 3_u32);
     EXPECT_EQ(a[0u], 1_u32);
     EXPECT_EQ(a[1u], 2_u32);
     EXPECT_EQ(a[2u], 3_u32);
-  }
-  // Verify no copies happen in the marker.
-  {
-    static i32 copies;
-    struct S {
-      S() {}
-      S(const S&) { copies += 1; }
-      S& operator=(const S&) {
-        copies += 1;
-        return *this;
-      }
-    };
-    copies = 0;
-    S s;
-    auto marker = sus::array(s);
-    EXPECT_EQ(copies, 0);
-    Array<S, 1> a = sus::move(marker);
-    EXPECT_GE(copies, 1);
-  }
-
-  // In place explicit construction.
-  {
-    auto a = sus::array(1_i32, 2_i32).construct();
-    static_assert(std::same_as<decltype(a), Array<i32, 2u>>);
-    EXPECT_EQ(a[0u], 1_i32);
-    EXPECT_EQ(a[1u], 2_i32);
-
-    auto b = sus::array(1, 2).construct<i32>();
-    static_assert(std::same_as<decltype(b), Array<i32, 2u>>);
-    EXPECT_EQ(b[0u], 1_i32);
-    EXPECT_EQ(b[1u], 2_i32);
   }
 }
 

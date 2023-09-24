@@ -23,7 +23,8 @@
 
 #include "fmt/core.h"
 #include "sus/assertions/check.h"
-#include "sus/collections/__private/array_marker.h"
+#include "sus/cmp/eq.h"
+#include "sus/cmp/ord.h"
 #include "sus/collections/collections.h"
 #include "sus/collections/iterators/array_iter.h"
 #include "sus/collections/iterators/slice_iter.h"
@@ -42,8 +43,6 @@
 #include "sus/num/num_concepts.h"
 #include "sus/num/signed_integer.h"
 #include "sus/num/unsigned_integer.h"
-#include "sus/cmp/eq.h"
-#include "sus/cmp/ord.h"
 #include "sus/string/__private/any_formatter.h"
 #include "sus/string/__private/format_to_stream.h"
 #include "sus/tuple/tuple.h"
@@ -614,22 +613,6 @@ auto get(Array<T, N>&& a) noexcept {
   return ::sus::move(a.get_unchecked_mut(::sus::marker::unsafe_fn, I));
 }
 
-/// Used to construct an Array<T, N> with the parameters as its values.
-///
-/// Calling array() produces a hint to make an Array<T, N> but does not
-/// actually construct Array<T, N>, as the type `T` is not known here.
-//
-// Note: A marker type is used instead of explicitly constructing an array
-// immediately in order to avoid redundantly having to specify `T` when using
-// the result of `sus::array()` as a function argument or return value.
-template <class... Ts>
-  requires(sizeof...(Ts) > 0)
-[[nodiscard]] inline constexpr auto array(
-    Ts&&... vs sus_lifetimebound) noexcept {
-  return __private::ArrayMarker<Ts...>(
-      ::sus::tuple_type::Tuple<Ts&&...>(::sus::forward<Ts>(vs)...));
-}
-
 }  // namespace sus::collections
 
 // Structured bindings support.
@@ -693,6 +676,5 @@ inline StreamType& operator<<(StreamType& stream, const Array<T, N>& value) {
 
 // Promote Array into the `sus` namespace.
 namespace sus {
-using ::sus::collections::array;
 using ::sus::collections::Array;
 }  // namespace sus
