@@ -90,7 +90,7 @@ properly build such a container type (e.g. `Option` and `Tuple`):
     in places that store the reference to ensure a reference to a temporary does not 
     get created due to an implicit conversion. The `FromReferenceType&&` here is should
     be the input type as it's written in the function parameters.
-  * If a ctor type deduction guide is provided, the deduction should struct qualifiers
+  * If a ctor type deduction guide is provided, the deduction should strip qualifiers
     and references with `std::remove_cvref_t` on the deduced type arguments.
   * Consider providing a construction marker type such as `some() -> SomeMarker` which
     captures the parameters as references and lazily constructs the final type. This 
