@@ -625,11 +625,11 @@ TEST(Iterator, Rev) {
   static_assert(sus::iter::Iterator<decltype(it), i32>);
   static_assert(sus::iter::DoubleEndedIterator<decltype(it), i32>);
   static_assert(sus::iter::ExactSizeIterator<decltype(it), i32>);
-  EXPECT_EQ(it.next(), sus::some(5).construct());
-  EXPECT_EQ(it.next(), sus::some(4).construct());
-  EXPECT_EQ(it.next(), sus::some(3).construct());
-  EXPECT_EQ(it.next(), sus::some(2).construct());
-  EXPECT_EQ(it.next(), sus::some(1).construct());
+  EXPECT_EQ(it.next(), sus::some(5));
+  EXPECT_EQ(it.next(), sus::some(4));
+  EXPECT_EQ(it.next(), sus::some(3));
+  EXPECT_EQ(it.next(), sus::some(2));
+  EXPECT_EQ(it.next(), sus::some(1));
   EXPECT_EQ(it.next(), sus::None);
 
   static_assert(
@@ -646,11 +646,11 @@ TEST(Iterator, Enumerate) {
     static_assert(sus::iter::Iterator<decltype(it), E>);
     static_assert(sus::iter::DoubleEndedIterator<decltype(it), E>);
     static_assert(sus::iter::ExactSizeIterator<decltype(it), E>);
-    EXPECT_EQ(it.next().unwrap(), sus::tuple(0u, 5).construct());
-    EXPECT_EQ(it.next().unwrap(), sus::tuple(1u, 4).construct());
-    EXPECT_EQ(it.next().unwrap(), sus::tuple(2u, 3).construct());
-    EXPECT_EQ(it.next().unwrap(), sus::tuple(3u, 2).construct());
-    EXPECT_EQ(it.next().unwrap(), sus::tuple(4u, 1).construct());
+    EXPECT_EQ(it.next().unwrap(), sus::Tuple(0u, 5));
+    EXPECT_EQ(it.next().unwrap(), sus::Tuple(1u, 4));
+    EXPECT_EQ(it.next().unwrap(), sus::Tuple(2u, 3));
+    EXPECT_EQ(it.next().unwrap(), sus::Tuple(3u, 2));
+    EXPECT_EQ(it.next().unwrap(), sus::Tuple(4u, 1));
     EXPECT_EQ(it.next(), sus::None);
   }
   {
@@ -659,11 +659,11 @@ TEST(Iterator, Enumerate) {
     static_assert(sus::iter::Iterator<decltype(it), E>);
     static_assert(sus::iter::DoubleEndedIterator<decltype(it), E>);
     static_assert(sus::iter::ExactSizeIterator<decltype(it), E>);
-    EXPECT_EQ(it.next_back().unwrap(), sus::tuple(4u, 5).construct());
-    EXPECT_EQ(it.next_back().unwrap(), sus::tuple(3u, 4).construct());
-    EXPECT_EQ(it.next_back().unwrap(), sus::tuple(2u, 3).construct());
-    EXPECT_EQ(it.next_back().unwrap(), sus::tuple(1u, 2).construct());
-    EXPECT_EQ(it.next_back().unwrap(), sus::tuple(0u, 1).construct());
+    EXPECT_EQ(it.next_back().unwrap(), sus::Tuple(4u, 5));
+    EXPECT_EQ(it.next_back().unwrap(), sus::Tuple(3u, 4));
+    EXPECT_EQ(it.next_back().unwrap(), sus::Tuple(2u, 3));
+    EXPECT_EQ(it.next_back().unwrap(), sus::Tuple(1u, 2));
+    EXPECT_EQ(it.next_back().unwrap(), sus::Tuple(0u, 1));
     EXPECT_EQ(it.next_back(), sus::None);
   }
 

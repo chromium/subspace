@@ -168,7 +168,7 @@ TEST(Tuple, With) {
   [[maybe_unused]] constexpr auto c = Tuple<i32, f32>(2, 3.f);
 }
 
-TEST(Tuple, ConstructorFunction) {
+TEST(Tuple, TypeDeducer) {
   {
     // All parameters match the tuple type.
     Tuple<u32, u32, u32> a = sus::tuple(1_u32, 2_u32, 3_u32);
@@ -189,6 +189,14 @@ TEST(Tuple, ConstructorFunction) {
     EXPECT_EQ(a.at<0>(), 1_u32);
     EXPECT_EQ(a.at<1>(), 2_u32);
     EXPECT_EQ(a.at<2>(), 3_u32);
+  }
+  {
+    // Some parameters convert to a reference.
+    [](Tuple<const u32&, u32, const u32&> a) {
+      EXPECT_EQ(a.at<0>(), 1_u32);
+      EXPECT_EQ(a.at<1>(), 2_u32);
+      EXPECT_EQ(a.at<2>(), 3_u32);
+    }(sus::tuple(1_u32, 2_u32, 3_u32));
   }
   {
     // into() as an input to the tuple.
@@ -227,37 +235,69 @@ TEST(Tuple, ConstructorFunction) {
     };
     copies = 0;
     S s;
-    auto marker = sus::tuple(s);
     EXPECT_EQ(copies, 0);
-    Tuple<S> tuple = sus::move(marker);
+    Tuple<S> tuple = sus::tuple(s);
     EXPECT_GE(copies, 1);
-  }
-
-  // In place explicit construction.
-  {
-    const auto i = 2_i32;
-    auto a = sus::tuple(1_i8, i, 3_u32).construct();
-    static_assert(std::same_as<decltype(a), sus::Tuple<i8, const i32&, u32>>);
-    EXPECT_EQ(a.at<0>(), 1_i8);
-    EXPECT_EQ(a.at<1>(), 2_i32);
-    EXPECT_EQ(a.at<2>(), 3_u32);
-
-    auto b = sus::tuple(sus::into(1_i8), i, 3_u32).construct<i32, i32, u32>();
-    static_assert(std::same_as<decltype(b), sus::Tuple<i32, i32, u32>>);
-    EXPECT_EQ(b.at<0>(), 1_i32);
-    EXPECT_EQ(b.at<1>(), 2_i32);
-    EXPECT_EQ(b.at<2>(), 3_u32);
   }
 }
 
-TEST(Tuple, ConstructorReferences) {
+TEST(Tuple, DeducedConstructor) {
   {
     // All parameters match the tuple type.
-    [](Tuple<const u32&, const u32&, const u32&> a) {
+    Tuple<u32, u32, u32> a = sus::Tuple(1_u32, 2_u32, 3_u32);
+    EXPECT_EQ(a.at<0>(), 1_u32);
+    EXPECT_EQ(a.at<1>(), 2_u32);
+    EXPECT_EQ(a.at<2>(), 3_u32);
+  }
+  {
+    // Some parameters convert to u32.
+    Tuple<u32, u32, u32> a = sus::Tuple(1_u32, 2u, 3_u32);
+    EXPECT_EQ(a.at<0>(), 1_u32);
+    EXPECT_EQ(a.at<1>(), 2_u32);
+    EXPECT_EQ(a.at<2>(), 3_u32);
+  }
+  {
+    // All parameters convert to u32.
+    Tuple<u32, u32, u32> a = sus::Tuple(1u, 2u, 3u);
+    EXPECT_EQ(a.at<0>(), 1_u32);
+    EXPECT_EQ(a.at<1>(), 2_u32);
+    EXPECT_EQ(a.at<2>(), 3_u32);
+  }
+  {
+    // Some parameters convert to a reference.
+    [](Tuple<const u32&, u32, const u32&> a) {
       EXPECT_EQ(a.at<0>(), 1_u32);
       EXPECT_EQ(a.at<1>(), 2_u32);
       EXPECT_EQ(a.at<2>(), 3_u32);
-    }(sus::tuple(1_u32, 2_u32, 3_u32));
+    }(sus::Tuple(1_u32, 2_u32, 3_u32));
+    // And as a copy.
+    auto t = sus::Tuple(1_u32, 2_u32, 3_u32);
+    [](Tuple<const u32&, u32, const u32&> a) {
+      EXPECT_EQ(a.at<0>(), 1_u32);
+      EXPECT_EQ(a.at<1>(), 2_u32);
+      EXPECT_EQ(a.at<2>(), 3_u32);
+    }(t);
+  }
+  {
+    // Can not store into() in a Tuple directly, it needs to be coerced into
+    // its target type.
+  }
+  {
+    // Copies the lvalue and const lvalue.
+    auto i = 1_u32;
+    const auto j = 2_u32;
+    Tuple<u32, u32, u32> a = sus::Tuple(i, j, 3_u32);
+    EXPECT_EQ(a.at<0>(), 1_u32);
+    EXPECT_EQ(a.at<1>(), 2_u32);
+    EXPECT_EQ(a.at<2>(), 3_u32);
+  }
+  {
+    // Copies the rvalue reference.
+    auto i = 1_u32;
+    Tuple<u32, u32, u32> a = sus::Tuple(sus::move(i), 2_u32, 3_u32);
+    EXPECT_EQ(a.at<0>(), 1_u32);
+    EXPECT_EQ(a.at<1>(), 2_u32);
+    EXPECT_EQ(a.at<2>(), 3_u32);
   }
 }
 

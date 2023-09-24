@@ -21,6 +21,8 @@
 #include "fmt/core.h"
 #include "sus/assertions/check.h"
 #include "sus/choice/__private/pack_index.h"
+#include "sus/cmp/eq.h"
+#include "sus/cmp/ord.h"
 #include "sus/construct/default.h"
 #include "sus/construct/safe_from_reference.h"
 #include "sus/iter/extend.h"
@@ -36,8 +38,6 @@
 #include "sus/mem/remove_rvalue_reference.h"
 #include "sus/mem/replace.h"
 #include "sus/num/num_concepts.h"
-#include "sus/cmp/eq.h"
-#include "sus/cmp/ord.h"
 #include "sus/string/__private/any_formatter.h"
 #include "sus/string/__private/format_to_stream.h"
 #include "sus/tuple/__private/storage.h"
@@ -158,6 +158,41 @@ class Tuple final {
           __private::find_tuple_storage<Is>(storage_).at())...);
     };
     return f(std::make_index_sequence<1u + sizeof...(Ts)>());
+  }
+
+  /// Converts from `Tuple<X', Y', Z'>` to `Tuple<X, Y, Z>` when `X'`, `Y'`,
+  /// and `Z'` can be converted to `X`, `Y`, and `Z`.
+  template <class U, class... Us>
+    requires((std::convertible_to<const U&, T> && ... &&
+              std::convertible_to<const Us&, Ts>) &&  //
+             sizeof...(Ts) == sizeof...(Us))
+  constexpr Tuple(const Tuple<U, Us...>& tuple) noexcept
+      : Tuple(UNPACK, tuple, std::make_index_sequence<1u + sizeof...(Ts)>()) {
+    static_assert(
+        (::sus::construct::SafelyConstructibleFromReference<T, const U&> &&
+         ... &&
+         ::sus::construct::SafelyConstructibleFromReference<Ts, const Us&>),
+        "Unable to safely convert to a different reference type, as conversion "
+        "would produce a reference to a temporary. The TupleMarker's value "
+        "type must match the Tuple's. For example a `Tuple<const i32&, u32>` "
+        "can not be constructed from a `Tuple<i16, u32>`, "
+        "but it can be constructed from `Tuple<i32, u16>`.");
+  }
+  template <class U, class... Us>
+    requires((std::convertible_to<U &&, T> && ... &&
+              std::convertible_to<Us &&, Ts>) &&  //
+             sizeof...(Ts) == sizeof...(Us))
+  constexpr Tuple(Tuple<U, Us...>&& tuple) noexcept
+      : Tuple(UNPACK, ::sus::move(tuple),
+              std::make_index_sequence<1u + sizeof...(Ts)>()) {
+    static_assert(
+        (::sus::construct::SafelyConstructibleFromReference<T, U&&> && ... &&
+         ::sus::construct::SafelyConstructibleFromReference<Ts, Us&&>),
+        "Unable to safely convert to a different reference type, as conversion "
+        "would produce a reference to a temporary. The TupleMarker's value "
+        "type must match the Tuple's. For example a `Tuple<const i32&, u32>` "
+        "can not be constructed from a `Tuple<i16, u32>`, "
+        "but it can be constructed from `Tuple<i32, u16>`.");
   }
 
   /// Gets a const reference to the `I`th element in the tuple.
@@ -318,6 +353,17 @@ class Tuple final {
   template <class U, class... Us>
   friend class Tuple;
 
+  enum UnpackContructor { UNPACK };
+  template <class U, class... Us, size_t... Is>
+  explicit constexpr Tuple(UnpackContructor, const Tuple<U, Us...>& tuple,
+                           std::index_sequence<Is...>) noexcept
+      : Tuple(__private::find_tuple_storage<Is>(tuple.storage_).at()...) {}
+  template <class U, class... Us, size_t... Is>
+  explicit constexpr Tuple(UnpackContructor, Tuple<U, Us...>&& tuple,
+                           std::index_sequence<Is...>) noexcept
+      : Tuple(::sus::move(__private::find_tuple_storage_mut<Is>(tuple.storage_))
+                  .into_inner()...) {}
+
   /// Storage for the tuple elements.
   using Storage = __private::TupleStorage<T, Ts...>;
 
@@ -333,6 +379,9 @@ class Tuple final {
 
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn, T, Ts...);
 };
+
+template <class... Ts>
+Tuple(Ts&&...) -> Tuple<std::remove_cvref_t<Ts>...>;
 
 // Support for structured binding.
 template <size_t I, class... Ts>
@@ -355,8 +404,8 @@ constexpr decltype(auto) get(Tuple<Ts...>&& t) noexcept {
 namespace __private {
 template <class... Ts>
 struct [[nodiscard]] TupleMarker {
-  sus_clang_bug_54040(constexpr inline TupleMarker(Tuple<Ts&&...>&& values)
-                      : values(::sus::move(values)){});
+  explicit constexpr TupleMarker(Tuple<Ts&&...>&& values)
+      : values(::sus::move(values)) {}
 
   Tuple<Ts&&...> values;
 
@@ -412,26 +461,27 @@ struct [[nodiscard]] TupleMarker {
     return make_tuple(std::make_integer_sequence<size_t, sizeof...(Ts)>());
   }
 
-  inline constexpr Tuple<Ts...> construct() && noexcept {
-    return ::sus::move(*this);
-  }
-
-  template <class... Us>
-  inline constexpr Tuple<Us...> construct() && noexcept {
-    return ::sus::move(*this);
-  }
+  // Doesn't copy or move. `TupleMarker` should only be used as a temporary.
+  TupleMarker(const TupleMarker&) = delete;
+  TupleMarker& operator=(const TupleMarker&) = delete;
 };
 
 }  // namespace __private
 
-/// Used to construct a Tuple<Ts...> with the parameters as its values.
+/// Used to construct a [`Tuple`]($sus::tuple_type::Tuple) with the
+/// parameters as its values.
 ///
-/// Calling tuple() produces a hint to make a Tuple<Ts...> but does not actually
-/// construct Tuple<Ts...>, as the types in `Ts...` are not known here.
-//
-// Note: A marker type is used instead of explicitly constructing a tuple
-// immediately in order to avoid redundantly having to specify `Ts...` when
-// using the result of `sus::tuple()` as a function argument or return value.
+/// Calling `tuple()` produces a hint to make a [`Tuple`](
+/// $sus::tuple_type::Tuple) but does not actually
+/// construct [`Tuple`]($sus::tuple_type::Tuple), as the types in the
+/// [`Tuple`]($sus::tuple_type::Tuple) are not known yet here and are not
+/// assumed to be the same as the parameters.
+///
+/// The marker type holds a refernce to each parameter, allowing it to construct
+/// a [`Tuple`]($sus::tuple_type::Tuple) which holds references correctly. The
+/// marker must be consumed immediately into a [`Tuple`](
+/// $sus::tuple_type::Tuple) variable, which is normally done by using the
+/// `tuple` function as a function argument or in a return statement.
 template <class... Ts>
   requires(sizeof...(Ts) > 0)
 [[nodiscard]] inline constexpr auto tuple(

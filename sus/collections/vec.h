@@ -108,6 +108,7 @@ class Vec final {
   /// This constructor is implicit so that using the [`EmptyMarker`](
   /// $sus::marker::EmptyMarker) allows the caller to avoid spelling out the
   /// full `Vec` type.
+  /// #[doc.overloads=empty]
   constexpr Vec(::sus::marker::EmptyMarker) : Vec() {}
 
   /// Constructs a `Vec`, which constructs objects of type `T` from the given
@@ -327,7 +328,7 @@ class Vec final {
   /// allowing the destructor to perform the cleanup.
   constexpr ::sus::Tuple<T*, usize, usize> into_raw_parts() && noexcept {
     check(!is_moved_from() && !has_iterators());
-    return sus::tuple(::sus::mem::replace(data_, nullptr),
+    return sus::Tuple(::sus::mem::replace(data_, nullptr),
                       ::sus::mem::replace(len_, kMovedFromLen),
                       ::sus::mem::replace(capacity_, kMovedFromCapacity));
   }
@@ -992,12 +993,10 @@ class Vec final {
                                            decltype(len_));
 };
 
-template <class T, std::same_as<T>... Ts>
-Vec(const T&, const Ts&...) -> Vec<T>;
-template <class T, std::same_as<T>... Ts>
-Vec(T&, Ts&...) -> Vec<T>;
-template <class T, std::same_as<T>... Ts>
-Vec(T&&, Ts&&...) -> Vec<T>;
+template <class T, class... Ts>
+  requires((... &&
+            std::same_as<std::remove_cvref_t<T>, std::remove_cvref_t<Ts>>))
+Vec(T&&, Ts&&...) -> Vec<std::remove_cvref_t<T>>;
 
 #define _ptr_expr data_
 #define _len_expr len_

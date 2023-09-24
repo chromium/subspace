@@ -42,6 +42,14 @@ TEST(Vec, EmptyTypeDeduction) {
   EXPECT_EQ(v.len(), 0_usize);
 }
 
+TEST(Vec, DeductionGuide) {
+  const auto i = 3_i32;
+  auto j = 2_i32;
+  auto v = Vec(i, 1_i32, j);
+  static_assert(std::same_as<decltype(v), Vec<i32>>);
+  EXPECT_EQ(v, Vec(3, 1, 2));
+}
+
 TEST(Vec, IsEmpty) {
   auto v = Vec<i32>();
   EXPECT_EQ(v.is_empty(), true);

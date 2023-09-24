@@ -40,22 +40,9 @@ TEST(Reverse, Example_ReverseByFunction) {
 TEST(Reverse, Example_ReverseKey) {
   using sus::cmp::Reverse;
 
-  // TODO: This is too verbose!! Can we just use tuple() and deduce the types
-  // immediately?
-  // https://discord.com/channels/1143232210762219590/1143232318996221962/1155229910978285590
-  {
-    auto v = sus::Vec<i32>(1, 2, 3, 4, 5, 6);
-    v.sort_by_key([](i32 num) {
-      return sus::Tuple<bool, Reverse<i32>>(num > 3, Reverse(num));
-    });
-    sus::check(v == sus::Vec<i32>(3, 2, 1, 6, 5, 4));
-  }
-  {
-    auto v = sus::Vec<i32>(1, 2, 3, 4, 5, 6);
-    v.sort_by_key(
-        [](i32 num) { return sus::tuple(num > 3, Reverse(num)).construct(); });
-    sus::check(v == sus::Vec<i32>(3, 2, 1, 6, 5, 4));
-  }
+  auto v = sus::Vec<i32>(1, 2, 3, 4, 5, 6);
+  v.sort_by_key([](i32 num) { return sus::Tuple(num > 3, Reverse(num)); });
+  sus::check(v == sus::Vec<i32>(3, 2, 1, 6, 5, 4));
 }
 
 }  // namespace
