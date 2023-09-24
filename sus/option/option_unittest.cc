@@ -143,6 +143,46 @@ static_assert(!std::constructible_from<Option<const i32&>, i16&>);
 static_assert(!std::constructible_from<Option<const i32&>, i16&&>);
 static_assert(!std::constructible_from<Option<const i32&>, const i16&&>);
 
+/// Verify if SafelyConstructFromReference blocks invalid reference conversions.
+template <class O, class... Args>
+concept CanSafelyStoreReferenceOption = requires(O& o, Args&&... args) {
+  { O(::sus::forward<Args>(args)...) } -> std::same_as<O>;
+  { o.insert(::sus::forward<Args>(args)...) };
+  { o.get_or_insert(::sus::forward<Args>(args)...) };
+  { o.replace(::sus::forward<Args>(args)...) };
+};
+
+template <class O, class... Args>
+concept CanNotSafelyStoreReferenceOption = !requires(O& o, Args&&... args) {
+  { O(::sus::forward<Args>(args)...) } -> std::same_as<O>;
+} && !requires(O& o, Args&&... args) {
+  { o.insert(::sus::forward<Args>(args)...) };
+} && !requires(O& o, Args&&... args) {
+  { o.get_or_insert(::sus::forward<Args>(args)...) };
+} && !requires(O& o, Args&&... args) {
+  { o.replace(::sus::forward<Args>(args)...) };
+};
+
+// Storing a value.
+static_assert(CanSafelyStoreReferenceOption<Option<i32>, const i32&>);
+static_assert(CanSafelyStoreReferenceOption<Option<i32>, i32&>);
+static_assert(CanSafelyStoreReferenceOption<Option<i32>, i32&&>);
+// Storing a reference, without conversion.
+static_assert(CanSafelyStoreReferenceOption<Option<const i32&>, const i32&>);
+static_assert(CanSafelyStoreReferenceOption<Option<const i32&>, i32&>);
+static_assert(CanSafelyStoreReferenceOption<Option<const i32&>, i32&&>);
+// Storing a reference, without conversion, but preserving qualifiers.
+static_assert(CanNotSafelyStoreReferenceOption<Option<i32&>, const i32&>);
+static_assert(CanSafelyStoreReferenceOption<Option<i32&>, i32&>);
+static_assert(CanNotSafelyStoreReferenceOption<Option<i32&>, i32&&>);
+// Storing a reference, with conversion which is invalid.
+static_assert(CanNotSafelyStoreReferenceOption<Option<const i32&>, const int&>);
+static_assert(CanNotSafelyStoreReferenceOption<Option<const i32&>, int&>);
+static_assert(CanNotSafelyStoreReferenceOption<Option<const i32&>, int&&>);
+static_assert(CanNotSafelyStoreReferenceOption<Option<i32&>, const int&>);
+static_assert(CanNotSafelyStoreReferenceOption<Option<i32&>, int&>);
+static_assert(CanNotSafelyStoreReferenceOption<Option<i32&>, int&&>);
+
 TEST(Option, Construct) {
   {
     using T = DefaultConstructible;
