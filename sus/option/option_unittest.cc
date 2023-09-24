@@ -270,22 +270,6 @@ TEST(Option, SomeNoneHelpers) {
     Option<S> o = sus::move(marker);
     EXPECT_GE(copies, 1);
   }
-
-  // In place explicit construction.
-  {
-    const auto i = 2_i32;
-    auto a = sus::some(i).construct();
-    static_assert(std::same_as<decltype(a), Option<const i32&>>);
-    EXPECT_EQ(*a, 2_i32);
-
-    auto b = sus::some(2_i32).construct();
-    static_assert(std::same_as<decltype(b), Option<i32>>);
-    EXPECT_EQ(*a, 2_i32);
-
-    auto c = sus::some(i).construct<i32>();
-    static_assert(std::same_as<decltype(c), Option<i32>>);
-    EXPECT_EQ(*a, 2_i32);
-  }
 }
 
 TEST(Option, Copy) {

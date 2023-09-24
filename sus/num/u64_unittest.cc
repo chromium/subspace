@@ -624,8 +624,8 @@ TEST(u64, CheckedMul) {
   constexpr auto a = (1_u64).checked_mul(3_u64).unwrap();
   EXPECT_EQ(a, 3_u64);
 
-  EXPECT_EQ((100_u64).checked_mul(21_u64), sus::some(2100_u64).construct());
-  EXPECT_EQ((21_u64).checked_mul(100_u64), sus::some(2100_u64).construct());
+  EXPECT_EQ((100_u64).checked_mul(21_u64), sus::some(2100_u64));
+  EXPECT_EQ((21_u64).checked_mul(100_u64), sus::some(2100_u64));
   EXPECT_EQ((u64::MAX).checked_mul(2_u64), sus::None);
 }
 

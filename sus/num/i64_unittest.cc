@@ -609,14 +609,14 @@ TEST(i64, CheckedMul) {
   constexpr auto a = (1_i64).checked_mul(3_i64).unwrap();
   EXPECT_EQ(a, 3_i64);
 
-  EXPECT_EQ((100_i64).checked_mul(21_i64), sus::some(2100_i64).construct());
-  EXPECT_EQ((21_i64).checked_mul(100_i64), sus::some(2100_i64).construct());
+  EXPECT_EQ((100_i64).checked_mul(21_i64), sus::some(2100_i64));
+  EXPECT_EQ((21_i64).checked_mul(100_i64), sus::some(2100_i64));
   EXPECT_EQ((i64::MAX).checked_mul(2_i64), sus::None);
 
   // ** Signed only.
-  EXPECT_EQ((-3_i64).checked_mul(10_i64), sus::some(-30_i64).construct());
-  EXPECT_EQ((-100_i64).checked_mul(21_i64), sus::some(-2100_i64).construct());
-  EXPECT_EQ((-21_i64).checked_mul(100_i64), sus::some(-2100_i64).construct());
+  EXPECT_EQ((-3_i64).checked_mul(10_i64), sus::some(-30_i64));
+  EXPECT_EQ((-100_i64).checked_mul(21_i64), sus::some(-2100_i64));
+  EXPECT_EQ((-21_i64).checked_mul(100_i64), sus::some(-2100_i64));
   EXPECT_EQ((i64::MIN).checked_mul(-2_i64), sus::None);
   EXPECT_EQ((i64::MAX).checked_mul(-2_i64), sus::None);
 }

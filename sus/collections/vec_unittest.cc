@@ -339,9 +339,9 @@ TEST(Vec, IntoIterDoubleEnded) {
 
   auto it = sus::move(v).into_iter();
   static_assert(sus::iter::DoubleEndedIterator<decltype(it), i32>);
-  EXPECT_EQ(it.next_back(), sus::some(3_i32).construct());
-  EXPECT_EQ(it.next_back(), sus::some(2_i32).construct());
-  EXPECT_EQ(it.next_back(), sus::some(1_i32).construct());
+  EXPECT_EQ(it.next_back(), sus::some(3_i32));
+  EXPECT_EQ(it.next_back(), sus::some(2_i32));
+  EXPECT_EQ(it.next_back(), sus::some(1_i32));
   EXPECT_EQ(it.next_back(), sus::None);
 }
 
@@ -1217,7 +1217,7 @@ TEST(Vec, Drain_NonTriviallyRelocatable) {
     auto cap = v.capacity();
 
     destroyed = moved = assigned = 0_usize;
-    auto d = sus::some(v.drain(".."_r)).construct();
+    auto d = sus::Option(v.drain(".."_r));
     EXPECT_EQ(moved, 0u);
     EXPECT_EQ(destroyed, 0u);
     EXPECT_EQ(assigned, 0u);
