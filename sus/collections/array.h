@@ -461,6 +461,11 @@ class Array final {
                                       ::sus::mem::relocate_by_memcpy<T>));
 };
 
+template <class T, class... Ts>
+  requires((... &&
+            std::same_as<std::remove_cvref_t<T>, std::remove_cvref_t<Ts>>))
+Array(T&&, Ts&&...) -> Array<std::remove_cvref_t<T>, 1u + sizeof...(Ts)>;
+
 namespace __private {
 
 template <size_t I>

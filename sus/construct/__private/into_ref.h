@@ -16,6 +16,8 @@
 // IWYU pragma: friend "sus/.*"
 #pragma once
 
+#include <concepts>
+
 #include "sus/construct/from.h"
 #include "sus/mem/forward.h"
 
@@ -38,7 +40,11 @@ struct IntoRef final {
   }
 
   // Doesn't copy or move. `IntoRef` should only be used as a temporary.
-  IntoRef(const IntoRef&) = delete;
+  IntoRef(const IntoRef&) {
+    static_assert(std::same_as<FromType, FromType>,
+                  "into() must immediately be converted to a type by forcing a "
+                  "conversion, it can not be stored");
+  }
   IntoRef& operator=(const IntoRef&) = delete;
 
  private:

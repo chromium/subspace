@@ -99,6 +99,14 @@ TEST(Array, Default) {
   }
 }
 
+TEST(Array, DeductionGuide) {
+  const auto i = 3_i32;
+  auto j = 2_i32;
+  auto v = Array(i, 1_i32, j);
+  static_assert(std::same_as<decltype(v), Array<i32, 3>>);
+  EXPECT_EQ(v, Array(3, 1, 2));
+}
+
 TEST(Array, Zero) {
   auto a = Array<int, 0>();
   static_assert(sizeof(a) == 1);

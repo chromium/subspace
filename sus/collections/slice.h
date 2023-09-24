@@ -81,6 +81,7 @@ class [[sus_trivial_abi]] Slice final {
   /// This constructor is implicit so that using the [`EmptyMarker`](
   /// $sus::marker::EmptyMarker) allows the caller to avoid spelling out the
   /// full `Slice` type.
+  /// #[doc.overloads=empty]
   constexpr Slice(::sus::marker::EmptyMarker) : Slice() {}
 
   /// Constructs an empty Slice, which has no elements.
@@ -319,6 +320,7 @@ class [[sus_trivial_abi]] SliceMut final {
   /// This constructor is implicit so that using the [`EmptyMarker`](
   /// $sus::marker::EmptyMarker) allows the caller to avoid spelling out the
   /// full `Slice` type.
+  /// #[doc.overloads=empty]
   constexpr SliceMut(::sus::marker::EmptyMarker) : SliceMut() {}
 
   /// Constructs an empty SliceMut, which has no elements.

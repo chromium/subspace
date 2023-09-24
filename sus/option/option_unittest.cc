@@ -2098,10 +2098,10 @@ TEST(Option, Replace) {
   IS_NONE(izz);
 
   // Constexpr.
-  constexpr auto r = []() constexpr -> sus::Tuple<i32, i32> {
+  constexpr auto r = [] {
     auto x = Option<i32>(2);
     auto old = x.replace(4);
-    return sus::tuple(sus::move(old).unwrap(), sus::move(x).unwrap());
+    return sus::Tuple(sus::move(old).unwrap(), sus::move(x).unwrap());
   }();
   static_assert(r == sus::Tuple<i32, i32>(2, 4));
 }
