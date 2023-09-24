@@ -71,3 +71,33 @@ footguns, crashes, bugs, and UB.
    `operator==(Option, Option)` and `operator==(Option<T>, Option<U>)` look redundant
    but they are not, as the former allows conversions to Option for the rhs to happen
    while the latter does not (it would have to deduce `U` and fails).
+  
+## Containers that hold references
+
+Container types that hold references require extra care in a number of ways. To
+properly build such a container type (e.g. `Option` and `Tuple`):
+  * While the external API can work with references, internally it must be stored in a
+    pointer so it can be rebound, usually in a wrapper that converts to/from references
+    such as `StoragePointer` used for `Option`.
+  * Never check concepts such as `Copy`, `Clone`, `Move` or `Default` directly, when
+    it can be a reference. Instead, use `CopyOrRef`, `CloneOrRef`, and `MoveOrRef`, and
+    treat `Default` as `false`.
+  * Hide methods or provide specialized overloads on `std::is_reference_v` where needed
+    for correctness. For instance, when holding a reference, returning that reference
+    from an rvalue is okay, but when holding a value, giving a reference to it from an
+    rvalue is not.
+  * Use `static_assert(SafelyConstructibleFromReference<ToType, FromReferenceType&&>)`
+    in places that store the reference to ensure a reference to a temporary does not 
+    get created due to an implicit conversion. The `FromReferenceType&&` here is should
+    be the input type as it's written in the function parameters.
+  * If a ctor type deduction guide is provided, the deduction should struct qualifiers
+    and references with `std::remove_cvref_t` on the deduced type arguments.
+  * Consider providing a construction marker type such as `some() -> SomeMarker` which
+    captures the parameters as references and lazily constructs the final type. This 
+    allows reference types to be preserved through to the construction of the
+    container without requiring the full type defn to be written every time.
+    * Notably, this is omitted for `Choice`, which needs to be reasonably used behind
+      a type-alias so spelling the full type does not require template arguments.
+  * Test all APIs with a reference to `sus::test::NoCopyMove` which ensures the
+    references are correctly preserved as copy/move of the underlying value will not
+    compile.
