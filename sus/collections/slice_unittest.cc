@@ -878,21 +878,17 @@ TEST(Slice, BinarySearch) {
   auto v = sus::Vec<i32>(0, 1, 1, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55);
   {
     auto s = v.as_slice();
-    EXPECT_EQ(s.binary_search(13), sus::result::ok(9_usize).construct<usize>());
-    EXPECT_EQ(s.binary_search(4), sus::result::err(7_usize).construct<usize>());
-    EXPECT_EQ(s.binary_search(100),
-              sus::result::err(13_usize).construct<usize>());
+    EXPECT_EQ(s.binary_search(13), sus::ok(9_usize));
+    EXPECT_EQ(s.binary_search(4), sus::err(7_usize));
+    EXPECT_EQ(s.binary_search(100), sus::err(13_usize));
     auto r = s.binary_search(1);
     EXPECT_TRUE("1..=4"_r.contains(sus::move(r).unwrap()));
   }
   {
     auto sm = v.as_mut_slice();
-    EXPECT_EQ(sm.binary_search(13),
-              sus::result::ok(9_usize).construct<usize>());
-    EXPECT_EQ(sm.binary_search(4),
-              sus::result::err(7_usize).construct<usize>());
-    EXPECT_EQ(sm.binary_search(100),
-              sus::result::err(13_usize).construct<usize>());
+    EXPECT_EQ(sm.binary_search(13), sus::ok(9_usize));
+    EXPECT_EQ(sm.binary_search(4), sus::err(7_usize));
+    EXPECT_EQ(sm.binary_search(100), sus::err(13_usize));
     auto r = sm.binary_search(1);
     EXPECT_TRUE("1..=4"_r.contains(sus::move(r).unwrap()));
   }
@@ -904,22 +900,22 @@ TEST(Slice, BinarySearchBy) {
   {
     auto s = v.as_slice();
     EXPECT_EQ(s.binary_search_by([](const i32& p) { return p <=> 13; }),
-              sus::result::ok(9_usize).construct<usize>());
+              sus::ok(9_usize));
     EXPECT_EQ(s.binary_search_by([](const i32& p) { return p <=> 4; }),
-              sus::result::err(7_usize).construct<usize>());
+              sus::err(7_usize));
     EXPECT_EQ(s.binary_search_by([](const i32& p) { return p <=> 100; }),
-              sus::result::err(13_usize).construct<usize>());
+              sus::err(13_usize));
     auto r = s.binary_search_by([](const i32& p) { return p <=> 1; });
     EXPECT_TRUE("1..=4"_r.contains(sus::move(r).unwrap()));
   }
   {
     auto sm = v.as_mut_slice();
     EXPECT_EQ(sm.binary_search_by([](const i32& p) { return p <=> 13; }),
-              sus::result::ok(9_usize).construct<usize>());
+              sus::ok(9_usize));
     EXPECT_EQ(sm.binary_search_by([](const i32& p) { return p <=> 4; }),
-              sus::result::err(7_usize).construct<usize>());
+              sus::err(7_usize));
     EXPECT_EQ(sm.binary_search_by([](const i32& p) { return p <=> 100; }),
-              sus::result::err(13_usize).construct<usize>());
+              sus::err(13_usize));
     auto r = sm.binary_search_by([](const i32& p) { return p <=> 1; });
     EXPECT_TRUE("1..=4"_r.contains(sus::move(r).unwrap()));
   }

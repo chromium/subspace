@@ -323,33 +323,24 @@ TEST(Result, OkHelpers) {
     EXPECT_GE(copies, 1);
   }
 
-  // In place explicit construction.
-  {
-    auto r = sus::ok(2_i32).construct<u32>();
-    static_assert(std::same_as<decltype(r), Result<i32, u32>>);
-    EXPECT_EQ(sus::move(r).unwrap(), 2_i32);
-  }
-
   // References.
   {
     const auto m = NoCopyMove();
-    decltype(auto) u =
-        sus::ok(m).construct<const NoCopyMove&, Error>().unwrap();
+    decltype(auto) u = sus::Result<const NoCopyMove&, Error>(m).unwrap();
     static_assert(std::same_as<decltype(u), const NoCopyMove&>);
     EXPECT_EQ(&u, &m);
   }
 
   {
     auto m = NoCopyMove();
-    decltype(auto) u =
-        sus::ok(m).construct<const NoCopyMove&, Error>().unwrap();
+    decltype(auto) u = sus::Result<const NoCopyMove&, Error>(m).unwrap();
     static_assert(std::same_as<decltype(u), const NoCopyMove&>);
     EXPECT_EQ(&u, &m);
   }
 
   {
     auto m = NoCopyMove();
-    decltype(auto) u = sus::ok(m).construct<NoCopyMove&, Error>().unwrap();
+    decltype(auto) u = sus::Result<NoCopyMove&, Error>(m).unwrap();
     static_assert(std::same_as<decltype(u), NoCopyMove&>);
     EXPECT_EQ(&u, &m);
   }
@@ -396,14 +387,14 @@ TEST(Result, ErrHelpers) {
   // References.
   {
     decltype(auto) u =
-        sus::err(2_i32).construct<const NoCopyMove&, i32>().unwrap_err();
+        sus::Result<const NoCopyMove&, i32>::with_err(2_i32).unwrap_err();
     static_assert(std::same_as<decltype(u), i32>);
     EXPECT_EQ(u, 2);
   }
 
   {
     decltype(auto) u =
-        sus::err(2_i32).construct<NoCopyMove&, i32>().unwrap_err();
+        sus::Result<NoCopyMove&, i32>::with_err(2_i32).unwrap_err();
     static_assert(std::same_as<decltype(u), i32>);
     EXPECT_EQ(u, 2);
   }
