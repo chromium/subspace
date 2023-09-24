@@ -39,7 +39,7 @@ Subspace library in action and test the ergonomics and features of the library.
 
 **Status:**
 Subdoc is still very much a work-in-progress, but it is being used to generate
-[Subspace documentation](https://danakj.github.io/subspace-docs/sus/#Namespaces)
+[Subspace documentation](https://suslib.cc)
 on each commit.
 
 ## Compiler Support
