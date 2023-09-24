@@ -43,7 +43,7 @@ sus::Result<Database, DiagnosticResults> run_test(
   auto vfs = llvm::IntrusiveRefCntPtr(new llvm::vfs::InMemoryFileSystem());
   vfs->addFile("test.cc", 0, llvm::MemoryBuffer::getMemBuffer(content));
 
-  return run_files(*comp_db, sus::vec("test.cc"), std::move(vfs), options);
+  return run_files(*comp_db, sus::Vec<std::string>("test.cc"), std::move(vfs), options);
 }
 
 struct DiagnosticTracker : public clang::TextDiagnosticPrinter {

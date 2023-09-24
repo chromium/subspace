@@ -209,9 +209,9 @@ int main(int argc, const char** argv) {
 
   auto gen_options = subdoc::gen::Options{
       .output_root = std::filesystem::path(option_out.getValue()),
-      .stylesheets = sus::vec(),
-      .favicons = sus::vec(),
-      .copy_files = sus::vec(),
+      .stylesheets = sus::Vec<std::string>(),
+      .favicons = sus::Vec<subdoc::gen::FavIcon>(),
+      .copy_files = sus::Vec<std::string>(),
       .ignore_bad_code_links = option_ignore_bad_code_links.getValue(),
   };
   if (option_project_name.getNumOccurrences() > 0) {

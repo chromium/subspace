@@ -238,7 +238,7 @@ sus::Result<void, MarkdownToHtmlError> generate_function(
   auto body = html.open_body();
   generate_nav(body, db, "function", element.name, "",
                // TODO: links to what?
-               sus::vec(), options);
+               sus::Vec<SidebarLink>(), options);
 
   auto main = body.open_main();
   auto function_div = main.open_div();

@@ -3110,7 +3110,8 @@ TEST(Option, BooleanOperators_Example) {
                 .unwrap();
           })
           .collect<Vec<std::string>>();
-  sus::check(res == sus::vec("error!", "error!", "foo", "error!", "bar"));
+  sus::check(res ==
+             sus::Vec<const char*>("error!", "error!", "foo", "error!", "bar"));
 }
 
 namespace no_extra_never_value_construction {

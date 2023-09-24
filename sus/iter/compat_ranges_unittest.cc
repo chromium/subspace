@@ -49,7 +49,7 @@ static_assert(std::ranges::input_range<CompatRangeMutRef>);
 static_assert(std::ranges::output_range<CompatRangeMutRef, i32>);
 
 TEST(CompatRanges, ViewableRange) {
-  sus::Vec<i32> vec = sus::vec(1, 2, 3, 4, 5, 6);
+  auto vec = sus::Vec<i32>(1, 2, 3, 4, 5, 6);
 
   // all() requires a `std::ranges::viewable_range`.
   auto view = std::ranges::views::all(sus::move(vec).into_iter().range());
@@ -62,7 +62,7 @@ TEST(CompatRanges, ViewableRange) {
 }
 
 TEST(CompatRanges, ViewableRangeConstRefs) {
-  sus::Vec<i32> vec = sus::vec(1, 2, 3, 4, 5, 6);
+  auto vec = sus::Vec<i32>(1, 2, 3, 4, 5, 6);
 
   // all() requires a `std::ranges::viewable_range`.
   auto view = std::ranges::views::all(vec.iter().range());
@@ -75,7 +75,7 @@ TEST(CompatRanges, ViewableRangeConstRefs) {
 }
 
 TEST(CompatRanges, ViewableRangeMutRefs) {
-  sus::Vec<i32> vec = sus::vec(1, 2, 3, 4, 5, 6);
+  auto vec = sus::Vec<i32>(1, 2, 3, 4, 5, 6);
 
   // all() requires a `std::ranges::viewable_range`.
   auto view = std::ranges::views::all(vec.iter_mut().range());
@@ -83,11 +83,11 @@ TEST(CompatRanges, ViewableRangeMutRefs) {
     i += 1;
   }
 
-  EXPECT_EQ(vec, sus::vec(2, 3, 4, 5, 6, 7));
+  EXPECT_EQ(vec, sus::Vec<i32>(2, 3, 4, 5, 6, 7));
 }
 
 TEST(CompatRanges, InputRange) {
-  sus::Vec<i32> vec = sus::vec(1, 2, 3, 4, 5, 6);
+  auto vec = sus::Vec<i32>(1, 2, 3, 4, 5, 6);
 
   // max() requires a `std::ranges::input_range`.
   auto max = std::ranges::max(sus::move(vec).into_iter().range());
@@ -99,7 +99,7 @@ TEST(CompatRanges, InputRange) {
 }
 
 TEST(CompatRanges, InputRangeConstRefs) {
-  sus::Vec<i32> vec = sus::vec(1, 2, 3, 6, 4, 5);
+  auto vec = sus::Vec<i32>(1, 2, 3, 6, 4, 5);
 
   // max() requires a `std::ranges::input_range`.
   auto max = std::ranges::max(vec.iter().range());
@@ -113,7 +113,7 @@ TEST(CompatRanges, InputRangeConstRefs) {
 }
 
 TEST(CompatRanges, InputRangeMutRefs) {
-  sus::Vec<i32> vec = sus::vec(1, 2, 3, 6, 4, 5);
+  auto vec = sus::Vec<i32>(1, 2, 3, 6, 4, 5);
 
   // max() requires a `std::ranges::input_range`.
   auto max = std::ranges::max(vec.iter_mut().range());

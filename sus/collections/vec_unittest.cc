@@ -91,7 +91,7 @@ TEST(Vec, WithValues) {
 TEST(Vec, ConstructorFunction) {
   {
     // All parameters match the vec type.
-    Vec<u32> a = sus::vec(1_u32, 2_u32, 3_u32);
+    auto a = Vec<u32>(1_u32, 2_u32, 3_u32);
     EXPECT_EQ(a.len(), 3_usize);
     EXPECT_EQ(a[0u], 1_u32);
     EXPECT_EQ(a[1u], 2_u32);
@@ -99,7 +99,7 @@ TEST(Vec, ConstructorFunction) {
   }
   {
     // Some parameters convert to u32.
-    Vec<u32> a = sus::vec(1_u32, 2u, 3_u32);
+    auto a = Vec<u32>(1_u32, 2u, 3_u32);
     EXPECT_EQ(a.len(), 3_usize);
     EXPECT_EQ(a[0u], 1_u32);
     EXPECT_EQ(a[1u], 2_u32);
@@ -107,7 +107,7 @@ TEST(Vec, ConstructorFunction) {
   }
   {
     // All parameters convert to u32.
-    Vec<u32> a = sus::vec(1u, 2u, 3u);
+    auto a = Vec<u32>(1u, 2u, 3u);
     EXPECT_EQ(a.len(), 3_usize);
     EXPECT_EQ(a[0u], 1_u32);
     EXPECT_EQ(a[1u], 2_u32);
@@ -115,7 +115,7 @@ TEST(Vec, ConstructorFunction) {
   }
   {
     // into() as an input to the vec.
-    Vec<u32> a = sus::vec(1_u32, sus::into(2_u16), 3_u32);
+    auto a = Vec<u32>(1_u32, sus::into(2_u16), 3_u32);
     EXPECT_EQ(a.len(), 3_usize);
     EXPECT_EQ(a[0u], 1_u32);
     EXPECT_EQ(a[1u], 2_u32);
@@ -125,7 +125,7 @@ TEST(Vec, ConstructorFunction) {
     // Copies the lvalue and const lvalue.
     auto i = 1_u32;
     const auto j = 2_u32;
-    Vec<u32> a = sus::vec(i, j, 3_u32);
+    auto a = Vec<u32>(i, j, 3_u32);
     EXPECT_EQ(a.len(), 3_usize);
     EXPECT_EQ(a[0u], 1_u32);
     EXPECT_EQ(a[1u], 2_u32);
@@ -134,42 +134,11 @@ TEST(Vec, ConstructorFunction) {
   {
     // Copies the rvalue reference.
     auto i = 1_u32;
-    Vec<u32> a = sus::vec(sus::move(i), 2_u32, 3_u32);
+    auto a = Vec<u32>(sus::move(i), 2_u32, 3_u32);
     EXPECT_EQ(a.len(), 3_usize);
     EXPECT_EQ(a[0u], 1_u32);
     EXPECT_EQ(a[1u], 2_u32);
     EXPECT_EQ(a[2u], 3_u32);
-  }
-  // Verify no copies happen in the marker.
-  {
-    static i32 copies;
-    struct S {
-      S() {}
-      S(const S&) { copies += 1; }
-      S& operator=(const S&) {
-        copies += 1;
-        return *this;
-      }
-    };
-    copies = 0;
-    S s;
-    auto marker = sus::vec(s);
-    EXPECT_EQ(copies, 0);
-    Vec<S> vec = sus::move(marker);
-    EXPECT_GE(copies, 1);
-  }
-
-  // In place explicit construction.
-  {
-    auto a = sus::vec(1_i32, 2_i32).construct();
-    static_assert(std::same_as<decltype(a), Vec<i32>>);
-    EXPECT_EQ(a[0u], 1_i32);
-    EXPECT_EQ(a[1u], 2_i32);
-
-    auto b = sus::vec(1, 2).construct<i32>();
-    static_assert(std::same_as<decltype(b), Vec<i32>>);
-    EXPECT_EQ(b[0u], 1_i32);
-    EXPECT_EQ(b[1u], 2_i32);
   }
 }
 
@@ -826,7 +795,7 @@ struct Sortable {
 
 TEST(Vec, Sort) {
   // clang-format off
-  sus::Vec<Sortable> unsorted = sus::vec(
+ auto unsorted =  sus::Vec<Sortable>(
     Sortable(3, 0),
     Sortable(3, 1),
     Sortable(4, 0),
@@ -837,7 +806,7 @@ TEST(Vec, Sort) {
     Sortable(6, 0),
     Sortable(5, 0)
   );
-  sus::Vec<Sortable> sorted = sus::vec(
+  auto sorted = sus::Vec<Sortable>(
     Sortable(1, 0),
     Sortable(2, 0),
     Sortable(2, 1),
@@ -858,7 +827,7 @@ TEST(Vec, Sort) {
 
 TEST(Vec, SortBy) {
   // clang-format off
-  sus::Vec<Sortable> unsorted = sus::vec(
+  auto unsorted = sus::Vec<Sortable>(
     Sortable(3, 0),
     Sortable(3, 1),
     Sortable(4, 0),
@@ -869,7 +838,7 @@ TEST(Vec, SortBy) {
     Sortable(6, 0),
     Sortable(5, 0)
   );
-  sus::Vec<Sortable> sorted = sus::vec(
+  auto sorted = sus::Vec<Sortable>(
     Sortable(6, 0),
     Sortable(5, 0),
     Sortable(4, 0),
@@ -890,8 +859,8 @@ TEST(Vec, SortBy) {
 }
 
 TEST(Vec, SortUnstable) {
-  sus::Vec<i32> unsorted = sus::vec(3, 4, 2, 1, 6, 5);
-  sus::Vec<i32> sorted = sus::vec(1, 2, 3, 4, 5, 6);
+  auto unsorted = sus::Vec<i32>(3, 4, 2, 1, 6, 5);
+  auto sorted = sus::Vec<i32>(1, 2, 3, 4, 5, 6);
 
   unsorted.sort_unstable();
   for (usize i = 0u; i < unsorted.len(); i += 1u) {
@@ -900,8 +869,8 @@ TEST(Vec, SortUnstable) {
 }
 
 TEST(Vec, SortUnstableBy) {
-  sus::Vec<i32> unsorted = sus::vec(3, 4, 2, 1, 6, 5);
-  sus::Vec<i32> sorted = sus::vec(6, 5, 4, 3, 2, 1);
+  auto unsorted = sus::Vec<i32>(3, 4, 2, 1, 6, 5);
+  auto sorted = sus::Vec<i32>(6, 5, 4, 3, 2, 1);
 
   // Sorts backward.
   unsorted.sort_unstable_by(
@@ -912,7 +881,7 @@ TEST(Vec, SortUnstableBy) {
 }
 
 TEST(Vec, FromSlice) {
-  sus::Vec<i32> original = sus::vec(1, 2, 3, 4);
+  auto original = sus::Vec<i32>(1, 2, 3, 4);
   {
     sus::Slice<i32> s = original.as_slice();
     sus::Vec<i32> from = sus::move_into(s);
@@ -960,7 +929,7 @@ TEST(Vec, FromCharArray) {
 }
 
 TEST(Vec, ExtendFromSlice) {
-  sus::Vec<i32> v = sus::vec(1, 2, 3, 4);
+  auto v = sus::Vec<i32>(1, 2, 3, 4);
   sus::Vec<i32> out;
   out.extend_from_slice(v.as_slice()["2..3"_r]);
   EXPECT_EQ(out.len(), 1u);
@@ -979,7 +948,7 @@ TEST(Vec, ExtendFromSlice) {
 }
 
 TEST(VecDeathTest, ExtendFromSliceAliases) {
-  sus::Vec<i32> v = sus::vec(1, 2, 3, 4);
+  auto v = sus::Vec<i32>(1, 2, 3, 4);
 #if GTEST_HAS_DEATH_TEST
   EXPECT_DEATH(v.extend_from_slice(v.as_slice()), "");
   EXPECT_DEATH(v.extend_from_slice(v.as_slice()["1.."_r]), "");
@@ -991,8 +960,8 @@ TEST(VecDeathTest, ExtendFromSliceAliases) {
 }
 
 TEST(Vec, ConvertsToSlice) {
-  Vec<i32> v = sus::vec(1, 2, 3, 4);
-  const Vec<i32> cv = sus::vec(1, 2, 3, 4);
+  auto v = Vec<i32>(1, 2, 3, 4);
+  const auto cv = Vec<i32>(1, 2, 3, 4);
   // Explicit construction.
   {
     [[maybe_unused]] Slice<i32> s2(v);

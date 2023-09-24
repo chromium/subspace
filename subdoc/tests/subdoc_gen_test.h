@@ -57,11 +57,11 @@ class SubDocGenTest : public testing::Test {
               test_root.append(directory);
               return test_root;
             }(),
-        .stylesheets = sus::vec("../subdoc-test-style.css"),
+        .stylesheets = sus::Vec<std::string>("../subdoc-test-style.css"),
         .favicons =
-            sus::vec(FavIcon::from_string("../icon.svg;image/svg+xml").unwrap(),
+            sus::Vec(FavIcon::from_string("../icon.svg;image/svg+xml").unwrap(),
                      FavIcon::from_string("../icon.png;image/png").unwrap()),
-        .copy_files = sus::vec(),
+        .copy_files = sus::Vec<std::string>(),
         .ignore_bad_code_links = false,
     };
     sus::result::Result<void, sus::Box<sus::error::DynError>> r =

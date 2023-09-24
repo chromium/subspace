@@ -314,7 +314,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             .collect_vec(),
         // Static data members are found in VisitVarDecl.
         FieldElement::NonStatic,
-        sus::vec(),  // Non-static fields can't have template parameters.
+        // Non-static fields can't have template parameters.
+        sus::Vec<std::string>(),
         decl->getASTContext().getSourceManager().getFileOffset(
             decl->getLocation()));
 
