@@ -44,12 +44,12 @@ struct Reverse {
 
   T value;
 
-  Reverse clone() const noexcept
+  constexpr Reverse clone() const noexcept
     requires(::sus::mem::Clone<T> && !::sus::mem::Copy<T>)
   {
     return Reverse(sus::mem::clone(value));
   }
-  Reverse clone_from(const Reverse& source) const noexcept
+  constexpr Reverse clone_from(const Reverse& source) const noexcept
     requires(::sus::mem::CloneFrom<T> && !::sus::mem::Copy<T>)
   {
     sus::mem::clone_into(value, source.value);
@@ -72,67 +72,5 @@ struct Reverse {
 
 template <class T>
 Reverse(T) -> Reverse<T>;
-
-/// A helper function for reverse ordering.
-///
-/// This function is a helper to be used with functions like `Vec::sort_by`.
-///
-/// # Examples
-/// ```
-/// auto v = sus::Vec<i32>(1, 2, 3, 4, 5, 6);
-/// v.sort_by(sus::cmp::reverse<i32>);
-/// sus::check(v == sus::Vec<i32>(6, 5, 4, 3, 2, 1));
-/// ```
-template <::sus::cmp::ExclusiveStrongOrd T>
-inline constexpr std::strong_ordering reverse(const T& lhs,
-                                              const T& rhs) noexcept {
-  return rhs <=> lhs;
-}
-
-template <::sus::cmp::ExclusiveOrd T>
-inline constexpr std::weak_ordering reverse(const T& lhs,
-                                            const T& rhs) noexcept {
-  return rhs <=> lhs;
-}
-
-template <::sus::cmp::ExclusivePartialOrd T>
-inline constexpr std::partial_ordering reverse(const T& lhs,
-                                               const T& rhs) noexcept {
-  return rhs <=> lhs;
-}
-
-/// A helper function for reverse ordering produced by another function.
-///
-/// This function is a helper to be used with functions like `Vec::sort_by` when
-/// there is already a function providing an ordering, but it should be
-/// reversed.
-template <class T,
-          ::sus::fn::FnMut<std::strong_ordering(const T&, const T&)> Fn>
-  requires(::sus::cmp::ExclusiveStrongOrd<T>)
-inline constexpr auto reverse_by(Fn f) noexcept {
-  return
-      [f = ::sus::move(f)](const T& lhs, const T& rhs) -> std::strong_ordering {
-        return f(rhs, lhs);
-      };
-}
-
-template <class T, ::sus::fn::FnMut<std::weak_ordering(const T&, const T&)> Fn>
-  requires(::sus::cmp::ExclusiveOrd<T>)
-inline constexpr auto reverse_by(Fn f) noexcept {
-  return
-      [f = ::sus::move(f)](const T& lhs, const T& rhs) -> std::weak_ordering {
-        return f(rhs, lhs);
-      };
-}
-
-template <class T,
-          ::sus::fn::FnMut<std::partial_ordering(const T&, const T&)> Fn>
-  requires(::sus::cmp::ExclusivePartialOrd<T>)
-inline constexpr auto reverse_by(Fn f) noexcept {
-  return [f = ::sus::move(f)](const T& lhs,
-                              const T& rhs) -> std::partial_ordering {
-    return f(rhs, lhs);
-  };
-}
 
 }  // namespace sus::cmp
