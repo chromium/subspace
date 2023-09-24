@@ -83,8 +83,11 @@
 #endif
 
 // TODO: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108169
+// TODO: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=99631
 // GCC considers class-type template parameters as const.
-#if defined(__GNUC__) && __GNUC__ > 0  // TODO: Update when the bug is fixed.
+// Fixed in 13.3 and 14.
+#if defined(__GNUC__) && \
+    !(__GNUC__ >= 14 || (__GNUC__ == 13 && __GNUC_MINOR__ >= 3))
 #define sus_gcc_bug_108169(...) __VA_ARGS__
 #define sus_gcc_bug_108169_else(...)
 #else
