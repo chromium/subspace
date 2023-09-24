@@ -353,7 +353,7 @@ union Storage<I, ::sus::Tuple<T>, Elements...> {
     std::construct_at(&tuple_, ::sus::Tuple<T>(::sus::forward<U>(value)));
   }
   inline constexpr void assign(T&& value) {
-    tuple_ = Type(::sus::move(value));
+    tuple_ = Type(::sus::forward<T>(value));
   }
   inline constexpr void move_construct(size_t index, Storage&& from) {
     if (index == I) {
@@ -612,7 +612,7 @@ union Storage<I, ::sus::Tuple<T>> {
     std::construct_at(&tuple_, ::sus::Tuple<T>(::sus::forward<U>(value)));
   }
   inline constexpr void assign(T&& value) {
-    tuple_ = Type(::sus::move(value));
+    tuple_ = Type(::sus::forward<T>(value));
   }
   inline constexpr void move_construct(size_t index, Storage&& from) {
     ::sus::check(index == I);

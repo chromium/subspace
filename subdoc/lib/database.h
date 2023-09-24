@@ -798,11 +798,11 @@ struct Database {
           Record,
           Function,
         };
-        sus::Choice<sus_choice_types(
+        using TargetChoice = sus::Choice<sus_choice_types(
             (Target::Namespace, const NamespaceElement&),
             (Target::Record, const RecordElement&),
-            (Target::Function, const FunctionElement&))>
-            target = sus::choice<Target::Namespace>(global);
+            (Target::Function, const FunctionElement&))>;
+        auto target = TargetChoice::with<Target::Namespace>(global);
         for (const InheritPathElement& e : *(c->attrs.inherit)) {
           switch (e) {
             case InheritPathNamespace: {
@@ -821,7 +821,7 @@ struct Database {
                   << " can't find namespace " << e.as<InheritPathNamespace>();
                 return sus::err(sus::move(s).str());
               }
-              target = sus::choice<Target::Namespace>(
+              target.set<Target::Namespace>(
                   target.as_mut<Target::Namespace>().namespaces.at(id));
               break;
             }
@@ -858,7 +858,7 @@ struct Database {
                   << " can't find record " << name;
                 return sus::err(sus::move(s).str());
               }
-              target = sus::choice<Target::Record>(sus::move(record).unwrap());
+              target.set<Target::Record>(sus::move(record).unwrap());
               break;
             }
             case InheritPathFunction: {
@@ -893,8 +893,7 @@ struct Database {
                   << " can't find function " << name;
                 return sus::err(sus::move(s).str());
               }
-              target =
-                  sus::choice<Target::Function>(sus::move(function).unwrap());
+              target.set<Target::Function>(sus::move(function).unwrap());
               break;
             }
           }

@@ -28,7 +28,6 @@ target_sources(subspace PUBLIC
     "choice/__private/all_values_are_unique.h"
     "choice/__private/index_of_value.h"
     "choice/__private/index_type.h"
-    "choice/__private/marker.h"
     "choice/__private/nothing.h"
     "choice/__private/ops_concepts.h"
     "choice/__private/pack_index.h"

@@ -110,14 +110,14 @@ class NamespaceIter final
       next_ndecl_ =
           clang::dyn_cast<clang::NamespaceDecl>(cur_ndecl->getParent());
       if (cur_ndecl->isAnonymousNamespace()) {
-        return sus::some(sus::choice<NamespaceType::Anonymous>());
+        return sus::some(Namespace::with<NamespaceType::Anonymous>());
       } else {
-        return sus::some(
-            sus::choice<NamespaceType::Named>(cur_ndecl->getNameAsString()));
+        return sus::some(Namespace::with<NamespaceType::Named>(
+            cur_ndecl->getNameAsString()));
       }
     } else if (!done_) {
       done_ = true;
-      return sus::some(sus::choice<NamespaceType::Global>());
+      return sus::some(Namespace::with<NamespaceType::Global>());
     } else {
       return sus::none();
     }
