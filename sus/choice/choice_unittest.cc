@@ -102,7 +102,7 @@ TEST(Choice, ConstructorFunctionNoValue) {
   using U =
       Choice<sus_choice_types((Order::First, u32), (Order::Second, void))>;
   {
-    U u = sus::choice<Order::Second>();
+    auto u = U::with<Order::Second>();
     EXPECT_EQ(u.which(), Order::Second);
   }
 }
@@ -112,38 +112,38 @@ TEST(Choice, ConstructorFunction1Value) {
       Choice<sus_choice_types((Order::First, u32), (Order::Second, void))>;
   {
     // All parameters match the tuple type.
-    U u = sus::choice<Order::First>(1_u32);
+    auto u = U::with<Order::First>(1_u32);
     EXPECT_EQ(u.as<Order::First>(), 1_u32);
   }
   {
     // All parameters convert to u32.
-    U u = sus::choice<Order::First>(1u);
+    auto u = U::with<Order::First>(1u);
     EXPECT_EQ(u.as<Order::First>(), 1_u32);
   }
   {
     // into() as an input to the tuple.
-    U u = sus::choice<Order::First>(sus::into(1_u16));
+    auto u = U::with<Order::First>(sus::into(1_u16));
     EXPECT_EQ(u.as<Order::First>(), 1_u32);
   }
   {
     // Copies the lvalue.
     auto i = 1_u32;
-    U u = sus::choice<Order::First>(i);
+    auto u = U::with<Order::First>(i);
     EXPECT_EQ(u.as<Order::First>(), 1_u32);
   }
   {
     // Copies the const lvalue.
     const auto i = 1_u32;
-    U u = sus::choice<Order::First>(i);
+    auto u = U::with<Order::First>(i);
     EXPECT_EQ(u.as<Order::First>(), 1_u32);
   }
   {
     // Copies the rvalue reference.
     auto i = 1_u32;
-    U u = sus::choice<Order::First>(sus::move(i));
+    auto u = U::with<Order::First>(sus::move(i));
     EXPECT_EQ(u.as<Order::First>(), 1_u32);
   }
-  // Verify no copies happen in the marker.
+  // Verify no copies happen.
   {
     static i32 copies;
     struct S {
@@ -156,11 +156,10 @@ TEST(Choice, ConstructorFunction1Value) {
     };
     copies = 0;
     S s;
-    auto marker = sus::choice<Order::First>(s);
     EXPECT_EQ(copies, 0);
-    Choice<sus_choice_types((Order::First, S), (Order::Second, void))> u =
-        sus::move(marker);
-    EXPECT_GE(copies, 1);
+    auto u = Choice<sus_choice_types(
+        (Order::First, S&), (Order::Second, void))>::with<Order::First>(s);
+    EXPECT_GE(copies, 0);
   }
 }
 
@@ -169,25 +168,25 @@ TEST(Choice, ConstructorFunctionMoreThan1Value) {
       Choice<sus_choice_types((Order::First, u32, u32), (Order::Second, void))>;
   {
     // All parameters match the tuple type.
-    U u = sus::choice<Order::First>(1_u32, 2_u32);
+    auto u = U::with<Order::First>(sus::tuple(1_u32, 2_u32));
     EXPECT_EQ(u.as<Order::First>().into_inner<0>(), 1_u32);
     EXPECT_EQ(u.as<Order::First>().into_inner<1>(), 2_u32);
   }
   {
     // Some parameters convert to u32.
-    U u = sus::choice<Order::First>(1_u32, 2u);
+    auto u = U::with<Order::First>(sus::tuple(1_u32, 2u));
     EXPECT_EQ(u.as<Order::First>().into_inner<0>(), 1_u32);
     EXPECT_EQ(u.as<Order::First>().into_inner<1>(), 2_u32);
   }
   {
     // All parameters convert to u32.
-    U u = sus::choice<Order::First>(1u, 2u);
+    auto u = U::with<Order::First>(sus::tuple(1u, 2u));
     EXPECT_EQ(u.as<Order::First>().into_inner<0>(), 1_u32);
     EXPECT_EQ(u.as<Order::First>().into_inner<1>(), 2_u32);
   }
   {
     // into() as an input to the tuple.
-    U u = sus::choice<Order::First>(1u, sus::into(2_u16));
+    auto u = U::with<Order::First>(sus::tuple(1u, sus::into(2_u16)));
     EXPECT_EQ(u.as<Order::First>().into_inner<0>(), 1_u32);
     EXPECT_EQ(u.as<Order::First>().into_inner<1>(), 2_u32);
   }
@@ -195,18 +194,18 @@ TEST(Choice, ConstructorFunctionMoreThan1Value) {
     // Copies the lvalue and const lvalue.
     auto i = 1_u32;
     const auto j = 2_u32;
-    U u = sus::choice<Order::First>(i, j);
+    auto u = U::with<Order::First>(sus::tuple(i, j));
     EXPECT_EQ(u.as<Order::First>().into_inner<0>(), 1_u32);
     EXPECT_EQ(u.as<Order::First>().into_inner<1>(), 2_u32);
   }
   {
     // Copies the rvalue reference.
     auto i = 1_u32;
-    U u = sus::choice<Order::First>(sus::move(i), 2_u32);
+    auto u = U::with<Order::First>(sus::tuple(sus::move(i), 2_u32));
     EXPECT_EQ(u.as<Order::First>().into_inner<0>(), 1_u32);
     EXPECT_EQ(u.as<Order::First>().into_inner<1>(), 2_u32);
   }
-  // Verify no copies happen in the marker.
+  // Verify no copies happen.
   {
     static i32 copies;
     struct S {
@@ -219,12 +218,11 @@ TEST(Choice, ConstructorFunctionMoreThan1Value) {
     };
     copies = 0;
     S s;
-    auto i = 2_u32;
-    auto marker = sus::choice<Order::First>(s, i);
     EXPECT_EQ(copies, 0);
-    Choice<sus_choice_types((Order::First, S, u32), (Order::Second, void))> u =
-        sus::move(marker);
-    EXPECT_GE(copies, 1);
+    auto u = Choice<sus_choice_types(
+        (Order::First, S&, S&), (Order::Second, void))>::with<Order::First>(  //
+        sus::tuple(s, s));
+    EXPECT_GE(copies, 0);
   }
 }
 
@@ -657,19 +655,6 @@ TEST(Choice, Eq) {
 
   u2.set<Order::First>(4u);
   EXPECT_EQ(u1, u2);
-
-  // Comparison with marker types. EXPECT_EQ also converts it to a const
-  // reference, so this tests that comparison from a const marker works (if the
-  // inner type is copyable).
-  auto no_storage =
-      Choice<sus_choice_types((Order::First, void))>::with<Order::First>();
-  EXPECT_EQ(no_storage, sus::choice<Order::First>());
-  auto single_storage = OrderChoice::with<Order::First>(4u);
-  EXPECT_EQ(single_storage, sus::choice<Order::First>(4u));
-  auto double_storage =
-      Choice<sus_choice_types((Order::First, u32, u64))>::with<Order::First>(
-          sus::tuple(2_u32, 3_u64));
-  EXPECT_EQ(double_storage, sus::choice<Order::First>(2u, 3u));
 }
 
 TEST(Choice, StrongOrd) {

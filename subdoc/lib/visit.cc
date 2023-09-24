@@ -27,11 +27,11 @@
 #include "subdoc/lib/unique_symbol.h"
 #include "sus/assertions/check.h"
 #include "sus/assertions/unreachable.h"
+#include "sus/cmp/ord.h"
 #include "sus/iter/compat_ranges.h"
 #include "sus/iter/iterator.h"
 #include "sus/iter/once.h"
 #include "sus/mem/swap.h"
-#include "sus/cmp/ord.h"
 #include "sus/prelude.h"
 
 namespace subdoc {
@@ -58,17 +58,17 @@ static bool should_skip_decl(VisitCx& cx, clang::Decl* decl) {
   // TODO: These could be configurable. As well as user-defined namespaces to
   // skip.
   if (path_contains_namespace(ndecl,
-                              sus::choice<Namespace::Tag::Anonymous>())) {
+                              Namespace::with<Namespace::Tag::Anonymous>())) {
     return true;
   }
   // TODO: Make this configurable on the command line.
   if (path_contains_namespace(
-          ndecl, sus::choice<Namespace::Tag::Named>("__private"))) {
+          ndecl, Namespace::with<Namespace::Tag::Named>("__private"))) {
     return true;
   }
   // TODO: Make this configurable on the command line.
   if (path_contains_namespace(ndecl,
-                              sus::choice<Namespace::Tag::Named>("test"))) {
+                              Namespace::with<Namespace::Tag::Named>("test"))) {
     return true;
   }
   if (path_is_private(ndecl)) {

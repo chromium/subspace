@@ -23,12 +23,13 @@
 #include "sus/choice/__private/all_values_are_unique.h"
 #include "sus/choice/__private/index_of_value.h"
 #include "sus/choice/__private/index_type.h"
-#include "sus/choice/__private/marker.h"
 #include "sus/choice/__private/ops_concepts.h"
 #include "sus/choice/__private/pack_index.h"
 #include "sus/choice/__private/storage.h"
 #include "sus/choice/__private/type_list.h"
 #include "sus/choice/choice_types.h"
+#include "sus/cmp/eq.h"
+#include "sus/cmp/ord.h"
 #include "sus/lib/__private/forward_decl.h"
 #include "sus/macros/lifetimebound.h"
 #include "sus/macros/no_unique_address.h"
@@ -39,16 +40,13 @@
 #include "sus/mem/never_value.h"
 #include "sus/mem/replace.h"
 #include "sus/num/__private/intrinsics.h"
-#include "sus/cmp/eq.h"
-#include "sus/cmp/ord.h"
 #include "sus/option/option.h"
 #include "sus/string/__private/any_formatter.h"
 #include "sus/string/__private/format_to_stream.h"
 #include "sus/tuple/tuple.h"
 
 namespace sus {
-/// The [`Choice`]($sus::choice_type::Choice) type, and the
-/// [`choice`]($sus::choice_type::choice) type-deduction constructor function.
+/// The [`Choice`]($sus::choice_type::Choice) type.
 namespace choice_type {}
 }  // namespace sus
 
@@ -588,13 +586,13 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   constexpr void set(U&& values) & noexcept {
     if (index_ == index<V>) {
       __private::find_choice_storage_mut<index<V>>(storage_).assign(
-          ::sus::move(values));
+          ::sus::forward<U>(values));
     } else {
       if (index_ != kUseAfterMove) storage_.destroy(index_);
       index_ = index<V>;
       storage_.activate_for_construct(index<V>);
       __private::find_choice_storage_mut<index<V>>(storage_).construct(
-          ::sus::move(values));
+          ::sus::forward<U>(values));
     }
   }
   template <TagsType V, int&...,
@@ -810,27 +808,6 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
       : index_(kNeverValue) {}
 };
 
-/// Used to construct a [`Choice`]($sus::choice_type::Choice) with `Tag` as its
-/// initial state and the parameter(s) as its associated value(s).
-///
-/// Calling `choice()` produces a hint to make a [`Choice`](
-/// $sus::choice_type::Choice) with a given inital value(s) `vs`, but does not
-/// actually construct the [`Choice`]($sus::choice_type::Choice), as the full
-/// type of the [`Choice`]($sus::choice_type::Choice) including all its member
-/// types is not known here.
-template <auto Tag, class... Ts>
-[[nodiscard]] inline constexpr auto choice(
-    Ts&&... vs sus_lifetimebound) noexcept {
-  if constexpr (sizeof...(Ts) == 0) {
-    return __private::ChoiceMarkerVoid<Tag>();
-  } else if constexpr (sizeof...(Ts) == 1) {
-    return __private::ChoiceMarker<Tag, Ts...>(::sus::forward<Ts>(vs)...);
-  } else {
-    return __private::ChoiceMarker<Tag, Ts...>(
-        ::sus::tuple_type::Tuple<Ts&&...>(::sus::forward<Ts>(vs)...));
-  }
-}
-
 }  // namespace sus::choice_type
 
 // fmt support.
@@ -915,5 +892,4 @@ inline StreamType& operator<<(
 // Promote Choice into the `sus` namespace.
 namespace sus {
 using ::sus::choice_type::Choice;
-using ::sus::choice_type::choice;
 }  // namespace sus
