@@ -22,6 +22,7 @@
 #include "sus/option/option.h"
 #include "sus/prelude.h"
 #include "sus/test/no_copy_move.h"
+#include "sus/tuple/tuple.h"
 
 namespace {
 enum class Order {
@@ -168,25 +169,25 @@ TEST(Choice, ConstructorFunctionMoreThan1Value) {
       Choice<sus_choice_types((Order::First, u32, u32), (Order::Second, void))>;
   {
     // All parameters match the tuple type.
-    auto u = U::with<Order::First>(sus::tuple(1_u32, 2_u32));
+    auto u = U::with<Order::First>(1_u32, 2_u32);
     EXPECT_EQ(u.as<Order::First>().into_inner<0>(), 1_u32);
     EXPECT_EQ(u.as<Order::First>().into_inner<1>(), 2_u32);
   }
   {
     // Some parameters convert to u32.
-    auto u = U::with<Order::First>(sus::tuple(1_u32, 2u));
+    auto u = U::with<Order::First>(1_u32, 2u);
     EXPECT_EQ(u.as<Order::First>().into_inner<0>(), 1_u32);
     EXPECT_EQ(u.as<Order::First>().into_inner<1>(), 2_u32);
   }
   {
     // All parameters convert to u32.
-    auto u = U::with<Order::First>(sus::tuple(1u, 2u));
+    auto u = U::with<Order::First>(1u, 2u);
     EXPECT_EQ(u.as<Order::First>().into_inner<0>(), 1_u32);
     EXPECT_EQ(u.as<Order::First>().into_inner<1>(), 2_u32);
   }
   {
     // into() as an input to the tuple.
-    auto u = U::with<Order::First>(sus::tuple(1u, sus::into(2_u16)));
+    auto u = U::with<Order::First>(1u, sus::into(2_u16));
     EXPECT_EQ(u.as<Order::First>().into_inner<0>(), 1_u32);
     EXPECT_EQ(u.as<Order::First>().into_inner<1>(), 2_u32);
   }
@@ -194,14 +195,14 @@ TEST(Choice, ConstructorFunctionMoreThan1Value) {
     // Copies the lvalue and const lvalue.
     auto i = 1_u32;
     const auto j = 2_u32;
-    auto u = U::with<Order::First>(sus::tuple(i, j));
+    auto u = U::with<Order::First>(i, j);
     EXPECT_EQ(u.as<Order::First>().into_inner<0>(), 1_u32);
     EXPECT_EQ(u.as<Order::First>().into_inner<1>(), 2_u32);
   }
   {
     // Copies the rvalue reference.
     auto i = 1_u32;
-    auto u = U::with<Order::First>(sus::tuple(sus::move(i), 2_u32));
+    auto u = U::with<Order::First>(sus::move(i), 2_u32);
     EXPECT_EQ(u.as<Order::First>().into_inner<0>(), 1_u32);
     EXPECT_EQ(u.as<Order::First>().into_inner<1>(), 2_u32);
   }
@@ -221,7 +222,7 @@ TEST(Choice, ConstructorFunctionMoreThan1Value) {
     EXPECT_EQ(copies, 0);
     auto u = Choice<sus_choice_types(
         (Order::First, S&, S&), (Order::Second, void))>::with<Order::First>(  //
-        sus::tuple(s, s));
+        s, s);
     EXPECT_GE(copies, 0);
   }
 }
@@ -271,8 +272,7 @@ TEST(Choice, AsTypes) {
   {
     auto u = Choice<sus_choice_types(
         (Order::First, i8, u64),
-        (Order::Second, u32))>::with<Order::First>(sus::Tuple<i8, u64>(1_i8,
-                                                                       2_u64));
+        (Order::Second, u32))>::with<Order::First>(1_i8, 2_u64);
     static_assert(std::same_as<decltype(u.as<Order::First>()),
                                sus::Tuple<const i8&, const u64&>>);
     static_assert(std::same_as<decltype(u.as<Order::Second>()), const u32&>);
@@ -331,12 +331,12 @@ TEST(Choice, Get) {
                        sus::Option<sus::Tuple<const i8&, const u64&>>>);
     }
 
-    u.set<Order::Second>(sus::tuple(1_i8, 2_u64));
+    u.set<Order::Second>(1_i8, 2_u64);
     {
       auto n = u.get<Order::First>();
       EXPECT_EQ(n, sus::None);
       auto s = u.get<Order::Second>();
-      EXPECT_EQ(*s, (sus::tuple(1_i8, 2_u64).construct()));
+      EXPECT_EQ(*s, sus::Tuple(1_i8, 2_u64));
       static_assert(std::same_as<decltype(n), sus::Option<const u32&>>);
       static_assert(
           std::same_as<decltype(s),
@@ -359,12 +359,12 @@ TEST(Choice, Get) {
                        sus::Option<sus::Tuple<const i8&, const u64&>>>);
     }
 
-    u.set<Order::First>(sus::tuple(1_i8, 2_u64));
+    u.set<Order::First>(1_i8, 2_u64);
     {
       auto n = u.get<Order::Second>();
       EXPECT_EQ(n, sus::None);
       auto s = u.get<Order::First>();
-      EXPECT_EQ(*s, (sus::tuple(1_i8, 2_u64).construct()));
+      EXPECT_EQ(*s, sus::Tuple(1_i8, 2_u64));
       static_assert(std::same_as<decltype(n), sus::Option<const u32&>>);
       static_assert(
           std::same_as<decltype(s),
@@ -395,10 +395,10 @@ TEST(Choice, Set) {
     EXPECT_EQ(u.which(), Order::First);
     EXPECT_EQ(u.get<Order::First>(), sus::some(3_u32));
     EXPECT_EQ(u.get<Order::Second>(), sus::none());
-    u.set<Order::Second>(sus::tuple(1_i8, 2_u64));
+    u.set<Order::Second>(1_i8, 2_u64);
     EXPECT_EQ(u.which(), Order::Second);
     EXPECT_EQ(u.get<Order::First>(), sus::none());
-    EXPECT_EQ(u.get<Order::Second>(), sus::some(sus::tuple(1_i8, 2_u64)));
+    EXPECT_EQ(u.get<Order::Second>(), sus::some(sus::Tuple(1_i8, 2_u64)));
   }
   // Constexpr non-void.
   {
@@ -406,10 +406,10 @@ TEST(Choice, Set) {
       auto u = Choice<sus_choice_types(
           (Order::First, u32),
           (Order::Second, i8, u64))>::with<Order::First>(3u);
-      u.set<Order::Second>(sus::tuple(1_i8, 2_u64));
+      u.set<Order::Second>(1_i8, 2_u64);
       return sus::move(u).into_inner<Order::Second>();
     }();
-    static_assert(r == sus::tuple(1_i8, 2_u64));
+    static_assert(r == sus::Tuple(1_i8, 2_u64));
   }
 
   // Set void.
@@ -449,12 +449,12 @@ TEST(Choice, GetMut) {
           std::same_as<decltype(n), sus::Option<sus::Tuple<i8&, u64&>>>);
     }
 
-    u.set<Order::Second>(sus::tuple(1_i8, 2_u64));
+    u.set<Order::Second>(1_i8, 2_u64);
     {
       auto n = u.get_mut<Order::First>();
       EXPECT_EQ(n, sus::None);
       auto s = u.get_mut<Order::Second>();
-      EXPECT_EQ(*s, (sus::tuple(1_i8, 2_u64).construct()));
+      EXPECT_EQ(*s, sus::Tuple(1_i8, 2_u64));
       static_assert(std::same_as<decltype(n), sus::Option<u32&>>);
       static_assert(
           std::same_as<decltype(s), sus::Option<sus::Tuple<i8&, u64&>>>);
@@ -475,12 +475,12 @@ TEST(Choice, GetMut) {
           std::same_as<decltype(n), sus::Option<sus::Tuple<i8&, u64&>>>);
     }
 
-    u.set<Order::First>(sus::tuple(1_i8, 2_u64));
+    u.set<Order::First>(1_i8, 2_u64);
     {
       auto n = u.get_mut<Order::Second>();
       EXPECT_EQ(n, sus::None);
       auto s = u.get_mut<Order::First>();
-      EXPECT_EQ(*s, (sus::tuple(1_i8, 2_u64).construct()));
+      EXPECT_EQ(*s, sus::Tuple(1_i8, 2_u64));
       static_assert(std::same_as<decltype(n), sus::Option<u32&>>);
       static_assert(
           std::same_as<decltype(s), sus::Option<sus::Tuple<i8&, u64&>>>);
@@ -513,10 +513,10 @@ TEST(Choice, GetUnchecked) {
       static_assert(std::same_as<decltype(s), const u32&>);
     }
 
-    u.set<Order::Second>(sus::tuple(1_i8, 2_u64));
+    u.set<Order::Second>(1_i8, 2_u64);
     {
       decltype(auto) s = u.get_unchecked<Order::Second>(unsafe_fn);
-      EXPECT_EQ(s, (sus::tuple(1_i8, 2_u64).construct()));
+      EXPECT_EQ(s, sus::Tuple(1_i8, 2_u64));
       static_assert(
           std::same_as<decltype(s), sus::Tuple<const i8&, const u64&>>);
     }
@@ -532,10 +532,10 @@ TEST(Choice, GetUnchecked) {
       static_assert(std::same_as<decltype(s), const u32&>);
     }
 
-    u.set<Order::First>(sus::tuple(1_i8, 2_u64));
+    u.set<Order::First>(1_i8, 2_u64);
     {
       decltype(auto) s = u.get_unchecked<Order::First>(unsafe_fn);
-      EXPECT_EQ(s, (sus::tuple(1_i8, 2_u64).construct()));
+      EXPECT_EQ(s, sus::Tuple(1_i8, 2_u64));
       static_assert(
           std::same_as<decltype(s), sus::Tuple<const i8&, const u64&>>);
     }
@@ -546,7 +546,7 @@ TEST(Choice, GetUnchecked) {
     const auto j = 2_u64;
     auto u = Choice<sus_choice_types(
         (Order::First, i8&, const u64&),
-        (Order::Second, NoCopyMove&))>::with<Order::First>(sus::tuple(i, j));
+        (Order::Second, NoCopyMove&))>::with<Order::First>(i, j);
     decltype(auto) s = u.get_unchecked<Order::First>(unsafe_fn);
     EXPECT_EQ(&s.at<0u>(), &i);
     EXPECT_EQ(&s.at<1u>(), &j);
@@ -892,14 +892,14 @@ TEST(Choice, Example_Construct) {
     using EitherOr = Choice<sus_choice_types(
         (Order::First, void), (Order::Second, std::string, i32))>;
     auto e1 = EitherOr::with<Order::First>();
-    auto e2 = EitherOr::with<Order::Second>(sus::tuple("hello worl", 0xd));
+    auto e2 = EitherOr::with<Order::Second>("hello worl", 0xd);
   }
 
   {
     enum class Order { First, Second };
     using EitherOr = Choice<sus_choice_types(
         (Order::First, u64), (Order::Second, std::string, i32))>;
-    auto e = EitherOr::with<Order::Second>(sus::tuple("hello worl", 0xd));
+    auto e = EitherOr::with<Order::Second>("hello worl", 0xd);
     switch (e) {
       case Order::First: {
         const auto& i = e.as<Order::First>();

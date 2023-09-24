@@ -16,6 +16,7 @@
 
 #include <stdint.h>
 
+#include <concepts>
 #include <type_traits>
 
 #include "fmt/core.h"
@@ -57,6 +58,36 @@ namespace sus::choice_type {
 template <class Choice, auto Tag>
 concept ChoiceValueIsVoid = !requires(const Choice& c) {
   { c.template get<Tag>() };
+};
+
+template <size_t I, class Storage, class... Us>
+struct CanConvertToStorage;
+
+template <size_t I, class Storage, class U>
+struct CanConvertToStorage<I, Storage, U> {
+  static_assert(I == 0u);
+
+  static constexpr bool value = std::convertible_to<U, Storage>;
+};
+
+template <size_t I, class... Ts, class U, class... Us>
+  requires(sizeof...(Us) > 0u)
+struct CanConvertToStorage<I, ::sus::tuple_type::Tuple<Ts...>, U, Us...> {
+  static_assert(I < sizeof...(Ts) - 1u);
+
+  using TargetType = std::tuple_element<I, ::sus::tuple_type::Tuple<Ts...>>;
+  static constexpr bool value =
+      std::convertible_to<U, TargetType> &&
+      CanConvertToStorage<I + 1u, ::sus::tuple_type::Tuple<Ts...>,
+                          Us...>::value;
+};
+
+template <size_t I, class... Ts, class U>
+struct CanConvertToStorage<I, ::sus::tuple_type::Tuple<Ts...>, U> {
+  static_assert(I == sizeof...(Ts) - 1u);
+
+  using TargetType = std::tuple_element<I, ::sus::tuple_type::Tuple<Ts...>>;
+  static constexpr bool value = std::convertible_to<U, TargetType>;
 };
 
 /// A tagged union, or sum type.
@@ -115,7 +146,7 @@ concept ChoiceValueIsVoid = !requires(const Choice& c) {
 ///     (Order::Second, std::string, i32)
 /// )>;
 /// auto e1 = EitherOr::with<Order::First>();
-/// auto e2 = EitherOr::with<Order::Second>(sus::tuple("text", 123));
+/// auto e2 = EitherOr::with<Order::Second>("text", 123);
 /// ```
 /// The `Choice` type can be used in a `switch`, with each case being one of its
 /// possible tag values. Within each tag case block, the values can be pulled
@@ -127,7 +158,7 @@ concept ChoiceValueIsVoid = !requires(const Choice& c) {
 ///     (Order::First, u64),
 ///     (Order::Second, std::string, i32)
 /// )>;
-/// auto e = EitherOr::with<Order::Second>(sus::tuple("hello worl", 0xd));
+/// auto e = EitherOr::with<Order::Second>("hello worl", 0xd);
 /// switch (e) {
 ///   case Order::First: {
 ///     const auto& i = e.as<Order::First>();
@@ -251,20 +282,32 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   ///
   /// If the associated type of the tag is `void` then `with()` takes no
   /// parameters.
-  template <TagsType V, class U, int&...,
-            __private::ValueIsNotVoid Arg = StorageTypeOfTag<V>>
-    requires(std::constructible_from<Arg, U &&>)
-  constexpr static Choice with(U&& values) noexcept {
+  template <TagsType V>
+    requires(__private::StorageCount<StorageTypeOfTag<V>> == 0u)
+  constexpr static Choice with() noexcept {
+    return Choice(index<V>);
+  }
+  template <TagsType V, class U>
+    requires(__private::StorageCount<StorageTypeOfTag<V>> == 1u &&  //
+             std::convertible_to<U &&, StorageTypeOfTag<V>>)
+  constexpr static Choice with(U&& value) noexcept {
     auto u = Choice(index<V>);
     u.storage_.activate_for_construct(index<V>);
     find_choice_storage_mut<index<V>>(u.storage_)
-        .construct(::sus::forward<U>(values));
+        .construct(StorageTypeOfTag<V>(::sus::forward<U>(value)));
     return u;
   }
-  template <TagsType V, int&...,
-            __private::ValueIsVoid Arg = StorageTypeOfTag<V>>
-  constexpr static Choice with() noexcept {
-    return Choice(index<V>);
+  template <TagsType V, class... Us>
+    requires(__private::StorageCount<StorageTypeOfTag<V>> > 1u &&  //
+             sizeof...(Us) ==
+                 __private::StorageCount<StorageTypeOfTag<V>> &&  //
+             std::constructible_from<StorageTypeOfTag<V>, Us && ...>)
+  constexpr static Choice with(Us&&... values) noexcept {
+    auto u = Choice(index<V>);
+    u.storage_.activate_for_construct(index<V>);
+    find_choice_storage_mut<index<V>>(u.storage_)
+        .construct(StorageTypeOfTag<V>(::sus::forward<Us>(values)...));
+    return u;
   }
 
   constexpr ~Choice()
@@ -481,7 +524,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   /// The function will panic if the active member does not match the tag value
   /// passed as the template parameter.
   template <TagsType V>
-    requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
+    requires(__private::StorageCount<StorageTypeOfTag<V>> > 0u)
   constexpr inline decltype(auto) as() const& noexcept {
     ::sus::check(index_ == index<V>);
     return __private::find_choice_storage<index<V>>(storage_).as();
@@ -507,7 +550,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   /// The function will panic if the active member does not match the tag value
   /// passed as the template parameter.
   template <TagsType V>
-    requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
+    requires(__private::StorageCount<StorageTypeOfTag<V>> > 0u)
   constexpr inline decltype(auto) as_mut() & noexcept {
     ::sus::check(index_ == index<V>);
     return __private::find_choice_storage_mut<index<V>>(storage_).as_mut();
@@ -528,7 +571,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   /// The function will panic if the active member does not match the tag value
   /// passed as the template parameter.
   template <TagsType V>
-    requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
+    requires(__private::StorageCount<StorageTypeOfTag<V>> > 0u)
   constexpr inline decltype(auto) into_inner() && noexcept {
     ::sus::check(index_ == index<V>);
     auto& s = __private::find_choice_storage_mut<index<V>>(storage_);
@@ -546,7 +589,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   /// directly, otherwise a [`Tuple`]($sus::tuple_type::Tuple) of references is
   /// returned to all values in the active member.
   template <TagsType V>
-    requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
+    requires(__private::StorageCount<StorageTypeOfTag<V>> > 0u)
   constexpr inline Option<AccessTypeOfTagConst<V>> get() const& noexcept {
     if (index_ != index<V>) return ::sus::none();
     return ::sus::some(__private::find_choice_storage<index<V>>(storage_).as());
@@ -568,7 +611,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   /// directly, otherwise a [`Tuple`]($sus::tuple_type::Tuple) of references is
   /// returned to all values in the active member.
   template <TagsType V>
-    requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
+    requires(__private::StorageCount<StorageTypeOfTag<V>> > 0u)
   constexpr inline Option<AccessTypeOfTagMut<V>> get_mut() & noexcept {
     if (index_ != index<V>) return ::sus::none();
     return ::sus::some(
@@ -580,27 +623,44 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   ///
   /// If the associated type of the tag is `void` then `set()` takes no
   /// parameters.
-  template <TagsType V, class U, int&..., class Arg = StorageTypeOfTag<V>>
-    requires(std::convertible_to<U &&, Arg> &&
-             __private::ValueIsNotVoid<StorageTypeOfTag<V>>)
-  constexpr void set(U&& values) & noexcept {
+  template <TagsType V>
+    requires(__private::StorageCount<StorageTypeOfTag<V>> == 0u)
+  constexpr void set() & noexcept {
+    if (index_ != index<V>) {
+      if (index_ != kUseAfterMove) storage_.destroy(index_);
+      index_ = index<V>;
+    }
+  }
+  template <TagsType V, class U>
+    requires(__private::StorageCount<StorageTypeOfTag<V>> == 1u &&  //
+             std::convertible_to<U &&, StorageTypeOfTag<V>>)
+  constexpr void set(U&& value) & noexcept {
     if (index_ == index<V>) {
       __private::find_choice_storage_mut<index<V>>(storage_).assign(
-          ::sus::forward<U>(values));
+          ::sus::forward<U>(value));
     } else {
       if (index_ != kUseAfterMove) storage_.destroy(index_);
       index_ = index<V>;
       storage_.activate_for_construct(index<V>);
       __private::find_choice_storage_mut<index<V>>(storage_).construct(
-          ::sus::forward<U>(values));
+          ::sus::forward<U>(value));
     }
   }
-  template <TagsType V, int&...,
-            __private::ValueIsVoid Arg = StorageTypeOfTag<V>>
-  constexpr void set() & noexcept {
-    if (index_ != index<V>) {
+  template <TagsType V, class... Us>
+    requires(__private::StorageCount<StorageTypeOfTag<V>> > 1u &&  //
+             sizeof...(Us) ==
+                 __private::StorageCount<StorageTypeOfTag<V>> &&  //
+             std::constructible_from<StorageTypeOfTag<V>, Us && ...>)
+  constexpr void set(Us&&... values) & noexcept {
+    if (index_ == index<V>) {
+      __private::find_choice_storage_mut<index<V>>(storage_).assign(
+          StorageTypeOfTag<V>(::sus::forward<Us>(values)...));
+    } else {
       if (index_ != kUseAfterMove) storage_.destroy(index_);
       index_ = index<V>;
+      storage_.activate_for_construct(index<V>);
+      __private::find_choice_storage_mut<index<V>>(storage_).construct(
+          StorageTypeOfTag<V>(::sus::forward<Us>(values)...));
     }
   }
 
@@ -619,7 +679,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   /// If the active member does not match the tag value passed as the template
   /// parameter, Undefined Behaviour results.
   template <TagsType V>
-    requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
+    requires(__private::StorageCount<StorageTypeOfTag<V>> > 0u)
   constexpr inline decltype(auto) get_unchecked(
       ::sus::marker::UnsafeFnMarker) const& noexcept {
     return __private::find_choice_storage<index<V>>(storage_).as();
@@ -646,7 +706,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   /// If the active member does not match the tag value passed as the template
   /// parameter, Undefined Behaviour results.
   template <TagsType V>
-    requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
+    requires(__private::StorageCount<StorageTypeOfTag<V>> > 0u)
   constexpr inline decltype(auto) get_unchecked_mut(
       ::sus::marker::UnsafeFnMarker) & noexcept {
     return __private::find_choice_storage_mut<index<V>>(storage_).as_mut();

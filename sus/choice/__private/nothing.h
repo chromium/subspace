@@ -31,15 +31,12 @@ struct Nothing {
 };
 
 template <class StorageType>
-concept ValueIsVoid = std::same_as<Nothing, StorageType>;
-
-template <class StorageType>
-concept ValueIsNotVoid = !ValueIsVoid<StorageType>;
+concept StorageIsVoid = std::same_as<Nothing, StorageType>;
 
 /// Maps the storage type back to the public type, which means it maps `Nothing`
 /// back to `void`.
 template <class StorageType>
 using PublicTypeForStorageType =
-    std::conditional_t<ValueIsVoid<StorageType>, void, StorageType>;
+    std::conditional_t<StorageIsVoid<StorageType>, void, StorageType>;
 
 }  // namespace sus::choice_type::__private

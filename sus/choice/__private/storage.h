@@ -66,6 +66,19 @@ struct StorageTypeOfTagHelper<::sus::Tuple<Ts...>> {
   using type = ::sus::Tuple<Ts...>;
 };
 
+template <class T>
+struct StorageCountHelper {
+  static constexpr size_t value = StorageIsVoid<T> ? 0u : 1u;
+};
+
+template <class... Ts>
+struct StorageCountHelper<::sus::tuple_type::Tuple<Ts...>> {
+  static constexpr size_t value = sizeof...(Ts);
+};
+
+template <class StorageType>
+static constexpr size_t StorageCount = StorageCountHelper<StorageType>::value;
+
 /// The Storage class stores Tuples internally, but for Tuples of a single
 /// object, they are stored and accessed as the interior object.
 ///
@@ -173,8 +186,8 @@ union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
       return more_.eq(index, other.more_);
     }
   }
-  inline constexpr std::strong_ordering strong_ord(size_t index,
-                                            const Storage& other) const& {
+  inline constexpr std::strong_ordering strong_ord(
+      size_t index, const Storage& other) const& {
     if (index == I) {
       return std::strong_order(tuple_, other.tuple_);
     } else {
@@ -507,7 +520,7 @@ union Storage<I, ::sus::Tuple<Ts...>> {
     return tuple_ == other.tuple_;
   }
   inline constexpr auto strong_ord(size_t index,
-                            const Storage& other) const& noexcept {
+                                   const Storage& other) const& noexcept {
     ::sus::check(index == I);
     return std::strong_order(tuple_, other.tuple_);
   }
