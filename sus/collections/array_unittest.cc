@@ -468,9 +468,9 @@ TEST(Array, IntoIterDoubleEnded) {
   auto a = Array<usize, 3>(1u, 2u, 3u);
 
   auto it = sus::move(a).into_iter();
-  EXPECT_EQ(it.next_back(), sus::some(3_usize).construct());
-  EXPECT_EQ(it.next_back(), sus::some(2_usize).construct());
-  EXPECT_EQ(it.next_back(), sus::some(1_usize).construct());
+  EXPECT_EQ(it.next_back(), sus::some(3_usize));
+  EXPECT_EQ(it.next_back(), sus::some(2_usize));
+  EXPECT_EQ(it.next_back(), sus::some(1_usize));
   EXPECT_EQ(it.next_back(), sus::None);
 }
 

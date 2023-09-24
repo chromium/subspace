@@ -367,9 +367,9 @@ TEST(Slice, DoubleEndedIterator) {
 
     auto it = slice.iter();
     static_assert(sus::iter::DoubleEndedIterator<decltype(it), const usize&>);
-    EXPECT_EQ(it.next_back(), sus::some(3_usize).construct());
-    EXPECT_EQ(it.next_back(), sus::some(2_usize).construct());
-    EXPECT_EQ(it.next_back(), sus::some(1_usize).construct());
+    EXPECT_EQ(it.next_back(), sus::Option(3_usize));
+    EXPECT_EQ(it.next_back(), sus::Option(2_usize));
+    EXPECT_EQ(it.next_back(), sus::Option(1_usize));
     EXPECT_EQ(it.next_back(), sus::None);
   }
   {
@@ -378,9 +378,9 @@ TEST(Slice, DoubleEndedIterator) {
 
     auto it = slice.iter_mut();
     static_assert(sus::iter::DoubleEndedIterator<decltype(it), usize&>);
-    EXPECT_EQ(it.next_back(), sus::some(3_usize).construct());
-    EXPECT_EQ(it.next_back(), sus::some(2_usize).construct());
-    EXPECT_EQ(it.next_back(), sus::some(1_usize).construct());
+    EXPECT_EQ(it.next_back(), sus::Option(3_usize));
+    EXPECT_EQ(it.next_back(), sus::Option(2_usize));
+    EXPECT_EQ(it.next_back(), sus::Option(1_usize));
     EXPECT_EQ(it.next_back(), sus::None);
   }
 }
@@ -393,23 +393,23 @@ TEST(Slice, ExactSizeIterator) {
     auto it = slice.iter();
     static_assert(sus::iter::ExactSizeIterator<decltype(it), const usize&>);
     EXPECT_EQ(it.size_hint().lower, 3u);
-    EXPECT_EQ(it.size_hint().upper, sus::Option<usize>(3u));
+    EXPECT_EQ(it.size_hint().upper, sus::Option(3u));
     EXPECT_EQ(it.exact_size_hint(), 3u);
-    EXPECT_EQ(it.next_back(), sus::some(3_usize).construct());
+    EXPECT_EQ(it.next_back(), sus::Option(3u));
     EXPECT_EQ(it.size_hint().lower, 2u);
-    EXPECT_EQ(it.size_hint().upper, sus::Option<usize>(2u));
+    EXPECT_EQ(it.size_hint().upper, sus::Option(2u));
     EXPECT_EQ(it.exact_size_hint(), 2u);
-    EXPECT_EQ(it.next_back(), sus::some(2_usize).construct());
+    EXPECT_EQ(it.next_back(), sus::Option(2u));
     EXPECT_EQ(it.size_hint().lower, 1u);
-    EXPECT_EQ(it.size_hint().upper, sus::Option<usize>(1u));
+    EXPECT_EQ(it.size_hint().upper, sus::Option(1u));
     EXPECT_EQ(it.exact_size_hint(), 1u);
-    EXPECT_EQ(it.next_back(), sus::some(1_usize).construct());
+    EXPECT_EQ(it.next_back(), sus::Option(1u));
     EXPECT_EQ(it.size_hint().lower, 0u);
-    EXPECT_EQ(it.size_hint().upper, sus::Option<usize>(0u));
+    EXPECT_EQ(it.size_hint().upper, sus::Option(0u));
     EXPECT_EQ(it.exact_size_hint(), 0u);
     EXPECT_EQ(it.next_back(), sus::None);
     EXPECT_EQ(it.size_hint().lower, 0u);
-    EXPECT_EQ(it.size_hint().upper, sus::Option<usize>(0u));
+    EXPECT_EQ(it.size_hint().upper, sus::Option(0u));
     EXPECT_EQ(it.exact_size_hint(), 0u);
   }
   {
@@ -418,9 +418,9 @@ TEST(Slice, ExactSizeIterator) {
 
     auto it = slice.iter_mut();
     static_assert(sus::iter::ExactSizeIterator<decltype(it), usize&>);
-    EXPECT_EQ(it.next_back(), sus::some(3_usize).construct());
-    EXPECT_EQ(it.next_back(), sus::some(2_usize).construct());
-    EXPECT_EQ(it.next_back(), sus::some(1_usize).construct());
+    EXPECT_EQ(it.next_back(), sus::Option(3_usize));
+    EXPECT_EQ(it.next_back(), sus::Option(2_usize));
+    EXPECT_EQ(it.next_back(), sus::Option(1_usize));
     EXPECT_EQ(it.next_back(), sus::None);
   }
 }

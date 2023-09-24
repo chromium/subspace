@@ -26,8 +26,7 @@ namespace sus::option::__private {
 
 template <class T>
 struct [[nodiscard]] SomeMarker {
-  sus_clang_bug_54040(constexpr inline SomeMarker(T&& value)
-                      : value(::sus::forward<T>(value)){});
+  explicit constexpr SomeMarker(T&& value) : value(::sus::forward<T>(value)) {}
 
   T&& value;
 
@@ -73,13 +72,13 @@ struct [[nodiscard]] SomeMarker {
     return Option<U>(::sus::forward<T>(value));
   }
 
-  template <class U = ::sus::mem::remove_rvalue_reference<T>>
-  inline constexpr Option<U> construct() && noexcept {
-    return sus::move(*this);
-  }
+  SomeMarker(SomeMarker&&) = delete;
+  SomeMarker& operator=(SomeMarker&&) = delete;
 };
 
 struct [[nodiscard]] NoneMarker {
+  explicit constexpr NoneMarker() = default;
+
   // Gtest macros force evaluation against a const reference.
   // https://github.com/google/googletest/issues/4350
   template <class U>
@@ -92,10 +91,8 @@ struct [[nodiscard]] NoneMarker {
     return Option<U>();
   }
 
-  template <class T>
-  inline constexpr Option<T> construct() && noexcept {
-    return sus::move(*this);
-  }
+  NoneMarker(NoneMarker&&) = delete;
+  NoneMarker& operator=(NoneMarker&&) = delete;
 };
 
 }  // namespace sus::option::__private

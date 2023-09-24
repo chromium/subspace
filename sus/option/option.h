@@ -20,6 +20,8 @@
 #include "fmt/format.h"
 #include "sus/assertions/check.h"
 #include "sus/assertions/unreachable.h"
+#include "sus/cmp/eq.h"
+#include "sus/cmp/ord.h"
 #include "sus/construct/default.h"
 #include "sus/construct/into.h"
 #include "sus/fn/fn_concepts.h"
@@ -42,8 +44,6 @@
 #include "sus/mem/relocate.h"
 #include "sus/mem/replace.h"
 #include "sus/mem/take.h"
-#include "sus/cmp/eq.h"
-#include "sus/cmp/ord.h"
 #include "sus/ops/try.h"
 #include "sus/option/__private/is_option_type.h"
 #include "sus/option/__private/is_tuple_type.h"
@@ -1948,6 +1948,9 @@ class Option final {
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
                                            StorageType<T>);
 };
+
+template <class T>
+Option(T) -> Option<std::remove_cvref_t<T>>;
 
 /// Implicit for-ranged loop iteration via
 /// [`Option::iter`]($sus::option::Option::iter).

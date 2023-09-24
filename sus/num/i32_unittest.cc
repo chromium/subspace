@@ -1309,14 +1309,14 @@ TEST(i32, CheckedMul) {
   constexpr auto a = (1_i32).checked_mul(3_i32).unwrap();
   EXPECT_EQ(a, 3_i32);
 
-  EXPECT_EQ((100_i32).checked_mul(21_i32), sus::some(2100_i32).construct());
-  EXPECT_EQ((21_i32).checked_mul(100_i32), sus::some(2100_i32).construct());
+  EXPECT_EQ((100_i32).checked_mul(21_i32), sus::some(2100_i32));
+  EXPECT_EQ((21_i32).checked_mul(100_i32), sus::some(2100_i32));
   EXPECT_EQ((123456_i32).checked_mul(234567_i32), sus::None);
 
   // ** Signed only.
-  EXPECT_EQ((-3_i32).checked_mul(10_i32), sus::some(-30_i32).construct());
-  EXPECT_EQ((-100_i32).checked_mul(21_i32), sus::some(-2100_i32).construct());
-  EXPECT_EQ((-21_i32).checked_mul(100_i32), sus::some(-2100_i32).construct());
+  EXPECT_EQ((-3_i32).checked_mul(10_i32), sus::some(-30_i32));
+  EXPECT_EQ((-100_i32).checked_mul(21_i32), sus::some(-2100_i32));
+  EXPECT_EQ((-21_i32).checked_mul(100_i32), sus::some(-2100_i32));
   EXPECT_EQ((-123456_i32).checked_mul(-23456_i32), sus::None);
   EXPECT_EQ((123456_i32).checked_mul(-23456_i32), sus::None);
 }

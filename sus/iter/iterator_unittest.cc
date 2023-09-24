@@ -386,8 +386,8 @@ TEST(Iterator, FilterDoubleEnded) {
 
   auto it = ArrayIterator<i32, 5>::with_array(nums).filter(
       [](const i32& i) { return i == 2 || i == 4; });
-  EXPECT_EQ(it.next_back(), sus::some(4_i32).construct());
-  EXPECT_EQ(it.next_back(), sus::some(2_i32).construct());
+  EXPECT_EQ(it.next_back(), sus::some(4_i32));
+  EXPECT_EQ(it.next_back(), sus::some(2_i32));
   EXPECT_EQ(it.next_back(), sus::None);
 }
 
@@ -463,11 +463,11 @@ TEST(Iterator, MapDoubleEnded) {
 
   auto it = ArrayIterator<i32, 5>::with_array(nums).map(
       [](i32&& i) { return u32::try_from(i).unwrap(); });
-  EXPECT_EQ(it.next_back(), sus::some(5_u32).construct());
-  EXPECT_EQ(it.next_back(), sus::some(4_u32).construct());
-  EXPECT_EQ(it.next_back(), sus::some(3_u32).construct());
-  EXPECT_EQ(it.next_back(), sus::some(2_u32).construct());
-  EXPECT_EQ(it.next_back(), sus::some(1_u32).construct());
+  EXPECT_EQ(it.next_back(), sus::some(5_u32));
+  EXPECT_EQ(it.next_back(), sus::some(4_u32));
+  EXPECT_EQ(it.next_back(), sus::some(3_u32));
+  EXPECT_EQ(it.next_back(), sus::some(2_u32));
+  EXPECT_EQ(it.next_back(), sus::some(1_u32));
   EXPECT_EQ(it.next_back(), sus::None);
 }
 
@@ -1633,7 +1633,7 @@ TEST(Iterator, FindMap) {
     auto it = a.iter();
     // Finds the 2nd.
     auto r1 = it.find_map(find_even);
-    EXPECT_EQ(r1, sus::some(2u).construct<u32>());
+    EXPECT_EQ(r1, sus::some(2u));
     // Finds the 4th.
     auto r2 = it.find_map(find_even);
     EXPECT_EQ(r2, sus::some(4u));
