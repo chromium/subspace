@@ -54,8 +54,7 @@ sus::result::Result<void, sus::Box<sus::error::DynError>> generate(
       }
     }
   }
-  if (auto result = generate_namespace(
-          db, db.global, sus::Vec<const NamespaceElement*>(), options);
+  if (auto result = generate_namespace(db, db.global, sus::empty, options);
       result.is_err()) {
     return sus::err(
         sus::into(GenerateError::with<GenerateError::Tag::MarkdownError>(

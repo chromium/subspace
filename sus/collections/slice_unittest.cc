@@ -5772,9 +5772,9 @@ TEST(Slice, StripPrefix) {
 
   EXPECT_EQ(s.strip_prefix(Slice<i32>()).unwrap(),
             sus::Vec<i32>(1, 2, 2, 3, 4, 5));
-  EXPECT_EQ(s.strip_prefix(v["..2"_r]).unwrap(), sus::Vec<i32>(2, 3, 4, 5));
-  EXPECT_EQ(s.strip_prefix(v["..5"_r]).unwrap(), sus::Vec<i32>(5));
-  EXPECT_EQ(s.strip_prefix(v[".."_r]).unwrap(), sus::Vec<i32>());
+  EXPECT_EQ(s.strip_prefix(v["..2"_r]).unwrap(), sus::Vec(2, 3, 4, 5));
+  EXPECT_EQ(s.strip_prefix(v["..5"_r]).unwrap(), sus::Vec(5));
+  EXPECT_EQ(s.strip_prefix(v[".."_r]).unwrap(), sus::empty);
 }
 
 TEST(SliceMut, StripPrefixMut) {
@@ -5793,9 +5793,9 @@ TEST(SliceMut, StripPrefixMut) {
 
   EXPECT_EQ(s.strip_prefix_mut(Slice<i32>()).unwrap(),
             sus::Vec<i32>(1, 2, 2, 3, 4, 5));
-  EXPECT_EQ(s.strip_prefix_mut(v["..2"_r]).unwrap(), sus::Vec<i32>(2, 3, 4, 5));
-  EXPECT_EQ(s.strip_prefix_mut(v["..5"_r]).unwrap(), sus::Vec<i32>(5));
-  EXPECT_EQ(s.strip_prefix_mut(v[".."_r]).unwrap(), sus::Vec<i32>());
+  EXPECT_EQ(s.strip_prefix_mut(v["..2"_r]).unwrap(), sus::Vec(2, 3, 4, 5));
+  EXPECT_EQ(s.strip_prefix_mut(v["..5"_r]).unwrap(), sus::Vec(5));
+  EXPECT_EQ(s.strip_prefix_mut(v[".."_r]).unwrap(), sus::empty);
 }
 
 TEST(Slice, StripSuffix) {
@@ -5814,9 +5814,9 @@ TEST(Slice, StripSuffix) {
 
   EXPECT_EQ(s.strip_suffix(Slice<i32>()).unwrap(),
             sus::Vec<i32>(1, 2, 2, 3, 4, 5));
-  EXPECT_EQ(s.strip_suffix(v["4.."_r]).unwrap(), sus::Vec<i32>(1, 2, 2, 3));
-  EXPECT_EQ(s.strip_suffix(v["1.."_r]).unwrap(), sus::Vec<i32>(1));
-  EXPECT_EQ(s.strip_suffix(v[".."_r]).unwrap(), sus::Vec<i32>());
+  EXPECT_EQ(s.strip_suffix(v["4.."_r]).unwrap(), sus::Vec(1, 2, 2, 3));
+  EXPECT_EQ(s.strip_suffix(v["1.."_r]).unwrap(), sus::Vec(1));
+  EXPECT_EQ(s.strip_suffix(v[".."_r]).unwrap(), sus::empty);
 }
 
 TEST(SliceMut, StripSuffixMut) {
@@ -5835,9 +5835,9 @@ TEST(SliceMut, StripSuffixMut) {
 
   EXPECT_EQ(s.strip_suffix_mut(Slice<i32>()).unwrap(),
             sus::Vec<i32>(1, 2, 2, 3, 4, 5));
-  EXPECT_EQ(s.strip_suffix_mut(v["4.."_r]).unwrap(), sus::Vec<i32>(1, 2, 2, 3));
-  EXPECT_EQ(s.strip_suffix_mut(v["1.."_r]).unwrap(), sus::Vec<i32>(1));
-  EXPECT_EQ(s.strip_suffix_mut(v[".."_r]).unwrap(), sus::Vec<i32>());
+  EXPECT_EQ(s.strip_suffix_mut(v["4.."_r]).unwrap(), sus::Vec(1, 2, 2, 3));
+  EXPECT_EQ(s.strip_suffix_mut(v["1.."_r]).unwrap(), sus::Vec(1));
+  EXPECT_EQ(s.strip_suffix_mut(v[".."_r]).unwrap(), sus::empty);
 }
 
 TEST(Slice, Windows) {

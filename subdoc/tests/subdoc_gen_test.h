@@ -50,6 +50,7 @@ class SubDocGenTest : public testing::Test {
     if (!result.is_ok()) return false;
 
     using subdoc::gen::FavIcon;
+    using namespace std::string_literals;
     auto options = subdoc::gen::Options{
         .output_root =
             [&]() {
@@ -57,11 +58,11 @@ class SubDocGenTest : public testing::Test {
               test_root.append(directory);
               return test_root;
             }(),
-        .stylesheets = sus::Vec<std::string>("../subdoc-test-style.css"),
+        .stylesheets = sus::Vec("../subdoc-test-style.css"s),
         .favicons =
             sus::Vec(FavIcon::from_string("../icon.svg;image/svg+xml").unwrap(),
                      FavIcon::from_string("../icon.png;image/png").unwrap()),
-        .copy_files = sus::Vec<std::string>(),
+        .copy_files = sus::empty,
         .ignore_bad_code_links = false,
     };
     sus::result::Result<void, sus::Box<sus::error::DynError>> r =

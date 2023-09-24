@@ -25,6 +25,7 @@
 #include "fmt/core.h"
 #include "sus/assertions/check.h"
 #include "sus/assertions/debug_check.h"
+#include "sus/cmp/ord.h"
 #include "sus/collections/collections.h"
 #include "sus/collections/concat.h"
 #include "sus/collections/iterators/chunks.h"
@@ -41,6 +42,7 @@
 #include "sus/iter/iterator_ref.h"
 #include "sus/lib/__private/forward_decl.h"
 #include "sus/macros/lifetimebound.h"
+#include "sus/marker/empty.h"
 #include "sus/marker/unsafe.h"
 #include "sus/mem/clone.h"
 #include "sus/mem/move.h"
@@ -51,7 +53,6 @@
 #include "sus/num/signed_integer.h"
 #include "sus/num/transmogrify.h"
 #include "sus/num/unsigned_integer.h"
-#include "sus/cmp/ord.h"
 #include "sus/ops/range.h"
 #include "sus/option/option.h"
 #include "sus/ptr/copy.h"
@@ -102,6 +103,13 @@ class Vec final {
       !std::allocator_traits<A>::propagate_on_container_copy_assignment::value);
 
  public:
+  /// Constructs an empty `Vec`.
+  ///
+  /// This constructor is implicit so that using the [`EmptyMarker`](
+  /// $sus::marker::EmptyMarker) allows the caller to avoid spelling out the
+  /// full `Vec` type.
+  constexpr Vec(::sus::marker::EmptyMarker) : Vec() {}
+
   /// Constructs a `Vec`, which constructs objects of type `T` from the given
   /// values.
   ///
