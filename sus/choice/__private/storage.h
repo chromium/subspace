@@ -66,6 +66,15 @@ struct StorageTypeOfTagHelper<::sus::Tuple<Ts...>> {
   using type = ::sus::Tuple<Ts...>;
 };
 
+/// The Storage class stores Tuples internally, but for Tuples of a single
+/// object, they are stored and accessed as the interior object.
+///
+/// For example:
+/// * Storage of `Tuple<i32, u32>` will be `Tuple<i32, u32>`.
+/// * Storage of `Tuple<i32>` will be just `i32`.
+template <size_t I, class... Ts>
+using StorageTypeOfTag = StorageTypeOfTagHelper<PackIth<I, Ts...>>::type;
+
 template <class T>
 struct StorageCountHelper {
   static constexpr size_t value = StorageIsVoid<T> ? 0u : 1u;
@@ -76,17 +85,63 @@ struct StorageCountHelper<::sus::tuple_type::Tuple<Ts...>> {
   static constexpr size_t value = sizeof...(Ts);
 };
 
+// TODO: We could receive size_t as an input here and figure out the count
+// without going through the StorageType and StorageIsVoid.
 template <class StorageType>
 static constexpr size_t StorageCount = StorageCountHelper<StorageType>::value;
 
-/// The Storage class stores Tuples internally, but for Tuples of a single
-/// object, they are stored and accessed as the interior object.
-///
-/// For example:
-/// * Storage of `Tuple<i32, u32>` will be `Tuple<i32, u32>`.
-/// * Storage of `Tuple<i32>` will be just `i32`.
-template <size_t I, class... Ts>
-using StorageTypeOfTag = StorageTypeOfTagHelper<PackIth<I, Ts...>>::type;
+struct SafelyConstructibleFromReferenceSuccess {};
+
+template <size_t I>
+struct SafelyConstructibleFromReferenceFailedForArgument {};
+
+template <size_t I, class StorageType, class... Params>
+struct SafelyConstructibleHelper;
+
+template <size_t I>
+struct SafelyConstructibleHelper<I, Nothing> {
+  static_assert(I == 0u);
+  using type = SafelyConstructibleFromReferenceSuccess;
+};
+
+template <size_t I, class... Ts, class P, class... Params>
+  requires(sizeof...(Params) > 0u)
+struct SafelyConstructibleHelper<I, ::sus::tuple_type::Tuple<Ts...>, P,
+                                 Params...> {
+  static_assert(I + 1u + sizeof...(Params) == sizeof...(Ts));
+
+  static constexpr bool safe =
+      ::sus::construct::SafelyConstructibleFromReference<PackIth<I, Ts...>, P>;
+
+  using type = std::conditional_t<
+      safe,
+      typename SafelyConstructibleHelper<
+          I + 1u, ::sus::tuple_type::Tuple<Ts...>, Params...>::type,
+      SafelyConstructibleFromReferenceFailedForArgument<I>>;
+};
+
+template <size_t I, class... Ts, class P>
+struct SafelyConstructibleHelper<I, ::sus::tuple_type::Tuple<Ts...>, P> {
+  static_assert(I + 1u == sizeof...(Ts));
+
+  static constexpr bool safe =
+      ::sus::construct::SafelyConstructibleFromReference<PackIth<I, Ts...>, P>;
+
+  using type = std::conditional_t<  //
+      safe,                         //
+      SafelyConstructibleFromReferenceSuccess,
+      SafelyConstructibleFromReferenceFailedForArgument<I>>;
+};
+
+/// Checks [`SafelyConstructibleFromReference`](
+/// $sus::construct::SafelyConstructibleFromReference) against every parameter
+/// type in `From...` and how it will be stored inside the [`Choice`](
+/// $sus::choice_type::Choice), typically as one of the members of a [`Tuple`](
+/// $sus::tuple_type::Tuple).
+template <class StorageType, class... From>
+concept StorageIsSafelyConstructibleFromReference = std::same_as<
+    typename SafelyConstructibleHelper<0u, StorageType, From...>::type,
+    SafelyConstructibleFromReferenceSuccess>;
 
 template <size_t I, class... Elements>
 union Storage;

@@ -141,12 +141,24 @@ class Tuple final {
   /// `static_cast<const T&>()` at the callsite (and document it =)).
   /// #[doc.overloads=ctor.values]
   template <std::convertible_to<T> U, std::convertible_to<Ts>... Us>
-    requires(sizeof...(Us) == sizeof...(Ts) &&
+    requires(sizeof...(Us) == sizeof...(Ts) &&  //
              (sus::construct::SafelyConstructibleFromReference<T, U &&> &&
               ... &&
               sus::construct::SafelyConstructibleFromReference<Ts, Us &&>))
   explicit constexpr Tuple(U&& first, Us&&... more) noexcept
-      : storage_(::sus::forward<U>(first), ::sus::forward<Us>(more)...) {}
+      : storage_(::sus::forward<U>(first), ::sus::forward<Us>(more)...) {
+    // TODO: Convert the requires check to a static_assert when we can test that
+    // with a nocompile test.
+    static_assert(
+        (sus::construct::SafelyConstructibleFromReference<T, U&&> && ... &&
+         sus::construct::SafelyConstructibleFromReference<Ts, Us&&>),
+        "Unable to safely convert to a different reference type, as "
+        "conversion would produce a reference to a temporary. The Tuple's "
+        "parameter type must match the Tuple's stored reference. For example a "
+        "`Tuple<const i32&, u32>` can not be constructed from "
+        "`const i16&, u32` parameters but it can be constructed from "
+        " `i32, u16`.");
+  }
 
   /// sus::mem::Clone trait.
   constexpr Tuple clone() const& noexcept
@@ -163,11 +175,17 @@ class Tuple final {
   /// Converts from `Tuple<X', Y', Z'>` to `Tuple<X, Y, Z>` when `X'`, `Y'`,
   /// and `Z'` can be converted to `X`, `Y`, and `Z`.
   template <class U, class... Us>
-    requires((std::convertible_to<const U&, T> && ... &&
-              std::convertible_to<const Us&, Ts>) &&  //
-             sizeof...(Ts) == sizeof...(Us))
+    requires(
+        (std::convertible_to<const U&, T> && ... &&
+         std::convertible_to<const Us&, Ts>) &&  //
+        sizeof...(Ts) == sizeof...(Us) &&        //
+        (::sus::construct::SafelyConstructibleFromReference<T, const U&> &&
+         ... &&
+         ::sus::construct::SafelyConstructibleFromReference<Ts, const Us&>))
   constexpr Tuple(const Tuple<U, Us...>& tuple) noexcept
       : Tuple(UNPACK, tuple, std::make_index_sequence<1u + sizeof...(Ts)>()) {
+    // TODO: Convert the requires check to a static_assert when we can test that
+    // with a nocompile test.
     static_assert(
         (::sus::construct::SafelyConstructibleFromReference<T, const U&> &&
          ... &&
@@ -181,10 +199,15 @@ class Tuple final {
   template <class U, class... Us>
     requires((std::convertible_to<U &&, T> && ... &&
               std::convertible_to<Us &&, Ts>) &&  //
-             sizeof...(Ts) == sizeof...(Us))
+             sizeof...(Ts) == sizeof...(Us) &&    //
+             (::sus::construct::SafelyConstructibleFromReference<T, U &&> &&
+              ... &&
+              ::sus::construct::SafelyConstructibleFromReference<Ts, Us &&>))
   constexpr Tuple(Tuple<U, Us...>&& tuple) noexcept
       : Tuple(UNPACK, ::sus::move(tuple),
               std::make_index_sequence<1u + sizeof...(Ts)>()) {
+    // TODO: Convert the requires check to a static_assert when we can test that
+    // with a nocompile test.
     static_assert(
         (::sus::construct::SafelyConstructibleFromReference<T, U&&> && ... &&
          ::sus::construct::SafelyConstructibleFromReference<Ts, Us&&>),
