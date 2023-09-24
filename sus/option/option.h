@@ -1081,7 +1081,16 @@ class Option final {
   /// [`Option::get_or_insert`]($sus::option::Option::get_or_insert),
   /// which doesn’t update the value if the option already contains `Some`.
   constexpr T& insert(T value) & noexcept
-    requires(sus::mem::MoveOrRef<T>)
+    requires(!std::is_reference_v<T> &&  //
+             sus::mem::Move<T>)
+  {
+    t_.set_some(move_to_storage(value));
+    return t_.val_mut();
+  }
+  template <std::convertible_to<T> U>
+  constexpr T& insert(U&& value) & noexcept
+    requires(std::is_reference_v<T> &&  //
+             sus::construct::SafelyConstructibleFromReference<T, U &&>)
   {
     t_.set_some(move_to_storage(value));
     return t_.val_mut();
@@ -1094,7 +1103,18 @@ class Option final {
   /// [`Option::get_or_insert_with`]($sus::option::Option::get_or_insert_with)
   /// method would be preferable, as it only constructs a `T` if needed.
   constexpr T& get_or_insert(T value) & noexcept sus_lifetimebound
-    requires(sus::mem::MoveOrRef<T>)
+    requires(!std::is_reference_v<T> &&  //
+             sus::mem::Move<T>)
+  {
+    if (t_.state() == None) {
+      t_.construct_from_none(move_to_storage(value));
+    }
+    return t_.val_mut();
+  }
+  template <std::convertible_to<T> U>
+  constexpr T& get_or_insert(U&& value) & noexcept sus_lifetimebound
+    requires(std::is_reference_v<T> &&  //
+             sus::construct::SafelyConstructibleFromReference<T, U &&>)
   {
     if (t_.state() == None) {
       t_.construct_from_none(move_to_storage(value));
@@ -1512,16 +1532,29 @@ class Option final {
     return ::sus::clone(*this).unzip();
   }
 
-  /// Replaces whatever the Option is currently holding with `Some` value `t`
-  /// and returns an Option holding what was there previously.
-  constexpr Option replace(T t) & noexcept
-    requires(sus::mem::MoveOrRef<T>)
+  /// Replaces whatever the Option is currently holding with `value` and returns
+  /// an Option holding what was there previously, which may be empty.
+  constexpr Option replace(T value) & noexcept
+    requires(!std::is_reference_v<T> &&  //
+             sus::mem::Move<T>)
   {
     if (t_.state() == None) {
-      t_.construct_from_none(move_to_storage(t));
+      t_.construct_from_none(move_to_storage(value));
       return Option();
     } else {
-      return Option(WITH_SOME, t_.replace_some(move_to_storage(t)));
+      return Option(WITH_SOME, t_.replace_some(move_to_storage(value)));
+    }
+  }
+  template <std::convertible_to<T> U>
+  constexpr Option replace(U&& value) & noexcept
+    requires(std::is_reference_v<T> &&  //
+             sus::construct::SafelyConstructibleFromReference<T, U &&>)
+  {
+    if (t_.state() == None) {
+      t_.construct_from_none(move_to_storage(value));
+      return Option();
+    } else {
+      return Option(WITH_SOME, t_.replace_some(move_to_storage(value)));
     }
   }
 

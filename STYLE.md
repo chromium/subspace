@@ -101,3 +101,33 @@ properly build such a container type (e.g. `Option` and `Tuple`):
   * Test all APIs with a reference to `sus::test::NoCopyMove` which ensures the
     references are correctly preserved as copy/move of the underlying value will not
     compile.
+  * Test all APIs that receive a reference and store it with concepts to verify that
+    invalid conversions (from a T& to a U&) do not occur. An example for `Option`.
+    These concepts check that the methods can all be called, or can all *not* be called
+    with a given type.
+    ```
+    template <class O, class... Args>
+    concept CanSafelyStoreReferenceOption = requires(O& o, Args&&... args) {
+      { O(::sus::forward<Args>(args)...) } -> std::same_as<O>;
+      { o.insert(::sus::forward<Args>(args)...) };
+      { o.get_or_insert(::sus::forward<Args>(args)...) };
+      { o.replace(::sus::forward<Args>(args)...) };
+    };
+    template <class O, class... Args>
+    concept CanNotSafelyStoreReferenceOption = !requires(O& o, Args&&... args) {
+      { O(::sus::forward<Args>(args)...) } -> std::same_as<O>;
+    } && !requires(O& o, Args&&... args) {
+      { o.insert(::sus::forward<Args>(args)...) };
+    } && !requires(O& o, Args&&... args) {
+      { o.get_or_insert(::sus::forward<Args>(args)...) };
+    } && !requires(O& o, Args&&... args) {
+      { o.replace(::sus::forward<Args>(args)...) };
+    };
+    ```
+    Then these test for correctness.
+    ```
+    /// No reference conversion, allowed.
+    static_assert(CanSafelyStoreReferenceOption<Option<i32&>, i32&>);
+    /// Reference conversion, disallowed.
+    static_assert(CanNotSafelyStoreReferenceOption<Option<i32&>, int&>);
+    ```
