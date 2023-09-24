@@ -289,24 +289,51 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   }
   template <TagsType V, class U>
     requires(__private::StorageCount<StorageTypeOfTag<V>> == 1u &&  //
+             ::sus::construct::SafelyConstructibleFromReference<
+                 StorageTypeOfTag<V>, U &&> &&  //
              std::convertible_to<U &&, StorageTypeOfTag<V>>)
   constexpr static Choice with(U&& value) noexcept {
+    using StorageType = StorageTypeOfTag<V>;
+    // TODO: Convert the requires check to a static_assert when we can test that
+    // with a nocompile test.
+    static_assert(
+        ::sus::construct::SafelyConstructibleFromReference<StorageType, U&&>,
+        "Unable to safely convert to a different reference type, as conversion "
+        "would produce a reference to a temporary. The Choice's parameter "
+        "type must match the Choice's stored reference. For example a Choice "
+        "holding `const i32&, u32` can not be constructed from "
+        "`const i16&, u32` parameters but it can be constructed from "
+        " `i32, u16`.");
     auto u = Choice(index<V>);
     u.storage_.activate_for_construct(index<V>);
     find_choice_storage_mut<index<V>>(u.storage_)
-        .construct(StorageTypeOfTag<V>(::sus::forward<U>(value)));
+        .construct(StorageType(::sus::forward<U>(value)));
     return u;
   }
   template <TagsType V, class... Us>
     requires(__private::StorageCount<StorageTypeOfTag<V>> > 1u &&  //
              sizeof...(Us) ==
                  __private::StorageCount<StorageTypeOfTag<V>> &&  //
+             __private::StorageIsSafelyConstructibleFromReference<
+                 StorageTypeOfTag<V>, Us && ...> &&  //
              std::constructible_from<StorageTypeOfTag<V>, Us && ...>)
   constexpr static Choice with(Us&&... values) noexcept {
+    using StorageType = StorageTypeOfTag<V>;
+    // TODO: Convert the requires check to a static_assert when we can test that
+    // with a nocompile test.
+    static_assert(
+        __private::StorageIsSafelyConstructibleFromReference<StorageType,
+                                                             Us&&...>,
+        "Unable to safely convert to a different reference type, as conversion "
+        "would produce a reference to a temporary. The Choice's parameter "
+        "type must match the Choice's stored reference. For example a Choice "
+        "holding `const i32&, u32` can not be constructed from "
+        "`const i16&, u32` parameters but it can be constructed from "
+        " `i32, u16`.");
     auto u = Choice(index<V>);
     u.storage_.activate_for_construct(index<V>);
     find_choice_storage_mut<index<V>>(u.storage_)
-        .construct(StorageTypeOfTag<V>(::sus::forward<Us>(values)...));
+        .construct(StorageType(::sus::forward<Us>(values)...));
     return u;
   }
 
@@ -633,8 +660,21 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   }
   template <TagsType V, class U>
     requires(__private::StorageCount<StorageTypeOfTag<V>> == 1u &&  //
+             ::sus::construct::SafelyConstructibleFromReference<
+                 StorageTypeOfTag<V>, U &&> &&  //
              std::convertible_to<U &&, StorageTypeOfTag<V>>)
   constexpr void set(U&& value) & noexcept {
+    using StorageType = StorageTypeOfTag<V>;
+    // TODO: Convert the requires check to a static_assert when we can test that
+    // with a nocompile test.
+    static_assert(
+        ::sus::construct::SafelyConstructibleFromReference<StorageType, U&&>,
+        "Unable to safely convert to a different reference type, as conversion "
+        "would produce a reference to a temporary. The Choice's parameter "
+        "type must match the Choice's stored reference. For example a Choice "
+        "holding `const i32&, u32` can not be constructed from "
+        "`const i16&, u32` parameters but it can be constructed from "
+        " `i32, u16`.");
     if (index_ == index<V>) {
       __private::find_choice_storage_mut<index<V>>(storage_).assign(
           ::sus::forward<U>(value));
@@ -650,17 +690,31 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     requires(__private::StorageCount<StorageTypeOfTag<V>> > 1u &&  //
              sizeof...(Us) ==
                  __private::StorageCount<StorageTypeOfTag<V>> &&  //
+             __private::StorageIsSafelyConstructibleFromReference<
+                 StorageTypeOfTag<V>, Us && ...> &&  //
              std::constructible_from<StorageTypeOfTag<V>, Us && ...>)
   constexpr void set(Us&&... values) & noexcept {
+    using StorageType = StorageTypeOfTag<V>;
+    // TODO: Convert the requires check to a static_assert when we can test that
+    // with a nocompile test.
+    static_assert(
+        __private::StorageIsSafelyConstructibleFromReference<StorageType,
+                                                             Us&&...>,
+        "Unable to safely convert to a different reference type, as conversion "
+        "would produce a reference to a temporary. The Choice's parameter "
+        "type must match the Choice's stored reference. For example a Choice "
+        "holding `const i32&, u32` can not be constructed from "
+        "`const i16&, u32` parameters but it can be constructed from "
+        " `i32, u16`.");
     if (index_ == index<V>) {
       __private::find_choice_storage_mut<index<V>>(storage_).assign(
-          StorageTypeOfTag<V>(::sus::forward<Us>(values)...));
+          StorageType(::sus::forward<Us>(values)...));
     } else {
       if (index_ != kUseAfterMove) storage_.destroy(index_);
       index_ = index<V>;
       storage_.activate_for_construct(index<V>);
       __private::find_choice_storage_mut<index<V>>(storage_).construct(
-          StorageTypeOfTag<V>(::sus::forward<Us>(values)...));
+          StorageType(::sus::forward<Us>(values)...));
     }
   }
 

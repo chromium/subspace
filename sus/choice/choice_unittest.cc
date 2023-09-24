@@ -18,6 +18,7 @@
 
 #include "googletest/include/gtest/gtest.h"
 #include "sus/assertions/unreachable.h"
+#include "sus/mem/forward.h"
 #include "sus/num/types.h"
 #include "sus/option/option.h"
 #include "sus/prelude.h"
@@ -168,6 +169,12 @@ TEST(Choice, ConstructorFunctionMoreThan1Value) {
   using U =
       Choice<sus_choice_types((Order::First, u32, u32), (Order::Second, void))>;
   {
+    using namespace sus::choice_type::__private;
+    using namespace sus::choice_type;
+    static_assert(
+        StorageIsSafelyConstructibleFromReference<sus::Tuple<u32, u32>, u32&&,
+                                                  u32&&>);
+
     // All parameters match the tuple type.
     auto u = U::with<Order::First>(1_u32, 2_u32);
     EXPECT_EQ(u.as<Order::First>().into_inner<0>(), 1_u32);
@@ -224,6 +231,111 @@ TEST(Choice, ConstructorFunctionMoreThan1Value) {
         (Order::First, S&, S&), (Order::Second, void))>::with<Order::First>(  //
         s, s);
     EXPECT_GE(copies, 0);
+  }
+}
+
+/// Verify if SafelyConstructFromReference blocks construction.
+template <class C, auto Tag, class... Args>
+concept CanConstructChoice = requires(Args&&... args) {
+  { C::template with<Tag>(::sus::forward<Args>(args)...) } -> std::same_as<C>;
+};
+
+/// Verify if SafelyConstructFromReference blocks set().
+template <class C, auto Tag, class... Args>
+concept CanSetChoice = requires(C& c, Args&&... args) {
+  { c.template set<Tag>(::sus::forward<Args>(args)...) };
+};
+
+TEST(Choice, Reference1Value) {
+  static_assert([] {
+    using U = Choice<sus_choice_types((Order::First, const NoCopyMove&))>;
+
+    static_assert(CanConstructChoice<U, Order::First, const NoCopyMove&>);
+    static_assert(CanConstructChoice<U, Order::First, NoCopyMove&>);
+    static_assert(CanConstructChoice<U, Order::First, NoCopyMove&&>);
+    static_assert(CanSetChoice<U, Order::First, const NoCopyMove&>);
+    static_assert(CanSetChoice<U, Order::First, NoCopyMove&>);
+    static_assert(CanSetChoice<U, Order::First, NoCopyMove&&>);
+
+    auto n = NoCopyMove();
+    auto u = U::with<Order::First>(n);
+    return &u.as<Order::First>() == &n;
+  }());
+
+  static_assert([] {
+    using U = Choice<sus_choice_types((Order::First, i32&))>;
+
+    // No conversion. Access the reference as an rvalue. (No const to mutable
+    // or rvalue to lvalue-mutable qualifier change allowed though.)
+    static_assert(!CanConstructChoice<U, Order::First, const i32&>);
+    static_assert(CanConstructChoice<U, Order::First, i32&>);
+    static_assert(!CanConstructChoice<U, Order::First, i32&&>);
+    static_assert(!CanSetChoice<U, Order::First, const i32&>);
+    static_assert(CanSetChoice<U, Order::First, i32&>);
+    static_assert(!CanSetChoice<U, Order::First, i32&&>);
+
+    auto n = 2_i32;
+    return &U::with<Order::First>(n).as<Order::First>() == &n;
+  }());
+
+  {
+    using U = Choice<sus_choice_types((Order::First, const i32&))>;
+
+    // Conversion is not legal, creates a reference to a temporary.
+    static_assert(!CanConstructChoice<U, Order::First, const int&>);
+    static_assert(!CanConstructChoice<U, Order::First, int&>);
+    static_assert(!CanConstructChoice<U, Order::First, int&&>);
+    static_assert(!CanSetChoice<U, Order::First, const int&>);
+    static_assert(!CanSetChoice<U, Order::First, int&>);
+    static_assert(!CanSetChoice<U, Order::First, int&&>);
+  }
+}
+
+TEST(Choice, ReferenceMoreThan1Value) {
+  static_assert([] {
+    using U = Choice<sus_choice_types((Order::First, i32, const NoCopyMove&))>;
+
+    static_assert(CanConstructChoice<U, Order::First, int, const NoCopyMove&>);
+    static_assert(CanConstructChoice<U, Order::First, int, NoCopyMove&>);
+    static_assert(CanConstructChoice<U, Order::First, int, NoCopyMove&&>);
+    static_assert(CanSetChoice<U, Order::First, int, const NoCopyMove&>);
+    static_assert(CanSetChoice<U, Order::First, int, NoCopyMove&>);
+    static_assert(CanSetChoice<U, Order::First, int, NoCopyMove&&>);
+
+    auto n = NoCopyMove();
+    auto u = U::with<Order::First>(2, n);
+    return &u.as<Order::First>().into_inner<1>() == &n;
+  }());
+
+  static_assert([] {
+    using U = Choice<sus_choice_types((Order::First, i32, i32&))>;
+
+    // No conversion. Access the reference as an rvalue. (No const to mutable
+    // or rvalue to lvalue-mutable qualifier change allowed though.)
+    static_assert(!CanConstructChoice<U, Order::First, int, const i32&>);
+    static_assert(CanConstructChoice<U, Order::First, int, i32&>);
+    static_assert(!CanConstructChoice<U, Order::First, int, i32&&>);
+    static_assert(!CanSetChoice<U, Order::First, int, const i32&>);
+    static_assert(CanSetChoice<U, Order::First, int, i32&>);
+    static_assert(!CanSetChoice<U, Order::First, int, i32&&>);
+
+    auto n = 2_i32;
+    return &U::with<Order::First>(3, n)
+                .into_inner<Order::First>()
+                .into_inner<1>() == &n;
+  }());
+
+  {
+    using U = Choice<sus_choice_types((Order::First, i32, const i32&))>;
+
+    // Conversion is not legal, creates a reference to a temporary.
+    // static_assert failed: 'Unable to safely convert to a different reference type
+    static_assert(!CanConstructChoice<U, Order::First, int, const int&>);
+    static_assert(!CanConstructChoice<U, Order::First, int, int&>);
+    static_assert(!CanConstructChoice<U, Order::First, int, int&&>);
+    static_assert(!CanSetChoice<U, Order::First, int, const int&>);
+    static_assert(!CanSetChoice<U, Order::First, int, int&>);
+    static_assert(!CanSetChoice<U, Order::First, int, int&&>);
   }
 }
 
