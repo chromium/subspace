@@ -875,7 +875,7 @@ TEST(SliceMut, AsMutPtrRange) {
 }
 
 TEST(Slice, BinarySearch) {
-  sus::Vec<i32> v = sus::vec(0, 1, 1, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55);
+  auto v = sus::Vec<i32>(0, 1, 1, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55);
   {
     auto s = v.as_slice();
     EXPECT_EQ(s.binary_search(13), sus::result::ok(9_usize).construct<usize>());
@@ -899,7 +899,7 @@ TEST(Slice, BinarySearch) {
 }
 
 TEST(Slice, BinarySearchBy) {
-  sus::Vec<i32> v = sus::vec(0, 1, 1, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55);
+  auto v = sus::Vec<i32>(0, 1, 1, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55);
 
   {
     auto s = v.as_slice();
@@ -986,7 +986,7 @@ TEST(Slice, BinarySearchByKey) {
 }
 
 TEST(Slice, Chunks) {
-  sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+  auto v = sus::Vec<i32>(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
   auto s = v.as_slice();
   auto sm = v.as_mut_slice();
   static_assert(std::same_as<decltype(s.chunks(3u)), decltype(sm.chunks(3u))>);
@@ -1264,7 +1264,7 @@ TEST(Slice, Chunks) {
 }
 
 TEST(Slice, ChunksMut) {
-  sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+  auto v = sus::Vec<i32>(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
   auto s = v.as_mut_slice();
 
   {
@@ -1540,7 +1540,7 @@ TEST(Slice, ChunksMut) {
 }
 
 TEST(Slice, ChunksExact) {
-  sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+  auto v = sus::Vec<i32>(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
   auto s = v.as_slice();
 
   {
@@ -1798,7 +1798,7 @@ TEST(Slice, ChunksExact) {
 }
 
 TEST(Slice, ChunksExactMut) {
-  sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+  auto v = sus::Vec<i32>(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
   auto s = v.as_mut_slice();
 
   {
@@ -2056,7 +2056,7 @@ TEST(Slice, ChunksExactMut) {
 }
 
 TEST(Slice, SplitAt) {
-  sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+  auto v = sus::Vec<i32>(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
   sus::Slice<i32> s = v.as_slice();
 
   {
@@ -2104,7 +2104,7 @@ TEST(SliceDeathTest, SplitAtOutOfBounds) {
 }
 
 TEST(Slice, SplitAtUnchecked) {
-  sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+  auto v = sus::Vec<i32>(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
   sus::Slice<i32> s = v.as_slice();
 
   {
@@ -2134,7 +2134,7 @@ TEST(Slice, SplitAtUnchecked) {
 }
 
 TEST(SliceMut, SplitAtMut) {
-  sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+  auto v = sus::Vec<i32>(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
   sus::SliceMut<i32> s = v.as_mut_slice();
 
   {
@@ -2181,7 +2181,7 @@ TEST(SliceMutDeathTest, SplitAtOutOfBounds) {
 #endif
 }
 TEST(SliceMut, SplitAtMutUnchecked) {
-  sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+  auto v = sus::Vec<i32>(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
   sus::SliceMut<i32> s = v.as_mut_slice();
 
   {
@@ -2216,19 +2216,19 @@ TEST(Slice, ConcatSlices) {
   static_assert(sus::collections::Concat<const SliceMut<i32>>);
   static_assert(sus::collections::Concat<SliceMut<i32>>);
 
-  Vec<i32> v1 = sus::vec(1, 2, 3, 4);
-  Vec<i32> v2 = sus::vec(5, 6);
-  Vec<i32> v3 = sus::vec(7, 8, 9);
+  auto v1 = Vec<i32>(1, 2, 3, 4);
+  auto v2 = Vec<i32>(5, 6);
+  auto v3 = Vec<i32>(7, 8, 9);
   {
-    Vec<Slice<i32>> vs = sus::vec(v1.as_slice(), v2.as_slice(), v3.as_slice());
+    auto vs = Vec<Slice<i32>>(v1.as_slice(), v2.as_slice(), v3.as_slice());
     Slice<Slice<i32>> s = vs.as_slice();
     auto c = s.concat();
     static_assert(std::same_as<decltype(c), Vec<i32>>);
     EXPECT_EQ(c, Vec<i32>(1, 2, 3, 4, 5, 6, 7, 8, 9));
   }
   {
-    Vec<SliceMut<i32>> vs =
-        sus::vec(v1.as_mut_slice(), v2.as_mut_slice(), v3.as_mut_slice());
+    auto vs = Vec<SliceMut<i32>>(v1.as_mut_slice(), v2.as_mut_slice(),
+                                 v3.as_mut_slice());
     SliceMut<SliceMut<i32>> s = vs.as_mut_slice();
     auto c = s.concat();
     static_assert(std::same_as<decltype(c), Vec<i32>>);
@@ -2260,12 +2260,12 @@ TEST(Slice, JoinSlices) {
   // The separator can be converted.
   static_assert(sus::collections::Join<SliceMut<i32>, int>);
 
-  Vec<i32> v1 = sus::vec(1, 2, 3, 4);
-  Vec<i32> v2 = sus::vec(5, 6);
-  Vec<i32> v3 = sus::vec(7, 8, 9);
-  Vec<i32> vsep = sus::vec(98, 99);
+  auto v1 = Vec<i32>(1, 2, 3, 4);
+  auto v2 = Vec<i32>(5, 6);
+  auto v3 = Vec<i32>(7, 8, 9);
+  auto vsep = Vec<i32>(98, 99);
   {
-    Vec<Slice<i32>> vs = sus::vec(v1.as_slice(), v2.as_slice(), v3.as_slice());
+    auto vs = Vec<Slice<i32>>(v1.as_slice(), v2.as_slice(), v3.as_slice());
     Slice<Slice<i32>> s = vs.as_slice();
     auto c = s.join(99);
     static_assert(std::same_as<decltype(c), Vec<i32>>);
@@ -2276,8 +2276,8 @@ TEST(Slice, JoinSlices) {
     EXPECT_EQ(c2, Vec<i32>(1, 2, 3, 4, 98, 99, 5, 6, 98, 99, 7, 8, 9));
   }
   {
-    Vec<SliceMut<i32>> vs =
-        sus::vec(v1.as_mut_slice(), v2.as_mut_slice(), v3.as_mut_slice());
+    auto vs = Vec<SliceMut<i32>>(v1.as_mut_slice(), v2.as_mut_slice(),
+                                 v3.as_mut_slice());
     SliceMut<SliceMut<i32>> s = vs.as_mut_slice();
     auto c = s.join(99);
     static_assert(std::same_as<decltype(c), Vec<i32>>);
@@ -2303,7 +2303,7 @@ TEST(Slice, JoinExample) {
 }
 
 TEST(SliceMut, ConvertsToSlice) {
-  Vec<i32> v = sus::vec(1, 2, 3, 4);
+  auto v = Vec<i32>(1, 2, 3, 4);
   SliceMut<i32> sm = v.as_mut_slice();
   const SliceMut<i32> csm = v.as_mut_slice();
   // Explicit construction.
@@ -2335,7 +2335,7 @@ TEST(SliceMut, ConvertsToSlice) {
 }
 
 TEST(Slice, Contains) {
-  Vec<i32> v1 = sus::vec(1, 2, 3, 4);
+  auto v1 = Vec<i32>(1, 2, 3, 4);
   auto s = v1.as_slice();
   EXPECT_EQ(s.contains(0), false);
   EXPECT_EQ(s.contains(1), true);
@@ -2346,8 +2346,8 @@ TEST(Slice, Contains) {
 }
 
 TEST(Slice, CopyFromSlice) {
-  Vec<i32> v1 = sus::vec(1, 2, 3, 4);
-  Vec<i32> v2 = sus::vec(5, 6, 7, 8);
+  auto v1 = Vec<i32>(1, 2, 3, 4);
+  auto v2 = Vec<i32>(5, 6, 7, 8);
   // Same slice, non overlapping.
   v1["0..2"_r].copy_from_slice(v1["2..4"_r]);
   EXPECT_EQ(v1[0u], 3);
@@ -2379,7 +2379,7 @@ TEST(Slice, CopyFromSlice) {
 }
 
 TEST(SliceDeathTest, CopyFromSliceChecks) {
-  Vec<i32> v1 = sus::vec(1, 2, 3, 4);
+  auto v1 = Vec<i32>(1, 2, 3, 4);
 #if GTEST_HAS_DEATH_TEST
   // Overlapping.
   EXPECT_DEATH(v1["0..2"_r].copy_from_slice(v1["1..4"_r]), "");
@@ -2390,8 +2390,8 @@ TEST(SliceDeathTest, CopyFromSliceChecks) {
 }
 
 TEST(Slice, CopyFromSliceUnchecked) {
-  Vec<i32> v1 = sus::vec(1, 2, 3, 4);
-  Vec<i32> v2 = sus::vec(5, 6, 7, 8);
+  auto v1 = Vec<i32>(1, 2, 3, 4);
+  auto v2 = Vec<i32>(5, 6, 7, 8);
   // Same slice, non overlapping.
   EXPECT_EQ(v1["0..2"_r].len(), 2u);
   v1["0..2"_r].copy_from_slice_unchecked(unsafe_fn, v1["2..4"_r]);
@@ -2439,8 +2439,8 @@ TEST(Slice, CloneFromSlice) {
     constexpr Cloner clone() const noexcept { return Cloner(i * 10); }
   };
 
-  Vec<Cloner> v1 = sus::vec(1_i32, 2_i32, 3_i32, 4_i32);
-  Vec<Cloner> v2 = sus::vec(6_i32, 7_i32, 8_i32, 9_i32);
+  auto v1 = Vec<Cloner>(1_i32, 2_i32, 3_i32, 4_i32);
+  auto v2 = Vec<Cloner>(6_i32, 7_i32, 8_i32, 9_i32);
   v1["0..2"_r].clone_from_slice(v2["2..4"_r]);
   EXPECT_EQ(v1[0u].i, 80);
   EXPECT_EQ(v1[1u].i, 90);
@@ -2465,7 +2465,7 @@ TEST(Slice, CloneFromSlice) {
 }
 
 TEST(SliceDeathTest, CloneFromSliceChecks) {
-  Vec<i32> v1 = sus::vec(1, 2, 3, 4);
+  auto v1 = Vec<i32>(1, 2, 3, 4);
 #if GTEST_HAS_DEATH_TEST
   // Different sizes.
   EXPECT_DEATH(v1["0..1"_r].clone_from_slice(v1["1..4"_r]), "");
@@ -2474,7 +2474,7 @@ TEST(SliceDeathTest, CloneFromSliceChecks) {
 }
 
 TEST(Slice, EndsWith) {
-  Vec<i32> v1 = sus::vec(1, 2, 3, 4);
+  auto v1 = Vec<i32>(1, 2, 3, 4);
   EXPECT_TRUE(v1[".."_r].ends_with(v1["4..4"_r]));
   EXPECT_TRUE(v1[".."_r].ends_with(v1["3..4"_r]));
   EXPECT_TRUE(v1[".."_r].ends_with(v1["2..4"_r]));
@@ -2497,12 +2497,12 @@ TEST(Slice, Eq) {
   static_assert(!sus::cmp::Eq<SliceMut<int>, SliceMut<NotEq>>);
   static_assert(!sus::cmp::Eq<SliceMut<NotEq>>);
 
-  Vec<i32> v1 = sus::vec(1, 2, 3, 4);
+  auto v1 = Vec<i32>(1, 2, 3, 4);
   EXPECT_EQ(v1.as_slice(), v1.as_slice());
   EXPECT_EQ(v1.as_mut_slice(), v1.as_slice());
   EXPECT_EQ(v1.as_slice(), v1.as_mut_slice());
   EXPECT_EQ(v1.as_mut_slice(), v1.as_mut_slice());
-  Vec<i32> v2 = sus::vec(1, 2, 3, 4);
+  auto v2 = Vec<i32>(1, 2, 3, 4);
   EXPECT_EQ(v1.as_slice(), v2.as_slice());
   EXPECT_EQ(v1.as_mut_slice(), v2.as_slice());
   EXPECT_EQ(v1.as_slice(), v2.as_mut_slice());
@@ -2657,39 +2657,38 @@ TEST(Slice, Repeat) {
   {
     auto v1 = Vec<i32>(1);
     auto v2 = v1.as_slice().repeat(1u);
-    EXPECT_EQ(v2, sus::vec(1).construct<i32>());
+    EXPECT_EQ(v2, Vec<i32>(1));
   }
   {
     auto v1 = Vec<i32>(1, 2, 3, 4, 5);
     auto v2 = v1.as_slice().repeat(1u);
-    EXPECT_EQ(v2, sus::vec(1, 2, 3, 4, 5).construct<i32>());
+    EXPECT_EQ(v2, Vec<i32>(1, 2, 3, 4, 5));
   }
   {
     auto v1 = Vec<i32>(1, 2);
     auto v2 = v1.as_slice().repeat(3u);
-    EXPECT_EQ(v2, sus::vec(1, 2, 1, 2, 1, 2).construct<i32>());
+    EXPECT_EQ(v2, Vec<i32>(1, 2, 1, 2, 1, 2));
   }
   {
     auto v1 = Vec<i32>(1, 2);
     auto v2 = v1.as_slice().repeat(27u);
-    EXPECT_EQ(v2, sus::vec(1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2,
-                           1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2,
-                           1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2)
-                      .construct<i32>());
+    EXPECT_EQ(
+        v2, Vec<i32>(1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2,
+                     1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2,
+                     1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2));
   }
   {
     auto v1 = Vec<i32>(1, 2, 3, 4, 5);
     auto v2 = v1.as_slice().repeat(13u);
-    EXPECT_EQ(v2, sus::vec(1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3,
+    EXPECT_EQ(v2, Vec<i32>(1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3,
                            4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1,
                            2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4,
-                           5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5)
-                      .construct<i32>());
+                           5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5));
   }
 }
 
 TEST(Slice, RChunks) {
-  sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+  auto v = sus::Vec<i32>(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
   auto s = v.as_slice();
   auto sm = v.as_mut_slice();
   static_assert(std::same_as<decltype(s.chunks(3u)), decltype(sm.chunks(3u))>);
@@ -2967,7 +2966,7 @@ TEST(Slice, RChunks) {
 }
 
 TEST(Slice, RChunksMut) {
-  sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+  auto v = sus::Vec<i32>(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
   auto s = v.as_mut_slice();
 
   {
@@ -3243,7 +3242,7 @@ TEST(Slice, RChunksMut) {
 }
 
 TEST(Slice, RChunksExact) {
-  sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+  auto v = sus::Vec<i32>(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
   auto s = v.as_slice();
 
   {
@@ -3501,7 +3500,7 @@ TEST(Slice, RChunksExact) {
 }
 
 TEST(Slice, RChunksExactMut) {
-  sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+  auto v = sus::Vec<i32>(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
   auto s = v.as_mut_slice();
 
   {
@@ -5554,79 +5553,79 @@ TEST(SliceMut, RSplitNMut) {
 
 TEST(SliceMut, Swap) {
   {
-    sus::Vec<i32> v = sus::vec(1, 2, 3, 4, 5, 6);
+    auto v = sus::Vec<i32>(1, 2, 3, 4, 5, 6);
     SliceMut<i32> s = v.as_mut_slice();
     s.swap(0u, 0u);
-    sus::Vec<i32> expected = sus::vec(1, 2, 3, 4, 5, 6);
+    auto expected = sus::Vec<i32>(1, 2, 3, 4, 5, 6);
     EXPECT_EQ(s, expected);
   }
   {
-    sus::Vec<i32> v = sus::vec(1, 2, 3, 4, 5, 6);
+    auto v = sus::Vec<i32>(1, 2, 3, 4, 5, 6);
     SliceMut<i32> s = v.as_mut_slice();
     s.swap(0u, 1u);
-    sus::Vec<i32> expected = sus::vec(2, 1, 3, 4, 5, 6);
+    auto expected = sus::Vec<i32>(2, 1, 3, 4, 5, 6);
     EXPECT_EQ(s, expected);
   }
   {
-    sus::Vec<i32> v = sus::vec(1, 2, 3, 4, 5, 6);
+    auto v = sus::Vec<i32>(1, 2, 3, 4, 5, 6);
     SliceMut<i32> s = v.as_mut_slice();
     s.swap(3u, 5u);
-    sus::Vec<i32> expected = sus::vec(1, 2, 3, 6, 5, 4);
+    auto expected = sus::Vec<i32>(1, 2, 3, 6, 5, 4);
     EXPECT_EQ(s, expected);
   }
 }
 
 TEST(SliceMut, SwapNonOverlapping) {
   {
-    sus::Vec<i32> v = sus::vec(1, 2, 3, 4, 5, 6);
+    auto v = sus::Vec<i32>(1, 2, 3, 4, 5, 6);
     SliceMut<i32> s = v.as_mut_slice();
     s.swap_nonoverlapping(unsafe_fn, 0u, 1u);
-    sus::Vec<i32> expected = sus::vec(2, 1, 3, 4, 5, 6);
+    auto expected = sus::Vec<i32>(2, 1, 3, 4, 5, 6);
     EXPECT_EQ(s, expected);
   }
   {
-    sus::Vec<i32> v = sus::vec(1, 2, 3, 4, 5, 6);
+    auto v = sus::Vec<i32>(1, 2, 3, 4, 5, 6);
     SliceMut<i32> s = v.as_mut_slice();
     s.swap_nonoverlapping(unsafe_fn, 3u, 5u);
-    sus::Vec<i32> expected = sus::vec(1, 2, 3, 6, 5, 4);
+    auto expected = sus::Vec<i32>(1, 2, 3, 6, 5, 4);
     EXPECT_EQ(s, expected);
   }
 }
 
 TEST(SliceMut, SwapUnchecked) {
   {
-    sus::Vec<i32> v = sus::vec(1, 2, 3, 4, 5, 6);
+    auto v = sus::Vec<i32>(1, 2, 3, 4, 5, 6);
     SliceMut<i32> s = v.as_mut_slice();
     s.swap_unchecked(unsafe_fn, 0u, 0u);
-    sus::Vec<i32> expected = sus::vec(1, 2, 3, 4, 5, 6);
+    auto expected = sus::Vec<i32>(1, 2, 3, 4, 5, 6);
     EXPECT_EQ(s, expected);
   }
   {
-    sus::Vec<i32> v = sus::vec(1, 2, 3, 4, 5, 6);
+    auto v = sus::Vec<i32>(1, 2, 3, 4, 5, 6);
     SliceMut<i32> s = v.as_mut_slice();
     s.swap_unchecked(unsafe_fn, 0u, 1u);
-    sus::Vec<i32> expected = sus::vec(2, 1, 3, 4, 5, 6);
+    auto expected = sus::Vec<i32>(2, 1, 3, 4, 5, 6);
     EXPECT_EQ(s, expected);
   }
   {
-    sus::Vec<i32> v = sus::vec(1, 2, 3, 4, 5, 6);
+    auto v = sus::Vec<i32>(1, 2, 3, 4, 5, 6);
     SliceMut<i32> s = v.as_mut_slice();
     s.swap_unchecked(unsafe_fn, 3u, 5u);
-    sus::Vec<i32> expected = sus::vec(1, 2, 3, 6, 5, 4);
+    auto expected = sus::Vec<i32>(1, 2, 3, 6, 5, 4);
     EXPECT_EQ(s, expected);
   }
 }
 
 TEST(SliceMut, SwapWithSlice) {
   {
-    sus::Vec<i32> v1 = sus::vec(1, 2, 3, 4, 5, 6);
+    auto v1 = sus::Vec<i32>(1, 2, 3, 4, 5, 6);
     SliceMut<i32> s1 = v1.as_mut_slice();
-    sus::Vec<i32> v2 = sus::vec(101, 102, 103, 104, 105, 106);
+    auto v2 = sus::Vec<i32>(101, 102, 103, 104, 105, 106);
     SliceMut<i32> s2 = v2.as_mut_slice();
 
     s1.swap_with_slice(s2);
-    sus::Vec<i32> expected1 = sus::vec(1, 2, 3, 4, 5, 6);
-    sus::Vec<i32> expected2 = sus::vec(101, 102, 103, 104, 105, 106);
+    auto expected1 = sus::Vec<i32>(1, 2, 3, 4, 5, 6);
+    auto expected2 = sus::Vec<i32>(101, 102, 103, 104, 105, 106);
     EXPECT_EQ(s1, expected2);
     EXPECT_EQ(s2, expected1);
     s1.swap_with_slice(s2);
@@ -5634,15 +5633,15 @@ TEST(SliceMut, SwapWithSlice) {
     EXPECT_EQ(s2, expected2);
 
     s1["2..4"_r].swap_with_slice(s2["3..5"_r]);
-    sus::Vec<i32> expected3 = sus::vec(1, 2, 104, 105, 5, 6);
-    sus::Vec<i32> expected4 = sus::vec(101, 102, 103, 3, 4, 106);
+    auto expected3 = sus::Vec<i32>(1, 2, 104, 105, 5, 6);
+    auto expected4 = sus::Vec<i32>(101, 102, 103, 3, 4, 106);
     EXPECT_EQ(s1, expected3);
     EXPECT_EQ(s2, expected4);
   }
 }
 
 TEST(Slice, SplitFirst) {
-  sus::Vec<i32> v = sus::vec(0, 1, 2);
+  auto v = sus::Vec<i32>(0, 1, 2);
   sus::Slice<i32> s = v.as_slice();
 
   auto&& [first, rest] = s.split_first().unwrap();
@@ -5666,7 +5665,7 @@ TEST(Slice, SplitFirst) {
 }
 
 TEST(SliceMut, SplitFirstMut) {
-  sus::Vec<i32> v = sus::vec(0, 1, 2);
+  auto v = sus::Vec<i32>(0, 1, 2);
   sus::SliceMut<i32> s = v.as_mut_slice();
 
   auto&& [first, rest] = s.split_first_mut().unwrap();
@@ -5690,7 +5689,7 @@ TEST(SliceMut, SplitFirstMut) {
 }
 
 TEST(Slice, SplitLast) {
-  sus::Vec<i32> v = sus::vec(0, 1, 2);
+  auto v = sus::Vec<i32>(0, 1, 2);
   sus::Slice<i32> s = v.as_slice();
 
   auto&& [last, rest] = s.split_last().unwrap();
@@ -5714,7 +5713,7 @@ TEST(Slice, SplitLast) {
 }
 
 TEST(SliceMut, SplitLastMut) {
-  sus::Vec<i32> v = sus::vec(0, 1, 2);
+  auto v = sus::Vec<i32>(0, 1, 2);
   sus::SliceMut<i32> s = v.as_mut_slice();
 
   auto&& [last, rest] = s.split_last_mut().unwrap();
@@ -5738,7 +5737,7 @@ TEST(SliceMut, SplitLastMut) {
 }
 
 TEST(Slice, StartsWith) {
-  sus::Vec<i32> v = sus::vec(1, 2, 2, 3, 4, 5);
+  auto v = sus::Vec<i32>(1, 2, 2, 3, 4, 5);
   sus::Slice<i32> s = v.as_slice();
   // Comparing with itself.
   EXPECT_EQ(s.starts_with(s[".."_r]), true);
@@ -5758,7 +5757,7 @@ TEST(Slice, StartsWith) {
 }
 
 TEST(Slice, StripPrefix) {
-  sus::Vec<i32> v = sus::vec(1, 2, 2, 3, 4, 5);
+  auto v = sus::Vec<i32>(1, 2, 2, 3, 4, 5);
   sus::Slice<i32> s = v.as_slice();
 
   static_assert(std::same_as<decltype(s.strip_prefix(Slice<i32>())),
@@ -5768,7 +5767,7 @@ TEST(Slice, StripPrefix) {
   EXPECT_EQ(s.strip_prefix(s), sus::Some);
   EXPECT_EQ(s.strip_prefix(v["..5"_r]), sus::Some);
   EXPECT_EQ(s.strip_prefix(v["1..5"_r]), sus::None);
-  sus::Vec<i32> more = sus::vec(1, 2, 2, 3, 4, 5, 6);
+  auto more = sus::Vec<i32>(1, 2, 2, 3, 4, 5, 6);
   EXPECT_EQ(s.strip_prefix(more), sus::None);
 
   EXPECT_EQ(s.strip_prefix(Slice<i32>()).unwrap(),
@@ -5779,7 +5778,7 @@ TEST(Slice, StripPrefix) {
 }
 
 TEST(SliceMut, StripPrefixMut) {
-  sus::Vec<i32> v = sus::vec(1, 2, 2, 3, 4, 5);
+  auto v = sus::Vec<i32>(1, 2, 2, 3, 4, 5);
   sus::SliceMut<i32> s = v.as_mut_slice();
 
   static_assert(std::same_as<decltype(s.strip_prefix_mut(Slice<i32>())),
@@ -5789,7 +5788,7 @@ TEST(SliceMut, StripPrefixMut) {
   EXPECT_EQ(s.strip_prefix_mut(s), sus::Some);
   EXPECT_EQ(s.strip_prefix_mut(v["..5"_r]), sus::Some);
   EXPECT_EQ(s.strip_prefix_mut(v["1..5"_r]), sus::None);
-  sus::Vec<i32> more = sus::vec(1, 2, 2, 3, 4, 5, 6);
+  auto more = sus::Vec<i32>(1, 2, 2, 3, 4, 5, 6);
   EXPECT_EQ(s.strip_prefix_mut(more), sus::None);
 
   EXPECT_EQ(s.strip_prefix_mut(Slice<i32>()).unwrap(),
@@ -5800,7 +5799,7 @@ TEST(SliceMut, StripPrefixMut) {
 }
 
 TEST(Slice, StripSuffix) {
-  sus::Vec<i32> v = sus::vec(1, 2, 2, 3, 4, 5);
+  auto v = sus::Vec<i32>(1, 2, 2, 3, 4, 5);
   sus::Slice<i32> s = v.as_slice();
 
   static_assert(std::same_as<decltype(s.strip_suffix(Slice<i32>())),
@@ -5810,7 +5809,7 @@ TEST(Slice, StripSuffix) {
   EXPECT_EQ(s.strip_suffix(s), sus::Some);
   EXPECT_EQ(s.strip_suffix(v["1.."_r]), sus::Some);
   EXPECT_EQ(s.strip_suffix(v["1..5"_r]), sus::None);
-  sus::Vec<i32> more = sus::vec(1, 2, 2, 3, 4, 5, 6);
+  auto more = sus::Vec<i32>(1, 2, 2, 3, 4, 5, 6);
   EXPECT_EQ(s.strip_suffix(more), sus::None);
 
   EXPECT_EQ(s.strip_suffix(Slice<i32>()).unwrap(),
@@ -5821,7 +5820,7 @@ TEST(Slice, StripSuffix) {
 }
 
 TEST(SliceMut, StripSuffixMut) {
-  sus::Vec<i32> v = sus::vec(1, 2, 2, 3, 4, 5);
+  auto v = sus::Vec<i32>(1, 2, 2, 3, 4, 5);
   sus::SliceMut<i32> s = v.as_mut_slice();
 
   static_assert(std::same_as<decltype(s.strip_suffix_mut(Slice<i32>())),
@@ -5831,7 +5830,7 @@ TEST(SliceMut, StripSuffixMut) {
   EXPECT_EQ(s.strip_suffix_mut(s), sus::Some);
   EXPECT_EQ(s.strip_suffix_mut(v["1.."_r]), sus::Some);
   EXPECT_EQ(s.strip_suffix_mut(v["1..5"_r]), sus::None);
-  sus::Vec<i32> more = sus::vec(1, 2, 2, 3, 4, 5, 6);
+  auto more = sus::Vec<i32>(1, 2, 2, 3, 4, 5, 6);
   EXPECT_EQ(s.strip_suffix_mut(more), sus::None);
 
   EXPECT_EQ(s.strip_suffix_mut(Slice<i32>()).unwrap(),
@@ -5842,7 +5841,7 @@ TEST(SliceMut, StripSuffixMut) {
 }
 
 TEST(Slice, Windows) {
-  sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7);
+  auto v = sus::Vec<i32>(0, 1, 2, 3, 4, 5, 6, 7);
   sus::Slice<i32> s = v.as_slice();
 
   // Larger than the slice size.
@@ -5888,7 +5887,7 @@ TEST(Slice, Windows) {
 }
 
 TEST(SliceMut, WindowsMut) {
-  sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7);
+  auto v = sus::Vec<i32>(0, 1, 2, 3, 4, 5, 6, 7);
   sus::SliceMut<i32> s = v.as_mut_slice();
 
   // Larger than the slice size.
@@ -6011,7 +6010,7 @@ TEST(SliceMut, DropIteratorInvalidationTracking) {
 
 TEST(SliceDeathTest, ChunksInvalidation) {
 #if GTEST_HAS_DEATH_TEST
-  sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+  auto v = sus::Vec<i32>(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
   EXPECT_DEATH(
       {
         auto it = v.chunks(2u);
@@ -6073,7 +6072,7 @@ TEST(SliceDeathTest, ChunksInvalidation) {
 
 TEST(SliceDeathTest, SplitInvalidation) {
 #if GTEST_HAS_DEATH_TEST
-  sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+  auto v = sus::Vec<i32>(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
   EXPECT_DEATH(
       {
         auto it = v.split([](auto) { return true; });
@@ -6149,7 +6148,7 @@ TEST(SliceDeathTest, SplitInvalidation) {
 
 TEST(SliceDeathTest, WindowsInvalidation) {
 #if GTEST_HAS_DEATH_TEST
-  sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+  auto v = sus::Vec<i32>(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
   EXPECT_DEATH(
       {
         auto it = v.windows(3u);

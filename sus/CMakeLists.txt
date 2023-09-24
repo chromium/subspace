@@ -49,7 +49,6 @@ target_sources(subspace PUBLIC
     "collections/__private/slice_methods.inc"
     "collections/__private/slice_mut_methods.inc"
     "collections/__private/sort.h"
-    "collections/__private/vec_marker.h"
     "collections/iterators/array_iter.h"
     "collections/iterators/chunks.h"
     "collections/iterators/drain.h"

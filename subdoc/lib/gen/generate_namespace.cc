@@ -589,7 +589,8 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
   for (const auto& [u, sub_element] : element.records) {
     if (sub_element.hidden()) continue;
     if (auto result =
-            generate_record(db, sub_element, ancestors, sus::vec(), options);
+            generate_record(db, sub_element, ancestors,
+                            sus::Vec<const RecordElement*>(), options);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }

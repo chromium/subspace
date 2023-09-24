@@ -25,7 +25,6 @@
 #include "fmt/core.h"
 #include "sus/assertions/check.h"
 #include "sus/assertions/debug_check.h"
-#include "sus/collections/__private/vec_marker.h"
 #include "sus/collections/collections.h"
 #include "sus/collections/concat.h"
 #include "sus/collections/iterators/chunks.h"
@@ -985,6 +984,13 @@ class Vec final {
                                            decltype(len_));
 };
 
+template <class T, std::same_as<T>... Ts>
+Vec(const T&, const Ts&...) -> Vec<T>;
+template <class T, std::same_as<T>... Ts>
+Vec(T&, Ts&...) -> Vec<T>;
+template <class T, std::same_as<T>... Ts>
+Vec(T&&, Ts&&...) -> Vec<T>;
+
 #define _ptr_expr data_
 #define _len_expr len_
 #define _iter_refs_expr iter_refs_.to_iter_from_owner()
@@ -1044,31 +1050,6 @@ using ::sus::iter::__private::begin;
 /// [`Vec::iter()`]($sus:collections::Vec::iter).
 using ::sus::iter::__private::end;
 
-/// Used to construct a [`Vec`]($sus::collections::Vec) with the parameters as
-/// its values.
-///
-/// Calling `vec()` produces a hint to make a [`Vec<T>`]($sus::collections::Vec)
-/// but does not actually construct [`Vec<T>`]($sus::collections::Vec), as the
-/// type `T` is not known here. The [`Vec`]($sus::collections::Vec) will be
-/// constructed once the `T` is deduced by converting the marker to the
-/// [`Vec<T>`]($sus::collections::Vec) type.
-///
-/// Passing no arguments will produce an empty [`Vec`]($sus::collections::Vec).
-///
-/// A marker type like that from `vec` is used instead of explicitly
-/// constructing a [`Vec`]($sus::collections::Vec) in order to avoid redundantly
-/// having to specify `T` in `Vec<T>` when using the result of `vec()` as a
-/// function argument or return value.
-template <class... Ts>
-[[nodiscard]] inline constexpr auto vec(Ts&&... vs sus_lifetimebound) noexcept {
-  if constexpr (sizeof...(Ts) > 0) {
-    return __private::VecMarker<Ts...>(
-        ::sus::tuple_type::Tuple<Ts&&...>(::sus::forward<Ts>(vs)...));
-  } else {
-    return __private::VecEmptyMarker();
-  }
-}
-
 }  // namespace sus::collections
 
 // sus::iter::FromIterator trait for Vec.
@@ -1117,5 +1098,4 @@ sus__format_to_stream(sus::collections, Vec, T);
 // Promote Vec into the `sus` namespace.
 namespace sus {
 using ::sus::collections::Vec;
-using ::sus::collections::vec;
 }  // namespace sus

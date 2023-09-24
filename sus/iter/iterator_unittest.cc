@@ -1784,7 +1784,7 @@ TEST(Iterator, Flatten) {
   {
     auto v1 = sus::Vec<i32>(1, 2);
     auto v2 = sus::Vec<i32>(3);
-    auto vecs = sus::vec(v1.iter(), v2.iter()).construct();
+    auto vecs = sus::Vec(v1.iter(), v2.iter());
     auto it = sus::move(vecs).into_iter().flatten();
     static_assert(std::same_as<decltype(it.next()), Option<const i32&>>);
     EXPECT_EQ(it.next().unwrap(), 1);
@@ -1796,7 +1796,7 @@ TEST(Iterator, Flatten) {
   {
     auto v1 = sus::Vec<i32>(1, 2);
     auto v2 = sus::Vec<i32>(3);
-    auto vecs = sus::vec(v1.iter_mut(), v2.iter_mut()).construct();
+    auto vecs = sus::Vec(v1.iter_mut(), v2.iter_mut());
     auto it = sus::move(vecs).into_iter().flatten();
     static_assert(std::same_as<decltype(it.next()), Option<i32&>>);
     EXPECT_EQ(it.next().unwrap(), 1);
@@ -2014,7 +2014,7 @@ TEST(Iterator, Fold) {
                     .fold(sus::Vec<char>(), [](sus::Vec<char> acc, char v) {
                       acc.push(v);
                       return acc;
-                    }) == sus::vec('a', 'b', 'c', 'd', 'e'));
+                    }) == sus::Vec('a', 'b', 'c', 'd', 'e'));
 }
 
 TEST(Iterator, Fold_Example_References) {
@@ -2052,7 +2052,7 @@ TEST(Iterator, Rfold) {
                     .rfold(sus::Vec<char>(), [](sus::Vec<char> acc, char v) {
                       acc.push(v);
                       return acc;
-                    }) == sus::vec('e', 'd', 'c', 'b', 'a'));
+                    }) == sus::Vec('e', 'd', 'c', 'b', 'a'));
 }
 
 TEST(Iterator, ForEach) {
@@ -2087,7 +2087,7 @@ TEST(Iterator, ForEach) {
         .into_iter()
         .for_each([&](char v) { acc.push(v); });
     return acc;
-  }() == sus::vec('a', 'b', 'c', 'd', 'e'));
+  }() == sus::Vec('a', 'b', 'c', 'd', 'e'));
 }
 
 TEST(Iterator, Fuse) {
@@ -2338,7 +2338,7 @@ TEST(Iterator, Inspect) {
         .inspect([&](const i32& v) { seen.push(v); })
         .count();
     return seen;
-  }() == sus::vec(1, 2, 3, 4, 5));
+  }() == sus::Vec(1, 2, 3, 4, 5));
 }
 
 TEST(Iterator, Last) {
