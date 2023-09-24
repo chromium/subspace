@@ -487,7 +487,7 @@ static_assert(sus::cmp::Ord<Sortable>);
 TEST(SliceMut, Sort) {
   {
     // clang-format off
-    sus::Array<Sortable, 9> unsorted = sus::array(
+    auto unsorted = sus::Array<Sortable, 9>(
       Sortable(3, 0),
       Sortable(3, 1),
       Sortable(4, 0),
@@ -498,7 +498,7 @@ TEST(SliceMut, Sort) {
       Sortable(6, 0),
       Sortable(5, 0)
     );
-    sus::Array<Sortable, 9> sorted = sus::array(
+    auto sorted = sus::Array<Sortable, 9>(
       Sortable(1, 0),
       Sortable(2, 0),
       Sortable(2, 1),
@@ -537,7 +537,7 @@ TEST(SliceMut, Sort) {
 TEST(SliceMut, SortBy) {
   {
     // clang-format off
-    sus::Array<Sortable, 9> unsorted = sus::array(
+    auto unsorted = sus::Array<Sortable, 9>(
       Sortable(3, 0),
       Sortable(3, 1),
       Sortable(4, 0),
@@ -548,7 +548,7 @@ TEST(SliceMut, SortBy) {
       Sortable(6, 0),
       Sortable(5, 0)
     );
-    sus::Array<Sortable, 9> sorted = sus::array(
+    auto sorted = sus::Array<Sortable, 9>(
       Sortable(6, 0),
       Sortable(5, 0),
       Sortable(4, 0),
@@ -593,7 +593,7 @@ TEST(SliceMut, SortByKey) {
   };
 
   // clang-format off
-  sus::Array<Unsortable, 9> unsorted = sus::array(
+  auto unsorted = sus::Array<Unsortable, 9>(
     Unsortable(Sortable(3, 0)),
     Unsortable(Sortable(3, 1)),
     Unsortable(Sortable(4, 0)),
@@ -604,7 +604,7 @@ TEST(SliceMut, SortByKey) {
     Unsortable(Sortable(6, 0)),
     Unsortable(Sortable(5, 0))
   );
-  sus::Array<Unsortable, 9> sorted = sus::array(
+  auto sorted = sus::Array<Unsortable, 9>(
     Unsortable(Sortable(1, 0)),
     Unsortable(Sortable(2, 0)),
     Unsortable(Sortable(2, 1)),
@@ -635,7 +635,7 @@ TEST(SliceMut, SortByCachedKey) {
   };
 
   // clang-format off
-  sus::Array<Unsortable, 9> unsorted = sus::array(
+  auto unsorted = sus::Array<Unsortable, 9>(
     Unsortable(Sortable(3, 0)),
     Unsortable(Sortable(3, 1)),
     Unsortable(Sortable(4, 0)),
@@ -646,7 +646,7 @@ TEST(SliceMut, SortByCachedKey) {
     Unsortable(Sortable(6, 0)),
     Unsortable(Sortable(5, 0))
   );
-  sus::Array<Unsortable, 9> sorted = sus::array(
+  auto sorted = sus::Array<Unsortable, 9>(
     Unsortable(Sortable(1, 0)),
     Unsortable(Sortable(2, 0)),
     Unsortable(Sortable(2, 1)),
@@ -669,8 +669,8 @@ TEST(SliceMut, SortByCachedKey) {
 
 TEST(SliceMut, SortUnstable) {
   {
-    sus::Array<i32, 6> unsorted = sus::array(3, 4, 2, 1, 6, 5);
-    sus::Array<i32, 6> sorted = sus::array(1, 2, 3, 4, 5, 6);
+    auto unsorted = sus::Array<i32, 6>(3, 4, 2, 1, 6, 5);
+    auto sorted = sus::Array<i32, 6>(1, 2, 3, 4, 5, 6);
 
     SliceMut<i32> s = unsorted.as_mut_slice();
     s.sort_unstable();
@@ -697,8 +697,8 @@ TEST(SliceMut, SortUnstable) {
 
 TEST(SliceMut, SortUnstableBy) {
   {
-    sus::Array<i32, 6> unsorted = sus::array(3, 4, 2, 1, 6, 5);
-    sus::Array<i32, 6> sorted = sus::array(6, 5, 4, 3, 2, 1);
+    auto unsorted = sus::Array<i32, 6>(3, 4, 2, 1, 6, 5);
+    auto sorted = sus::Array<i32, 6>(6, 5, 4, 3, 2, 1);
 
     SliceMut<i32> s = unsorted.as_mut_slice();
     // Sorts backward.
@@ -731,12 +731,12 @@ TEST(SliceMut, SortUnstableByKey) {
     return u.sortable;
   };
 
-  sus::Array<Unsortable, 6> unsorted =
-      sus::array(Unsortable(3), Unsortable(4), Unsortable(2), Unsortable(1),
-                 Unsortable(6), Unsortable(5));
-  sus::Array<Unsortable, 6> sorted =
-      sus::array(Unsortable(1), Unsortable(2), Unsortable(3), Unsortable(4),
-                 Unsortable(5), Unsortable(6));
+  auto unsorted =
+      sus::Array<Unsortable, 6>(Unsortable(3), Unsortable(4), Unsortable(2),
+                                Unsortable(1), Unsortable(6), Unsortable(5));
+  auto sorted =
+      sus::Array<Unsortable, 6>(Unsortable(1), Unsortable(2), Unsortable(3),
+                                Unsortable(4), Unsortable(5), Unsortable(6));
 
   SliceMut<Unsortable> s = unsorted.as_mut_slice();
   s.sort_unstable_by_key(unsortable_key);
@@ -756,7 +756,7 @@ TEST(Slice, Default) {
 }
 
 TEST(Slice, ToVec) {
-  sus::Array<i32, 6> array = sus::array(3, 4, 2, 1, 6, 5);
+  auto array = sus::Array<i32, 6>(3, 4, 2, 1, 6, 5);
   {
     auto s = array.as_slice();
     EXPECT_EQ(array.as_ptr(), s.as_ptr());
@@ -801,7 +801,7 @@ TEST(Slice, ToVec) {
   };
   static_assert(sus::mem::Clone<Cloner>);
   static_assert(!sus::mem::Copy<Cloner>);
-  sus::Array<Cloner, 2> v = sus::array(Cloner(1), Cloner(2));
+  auto v = sus::Array<Cloner, 2>(Cloner(1), Cloner(2));
   {
     auto s = v.as_slice();
     sus::Vec<Cloner> v2 = s.to_vec();
@@ -821,7 +821,7 @@ TEST(Slice, ToVec) {
 }
 
 TEST(Slice, AsPtr) {
-  sus::Array<i32, 3> array = sus::array(3, 4, 2);
+  auto array = sus::Array<i32, 3>(3, 4, 2);
   auto s = array.as_slice();
   EXPECT_EQ(s.as_ptr(), array.as_ptr());
 
@@ -830,7 +830,7 @@ TEST(Slice, AsPtr) {
 }
 
 TEST(Slice, AsPtrRange) {
-  sus::Array<i32, 3> array = sus::array(3, 4, 2);
+  auto array = sus::Array<i32, 3>(3, 4, 2);
   {
     auto s = array.as_slice();
     auto r = s.as_ptr_range();
@@ -856,13 +856,13 @@ TEST(Slice, AsPtrRange) {
 }
 
 TEST(SliceMut, AsMutPtr) {
-  sus::Array<i32, 3> array = sus::array(3, 4, 2);
+  auto array = sus::Array<i32, 3>(3, 4, 2);
   auto sm = array.as_mut_slice();
   EXPECT_EQ(sm.as_mut_ptr(), array.as_mut_ptr());
 }
 
 TEST(SliceMut, AsMutPtrRange) {
-  sus::Array<i32, 3> array = sus::array(3, 4, 2);
+  auto array = sus::Array<i32, 3>(3, 4, 2);
   auto sm = array.as_mut_slice();
   auto r = sm.as_mut_ptr_range();
   static_assert(std::same_as<decltype(r), sus::ops::Range<i32*>>);
@@ -926,7 +926,7 @@ TEST(Slice, BinarySearchBy) {
 }
 
 TEST(Slice, BinarySearchByKey) {
-  sus::Array<sus::Tuple<i32, i32>, 13> arr = sus::array(
+  auto arr = sus::Array<sus::Tuple<i32, i32>, 13>(
       sus::tuple(0, 0), sus::tuple(2, 1), sus::tuple(4, 1), sus::tuple(5, 1),
       sus::tuple(3, 1), sus::tuple(1, 2), sus::tuple(2, 3), sus::tuple(4, 5),
       sus::tuple(5, 8), sus::tuple(3, 13), sus::tuple(1, 21), sus::tuple(2, 34),
@@ -939,19 +939,19 @@ TEST(Slice, BinarySearchByKey) {
                                [](const sus::Tuple<i32, i32>& pair) -> i32 {
                                  return pair.at<1u>();
                                }),
-        sus::result::ok(9_usize).construct<usize>());
+        sus::ok(9u));
     EXPECT_EQ(
         s.binary_search_by_key(4_i32,
                                [](const sus::Tuple<i32, i32>& pair) -> i32 {
                                  return pair.at<1u>();
                                }),
-        sus::result::err(7_usize).construct<usize>());
+        sus::err(7u));
     EXPECT_EQ(
         s.binary_search_by_key(100_i32,
                                [](const sus::Tuple<i32, i32>& pair) -> i32 {
                                  return pair.at<1u>();
                                }),
-        sus::result::err(13_usize).construct<usize>());
+        sus::err(13u));
     auto r = s.binary_search_by_key(
         1_i32,
         [](const sus::Tuple<i32, i32>& pair) -> i32 { return pair.at<1u>(); });
@@ -965,19 +965,19 @@ TEST(Slice, BinarySearchByKey) {
                                 [](const sus::Tuple<i32, i32>& pair) -> i32 {
                                   return pair.at<1u>();
                                 }),
-        sus::result::ok(9_usize).construct<usize>());
+        sus::ok(9u));
     EXPECT_EQ(
         sm.binary_search_by_key(4_i32,
                                 [](const sus::Tuple<i32, i32>& pair) -> i32 {
                                   return pair.at<1u>();
                                 }),
-        sus::result::err(7_usize).construct<usize>());
+        sus::err(7u));
     EXPECT_EQ(
         sm.binary_search_by_key(100_i32,
                                 [](const sus::Tuple<i32, i32>& pair) -> i32 {
                                   return pair.at<1u>();
                                 }),
-        sus::result::err(13_usize).construct<usize>());
+        sus::err(13u));
     auto r = sm.binary_search_by_key(
         1_i32,
         [](const sus::Tuple<i32, i32>& pair) -> i32 { return pair.at<1u>(); });

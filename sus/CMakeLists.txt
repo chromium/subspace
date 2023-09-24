@@ -46,7 +46,6 @@ target_sources(subspace PUBLIC
     "construct/default.h"
     "construct/safe_from_reference.h"
     "construct/transmogrify.h"
-    "collections/__private/array_marker.h"
     "collections/__private/slice_methods_impl.inc"
     "collections/__private/slice_methods.inc"
     "collections/__private/slice_mut_methods.inc"
