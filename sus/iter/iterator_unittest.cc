@@ -18,6 +18,7 @@
 
 #include "googletest/include/gtest/gtest.h"
 #include "sus/assertions/unreachable.h"
+#include "sus/cmp/eq.h"
 #include "sus/collections/array.h"
 #include "sus/collections/vec.h"
 #include "sus/construct/into.h"
@@ -31,7 +32,6 @@
 #include "sus/mem/never_value.h"
 #include "sus/mem/replace.h"
 #include "sus/num/overflow_integer.h"
-#include "sus/cmp/eq.h"
 #include "sus/prelude.h"
 #include "sus/test/no_copy_move.h"
 
@@ -1689,11 +1689,11 @@ TEST(Iterator, Flatten) {
   }
   // By value/into_iter, backward.
   {
-    auto vecs = sus::Vec<Vec<i32>>(sus::Vec<i32>(1, 2, 3),  //
-                                   sus::Vec<i32>(4),        //
-                                   sus::Vec<i32>(),         //
-                                   sus::Vec<i32>(5, 6),
-                                   sus::Vec<i32>()  //
+    auto vecs = sus::Vec(sus::Vec<i32>(1, 2, 3),  //
+                         sus::Vec<i32>(4),        //
+                         sus::Vec<i32>(),         //
+                         sus::Vec<i32>(5, 6),
+                         sus::Vec<i32>()  //
     );
     auto it = sus::move(vecs).into_iter().flatten();
     static_assert(std::same_as<decltype(it.next()), Option<i32>>);

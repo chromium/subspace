@@ -36,6 +36,12 @@ TEST(Vec, Default) {
   EXPECT_EQ(v.len(), 0_usize);
 }
 
+TEST(Vec, EmptyTypeDeduction) {
+  Vec<i32> v = sus::empty;
+  EXPECT_EQ(v.capacity(), 0_usize);
+  EXPECT_EQ(v.len(), 0_usize);
+}
+
 TEST(Vec, IsEmpty) {
   auto v = Vec<i32>();
   EXPECT_EQ(v.is_empty(), true);

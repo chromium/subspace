@@ -161,7 +161,7 @@ sus::Result<void, MarkdownToHtmlError> generate_concept(
   auto body = html.open_body();
   generate_nav(body, db, "concept", element.name, "",
                    // TODO: links to what?
-                   sus::Vec<SidebarLink>(), options);
+                   sus::empty, options);
 
   auto main = body.open_main();
   auto record_div = main.open_div();

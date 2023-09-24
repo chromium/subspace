@@ -19,6 +19,8 @@
 #include "fmt/core.h"
 #include "sus/assertions/check.h"
 #include "sus/assertions/debug_check.h"
+#include "sus/cmp/eq.h"
+#include "sus/cmp/ord.h"
 #include "sus/collections/__private/sort.h"
 #include "sus/collections/concat.h"
 #include "sus/collections/iterators/chunks.h"
@@ -35,6 +37,7 @@
 #include "sus/macros/lifetimebound.h"
 #include "sus/macros/no_unique_address.h"
 #include "sus/macros/pure.h"
+#include "sus/marker/empty.h"
 #include "sus/marker/unsafe.h"
 #include "sus/mem/clone.h"
 #include "sus/mem/move.h"
@@ -42,8 +45,6 @@
 #include "sus/num/signed_integer.h"
 #include "sus/num/transmogrify.h"
 #include "sus/num/unsigned_integer.h"
-#include "sus/cmp/eq.h"
-#include "sus/cmp/ord.h"
 #include "sus/ops/range.h"
 #include "sus/option/option.h"
 #include "sus/ptr/copy.h"
@@ -75,8 +76,15 @@ class [[sus_trivial_abi]] Slice final {
                 "Slice inner type should not be const, it provides const "
                 "access to the slice regardless.");
 
+  /// Constructs an empty `Slice`.
+  ///
+  /// This constructor is implicit so that using the [`EmptyMarker`](
+  /// $sus::marker::EmptyMarker) allows the caller to avoid spelling out the
+  /// full `Slice` type.
+  constexpr Slice(::sus::marker::EmptyMarker) : Slice() {}
+
   /// Constructs an empty Slice, which has no elements.
-  constexpr Slice()
+  explicit constexpr Slice()
       : Slice(::sus::iter::IterRefCounter::empty_for_view(), nullptr, 0_usize) {
   }
 
@@ -306,8 +314,15 @@ class [[sus_trivial_abi]] SliceMut final {
                 "SliceMut inner type should not be const, it provides mutable "
                 "access to the slice. Use Slice to represent const access.");
 
+  /// Constructs an empty `Slice`.
+  ///
+  /// This constructor is implicit so that using the [`EmptyMarker`](
+  /// $sus::marker::EmptyMarker) allows the caller to avoid spelling out the
+  /// full `Slice` type.
+  constexpr SliceMut(::sus::marker::EmptyMarker) : SliceMut() {}
+
   /// Constructs an empty SliceMut, which has no elements.
-  constexpr SliceMut() = default;
+  explicit constexpr SliceMut() = default;
 
   /// Constructs a slice from its raw parts.
   ///
