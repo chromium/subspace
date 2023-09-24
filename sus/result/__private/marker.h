@@ -26,28 +26,32 @@
 namespace sus::result::__private {
 
 struct [[nodiscard]] OkVoidMarker {
+  OkVoidMarker() = default;
+
   // Gtest macros force evaluation against a const reference.
   // https://github.com/google/googletest/issues/4350
   template <class E>
-  inline constexpr operator ::sus::result::Result<void, E>() const& noexcept {
+  constexpr operator ::sus::result::Result<void, E>() const& noexcept {
     return Result<void, E>(::sus::result::OkVoid());
   }
 
   template <class E>
-  inline constexpr operator ::sus::result::Result<void, E>() && noexcept {
+  constexpr operator ::sus::result::Result<void, E>() && noexcept {
     return Result<void, E>(::sus::result::OkVoid());
   }
 
   template <class E>
-  inline constexpr ::sus::result::Result<void, E> construct() && noexcept {
+  constexpr ::sus::result::Result<void, E> construct() && noexcept {
     return ::sus::move(*this);
   }
+
+  OkVoidMarker(const OkVoidMarker&) = delete;
+  OkVoidMarker& operator=(const OkVoidMarker&) = delete;
 };
 
 template <class T>
 struct [[nodiscard]] OkMarker {
-  sus_clang_bug_54040(constexpr inline OkMarker(T&& value)
-                      : value(::sus::forward<T>(value)){});
+  constexpr inline OkMarker(T&& value) : value(::sus::forward<T>(value)) {}
 
   T&& value;
 
@@ -93,24 +97,13 @@ struct [[nodiscard]] OkMarker {
     return Result<U, E>(::sus::forward<T>(value));
   }
 
-  template <class E>
-  inline constexpr ::sus::result::Result<::sus::mem::remove_rvalue_reference<T>,
-                                         E>
-  construct() && noexcept {
-    return ::sus::move(*this);
-  }
-
-  template <class U, class E>
-    requires(std::convertible_to<T &&, U>)
-  inline constexpr ::sus::result::Result<U, E> construct() && noexcept {
-    return ::sus::move(*this);
-  }
+  OkMarker(const OkMarker&) = delete;
+  OkMarker& operator=(const OkMarker&) = delete;
 };
 
 template <class E>
 struct [[nodiscard]] ErrMarker {
-  sus_clang_bug_54040(constexpr inline ErrMarker(E&& value)
-                      : value(::sus::forward<E>(value)){});
+  constexpr inline ErrMarker(E&& value) : value(::sus::forward<E>(value)) {}
 
   E&& value;
 
@@ -142,11 +135,8 @@ struct [[nodiscard]] ErrMarker {
     return Result<T, F>::with_err(::sus::forward<E>(value));
   }
 
-  template <class T, class F = std::remove_reference_t<E>>
-    requires(std::convertible_to<E &&, F>)
-  inline constexpr ::sus::result::Result<T, F> construct() && noexcept {
-    return ::sus::move(*this);
-  }
+  ErrMarker(const ErrMarker&) = delete;
+  ErrMarker& operator=(const ErrMarker&) = delete;
 };
 
 }  // namespace sus::result::__private
