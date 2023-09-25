@@ -647,13 +647,12 @@ class Option final {
     requires(!::sus::mem::MoveOrRef<T>)
   = delete;
 
-  /// Copy assignment for [`Option<T>`]($sus::option::Option) which will
-  /// satisfy [`Copy<Option<T>>`]($sus::mem::Copy) if
-  /// [`Copy<T>`]($sus::mem::Copy) is satisfied.
+  /// Copy assignment for [`Option`]($sus::option::Option) which will
+  /// satisfy [`Copy`]($sus::mem::Copy) for `Option<T>` if
+  /// `T` satisifes [`Copy`]($sus::mem::Copy).
   ///
   /// If `T` can be trivially copy-assigned, then
-  /// [`Option<T>`]($sus::option::Option) can also be
-  /// trivially copy-assigned.
+  /// `Option<T>` can also be trivially copy-assigned.
   ///
   /// #[doc.overloads=copy]
   constexpr Option& operator=(const Option& o)
@@ -664,16 +663,17 @@ class Option final {
     requires(!::sus::mem::CopyOrRef<T>)
   = delete;
 
-  /// Move assignment for [`Option<T>`]($sus::option::Option) which will
-  /// satisfy [`Move<Option<T>>`]($sus::mem::Move) if
-  /// [`Move<T>`]($sus::mem::Move) is satisfied.
+  /// Move assignment for [`Option`]($sus::option::Option) which will
+  /// satisfy [`Move`]($sus::mem::Move) for `<Option<T>` if `T`
+  /// satisifies [`Move`]($sus::mem::Move).
   ///
   /// If `T` can be trivially move-assigned, then
-  /// [`Option<T>`]($sus::option::Option) can also be trivially move-assigned.
-  /// When trivially-moved, the option is copied on move, and the moved-from
-  /// option is unchanged but should still not be used thereafter without
-  /// reinitializing it. Use `take()` instead to move the value out of the
-  /// option when the option may be used again afterward.
+  /// `Option<T>` can also be trivially move-assigned.
+  /// When trivially-moved, the `Option` is copied on move, and the moved-from
+  /// `Option` is unchanged but should still not be used thereafter without
+  /// reinitializing it. Use [`take`]($sus::option::Option::take) to
+  /// move the value out of the `Option` when the `Option` may be used again
+  /// afterward, such as with class fields.
   ///
   /// #[doc.overloads=move]
   constexpr Option& operator=(Option&& o)
