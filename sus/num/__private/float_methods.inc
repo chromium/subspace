@@ -734,6 +734,9 @@ sus_pure inline _self recip() const& noexcept {
 /// $sus::num::@doc.self::round_ties) which often makes the latter a better
 /// choice.
 ///
+/// If `self` is a `NaN`, infinity, or zero, the same will be returned, though
+/// a different `NaN` may be returned.
+///
 /// As in Rust's [`round`](
 /// https://doc.rust-lang.org/stable/std/primitive.@doc.self.html#method.round),
 /// this method preserves the sign bit when the result is `-0.0`, but this is
@@ -750,6 +753,9 @@ sus_pure inline _self round() const& noexcept {
 /// [`round`]($sus::num::@doc.self::round), making it generally preferable.
 /// However it breaks with the legacy behaviour of [`std::round`](
 /// https://en.cppreference.com/w/cpp/numeric/math/round).
+///
+/// If `self` is a `NaN`, infinity, or zero, the same will be returned, though
+/// a different `NaN` may be returned.
 ///
 /// Rust has the unstable [`round_ties_even`](
 /// https://doc.rust-lang.org/stable/std/primitive.@doc.self.html#method.round_ties_even)

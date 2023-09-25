@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma STDC FENV_ACCESS ON
-
-#include <math.h>
+#include <bit>
+#include <cfenv>
+#include <cmath>
+#include <limits>
 
 #include "googletest/include/gtest/gtest.h"
 #include "sus/cmp/eq.h"
@@ -785,6 +786,8 @@ TEST(f64, Round) {
   auto g = (-0.02_f64).round();
   EXPECT_EQ(g.is_sign_negative(), true);
   EXPECT_EQ(g, -0_f64);
+  auto h = f64::NAN.round();
+  EXPECT_EQ(h.is_nan(), true);
 }
 
 TEST(f64, RoundTies) {
@@ -796,20 +799,9 @@ TEST(f64, RoundTies) {
   EXPECT_EQ(c, 2_f64);
   auto d = (-1.546_f64).round_ties();
   EXPECT_EQ(d, -2_f64);
-  // On a tie, honour the rounding mode.
-  {
-    auto e = (-100.5_f64).round_ties();
-    EXPECT_EQ(e, -100_f64);
-  }
-  {
-    int mode = std::fesetround(FE_DOWNWARD);
-    auto e = (-100.5_f64).round_ties();
-    // Normally this would be -101, and it is with Clang, and sometimes with
-    // GCC. But on our CI bots GCC is ignoring fesetround() and thus gives back
-    // -100 from nearbyint() with FE_DOWNWARD.
-    EXPECT_EQ(e, std::nearbyint(-100.5));
-    std::fesetround(mode);
-  }
+  // On a tie, honour the rounding mode, which defaults to nearest even.
+  auto e = (-100.5_f64).round_ties();
+  EXPECT_EQ(e, -100_f64);
   // Preserve sign bit.
   auto f = (-0_f64).round_ties();
   EXPECT_EQ(f.is_sign_negative(), true);
@@ -817,6 +809,8 @@ TEST(f64, RoundTies) {
   auto g = (-0.02_f64).round_ties();
   EXPECT_EQ(g.is_sign_negative(), true);
   EXPECT_EQ(g, -0_f64);
+  auto h = f64::NAN.round_ties();
+  EXPECT_EQ(h.is_nan(), true);
 }
 
 TEST(f64, RoundTo) {

@@ -1511,7 +1511,7 @@ sus_pure_const sus_always_inline constexpr int32_t float_normal_exponent_value(
   return exponent_bits(x) - int32_t{1023};
 }
 
-constexpr sus_always_inline uint32_t mantissa(float x) noexcept {
+sus_pure_const sus_always_inline constexpr uint32_t mantissa(float x) noexcept {
   constexpr uint32_t mask = 0b00000000011111111111111111111111;
   return into_unsigned_integer(x) & mask;
 }
@@ -1675,46 +1675,42 @@ sus_pure_const inline T float_signum(T x) noexcept {
 template <class T>
   requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() <= 8)
 sus_pure_const sus_always_inline T float_round(T x) noexcept {
-  // MSVC round(float) is returning a double for some reason.
-  const auto out = into_unsigned_integer(static_cast<T>(std::round(x)));
-  // `round()` doesn't preserve the sign bit for -0, so we need to restore it,
-  // for (-0.5, -0.0].
-  return into_float((out & ~high_bit<T>()) |
-                    (into_unsigned_integer(x) & high_bit<T>()));
+  return std::round(x);
 }
 
+// Note: not sus_pure_const because it depends on global state: the rounding
+// mode.
 template <class T>
   requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() <= 8)
-sus_pure_const sus_always_inline T float_round_ties_by_mode(T x) noexcept {
+sus_pure sus_always_inline T float_round_ties_by_mode(T x) noexcept {
   return std::nearbyint(x);
 }
 
+// Note: not sus_pure_const because it depends on global state: the rounding
+// mode.
 template <class I, class T>
   requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() <= 8)
-sus_pure_const sus_always_inline I float_round_to(T x) noexcept {
+sus_pure sus_always_inline I float_round_to(T x) noexcept {
   static_assert(::sus::mem::size_of<I>() <= ::sus::mem::size_of<long long>());
 
   if (float_is_nan(x)) [[unlikely]]
     return I{0};
+  if (x > max_int_float<I, T>()) [[unlikely]]
+    return max_value<I>();
+  if (x < min_int_float<I, T>()) [[unlikely]]
+    return min_value<I>();
   if constexpr (::sus::mem::size_of<I>() == ::sus::mem::size_of<long long>()) {
-    if (x > max_int_float<I, T>()) [[unlikely]]
-      return max_value<I>();
-    if (x < min_int_float<I, T>()) [[unlikely]]
-      return min_value<I>();
     return std::llrint(x);
   } else {
-    if (x > max_int_float<I, T>()) [[unlikely]]
-      return max_value<I>();
-    if (x < min_int_float<I, T>()) [[unlikely]]
-      return min_value<I>();
-    return std::lrint(x);
+    return static_cast<I>(std::lrint(x));
   }
 }
 
 #if __has_builtin(__builtin_fpclassify)
 template <class T>
   requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() <= 8)
-constexpr inline ::sus::num::FpCategory float_category(T x) noexcept {
+sus_pure_const constexpr inline ::sus::num::FpCategory float_category(
+    T x) noexcept {
   constexpr auto nan = 1;
   constexpr auto inf = 2;
   constexpr auto norm = 3;
