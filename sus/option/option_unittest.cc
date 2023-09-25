@@ -3186,4 +3186,60 @@ TEST(Option, NoExtraNeverValueConstruction) {
 }
 }  // namespace no_extra_never_value_construction
 
+TEST(Option, Convert) {
+  struct SuperType {};
+  struct SubType : public SuperType {};
+
+  static_assert(sus::construct::From<Option<SuperType&>, Option<SubType&>>);
+  static_assert(sus::construct::From<Option<i64>, Option<i32>>);
+
+  static_assert([] {
+    SubType s;
+    Option<SubType&> sub(s);
+    Option<SuperType&> super = sub;
+    super = sus::move(sub);
+    return &super.unwrap() == &s;
+  }());
+
+  static_assert([] {
+    Option<SubType&> sub;
+    Option<SuperType&> super = sub;
+    return super.is_none();
+  }());
+
+  static_assert([] {
+    Option<i32> smaller(2);
+    Option<i64> bigger = smaller;
+    bigger = sus::move(smaller);
+    return bigger.unwrap() == 2;
+  }());
+
+  static_assert([] {
+    Option<i32> smaller;
+    Option<i64> bigger = smaller;
+    return bigger.is_none();
+  }());
+
+  struct ConvertsTo {};
+  struct ConvertsFrom {
+    constexpr operator ConvertsTo() && { return ConvertsTo(); }
+  };
+
+  static_assert(sus::construct::From<Option<ConvertsTo>, Option<ConvertsFrom>>);
+
+  static_assert([] {
+    auto from = Option(ConvertsFrom());
+    // Can only convert by move.
+    Option<ConvertsTo> to = sus::move(from);
+    return to.is_some();
+  }());
+
+  static_assert([] {
+    auto from = Option<ConvertsFrom>();
+    // Can only convert by move.
+    Option<ConvertsTo> to = sus::move(from);
+    return to.is_none();
+  }());
+}
+
 }  // namespace

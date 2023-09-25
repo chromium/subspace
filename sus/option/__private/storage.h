@@ -28,6 +28,7 @@
 #include "sus/mem/replace.h"
 #include "sus/mem/take.h"
 #include "sus/option/state.h"
+#include "sus/ptr/subclass.h"
 
 namespace sus::option::__private {
 
@@ -86,14 +87,27 @@ struct Storage<T, false> final {
       set_none();
   }
 
-  constexpr Storage() {}
-  constexpr Storage(const std::remove_cvref_t<T>& t) : val_(t), state_(Some) {}
-  constexpr Storage(std::remove_cvref_t<T>& t) : val_(t), state_(Some) {}
-  constexpr Storage(std::remove_cvref_t<T>&& t)
+  constexpr Storage() noexcept {}
+  constexpr Storage(const std::remove_cvref_t<T>& t) noexcept
+      : val_(t), state_(Some) {}
+  constexpr Storage(std::remove_cvref_t<T>& t) noexcept
+      : val_(t), state_(Some) {}
+  constexpr Storage(std::remove_cvref_t<T>&& t) noexcept
       : val_(::sus::move(t)), state_(Some) {}
 
-  sus_pure constexpr const T& val() const { return val_; }
-  sus_pure constexpr T& val_mut() { return val_; }
+  template <class U>
+    requires(std::convertible_to<U, T>)
+  constexpr Storage(const Storage<U>& o) noexcept : state_(o.state()) {
+    if (state_ == Some) std::construct_at(&val_, o.val());
+  }
+  template <class U>
+    requires(std::convertible_to<U &&, T>)
+  constexpr Storage(Storage<U>&& o) noexcept : state_(o.state()) {
+    if (state_ == Some) std::construct_at(&val_, o.take_and_set_none());
+  }
+
+  sus_pure constexpr const T& val() const noexcept { return val_; }
+  sus_pure constexpr T& val_mut() noexcept { return val_; }
 
   sus_pure constexpr inline State state() const noexcept { return state_; }
 
@@ -210,12 +224,31 @@ struct Storage<T, true> final {
       set_none();
   }
 
-  constexpr Storage() : access_() {}
-  constexpr Storage(const T& t) : access_(t) {}
-  constexpr Storage(T&& t) : access_(::sus::move(t)) {}
+  constexpr Storage() noexcept : access_() {}
+  constexpr Storage(const T& t) noexcept : access_(t) {}
+  constexpr Storage(T&& t) noexcept : access_(::sus::move(t)) {}
 
-  sus_pure constexpr const T& val() const { return access_.as_inner(); };
-  sus_pure constexpr T& val_mut() { return access_.as_inner_mut(); };
+  template <class U>
+    requires(std::convertible_to<U, T>)
+  constexpr Storage(const Storage<U>& o) noexcept {
+    if (o.state() == Some)
+      std::construct_at(&access_, o.val());
+    else
+      std::construct_at(&access_);
+  }
+  template <class U>
+    requires(std::convertible_to<U &&, T>)
+  constexpr Storage(Storage<U>&& o) noexcept {
+    if (o.state() == Some)
+      std::construct_at(&access_, o.take_and_set_none());
+    else
+      std::construct_at(&access_);
+  }
+
+  sus_pure constexpr const T& val() const noexcept {
+    return access_.as_inner();
+  };
+  sus_pure constexpr T& val_mut() noexcept { return access_.as_inner_mut(); };
 
   sus_pure constexpr inline State state() const noexcept {
     return access_.is_constructed() ? Some : None;
@@ -290,10 +323,20 @@ struct [[sus_trivial_abi]] StoragePointer<T&> {
   explicit constexpr sus_always_inline StoragePointer(T& ref) noexcept
       : ptr_(::sus::mem::addressof(ref)) {}
 
-  inline constexpr operator const T&() const { return *ptr_; }
-  inline constexpr operator T&() { return *ptr_; }
+  template <class U>
+    requires(std::convertible_to<U&, T&>)
+  //requires(sus::ptr::SameOrSubclassOf<T*, U*>)
+  constexpr sus_always_inline StoragePointer(
+      const StoragePointer<U&>& other) noexcept
+      : ptr_(other.ptr_) {}
+
+  constexpr operator const T&() const { return *ptr_; }
+  constexpr operator T&() { return *ptr_; }
 
  private:
+  template <class U>
+  friend struct StoragePointer;
+
   T* ptr_;
 
   // Pointers are trivially relocatable.
@@ -313,8 +356,6 @@ static_assert(std::is_trivially_move_assignable_v<StoragePointer<int&>>);
 
 // This must be true in order for StoragePointer to be useful with the
 // never-value field optimization.
-// clang-format off
 static_assert(::sus::mem::NeverValueField<StoragePointer<int&>>);
-// clang-format on
 
 }  // namespace sus::option::__private
