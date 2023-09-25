@@ -174,6 +174,7 @@ class Tuple final {
 
   /// Converts from `Tuple<X', Y', Z'>` to `Tuple<X, Y, Z>` when `X'`, `Y'`,
   /// and `Z'` can be converted to `X`, `Y`, and `Z`.
+  /// #[doc.overloads=ctor.convert]
   template <class U, class... Us>
     requires(
         (std::convertible_to<const U&, T> && ... &&
@@ -196,6 +197,7 @@ class Tuple final {
         "can not be constructed from a `Tuple<i16, u32>`, "
         "but it can be constructed from `Tuple<i32, u16>`.");
   }
+  /// #[doc.overloads=ctor.convert]
   template <class U, class... Us>
     requires((std::convertible_to<U &&, T> && ... &&
               std::convertible_to<Us &&, Ts>) &&  //

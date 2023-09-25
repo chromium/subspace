@@ -531,9 +531,11 @@ class Option final {
       : Option(WITH_SOME, move_to_storage(t)) {}
 
   /// Converts from `Option<X>` to `Option<Y>` if `X` is convertible to `Y`.
+  /// #[doc.overloads=ctor.convert]
   template <class U>
     requires(std::convertible_to<U, T>)
   constexpr Option(const Option<U>& other) : t_(other.t_) {}
+  /// #[doc.overloads=ctor.convert]
   template <class U>
     requires(std::convertible_to<U &&, T>)
   constexpr Option(Option<U>&& other) : t_(::sus::move(other.t_)) {}
