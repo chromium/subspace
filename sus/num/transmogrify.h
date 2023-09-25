@@ -118,81 +118,7 @@ struct sus::construct::TransmogrifyImpl<T, F> {
 template <sus::num::PrimitiveInteger T, sus::num::Float F>
 struct sus::construct::TransmogrifyImpl<T, F> {
   constexpr static T mog_from(const F& from) noexcept {
-    if (from.is_nan()) [[unlikely]]
-      return T(0);
-
-    struct MinMax {
-      F min, max;
-    };
-    constexpr MinMax minmax = []() {
-      if constexpr (::sus::mem::size_of<T>() == 1u) {
-        if constexpr (std::is_signed_v<T>) {
-          if constexpr (::sus::mem::size_of<F>() == 4u) {
-            return MinMax(-128.f, 127.f);
-          } else {
-            return MinMax(-128.0, 127.0);
-          }
-        } else {
-          if constexpr (::sus::mem::size_of<F>() == 4u) {
-            return MinMax(0.f, 255.f);
-          } else {
-            return MinMax(0.0, 255.0);
-          }
-        }
-      } else if constexpr (::sus::mem::size_of<T>() == 2u) {
-        if constexpr (std::is_signed_v<T>) {
-          if constexpr (::sus::mem::size_of<F>() == 4u) {
-            return MinMax(-32768.f, 32767.f);
-          } else {
-            return MinMax(-32768.0, 32767.0);
-          }
-        } else {
-          if constexpr (::sus::mem::size_of<F>() == 4u) {
-            return MinMax(0.f, 65535.f);
-          } else {
-            return MinMax(0.0, 65535.0);
-          }
-        }
-      } else if constexpr (::sus::mem::size_of<T>() == 4u) {
-        if constexpr (std::is_signed_v<T>) {
-          if constexpr (::sus::mem::size_of<F>() == 4u) {
-            return MinMax(-2147483648.f, 2147483647.f);
-          } else {
-            return MinMax(-2147483648.0, 2147483647.0);
-          }
-        } else {
-          if constexpr (::sus::mem::size_of<F>() == 4u) {
-            return MinMax(0.f, 4294967295.f);
-          } else {
-            return MinMax(0.0, 4294967295.0);
-          }
-        }
-      } else {
-        static_assert(::sus::mem::size_of<T>() == 8u);
-        if constexpr (std::is_signed_v<T>) {
-          if constexpr (::sus::mem::size_of<F>() == 4u) {
-            return MinMax(-9223372036854775808.f, 9223372036854775807.f);
-          } else {
-            return MinMax(-9223372036854775808.0, 9223372036854775807.0);
-          }
-        } else {
-          if constexpr (::sus::mem::size_of<F>() == 4u) {
-            return MinMax(0.f, 18446744073709551615.f);
-          } else {
-            return MinMax(0.0, 18446744073709551615.0);
-          }
-        }
-      }
-    }();
-    if (from >= minmax.max) [[unlikely]]
-      return ::sus::num::__private::max_value<T>();
-    if (from <= minmax.min) [[unlikely]]
-      return ::sus::num::__private::min_value<T>();
-    // SAFETY: The conversion from a float to an integer is UB if the value is
-    // out of range for the integer. We have checked above that it is not out of
-    // range by comparing with the floating point representation of the
-    // integer's min/max values.
-    return static_cast<T>(from.primitive_value);
+    return ::sus::mog<T>(from.primitive_value);
   }
 };
 
@@ -200,12 +126,17 @@ struct sus::construct::TransmogrifyImpl<T, F> {
 template <sus::num::PrimitiveInteger T, sus::num::PrimitiveFloat F>
 struct sus::construct::TransmogrifyImpl<T, F> {
   constexpr static T mog_from(const F& from) noexcept {
-    if constexpr (::sus::mem::size_of<F>() == 4u) {
-      return ::sus::mog<T>(::sus::num::f32(from));
-    } else {
-      static_assert(::sus::mem::size_of<F>() == 8u);
-      return ::sus::mog<T>(::sus::num::f64(from));
-    }
+    if (::sus::num::__private::float_is_nan(from)) [[unlikely]]
+      return T(0);
+    if (from > ::sus::num::__private::max_int_float<T, F>()) [[unlikely]]
+      return ::sus::num::__private::max_value<T>();
+    if (from < ::sus::num::__private::min_int_float<T, F>()) [[unlikely]]
+      return ::sus::num::__private::min_value<T>();
+    // SAFETY: The conversion from a float to an integer is UB if the value is
+    // out of range for the integer. We have checked above that it is not out of
+    // range by comparing with the floating point representation of the
+    // integer's min/max values.
+    return static_cast<T>(from);
   }
 };
 

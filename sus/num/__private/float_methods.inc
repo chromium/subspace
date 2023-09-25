@@ -725,7 +725,7 @@ sus_pure inline _self powi(i32 n) const& noexcept {
 sus_pure inline _self recip() const& noexcept {
   return _primitive{1} / primitive_value;
 }
-/// Returns the nearest integer to self. If a value is half-way between two
+/// Returns the nearest integer to `self`. If a value is half-way between two
 /// integers, round away from `0.0`.
 ///
 /// This rounding behaviour matches the behaviour of the [`std::round`](
@@ -741,7 +741,7 @@ sus_pure inline _self recip() const& noexcept {
 sus_pure inline _self round() const& noexcept {
   return __private::float_round(primitive_value);
 }
-/// Returns the nearest integer to self. If a value is half-way between two
+/// Returns the nearest integer to `self`. If a value is half-way between two
 /// integers, respects the current [rounding mode](
 /// https://en.cppreference.com/w/cpp/numeric/fenv/FE_round). The default mode
 /// will round ties to the nearest even number.
@@ -765,6 +765,81 @@ sus_pure inline _self round() const& noexcept {
 /// preserves the sign bit when the result is `-0.0`.
 sus_pure inline _self round_ties() const& noexcept {
   return __private::float_round_ties_by_mode(primitive_value);
+}
+/// Returns the nearest [`i8`]($sus::num::i8) representable by `self`.
+///
+/// This is equivalent to `sus::mog<i8>(self.round_ties())` but it may require
+/// fewer instructions on some platforms.
+///
+/// Like [`round_ties`]($sus::num::@doc.self::round_ties), but unlike
+/// [`round`]($sus::num::@doc.self::round), the current [rounding mode](
+/// https://en.cppreference.com/w/cpp/numeric/fenv/FE_round) will be respected
+/// to break ties. The default mode will round ties to the nearest even number.
+///
+/// A `NaN` input will return 0.
+sus_pure inline i8 round_to_i8() const& noexcept {
+  return __private::float_round_to<decltype(i8::MAX_PRIMITIVE)>(
+      primitive_value);
+}
+/// Returns the nearest [`i16`]($sus::num::i16) representable by `self`.
+///
+/// This is equivalent to `sus::mog<i16>(self.round_ties())` but it may require
+/// fewer instructions on some platforms.
+///
+/// Like [`round_ties`]($sus::num::@doc.self::round_ties), but unlike
+/// [`round`]($sus::num::@doc.self::round), the current [rounding mode](
+/// https://en.cppreference.com/w/cpp/numeric/fenv/FE_round) will be respected
+/// to break ties. The default mode will round ties to the nearest even number.
+///
+/// A `NaN` input will return 0.
+sus_pure inline i16 round_to_i16() const& noexcept {
+  return __private::float_round_to<decltype(i16::MAX_PRIMITIVE)>(
+      primitive_value);
+}
+/// Returns the nearest [`i32`]($sus::num::i32) representable by `self`.
+///
+/// This is equivalent to `sus::mog<i32>(self.round_ties())` but it may require
+/// fewer instructions on some platforms.
+///
+/// Like [`round_ties`]($sus::num::@doc.self::round_ties), but unlike
+/// [`round`]($sus::num::@doc.self::round), the current [rounding mode](
+/// https://en.cppreference.com/w/cpp/numeric/fenv/FE_round) will be respected
+/// to break ties. The default mode will round ties to the nearest even number.
+///
+/// A `NaN` input will return 0.
+sus_pure inline i32 round_to_i32() const& noexcept {
+  return __private::float_round_to<decltype(i32::MAX_PRIMITIVE)>(
+      primitive_value);
+}
+/// Returns the nearest [`i64`]($sus::num::i64) representable by `self`.
+///
+/// This is equivalent to `sus::mog<i64>(self.round_ties())` but it may require
+/// fewer instructions on some platforms.
+///
+/// Like [`round_ties`]($sus::num::@doc.self::round_ties), but unlike
+/// [`round`]($sus::num::@doc.self::round), the current [rounding mode](
+/// https://en.cppreference.com/w/cpp/numeric/fenv/FE_round) will be respected
+/// to break ties. The default mode will round ties to the nearest even number.
+///
+/// A `NaN` input will return 0.
+sus_pure inline i64 round_to_i64() const& noexcept {
+  return __private::float_round_to<decltype(i64::MAX_PRIMITIVE)>(
+      primitive_value);
+}
+/// Returns the nearest [`isize`]($sus::num::isize) representable by `self`.
+///
+/// This is equivalent to `sus::mog<isize>(self.round_ties())` but it may
+/// require fewer instructions on some platforms.
+///
+/// Like [`round_ties`]($sus::num::@doc.self::round_ties), but unlike
+/// [`round`]($sus::num::@doc.self::round), the current [rounding mode](
+/// https://en.cppreference.com/w/cpp/numeric/fenv/FE_round) will be respected
+/// to break ties. The default mode will round ties to the nearest even number.
+///
+/// A `NaN` input will return 0.
+sus_pure inline isize round_to_isize() const& noexcept {
+  return __private::float_round_to<decltype(isize::MAX_PRIMITIVE)>(
+      primitive_value);
 }
 /// Returns a number that represents the sign of self.
 ///
@@ -951,12 +1026,12 @@ sus_pure constexpr inline bool is_subnormal() const& noexcept {
 /// # Panics
 /// Panics if min > max, min is NaN, or max is NaN.
 sus_pure constexpr inline _self clamp(_self min, _self max) const& noexcept {
-  check(!min.is_nan() && !max.is_nan() &&
-        min.primitive_value <= max.primitive_value);
+  ::sus::check(!min.is_nan() && !max.is_nan() &&
+               min.primitive_value <= max.primitive_value);
   // SAFETY: We have verified that the min and max are not NaN and that
   // `min <= max`.
-  return __private::float_clamp(::sus::marker::unsafe_fn, primitive_value,
-                                min.primitive_value, max.primitive_value);
+  return __private::float_clamp(primitive_value, min.primitive_value,
+                                max.primitive_value);
 }
 
 /// Calculates Euclidean division, the matching method for

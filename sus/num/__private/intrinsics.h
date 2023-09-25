@@ -187,6 +187,246 @@ sus_pure_const sus_always_inline constexpr T max_value() noexcept {
 }
 
 template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_pure_const sus_always_inline constexpr T max_int64_float() noexcept {
+  // Computed with https://godbolt.org/z/1sj8YdMf5.
+  if constexpr (::sus::mem::size_of<T>() == 4) {
+    // Largest float that is <= i64::MAX.
+    return 9223371487098961920.f;
+  } else {
+    // Largest double that is <= i64::MAX.
+    return 9223372036854774784.0;
+  }
+}
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_pure_const sus_always_inline constexpr T max_int32_float() noexcept {
+  // Computed with https://godbolt.org/z/1sj8YdMf5.
+  if constexpr (::sus::mem::size_of<T>() == 4) {
+    // Largest float that is <= i32::MAX.
+    return 2147483520.f;
+  } else {
+    // Largest double that is <= i32::MAX.
+    return 2147483648.0;
+  }
+}
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_pure_const sus_always_inline constexpr T max_int16_float() noexcept {
+  if constexpr (::sus::mem::size_of<T>() == 4) {
+    // Largest float that is <= i16::MAX.
+    return 32767.f;
+  } else {
+    // Largest double that is <= i16::MAX.
+    return 32767.0;
+  }
+}
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_pure_const sus_always_inline constexpr T max_int8_float() noexcept {
+  if constexpr (::sus::mem::size_of<T>() == 4) {
+    // Largest float that is <= i8::MAX.
+    return 127.f;
+  } else {
+    // Largest double that is <= i8::MAX.
+    return 127.0;
+  }
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_pure_const sus_always_inline constexpr T min_int64_float() noexcept {
+  // Computed with https://godbolt.org/z/1sj8YdMf5.
+  if constexpr (::sus::mem::size_of<T>() == 4) {
+    // Smallest float that is >= i64::MIN.
+    return -9223371487098961920.f;
+  } else {
+    // Smallest double that is >= i64::MIN.
+    return -9223372036854774784.0;
+  }
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_pure_const sus_always_inline constexpr T min_int32_float() noexcept {
+  // Computed with https://godbolt.org/z/1sj8YdMf5.
+  if constexpr (::sus::mem::size_of<T>() == 4) {
+    // Smallest float that is >= i32::MIN.
+    return -2147483520.f;
+  } else {
+    // Smallest float that is >= i32::MIN.
+    return -2147483649.0;
+  }
+}
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_pure_const sus_always_inline constexpr T min_int16_float() noexcept {
+  if constexpr (::sus::mem::size_of<T>() == 4) {
+    // Largest float that is >= i16::MIN.
+    return -32768.f;
+  } else {
+    // Largest double that is >= i16::MIN.
+    return -32768.0;
+  }
+}
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_pure_const sus_always_inline constexpr T min_int8_float() noexcept {
+  if constexpr (::sus::mem::size_of<T>() == 4) {
+    // Largest float that is >= i8::MIN.
+    return -128.f;
+  } else {
+    // Largest double that is >= i8::MIN.
+    return -128.0;
+  }
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_pure_const sus_always_inline constexpr T max_uint64_float() noexcept {
+  // Computed with https://godbolt.org/z/bY3vrvos9.
+  if constexpr (::sus::mem::size_of<T>() == 4) {
+    // Largest float that is <= u64::MAX.
+    return 18446742974197923840.f;
+  } else {
+    // Largest double that is <= u64::MAX.
+    return 18446744073709549568.0;
+  }
+}
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_pure_const sus_always_inline constexpr T max_uint32_float() noexcept {
+  // Computed with https://godbolt.org/z/bY3vrvos9.
+  if constexpr (::sus::mem::size_of<T>() == 4) {
+    // Largest float that is <= u32::MAX.
+    return 4294967040.f;
+  } else {
+    // Largest double that is <= u32::MAX.
+    return 4294967295.0;
+  }
+}
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_pure_const sus_always_inline constexpr T max_uint16_float() noexcept {
+  if constexpr (::sus::mem::size_of<T>() == 4) {
+    // Largest float that is <= u16::MAX.
+    return 65535.f;
+  } else {
+    // Largest double that is <= u16::MAX.
+    return 65535.0;
+  }
+}
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_pure_const sus_always_inline constexpr T max_uint8_float() noexcept {
+  if constexpr (::sus::mem::size_of<T>() == 4) {
+    // Largest float that is <= u8::MAX.
+    return 255.f;
+  } else {
+    // Largest double that is <= u8::MAX.
+    return 255.0;
+  }
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_pure_const sus_always_inline constexpr T min_uint64_float() noexcept {
+  // Computed with https://godbolt.org/z/bY3vrvos9.
+  if constexpr (::sus::mem::size_of<T>() == 4) {
+    // Smallest float that is >= u64::MIN.
+    return 0.f;
+  } else {
+    // Smallest double that is >= u64::MIN.
+    return 0.0;
+  }
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_pure_const sus_always_inline constexpr T min_uint32_float() noexcept {
+  // Computed with https://godbolt.org/z/bY3vrvos9.
+  if constexpr (::sus::mem::size_of<T>() == 4) {
+    // Smallest float that is >= u32::MIN.
+    return 0.f;
+  } else {
+    // Smallest float that is >= u32::MIN.
+    return 0.0;
+  }
+}
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_pure_const sus_always_inline constexpr T min_uint16_float() noexcept {
+  if constexpr (::sus::mem::size_of<T>() == 4) {
+    // Largest float that is >= u16::MIN.
+    return 0.f;
+  } else {
+    // Largest double that is >= u16::MIN.
+    return 0.0;
+  }
+}
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_pure_const sus_always_inline constexpr T min_uint8_float() noexcept {
+  if constexpr (::sus::mem::size_of<T>() == 4) {
+    // Largest float that is >= u8::MIN.
+    return 0.f;
+  } else {
+    // Largest double that is >= u8::MIN.
+    return 0.0;
+  }
+}
+
+template <class I, class T>
+  requires(std::is_floating_point_v<T> && std::is_integral_v<I> &&
+           ::sus::mem::size_of<I>() <= 8)
+sus_pure_const sus_always_inline constexpr T max_int_float() noexcept {
+  if constexpr (std::is_signed_v<I>) {
+    if constexpr (::sus::mem::size_of<I>() == 8)
+      return max_int64_float<T>();
+    else if constexpr (::sus::mem::size_of<I>() == 4)
+      return max_int32_float<T>();
+    else if constexpr (::sus::mem::size_of<I>() == 2)
+      return max_int16_float<T>();
+    else
+      return max_int8_float<T>();
+  } else {
+    if constexpr (::sus::mem::size_of<I>() == 8)
+      return max_uint64_float<T>();
+    else if constexpr (::sus::mem::size_of<I>() == 4)
+      return max_uint32_float<T>();
+    else if constexpr (::sus::mem::size_of<I>() == 2)
+      return max_uint16_float<T>();
+    else
+      return max_uint8_float<T>();
+  }
+}
+
+template <class I, class T>
+  requires(std::is_floating_point_v<T> && std::is_integral_v<I> &&
+           ::sus::mem::size_of<I>() <= 8)
+sus_pure_const sus_always_inline constexpr T min_int_float() noexcept {
+  if constexpr (std::is_signed_v<I>) {
+    if constexpr (::sus::mem::size_of<I>() == 8)
+      return min_int64_float<T>();
+    else if constexpr (::sus::mem::size_of<I>() == 4)
+      return min_int32_float<T>();
+    else if constexpr (::sus::mem::size_of<I>() == 2)
+      return min_int16_float<T>();
+    else
+      return min_int8_float<T>();
+  } else {
+    if constexpr (::sus::mem::size_of<I>() == 8)
+      return min_uint64_float<T>();
+    else if constexpr (::sus::mem::size_of<I>() == 4)
+      return min_uint32_float<T>();
+    else if constexpr (::sus::mem::size_of<I>() == 2)
+      return min_uint16_float<T>();
+    else
+      return min_uint8_float<T>();
+  }
+}
+
+template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T>)
 sus_pure_const sus_always_inline constexpr T min_value() noexcept {
   return T{0};
@@ -1379,23 +1619,8 @@ sus_pure_const inline constexpr bool float_is_normal(double x) noexcept {
 template <class T>
   requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() <= 8)
 sus_pure_const inline constexpr T truncate_float(T x) noexcept {
-  if constexpr (::sus::mem::size_of<T>() == 4) {
-    // Largest float that is <= i64::MAX.
-    constexpr float max_i64 = 9223371487098961920.f;
-    // Smallest float that is >= i64::MIN.
-    constexpr float min_i64 = -9223372036854775808.f;
-
-    if (x <= max_i64 && x >= min_i64)
-      return static_cast<T>(static_cast<int64_t>(x));
-  } else {
-    // Largest double that is <= i64::MAX.
-    constexpr double max_i64 = 9223372036854774784.0;
-    // Smallest double that is >= i64::MIN.
-    constexpr float min_i64 = -9223372036854775808.0;
-
-    if (x <= max_i64 && x >= min_i64)
-      return static_cast<T>(static_cast<int64_t>(x));
-  }
+  if (x <= max_int64_float<T>() && x >= min_int64_float<T>())
+    return static_cast<T>(static_cast<int64_t>(x));
 
   constexpr auto mantissa_width =
       ::sus::mem::size_of<T>() == ::sus::mem::size_of<float>() ? uint32_t{23}
@@ -1449,7 +1674,7 @@ sus_pure_const inline T float_signum(T x) noexcept {
 
 template <class T>
   requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() <= 8)
-sus_pure_const inline T float_round(T x) noexcept {
+sus_pure_const sus_always_inline T float_round(T x) noexcept {
   // MSVC round(float) is returning a double for some reason.
   const auto out = into_unsigned_integer(static_cast<T>(std::round(x)));
   // `round()` doesn't preserve the sign bit for -0, so we need to restore it,
@@ -1460,8 +1685,30 @@ sus_pure_const inline T float_round(T x) noexcept {
 
 template <class T>
   requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() <= 8)
-sus_pure_const inline T float_round_ties_by_mode(T x) noexcept {
+sus_pure_const sus_always_inline T float_round_ties_by_mode(T x) noexcept {
   return std::nearbyint(x);
+}
+
+template <class I, class T>
+  requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() <= 8)
+sus_pure_const sus_always_inline I float_round_to(T x) noexcept {
+  static_assert(::sus::mem::size_of<I>() <= ::sus::mem::size_of<long long>());
+
+  if (float_is_nan(x)) [[unlikely]]
+    return I{0};
+  if constexpr (::sus::mem::size_of<I>() == ::sus::mem::size_of<long long>()) {
+    if (x > max_int_float<I, T>()) [[unlikely]]
+      return max_value<I>();
+    if (x < min_int_float<I, T>()) [[unlikely]]
+      return min_value<I>();
+    return std::llrint(x);
+  } else {
+    if (x > max_int_float<I, T>()) [[unlikely]]
+      return max_value<I>();
+    if (x < min_int_float<I, T>()) [[unlikely]]
+      return min_value<I>();
+    return std::lrint(x);
+  }
 }
 
 #if __has_builtin(__builtin_fpclassify)
@@ -1511,8 +1758,7 @@ sus_pure_const constexpr inline ::sus::num::FpCategory float_category(
 // function produces Undefined Behaviour.
 template <class T>
   requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() <= 8)
-sus_pure_const constexpr inline T float_clamp(marker::UnsafeFnMarker, T x,
-                                              T min, T max) noexcept {
+sus_pure_const constexpr inline T float_clamp(T x, T min, T max) noexcept {
   if (float_is_nan(x)) [[unlikely]]
     return nan<T>();
   else if (x < min)
