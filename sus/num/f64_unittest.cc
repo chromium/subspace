@@ -819,6 +819,50 @@ TEST(f64, RoundTies) {
   EXPECT_EQ(g, -0_f64);
 }
 
+TEST(f64, RoundTo) {
+  static_assert(std::same_as<decltype((0_f64).round_to_i8()), i8>);
+  static_assert(std::same_as<decltype((0_f64).round_to_i16()), i16>);
+  static_assert(std::same_as<decltype((0_f64).round_to_i32()), i32>);
+  static_assert(std::same_as<decltype((0_f64).round_to_i64()), i64>);
+  static_assert(std::same_as<decltype((0_f64).round_to_isize()), isize>);
+
+  EXPECT_EQ(i8::MAX, (9999999_f64).round_to_i8());
+  EXPECT_EQ(i8::MIN, (-9999999_f64).round_to_i8());
+  EXPECT_EQ(i16::MAX, (9999999_f64).round_to_i16());
+  EXPECT_EQ(i16::MIN, (-9999999_f64).round_to_i16());
+  EXPECT_EQ(i32::MAX, (99999999999_f64).round_to_i32());
+  EXPECT_EQ(i32::MIN, (-9999999999_f64).round_to_i32());
+  EXPECT_EQ(i64::MAX, (9999999999999999999_f64).round_to_i64());
+  EXPECT_EQ(i64::MIN, (-9999999999999999999_f64).round_to_i64());
+
+  // Respects the rounding mode (default is to nearest even).
+  EXPECT_EQ(-100_i8, (-99.5_f64).round_to_i8());
+  EXPECT_EQ(100_i8, (99.5_f64).round_to_i8());
+  EXPECT_EQ(-100_i8, (-100.5_f64).round_to_i8());
+  EXPECT_EQ(100_i8, (100.5_f64).round_to_i8());
+  EXPECT_EQ(-100_i16, (-99.5_f64).round_to_i16());
+  EXPECT_EQ(100_i16, (99.5_f64).round_to_i16());
+  EXPECT_EQ(-100_i16, (-100.5_f64).round_to_i16());
+  EXPECT_EQ(100_i16, (100.5_f64).round_to_i16());
+  EXPECT_EQ(-100_i32, (-99.5_f64).round_to_i32());
+  EXPECT_EQ(100_i32, (99.5_f64).round_to_i32());
+  EXPECT_EQ(-100_i32, (-100.5_f64).round_to_i32());
+  EXPECT_EQ(100_i32, (100.5_f64).round_to_i32());
+  EXPECT_EQ(-100_i64, (-99.5_f64).round_to_i64());
+  EXPECT_EQ(100_i64, (99.5_f64).round_to_i64());
+  EXPECT_EQ(-100_i64, (-100.5_f64).round_to_i64());
+  EXPECT_EQ(100_i64, (100.5_f64).round_to_i64());
+  EXPECT_EQ(-100_isize, (-99.5_f64).round_to_isize());
+  EXPECT_EQ(100_isize, (99.5_f64).round_to_isize());
+  EXPECT_EQ(-100_isize, (-100.5_f64).round_to_isize());
+  EXPECT_EQ(100_isize, (100.5_f64).round_to_isize());
+
+  EXPECT_EQ(0_i8, (0.49_f64).round_to_i8());
+  EXPECT_EQ(0_i8, (-0.49_f64).round_to_i8());
+  EXPECT_EQ(1_i16, (0.51_f64).round_to_i16());
+  EXPECT_EQ(-1_i16, (-0.51_f64).round_to_i16());
+}
+
 TEST(f64, Signum) {
   EXPECT_EQ((0_f64).signum(), 1_f64);
   EXPECT_EQ((-0_f64).signum(), -1_f64);

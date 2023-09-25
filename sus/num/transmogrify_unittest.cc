@@ -373,12 +373,11 @@ TEST(NumTransmogrify, f64tof32) {
 
   // Just past the valid range of values for f32 in either direciton. A
   // static_cast<float>(double) for these values would cause UB.
-  EXPECT_EQ(sus::mog<f32>(
-                sus::mog<f64>(f32::MIN).next_toward(f64::NEG_INFINITY)),
-            f32::NEG_INFINITY);
   EXPECT_EQ(
-      sus::mog<f32>(sus::mog<f64>(f32::MAX).next_toward(f64::INFINITY)),
-      f32::INFINITY);
+      sus::mog<f32>(sus::mog<f64>(f32::MIN).next_toward(f64::NEG_INFINITY)),
+      f32::NEG_INFINITY);
+  EXPECT_EQ(sus::mog<f32>(sus::mog<f64>(f32::MAX).next_toward(f64::INFINITY)),
+            f32::INFINITY);
 
   // This is a value with bits set throughout the exponent and mantissa. Its
   // exponent is <= 127 and >= -126 so it's possible to represent it in f32.
@@ -408,6 +407,12 @@ TEST(NumTransmogrify, f32) {
     EXPECT_EQ(sus::mog<u16>(65536_f32), u16::MAX);
     EXPECT_EQ(sus::mog<u16>(999999999_f32), u16::MAX);
     EXPECT_EQ(sus::mog<u16>(f32::INFINITY), u16::MAX);
+
+    EXPECT_EQ(sus::mog<u8>(f32::NAN), 0_u8);
+    EXPECT_EQ(sus::mog<u8>(-99999999_f32), u8::MIN);
+    EXPECT_EQ(sus::mog<u8>(999999999_f32), u8::MAX);
+    EXPECT_EQ(sus::mog<u8>(1.1_f32), 1_u8);
+    EXPECT_EQ(sus::mog<u8>(0.9_f32), 0_u8);
   }
   // Float to smaller signed.
   {
@@ -433,6 +438,15 @@ TEST(NumTransmogrify, f32) {
     EXPECT_EQ(sus::mog<i16>(32767_f32), i16::MAX);
     EXPECT_EQ(sus::mog<i16>(999999999_f32), i16::MAX);
     EXPECT_EQ(sus::mog<i16>(f32::INFINITY), i16::MAX);
+
+    EXPECT_EQ(sus::mog<i8>(f32::NAN), 0_i8);
+    EXPECT_EQ(sus::mog<i8>(f32::NAN), 0_i8);
+    EXPECT_EQ(sus::mog<i8>(-99999999_f32), i8::MIN);
+    EXPECT_EQ(sus::mog<i8>(999999999_f32), i8::MAX);
+    EXPECT_EQ(sus::mog<i8>(1.1_f32), 1_i8);
+    EXPECT_EQ(sus::mog<i8>(0.9_f32), 0_i8);
+    EXPECT_EQ(sus::mog<i8>(-1.1_f32), -1_i8);
+    EXPECT_EQ(sus::mog<i8>(-0.9_f32), 0_i8);
   }
 
   // Float to larger unsigned.
@@ -456,6 +470,12 @@ TEST(NumTransmogrify, f32) {
     EXPECT_EQ(sus::mog<u64>(18446744073709551615_f32 + 1_f32), u64::MAX);
     EXPECT_EQ(sus::mog<u64>(18446744073709551615_f32 * 2_f32), u64::MAX);
     EXPECT_EQ(sus::mog<u64>(f32::INFINITY), u64::MAX);
+
+    EXPECT_EQ(sus::mog<u32>(f32::NAN), 0_u32);
+    EXPECT_EQ(sus::mog<u32>(-99999999999_f32), u32::MIN);
+    EXPECT_EQ(sus::mog<u32>(99999999999_f32), u32::MAX);
+    EXPECT_EQ(sus::mog<u32>(0.9_f32), 0_u32);
+    EXPECT_EQ(sus::mog<u32>(1.1_f32), 1_u32);
   }
   // Float to larger signed.
   {
@@ -484,6 +504,14 @@ TEST(NumTransmogrify, f32) {
     EXPECT_EQ(sus::mog<i64>(9223372036854775808_f32), i64::MAX);
     EXPECT_EQ(sus::mog<i64>(9999999999999999999_f32), i64::MAX);
     EXPECT_EQ(sus::mog<i64>(f32::INFINITY), i64::MAX);
+
+    EXPECT_EQ(sus::mog<i32>(f32::NAN), 0_i32);
+    EXPECT_EQ(sus::mog<i32>(-99999999999_f32), i32::MIN);
+    EXPECT_EQ(sus::mog<i32>(999999999999_f32), i32::MAX);
+    EXPECT_EQ(sus::mog<i32>(1.1_f32), 1_i32);
+    EXPECT_EQ(sus::mog<i32>(0.9_f32), 0_i32);
+    EXPECT_EQ(sus::mog<i32>(-1.1_f32), -1_i32);
+    EXPECT_EQ(sus::mog<i32>(-0.9_f32), 0_i32);
   }
 
   // Ints to f32.
