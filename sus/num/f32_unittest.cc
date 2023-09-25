@@ -12,16 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#pragma STDC FENV_ACCESS ON
+
 #include <bit>
+#include <cfenv>
 #include <limits>
 
 #include "googletest/include/gtest/gtest.h"
+#include "sus/cmp/eq.h"
+#include "sus/cmp/ord.h"
 #include "sus/collections/array.h"
 #include "sus/construct/into.h"
 #include "sus/num/__private/intrinsics.h"
 #include "sus/num/types.h"
-#include "sus/cmp/eq.h"
-#include "sus/cmp/ord.h"
 #include "sus/prelude.h"
 
 #define F32_NEAR(a, b, c) \
@@ -769,9 +772,51 @@ TEST(f32, Round) {
   auto b = (-0.456_f32).round();
   EXPECT_EQ(a.total_cmp(0_f32), std::strong_ordering::equal);
   auto c = (1.546_f32).round();
-  F32_NEAR(c, 2_f32, 0.00001_f32);
+  EXPECT_EQ(c, 2_f32);
   auto d = (-1.546_f32).round();
-  F32_NEAR(d, -2_f32, 0.00001_f32);
+  EXPECT_EQ(d, -2_f32);
+  // Round away from 0.
+  auto e = (-100.5_f32).round();
+  EXPECT_EQ(e, -101_f32);
+  // Preserve sign bit.
+  auto f = (-0_f32).round();
+  EXPECT_EQ(f.is_sign_negative(), true);
+  EXPECT_EQ(f, -0_f32);
+  auto g = (-0.02_f32).round();
+  EXPECT_EQ(g.is_sign_negative(), true);
+  EXPECT_EQ(g, -0_f32);
+}
+
+TEST(f32, RoundTies) {
+  auto a = (0.456_f32).round_ties();
+  EXPECT_EQ(a.total_cmp(0_f32), std::strong_ordering::equal);
+  auto b = (-0.456_f32).round_ties();
+  EXPECT_EQ(a.total_cmp(0_f32), std::strong_ordering::equal);
+  auto c = (1.546_f32).round_ties();
+  EXPECT_EQ(c, 2_f32);
+  auto d = (-1.546_f32).round_ties();
+  EXPECT_EQ(d, -2_f32);
+  // On a tie, honour the rounding mode.
+  {
+    auto e = (-100.5_f32).round_ties();
+    EXPECT_EQ(e, -100_f32);
+  }
+  {
+    int mode = std::fesetround(FE_DOWNWARD);
+    auto e = (-100.5_f32).round_ties();
+    // Normally this would be -101, and it is with Clang, and sometimes with
+    // GCC. But on our CI bots GCC is ignoring fesetround() and thus gives back
+    // -100 from nearbyint() with FE_DOWNWARD.
+    EXPECT_EQ(e, std::nearbyint(-100.5f));
+    std::fesetround(mode);
+  }
+  // Preserve sign bit.
+  auto f = (-0_f32).round_ties();
+  EXPECT_EQ(f.is_sign_negative(), true);
+  EXPECT_EQ(f, -0_f32);
+  auto g = (-0.02_f32).round_ties();
+  EXPECT_EQ(g.is_sign_negative(), true);
+  EXPECT_EQ(g, -0_f32);
 }
 
 TEST(f32, Signum) {
