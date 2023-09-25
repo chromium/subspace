@@ -28,15 +28,21 @@ concept IsConstLvalueReference = std::is_lvalue_reference_v<T> &&
 }  // namespace __private
 
 /// Returns whether a type `From` is safely constructible from a reference of
-/// type `To`. This is useful for marker types which hold a reference internally
-/// and are used to construct another type.
+/// type `To`. If `To` is a const reference, then the types must match, as a
+/// conversion would create a reference to a temporary.
 ///
-/// If `To` is a const reference, then they types must match, as a conversion
-/// would create a reference to a temporary.
+/// A struct will typically not actually store a reference but may provide an
+/// API of references nonetheless, and then store a pointer. When used with a
+/// universal reference `From` type, this can catch the case where the incoming
+/// reference will introduce a dangling reference when converted to the `To`
+/// reference.
 ///
-/// This concept only produces a useful result when `From` is a reference type
-/// which may not outlive the storage of `To`, such as with a reference to a
-/// temporary.
+/// # Examples
+/// template <std::convertible_to<i32&> U>
+///   requires(SafelyConstructibleFromReference<i32%, U&&>
+/// void Struct::stores_i32_ref(U&& u) {
+///   ptr_ = static_cast<i32&>(&u);
+/// }
 template <class To, class From>
 concept SafelyConstructibleFromReference =
     !__private::IsConstLvalueReference<To> ||
