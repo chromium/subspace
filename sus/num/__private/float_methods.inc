@@ -725,10 +725,46 @@ sus_pure inline _self powi(i32 n) const& noexcept {
 sus_pure inline _self recip() const& noexcept {
   return _primitive{1} / primitive_value;
 }
-/// Returns the nearest integer to itself, rounding half-way cases away from
-/// `0.0`.
+/// Returns the nearest integer to self. If a value is half-way between two
+/// integers, round away from `0.0`.
+///
+/// This rounding behaviour matches the behaviour of the [`std::round`](
+/// https://en.cppreference.com/w/cpp/numeric/math/round) standard library
+/// function, but is much slower and less conformant than [`round_ties`](
+/// $sus::num::@doc.self::round_ties) which often makes the latter a better
+/// choice.
+///
+/// As in Rust's [`round`](
+/// https://doc.rust-lang.org/stable/std/primitive.@doc.self.html#method.round),
+/// this method preserves the sign bit when the result is `-0.0`, but this is
+/// unlike [`std::round`](https://en.cppreference.com/w/cpp/numeric/math/round).
 sus_pure inline _self round() const& noexcept {
   return __private::float_round(primitive_value);
+}
+/// Returns the nearest integer to self. If a value is half-way between two
+/// integers, respects the current [rounding mode](
+/// https://en.cppreference.com/w/cpp/numeric/fenv/FE_round). The default mode
+/// will round ties to the nearest even number.
+///
+/// This rounding operation is faster and more standard conformant than
+/// [`round`]($sus::num::@doc.self::round), making it generally preferable.
+/// However it breaks with the legacy behaviour of [`std::round`](
+/// https://en.cppreference.com/w/cpp/numeric/math/round).
+///
+/// Rust has the unstable [`round_ties_even`](
+/// https://doc.rust-lang.org/stable/std/primitive.@doc.self.html#method.round_ties_even)
+/// method that always uses the [`FE_TONEAREST`](
+/// https://en.cppreference.com/w/cpp/numeric/fenv/FE_round) rounding mode. In
+/// C++ the rounding mode can be controlled by the user with
+/// [`std::fesetround`](https://en.cppreference.com/w/cpp/numeric/fenv/feround).
+///
+/// As in Rust's [`round`](
+/// https://doc.rust-lang.org/stable/std/primitive.@doc.self.html#method.round)
+/// and with [`std::nearbyint`](
+/// https://en.cppreference.com/w/cpp/numeric/math/nearbyint), this method
+/// preserves the sign bit when the result is `-0.0`.
+sus_pure inline _self round_ties() const& noexcept {
+  return __private::float_round_ties_by_mode(primitive_value);
 }
 /// Returns a number that represents the sign of self.
 ///

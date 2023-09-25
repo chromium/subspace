@@ -1450,12 +1450,18 @@ sus_pure_const inline T float_signum(T x) noexcept {
 template <class T>
   requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() <= 8)
 sus_pure_const inline T float_round(T x) noexcept {
-  /* MSVC round(float) is returning a double for some reason. */
-  const auto out = into_unsigned_integer(static_cast<T>(::round(x)));
-  // `round()` doesn't preserve the sign bit, so we need to restore it, for
-  // (-0.5, -0.0].
+  // MSVC round(float) is returning a double for some reason.
+  const auto out = into_unsigned_integer(static_cast<T>(std::round(x)));
+  // `round()` doesn't preserve the sign bit for -0, so we need to restore it,
+  // for (-0.5, -0.0].
   return into_float((out & ~high_bit<T>()) |
                     (into_unsigned_integer(x) & high_bit<T>()));
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() <= 8)
+sus_pure_const inline T float_round_ties_by_mode(T x) noexcept {
+  return std::nearbyint(x);
 }
 
 #if __has_builtin(__builtin_fpclassify)
