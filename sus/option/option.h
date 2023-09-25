@@ -530,6 +530,14 @@ class Option final {
              sus::construct::SafelyConstructibleFromReference<T, U &&>)
       : Option(WITH_SOME, move_to_storage(t)) {}
 
+  /// Converts from `Option<X>` to `Option<Y>` if `X` is convertible to `Y`.
+  template <class U>
+    requires(std::convertible_to<U, T>)
+  constexpr Option(const Option<U>& other) : t_(other.t_) {}
+  template <class U>
+    requires(std::convertible_to<U &&, T>)
+  constexpr Option(Option<U>&& other) : t_(::sus::move(other.t_)) {}
+
   /// Moves or copies `val` into a new option holding `Some(val)`.
   ///
   /// Implements [`From<Option<T>, T>`]($sus::construct::From).
