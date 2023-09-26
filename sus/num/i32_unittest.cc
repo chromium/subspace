@@ -16,6 +16,8 @@
 #include <type_traits>
 
 #include "googletest/include/gtest/gtest.h"
+#include "sus/cmp/eq.h"
+#include "sus/cmp/ord.h"
 #include "sus/collections/array.h"
 #include "sus/construct/default.h"
 #include "sus/construct/into.h"
@@ -24,8 +26,6 @@
 #include "sus/num/num_concepts.h"
 #include "sus/num/signed_integer.h"
 #include "sus/num/unsigned_integer.h"
-#include "sus/cmp/eq.h"
-#include "sus/cmp/ord.h"
 #include "sus/option/option.h"
 #include "sus/prelude.h"
 #include "sus/test/ensure_use.h"
@@ -449,11 +449,11 @@ TEST(i32, OperatorsWithPrimitives) {
   static_assert(CanShift<i32, uint8_t>);
   static_assert(CanShift<i32, uint16_t>);
   static_assert(CanShift<i32, uint32_t>);
-  static_assert(CantShift<i32, uint64_t>);
+  static_assert(CanShift<i32, uint64_t>);
   static_assert(CanShift<i32, ENUM(, uint8_t)>);
   static_assert(CanShift<i32, ENUM(, uint16_t)>);
   static_assert(CanShift<i32, ENUM(, uint32_t)>);
-  static_assert(CantShift<i32, ENUM(, uint64_t)>);
+  static_assert(CanShift<i32, ENUM(, uint64_t)>);
   static_assert(CantShift<i32, ENUM(class, uint8_t)>);
   static_assert(CantShift<i32, ENUM(class, uint16_t)>);
   static_assert(CantShift<i32, ENUM(class, uint32_t)>);

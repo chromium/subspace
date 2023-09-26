@@ -435,11 +435,11 @@ TEST(i64, OperatorsWithPrimitives) {
   static_assert(CanShift<i64, uint8_t>);
   static_assert(CanShift<i64, uint16_t>);
   static_assert(CanShift<i64, uint32_t>);
-  static_assert(CantShift<i64, uint64_t>);
+  static_assert(CanShift<i64, uint64_t>);
   static_assert(CanShift<i64, ENUM(, uint8_t)>);
   static_assert(CanShift<i64, ENUM(, uint16_t)>);
   static_assert(CanShift<i64, ENUM(, uint32_t)>);
-  static_assert(CantShift<i64, ENUM(, uint64_t)>);
+  static_assert(CanShift<i64, ENUM(, uint64_t)>);
   static_assert(CantShift<i64, ENUM(class, uint8_t)>);
   static_assert(CantShift<i64, ENUM(class, uint16_t)>);
   static_assert(CantShift<i64, ENUM(class, uint32_t)>);

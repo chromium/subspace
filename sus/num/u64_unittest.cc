@@ -444,11 +444,11 @@ TEST(u64, OperatorsWithPrimitives) {
   static_assert(CanShift<u64, uint8_t>);
   static_assert(CanShift<u64, uint16_t>);
   static_assert(CanShift<u64, uint32_t>);
-  static_assert(CantShift<u64, uint64_t>);
+  static_assert(CanShift<u64, uint64_t>);
   static_assert(CanShift<u64, ENUM(, uint8_t)>);
   static_assert(CanShift<u64, ENUM(, uint16_t)>);
   static_assert(CanShift<u64, ENUM(, uint32_t)>);
-  static_assert(CantShift<u64, ENUM(, uint64_t)>);
+  static_assert(CanShift<u64, ENUM(, uint64_t)>);
   static_assert(CantShift<u64, ENUM(class, uint8_t)>);
   static_assert(CantShift<u64, ENUM(class, uint16_t)>);
   static_assert(CantShift<u64, ENUM(class, uint32_t)>);
@@ -456,10 +456,10 @@ TEST(u64, OperatorsWithPrimitives) {
 
   static_assert(CantShift<u64, int8_t>);
 
-  static_assert(CantShift<int8_t, u64>);
-  static_assert(CantShift<uint8_t, u64>);
-  static_assert(CantShift<ENUM(, int8_t), u64>);
-  static_assert(CantShift<ENUM(, uint8_t), u64>);
+  static_assert(CanShift<int8_t, u64>);
+  static_assert(CanShift<uint8_t, u64>);
+  static_assert(CanShift<ENUM(, int8_t), u64>);
+  static_assert(CanShift<ENUM(, uint8_t), u64>);
   static_assert(CantShift<ENUM(class, int8_t), u64>);
   static_assert(CantShift<ENUM(class, uint8_t), u64>);
 }
