@@ -16,6 +16,8 @@
 
 #include <concepts>
 
+#include "sus/cmp/cmp.h"  // For docs.
+
 namespace sus::cmp {
 
 /// Concept for types that can be compared for equality with the `==` and `!=`

@@ -36,6 +36,7 @@ target_sources(subspace PUBLIC
     "choice/choice.h"
     "choice/choice_types.h"
     "cmp/__private/void_concepts.h"
+    "cmp/cmp.h"
     "cmp/eq.h"
     "cmp/ord.h"
     "cmp/reverse.h"
