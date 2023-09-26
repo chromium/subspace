@@ -34,6 +34,9 @@ namespace sus {
 ///   terminate in the case of a software bug, which is represented in the
 ///   method documentation.
 /// * No uninitialized memory through default initialization.
+/// * Indexing operations with negative signed values no longer compile.
+///   Containers that index on `size_t` (as in the standard library), instead of
+///   `usize`, will silently accept memory safety bugs with negative indices.
 /// * Providing explicit unsafe backdoors. Occasionally runtime checks can't be
 ///   elided by the compiler and they are in hot code that has visible
 ///   performance impact. Explicit unsafe backdoors allow individual callsites
