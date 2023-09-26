@@ -33,6 +33,7 @@ namespace sus {
 ///   fail to compile. And in some cases, will perform runtime checks and
 ///   terminate in the case of a software bug, which is represented in the
 ///   method documentation.
+/// * No uninitialized memory through default initialization.
 /// * Providing explicit unsafe backdoors. Occasionally runtime checks can't be
 ///   elided by the compiler and they are in hot code that has visible
 ///   performance impact. Explicit unsafe backdoors allow individual callsites
@@ -44,10 +45,10 @@ namespace sus {
 ///   and easily write error handling instead of Undefined Behaviour or
 ///   crashes.
 /// * No accidental copies. Subspace collections (that are not view types) do
-///   not satisfy the [`Copy`]($sus::mem::Copy) concept, and instead must be explicitly
-///   cloned via `sus::clone(x)` to make a copy. This allows them to be passed
-///   by value without introducing a copy at a caller that was expecting it to
-///   be received by reference.
+///   not satisfy the [`Copy`]($sus::mem::Copy) concept, and instead must be
+///   explicitly cloned via `sus::clone(x)` to make a copy.
+///   This allows them to be passed by value without introducing a copy at a
+///   caller that was expecting it to be received by reference.
 /// * Catch iterator invalidation. By default Subspace containers are built with
 ///   runtime protection against iterator invalidation. Iterators produced by
 ///   collections are tracked and if the collection is mutated while an iterator
