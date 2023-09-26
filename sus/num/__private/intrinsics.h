@@ -1689,7 +1689,8 @@ sus_pure sus_always_inline T float_round_ties_by_mode(T x) noexcept {
 // Note: not sus_pure_const because it depends on global state: the rounding
 // mode.
 template <class I, class T>
-  requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() <= 8)
+  requires(std::is_floating_point_v<T> && std::is_integral_v<I> &&
+           std::is_signed_v<I> && ::sus::mem::size_of<T>() <= 8)
 sus_pure sus_always_inline I float_round_to(T x) noexcept {
   static_assert(::sus::mem::size_of<I>() <= ::sus::mem::size_of<long long>());
 
