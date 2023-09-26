@@ -472,11 +472,11 @@ TEST(usize, OperatorsWithPrimitives) {
   static_assert(CanShift<usize, uint8_t>);
   static_assert(CanShift<usize, uint16_t>);
   static_assert(CanShift<usize, uint32_t>);
-  static_assert(CantShift<usize, uint64_t>);
+  static_assert(CanShift<usize, uint64_t>);
   static_assert(CanShift<usize, ENUM(, uint8_t)>);
   static_assert(CanShift<usize, ENUM(, uint16_t)>);
   static_assert(CanShift<usize, ENUM(, uint32_t)>);
-  static_assert(CantShift<usize, ENUM(, uint64_t)>);
+  static_assert(CanShift<usize, ENUM(, uint64_t)>);
   static_assert(CantShift<usize, ENUM(class, uint8_t)>);
   static_assert(CantShift<usize, ENUM(class, uint16_t)>);
   static_assert(CantShift<usize, ENUM(class, uint32_t)>);
@@ -484,18 +484,12 @@ TEST(usize, OperatorsWithPrimitives) {
 
   static_assert(CantShift<usize, int8_t>);
 
-  static_assert(!(sizeof(usize) <= sizeof(u32)) || CanShift<int8_t, usize>);
-  static_assert(!(sizeof(usize) > sizeof(u32)) || CantShift<int8_t, usize>);
-  static_assert(!(sizeof(usize) <= sizeof(u32)) || CanShift<uint8_t, usize>);
-  static_assert(!(sizeof(usize) > sizeof(u32)) || CantShift<uint8_t, usize>);
-  static_assert(!(sizeof(usize) <= sizeof(u32)) ||
-                CanShift<ENUM(, int8_t), usize>);
-  static_assert(!(sizeof(usize) > sizeof(u32)) ||
-                CantShift<ENUM(, uint8_t), usize>);
-  static_assert(!(sizeof(usize) <= sizeof(u32)) ||
-                CanShift<ENUM(class, int8_t), usize>);
-  static_assert(!(sizeof(usize) > sizeof(u32)) ||
-                CantShift<ENUM(class, uint8_t), usize>);
+  static_assert(CanShift<int8_t, usize>);
+  static_assert(CanShift<uint8_t, usize>);
+  static_assert(CanShift<ENUM(, int8_t), usize>);
+  static_assert(CanShift<ENUM(, uint8_t), usize>);
+  static_assert(CantShift<ENUM(class, int8_t), usize>);
+  static_assert(CantShift<ENUM(class, uint8_t), usize>);
 }
 
 TEST(usize, From) {

@@ -887,46 +887,6 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
            !std::convertible_to<U, _self>)
 friend constexpr inline _self operator^(U l, _self r) noexcept = delete;
-/// Satisfies the [`Shl`]($sus::num::Shl) concept for signed integers.
-///
-/// This operation supports shifting with primitive signed or unsigned integers
-/// that convert to the safe numeric, as well as enums.
-/// However enum class is excluded as they require an explicit conversion to an
-/// integer.
-///
-/// Thus the bound is `std::convertible_to` (implicit conversion) instead of
-/// `sus::construct::From` (explicit conversion).
-///
-/// #[doc.overloads=signedint.<<]
-[[nodiscard]] sus_pure friend constexpr inline _self operator<<(
-    _self l, std::convertible_to<u32> auto r) noexcept {
-  const auto out =
-      __private::shl_with_overflow(l.primitive_value, u32(r).primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(!out.overflow);
-  return out.value;
-}
-/// #[doc.overloads=signedint.<<]
-template <class U>
-  requires(!std::convertible_to<U, u32>)
-[[nodiscard]] sus_pure friend constexpr inline _self operator<<(
-    _self l, U r) noexcept = delete;
-/// Satisfies the [`Shr`]($sus::num::Shr) concept for signed integers.
-///
-/// #[doc.overloads=signedint.>>]
-[[nodiscard]] sus_pure friend constexpr inline _self operator>>(
-    _self l, std::convertible_to<u32> auto r) noexcept {
-  const auto out =
-      __private::shr_with_overflow(l.primitive_value, u32(r).primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(!out.overflow);
-  return out.value;
-}
-/// #[doc.overloads=signedint.>>]
-template <class U>
-  requires(!std::convertible_to<U, u32>)
-[[nodiscard]] sus_pure friend constexpr inline _self operator>>(
-    _self l, U r) noexcept = delete;
 
 /// Satisfies the [`AddAssign<@doc.self>`]($sus::num::AddAssign) concept.
 constexpr inline void operator+=(_self r) & noexcept {
