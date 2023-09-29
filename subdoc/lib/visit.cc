@@ -454,6 +454,32 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             docs_db_.find_namespace_mut(context).unwrap();
         add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(ae),
                         parent.aliases, decl->getASTContext());
+      } else if (auto* condecl = clang::dyn_cast<clang::ConceptDecl>(
+                     shadow->getTargetDecl())) {
+        auto* context =
+            clang::dyn_cast<clang::NamespaceDecl>(decl->getDeclContext());
+        if (!context &&
+            !clang::isa<clang::TranslationUnitDecl>(decl->getDeclContext())) {
+          // The context for a concept is a namespace or translation unit.
+          decl->dump();
+          decl->getDeclContext()->dumpAsDecl();
+          sus::unreachable();
+        }
+
+        auto ae = AliasElement(
+            // alias info.
+            iter_namespace_path(decl).collect_vec(), sus::move(comment),
+            decl->getNameAsString(),
+            decl->getASTContext().getSourceManager().getFileOffset(
+                decl->getLocation()),
+            sus::vec(),
+            // target info.
+            sus::move(target_namespace_path), sus::move(target_record_path),
+            condecl->getNameAsString());
+        NamespaceElement& parent =
+            docs_db_.find_namespace_mut(context).unwrap();
+        add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(ae),
+                        parent.aliases, decl->getASTContext());
       } else if (auto* ecdecl = clang::dyn_cast<clang::EnumConstantDecl>(
                      shadow->getTargetDecl())) {
         ecdecl->dump();
