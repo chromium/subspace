@@ -16,6 +16,11 @@ using other::subother::S;
 /// Alias of [`C`]($other::subother::C).
 using other::subother::C;
 
+/// Renamed from [`S`]($other::subother::S).
+using RenamedUsingS = other::subother::S;
+/// Renamed from [`S`]($other::subother::S).
+typedef other::subother::S RenamedTypedefS;
+
 /// Should show `S` as the return type, not the full path.
 other::subother::S return_s();
 
