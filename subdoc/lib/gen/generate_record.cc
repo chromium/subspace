@@ -35,8 +35,12 @@ namespace subdoc::gen {
 
 namespace {
 
-using SortedFunctionByName = sus::Tuple<std::string_view, u32, u32, FunctionId>;
-using SortedFieldByName = sus::Tuple<std::string_view, u32, UniqueSymbol>;
+using SortedFunctionByName =
+    sus::Tuple<std::string_view,
+               /* primary sort_key (this should be ordered first) */ u32,
+               /* sort_key */ u32, FunctionId>;
+using SortedFieldByName =
+    sus::Tuple<std::string_view, /* sort_key */ u32, UniqueSymbol>;
 
 enum class MethodType {
   StaticMethods,

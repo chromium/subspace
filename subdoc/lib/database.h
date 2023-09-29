@@ -46,7 +46,7 @@ struct RecordElement;
 enum class FoundNameTag {
   Namespace,
   Function,
-  Type,  // Includes Records, Typedefs, Enums.
+  Type,  // Includes Records, Aliases, Enums.
   Concept,
   Field,
 };
@@ -169,42 +169,43 @@ struct FunctionOverload {
   // TODO: `noexcept` stuff from FunctionDecl::getExceptionSpecType().
 };
 
-/// An alias just pulls a name into another context, but doesn't instantiate
-/// a template or give it a different name. e.g. `using a::b;`
-struct AliasElement : public TypeElement {
-  explicit AliasElement(sus::Vec<Namespace> namespace_path, Comment comment,
-                        std::string name, u32 sort_key,
-                        sus::Vec<std::string> record_path,
-                        sus::Vec<Namespace> target_namespace_path,
-                        sus::Vec<std::string> target_record_path,
-                        std::string target_name)
-      : TypeElement(sus::move(namespace_path), sus::move(comment),
-                    sus::move(name), sus::move(record_path), sort_key),
-        target_namespace_path(sus::move(target_namespace_path)),
-        target_record_path(sus::move(target_record_path)),
-        target_name(sus::move(target_name)) {}
-
-  sus::Vec<Namespace> target_namespace_path;
-  sus::Vec<std::string> target_record_path;
-  std::string target_name;
+enum class AliasStyle {
+  Forwarding,
+  NewType,
 };
 
-/// A typedef pulls a name into another context but can include template
-/// parameters, can specialize a template, and defines a new name.
-/// e.g. `using a = b;`
-struct TypedefElement : public TypeElement {
-  explicit TypedefElement(sus::Vec<Namespace> namespace_path, Comment comment,
+enum AliasTargetTag {
+  AliasOfType,
+  AliasOfConcept,
+  AliasOfMethod,
+  AliasOfEnumConstant,
+};
+using AliasTarget = sus::Choice<sus_choice_types(
+    (AliasTargetTag::AliasOfType, LinkedType),
+    (AliasTargetTag::AliasOfConcept, LinkedConcept),
+    (AliasTargetTag::AliasOfMethod, LinkedType, std::string /* method name */),
+    (AliasTargetTag::AliasOfEnumConstant, LinkedType,
+     std::string /* constant name */))>;
+
+/// An alias can be Forwarding (`using a::b`) or NewType (`using a = b`).
+struct AliasElement : public TypeElement {
+  explicit AliasElement(sus::Vec<Namespace> namespace_path, Comment comment,
                           std::string name, u32 sort_key,
                           sus::Vec<std::string> record_path,
+                          AliasStyle alias_style,
                           sus::Option<RequiresConstraints> constraints,
-                          LinkedType target_type)
+                          AliasTarget target)
       : TypeElement(sus::move(namespace_path), sus::move(comment),
                     sus::move(name), sus::move(record_path), sort_key),
+        alias_style(alias_style),
         constraints(sus::move(constraints)),
-        target_type(sus::move(target_type)) {}
+        target(sus::move(target)) {}
 
+  /// True for aliases that just forward to another type, and don't define a new
+  /// name. True for `using a::b` but false for `using a = b`.
+  AliasStyle alias_style;
   sus::Option<RequiresConstraints> constraints;
-  LinkedType target_type;
+  AliasTarget target;
 };
 
 struct FunctionElement : public CommentElement {
@@ -377,20 +378,6 @@ struct AliasId {
   };
 };
 
-struct TypedefId {
-  explicit TypedefId(std::string name) : name(sus::move(name)) {}
-
-  std::string name;
-
-  bool operator==(const TypedefId&) const = default;
-
-  struct Hash {
-    std::size_t operator()(const TypedefId& k) const {
-      return std::hash<std::string>()(k.name);
-    }
-  };
-};
-
 struct RecordId {
   explicit RecordId(std::string name) : name(sus::move(name)) {}
   explicit RecordId(std::string_view name) : name(name) {}
@@ -464,7 +451,6 @@ struct RecordElement : public TypeElement {
   std::unordered_map<FunctionId, FunctionElement, FunctionId::Hash> conversions;
   std::unordered_map<FunctionId, FunctionElement, FunctionId::Hash> methods;
   std::unordered_map<AliasId, AliasElement, AliasId::Hash> aliases;
-  std::unordered_map<TypedefId, TypedefElement, TypedefId::Hash> typedefs;
 
   bool has_any_comments() const noexcept {
     if (has_found_comment()) return true;
@@ -574,20 +560,6 @@ struct RecordElement : public TypeElement {
     return out;
   }
 
-  sus::Option<const CommentElement&> find_typedef_comment(
-      std::string_view comment_loc) const noexcept {
-    sus::Option<const CommentElement&> out;
-    for (const auto& [u, e] : typedefs) {
-      out = e.find_comment(comment_loc);
-      if (out.is_some()) return out;
-    }
-    for (const auto& [u, e] : records) {
-      out = e.find_typedef_comment(comment_loc);
-      if (out.is_some()) return out;
-    }
-    return out;
-  }
-
   sus::Option<const CommentElement&> find_field_comment(
       std::string_view comment_loc) const noexcept {
     sus::Option<const CommentElement&> out;
@@ -663,7 +635,6 @@ struct NamespaceElement : public CommentElement {
   std::unordered_map<RecordId, RecordElement, RecordId::Hash> records;
   std::unordered_map<FunctionId, FunctionElement, FunctionId::Hash> functions;
   std::unordered_map<AliasId, AliasElement, AliasId::Hash> aliases;
-  std::unordered_map<TypedefId, TypedefElement, TypedefId::Hash> typedefs;
 
   bool is_empty() const noexcept {
     return namespaces.empty() && records.empty() && functions.empty();
@@ -804,24 +775,6 @@ struct NamespaceElement : public CommentElement {
     }
     for (const auto& [u, e] : records) {
       out = e.find_alias_comment(comment_loc);
-      if (out.is_some()) return out;
-    }
-    return out;
-  }
-
-  sus::Option<const CommentElement&> find_typedef_comment(
-      std::string_view comment_loc) const noexcept {
-    sus::Option<const CommentElement&> out;
-    for (const auto& [u, e] : typedefs) {
-      out = e.find_comment(comment_loc);
-      if (out.is_some()) return out;
-    }
-    for (const auto& [u, e] : namespaces) {
-      out = e.find_typedef_comment(comment_loc);
-      if (out.is_some()) return out;
-    }
-    for (const auto& [u, e] : records) {
-      out = e.find_typedef_comment(comment_loc);
       if (out.is_some()) return out;
     }
     return out;
@@ -1054,6 +1007,29 @@ struct Database {
     return sus::ok();
   }
 
+  sus::Option<const ConceptElement&> find_concept_ref(
+      sus::Slice<Namespace> namespace_path,
+      const std::string& name) const noexcept {
+    const NamespaceElement* ns_cursor = &global;
+    for (const Namespace& n : namespace_path) {
+      switch (n) {
+        case Namespace::Tag::Global: break;
+        case Namespace::Tag::Anonymous:
+          // We have nowhere to store an anonymous namespace in the database
+          // right now.
+          return sus::none();
+        case Namespace::Tag::Named:
+          const std::string& name = n.as<Namespace::Tag::Named>();
+          auto it = ns_cursor->namespaces.find(NamespaceId(name));
+          if (it == ns_cursor->namespaces.end()) return sus::none();
+          ns_cursor = &it->second;
+      }
+    }
+    auto cit = ns_cursor->concepts.find(ConceptId(name));
+    if (cit == ns_cursor->concepts.end()) return sus::none();
+    return sus::some(cit->second);
+  }
+
   sus::Vec<sus::Option<TypeRef>> collect_type_element_refs(
       const Type& type) const noexcept {
     sus::Vec<sus::Option<TypeRef>> vec;
@@ -1200,17 +1176,6 @@ struct Database {
     return global.find_alias_comment(comment_loc);
   }
   sus::Option<const CommentElement&> find_alias_comment(
-      std::string_view comment_loc) && = delete;
-
-  /// Finds a comment whose location ends with the `comment_loc` suffix.
-  ///
-  /// The suffix can be used to look for the line:column and ignore the
-  /// filename in the comment location format `filename:line:col`.
-  sus::Option<const CommentElement&> find_typedef_comment(
-      std::string_view comment_loc) const& noexcept {
-    return global.find_typedef_comment(comment_loc);
-  }
-  sus::Option<const CommentElement&> find_typedef_comment(
       std::string_view comment_loc) && = delete;
 
   /// Finds a comment whose location ends with the `comment_loc` suffix.
