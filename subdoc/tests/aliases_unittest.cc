@@ -33,6 +33,25 @@ TEST_F(SubDocTest, AliasUsingStruct) {
   EXPECT_TRUE(has_alias_comment(db, "10:5", "<p>Global comment headline</p>"));
 }
 
+TEST_F(SubDocTest, AliasUsingConcept) {
+  auto result = run_code(R"(
+    namespace a {
+    /// Comment headline
+    template <class T> concept S = true;
+    }
+    namespace b {
+    /// Alias comment headline
+    using a::S;
+    }
+    /// Global comment headline
+    using a::S;
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_alias_comment(db, "7:5", "<p>Alias comment headline</p>"));
+  EXPECT_TRUE(has_alias_comment(db, "10:5", "<p>Global comment headline</p>"));
+}
+
 TEST_F(SubDocTest, AliasUsingMethod) {
   auto result = run_code(R"(
     namespace a {
