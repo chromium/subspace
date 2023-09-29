@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include "subdoc/lib/path.h"
 #include "subdoc/lib/type.h"
 #include "sus/choice/choice.h"
 #include "sus/collections/vec.h"
@@ -44,9 +45,26 @@ struct LinkedType {
   sus::Vec<sus::Option<TypeRef>> type_element_refs;
 
  private:
- enum Construct { CONSTRUCT };
+  enum Construct { CONSTRUCT };
   LinkedType(Construct, Type t, sus::Vec<sus::Option<TypeRef>> v)
       : type(sus::move(t)), type_element_refs(sus::move(v)) {}
+};
+
+enum class ConceptRefOrNameTag {
+  Ref,
+  Name,
+};
+/// A reference to a concept in the `Database`, or name.
+using ConceptRefOrName = sus::Choice<sus_choice_types(
+    (ConceptRefOrNameTag::Ref, const ConceptElement&),
+    (ConceptRefOrNameTag::Name, std::string))>;
+
+struct LinkedConcept {
+  static LinkedConcept with_concept(
+      sus::Slice<Namespace> namespace_path, std::string name,
+      const Database& db) noexcept;
+
+  ConceptRefOrName ref_or_name;
 };
 
 }  // namespace subdoc

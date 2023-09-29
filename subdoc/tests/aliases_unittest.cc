@@ -117,3 +117,38 @@ TEST_F(SubDocTest, DISABLED_AliasCommentOnUsingEnum) {
   // A comment on `using enum` has nowhere to display, so it's an error.
   EXPECT_EQ(diags.locations[0u], "test.cc:3:5");
 }
+
+TEST_F(SubDocTest, AliasNamedTypeInNamespace) {
+  auto result = run_code(R"(
+    namespace a {
+    /// Comment headline
+    struct S {};
+    }
+    namespace b {
+    /// Alias comment headline
+    using T = a::S;
+    }
+    /// Global comment headline
+    using T2 = a::S;
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_alias_comment(db, "7:5", "<p>Alias comment headline</p>"));
+  EXPECT_TRUE(has_alias_comment(db, "10:5", "<p>Global comment headline</p>"));
+}
+
+TEST_F(SubDocTest, AliasNamedTypeInRecord) {
+  auto result = run_code(R"(
+    namespace a {
+    /// Comment headline
+    struct S {};
+    }
+    struct T {
+      /// Alias comment headline
+      using A = a::S;
+    };
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_alias_comment(db, "7:7", "<p>Alias comment headline</p>"));
+}

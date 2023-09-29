@@ -23,4 +23,21 @@ LinkedType LinkedType::with_type(Type t, const Database& db) noexcept {
   return LinkedType(CONSTRUCT, sus::move(t), sus::move(refs));
 }
 
+LinkedConcept LinkedConcept::with_concept(
+    sus::Slice<Namespace> namespace_path, std::string name,
+    const Database& db) noexcept {
+  sus::Option<const ConceptElement&> elem =
+      db.find_concept_ref(namespace_path, name);
+  if (elem.is_some()) {
+    return LinkedConcept{
+        ConceptRefOrName::with<ConceptRefOrName::Tag::Ref>(
+            sus::move(elem).unwrap()),
+    };
+  } else {
+    return LinkedConcept{
+        ConceptRefOrName::with<ConceptRefOrName::Tag::Name>(sus::move(name)),
+    };
+  }
+}
+
 }  // namespace subdoc
