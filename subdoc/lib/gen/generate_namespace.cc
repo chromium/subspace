@@ -17,6 +17,7 @@
 #include <filesystem>
 
 #include "subdoc/lib/gen/files.h"
+#include "subdoc/lib/gen/generate_alias.h"
 #include "subdoc/lib/gen/generate_concept.h"
 #include "subdoc/lib/gen/generate_cpp_path.h"
 #include "subdoc/lib/gen/generate_function.h"
@@ -38,6 +39,7 @@ using SortedNamespaceByName = sus::Tuple<std::string_view, u32, NamespaceId>;
 using SortedConceptByName = sus::Tuple<std::string_view, u32, ConceptId>;
 using SortedFunctionByName = sus::Tuple<std::string_view, u32, FunctionId>;
 using SortedRecordByName = sus::Tuple<std::string_view, u32, RecordId>;
+using SortedAliasByName = sus::Tuple<std::string_view, u32, AliasId>;
 
 const NamespaceElement& namespace_element_from_sorted(
     const NamespaceElement& element, const SortedNamespaceByName& s) noexcept {
@@ -57,6 +59,11 @@ const FunctionElement& function_element_from_sorted(
 const RecordElement& record_element_from_sorted(
     const NamespaceElement& element, const SortedRecordByName& s) noexcept {
   return element.records.at(s.at<2>());
+}
+
+const AliasElement& alias_element_from_sorted(
+    const NamespaceElement& element, const SortedAliasByName& s) noexcept {
+  return element.aliases.at(s.at<2>());
 }
 
 constexpr inline std::weak_ordering cmp_namespaces_by_name(
@@ -82,6 +89,13 @@ constexpr inline std::weak_ordering cmp_functions_by_name(
 
 constexpr inline std::weak_ordering cmp_records_by_name(
     const SortedRecordByName& a, const SortedRecordByName& b) noexcept {
+  auto ord = a.at<0>() <=> b.at<0>();
+  if (ord != 0) return ord;
+  return a.at<1>() <=> b.at<1>();
+}
+
+constexpr inline std::weak_ordering cmp_aliases_by_name(
+    const SortedAliasByName& a, const SortedAliasByName& b) noexcept {
   auto ord = a.at<0>() <=> b.at<0>();
   if (ord != 0) return ord;
   return a.at<1>() <=> b.at<1>();
@@ -254,6 +268,69 @@ sus::Result<void, MarkdownToHtmlError> generate_concept_references(
       if (auto result = generate_concept_reference(items_list, ce, page_state);
           result.is_err()) {
         return sus::err(sus::move(result).unwrap_err());
+      }
+    }
+  }
+
+  return sus::ok();
+}
+
+enum class AliasesOf { Types, Concepts };
+
+sus::Result<void, MarkdownToHtmlError> generate_alias_references(
+    HtmlWriter::OpenDiv& namespace_div, AliasesOf aliases_of,
+    const NamespaceElement& element, sus::Slice<SortedAliasByName> aliases,
+    ParseMarkdownPageState& page_state) {
+  if (aliases.is_empty()) return sus::ok();
+
+  auto section_div = namespace_div.open_div();
+  section_div.add_class("section");
+  section_div.add_class("aliases");
+  switch (aliases_of) {
+    case AliasesOf::Types: section_div.add_class("types"); break;
+    case AliasesOf::Concepts: section_div.add_class("concepts"); break;
+  }
+
+  {
+    auto header_div = section_div.open_div();
+    header_div.add_class("section-header");
+    auto header_name = header_div.open_a();
+    switch (aliases_of) {
+      case AliasesOf::Types:
+        header_name.add_name("aliases-types");
+        header_name.add_href("#aliases-types");
+        header_name.write_text("Type Aliases");
+        break;
+      case AliasesOf::Concepts:
+        header_name.add_name("aliases-concepts");
+        header_name.add_href("#aliases-concepts");
+        header_name.write_text("Concept Aliases");
+        break;
+    }
+  }
+  {
+    auto items_list = section_div.open_ul();
+    items_list.add_class("section-items");
+    items_list.add_class("item-table");
+
+    for (const SortedAliasByName& sorted_alias : aliases) {
+      const AliasElement& ae = alias_element_from_sorted(element, sorted_alias);
+      switch (aliases_of) {
+        case AliasesOf::Types:
+          if (auto result =
+                  generate_alias_of_type_reference(items_list, ae, page_state);
+              result.is_err()) {
+            return sus::err(sus::move(result).unwrap_err());
+          }
+          break;
+        case AliasesOf::Concepts:
+          // TODO:
+          // if (auto result =
+          //generate_alias_of_concept_reference(items_list, ae, page_state);
+          //result.is_err()) {
+          //return sus::err(sus::move(result).unwrap_err());
+          //}
+          break;
       }
     }
   }
@@ -445,6 +522,27 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
   }
   sorted_concepts.sort_unstable_by(cmp_concepts_by_name);
 
+  sus::Vec<SortedAliasByName> sorted_aliases_of_types;
+  sus::Vec<SortedAliasByName> sorted_aliases_of_concepts;
+  for (const auto& [key, sub_element] : element.aliases) {
+    if (sub_element.hidden()) continue;
+
+    switch (sub_element.target) {
+      case AliasTarget::Tag::AliasOfType:
+        sorted_aliases_of_types.push(
+            sus::tuple(sub_element.name, sub_element.sort_key, key));
+        break;
+      case AliasTarget::Tag::AliasOfConcept:
+        sorted_aliases_of_concepts.push(
+            sus::tuple(sub_element.name, sub_element.sort_key, key));
+        break;
+      case AliasTarget::Tag::AliasOfMethod: [[fallthrough]];
+      case AliasTarget::Tag::AliasOfEnumConstant: break;
+    }
+  }
+  sorted_aliases_of_types.sort_unstable_by(cmp_aliases_by_name);
+  sorted_aliases_of_concepts.sort_unstable_by(cmp_aliases_by_name);
+
   sus::Vec<SidebarLink> sidebar_links;
   if (!sorted_namespaces.is_empty()) {
     sidebar_links.push(SidebarLink(SidebarLinkStyle::GroupHeader, "Namespaces",
@@ -564,6 +662,24 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
   if (!sorted_concepts.is_empty()) {
     if (auto result = generate_concept_references(
             namespace_div, element, sorted_concepts.as_slice(), page_state);
+        result.is_err()) {
+      return sus::err(sus::move(result).unwrap_err());
+    }
+  }
+
+  if (!sorted_aliases_of_types.is_empty()) {
+    if (auto result = generate_alias_references(
+            namespace_div, AliasesOf::Types, element,
+            sorted_aliases_of_types.as_slice(), page_state);
+        result.is_err()) {
+      return sus::err(sus::move(result).unwrap_err());
+    }
+  }
+
+  if (!sorted_aliases_of_concepts.is_empty()) {
+    if (auto result = generate_alias_references(
+            namespace_div, AliasesOf::Concepts, element,
+            sorted_aliases_of_concepts.as_slice(), page_state);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }
