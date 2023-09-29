@@ -40,6 +40,8 @@ struct HoldS {
 };
 
 struct FunctionParams {
+  using AliasInStruct = other::subother::S;
+
   /// A const lvalue ref.
   static auto const_ref(const other::subother::S& s) -> const other::subother::S&;
   /// A mut lvalue ref.

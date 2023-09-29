@@ -60,6 +60,16 @@ static bool should_skip_decl(VisitCx& cx, clang::Decl* decl) {
     return true;
   }
 
+  clang::DeclContext* context = decl->getDeclContext();
+  while (clang::isa<clang::LinkageSpecDecl>(context))
+    context = context->getParent();
+  if (!(clang::isa<clang::RecordDecl>(context) ||
+        clang::isa<clang::NamespaceDecl>(context) ||
+        clang::isa<clang::TranslationUnitDecl>(context))) {
+    // Skip decls in function bodies.
+    return true;
+  }
+
   // TODO: These could be configurable. As well as user-defined namespaces to
   // skip.
   if (path_contains_namespace(ndecl,
@@ -383,18 +393,58 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   }
 
   bool VisitTypedefDecl(clang::TypedefDecl* decl) noexcept {
-    if (should_skip_decl(cx_, decl)) return true;
-    // clang::RawComment* raw_comment = get_raw_comment(decl);
-    // if (raw_comment)
-    //   llvm::errs() << "TypedefDecl " << raw_comment->getKind() << "\n";
-    return true;
+    return VisitTypeAliasDecl(decl);
   }
 
-  bool VisitTypeAliasDecl(clang::TypeAliasDecl* decl) noexcept {
+  /// Received TypedefNameDecl as it handles TypeAliasDecl and TypedefDecl.
+  bool VisitTypeAliasDecl(clang::TypedefNameDecl* decl) noexcept {
     if (should_skip_decl(cx_, decl)) return true;
-    // clang::RawComment* raw_comment = get_raw_comment(decl);
-    // if (raw_comment)
-    //   llvm::errs() << "TypeAliasDecl " << raw_comment->getKind() << "\n";
+
+    clang::RawComment* raw_comment = get_raw_comment(decl);
+    Comment comment = make_db_comment(decl->getASTContext(), raw_comment, "");
+
+    auto* context = decl->getDeclContext();
+    // TODO: Save the linkage spec (`extern "C"`) so we can show it.
+    while (clang::isa<clang::LinkageSpecDecl>(context))
+      context = context->getParent();
+
+    sus::Option<RequiresConstraints> constraints;
+    if (auto* alias_decl = clang::dyn_cast<clang::TypeAliasDecl>(decl)) {
+      if (auto* tmpl = alias_decl->getDescribedAliasTemplate()) {
+        constraints = collect_template_constraints(tmpl, preprocessor_);
+      }
+    }
+
+    auto te = TypedefElement(
+        // alias info.
+        iter_namespace_path(decl).collect_vec(), sus::move(comment),
+        decl->getNameAsString(),
+        decl->getASTContext().getSourceManager().getFileOffset(
+            decl->getLocation()),
+        iter_record_path(context)
+            .map([](std::string_view v) { return std::string(v); })
+            .collect_vec(),
+        sus::move(constraints),
+        LinkedType::with_type(
+            build_local_type(decl->getUnderlyingType(),
+                             decl->getASTContext().getSourceManager(),
+                             preprocessor_, decl->getBeginLoc()),
+            docs_db_));
+
+    if (auto* rec_ctx = clang::dyn_cast<clang::RecordDecl>(context)) {
+      RecordElement& parent = docs_db_.find_record_mut(rec_ctx).unwrap();
+      add_typedef_to_db(TypedefId(decl->getNameAsString()), sus::move(te),
+                        parent.typedefs, decl->getASTContext());
+    } else if (auto* ns_ctx = clang::dyn_cast<clang::NamespaceDecl>(context)) {
+      NamespaceElement& parent = docs_db_.find_namespace_mut(ns_ctx).unwrap();
+      add_typedef_to_db(TypedefId(decl->getNameAsString()), sus::move(te),
+                        parent.typedefs, decl->getASTContext());
+    } else {
+      sus::check(clang::isa<clang::TranslationUnitDecl>(context));
+      NamespaceElement& parent = docs_db_.find_namespace_mut(nullptr).unwrap();
+      add_typedef_to_db(TypedefId(decl->getNameAsString()), sus::move(te),
+                        parent.typedefs, decl->getASTContext());
+    }
     return true;
   }
 
@@ -416,6 +466,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   bool VisitUsingDecl(clang::BaseUsingDecl* decl) noexcept {
     if (should_skip_decl(cx_, decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
+    // TODO: The comment should be inherited from the target of the using decl.
     Comment comment = make_db_comment(decl->getASTContext(), raw_comment, "");
     // `using enum` can pull in more than one shadow, it pulls in every constant
     // in the enum.
@@ -984,6 +1035,28 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       // We already visited this thing, from another translation unit.
     } else {
       const AliasElement& old_element = it->second;
+      ast_cx.getDiagnostics()
+          .Report(db_element.comment.attrs.location,
+                  diag_ids_.superceded_comment)
+          .AddString(old_element.comment.begin_loc);
+    }
+  }
+  template <class MapT>
+  void add_typedef_to_db(TypedefId db_key, TypedefElement db_element,
+                         MapT& db_map, clang::ASTContext& ast_cx) noexcept {
+    auto it = db_map.find(db_key);
+    if (it == db_map.end()) {
+      db_map.emplace(db_key, std::move(db_element));
+    } else if (!it->second.has_found_comment() &&
+               db_element.has_found_comment()) {
+      // Steal the comment.
+      sus::mem::swap(db_map.at(db_key).comment, db_element.comment);
+    } else if (!db_element.has_found_comment()) {
+      // Leave the existing comment in place, do nothing.
+    } else if (db_element.comment.begin_loc == it->second.comment.begin_loc) {
+      // We already visited this thing, from another translation unit.
+    } else {
+      const TypedefElement& old_element = it->second;
       ast_cx.getDiagnostics()
           .Report(db_element.comment.attrs.location,
                   diag_ids_.superceded_comment)

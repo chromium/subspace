@@ -120,6 +120,15 @@ class SubDocTest : public testing::Test {
                           comment_loc, comment_start);
   }
 
+  /// Returns whether an typedef was found whose comment location ends with
+  /// `comment_loc` and whose comment begins with `comment_start`.
+  bool has_typedef_comment(const subdoc::Database& db,
+                           std::string_view comment_loc,
+                           std::string_view comment_start) const noexcept {
+    return verify_comment("typedef", db, db.find_typedef_comment(comment_loc),
+                          comment_loc, comment_start);
+  }
+
  private:
   bool verify_comment(std::string_view type, const subdoc::Database& db,
                       sus::Option<const subdoc::CommentElement&> element,

@@ -169,24 +169,42 @@ struct FunctionOverload {
   // TODO: `noexcept` stuff from FunctionDecl::getExceptionSpecType().
 };
 
-struct AliasElement : public CommentElement {
+/// An alias just pulls a name into another context, but doesn't instantiate
+/// a template or give it a different name. e.g. `using a::b;`
+struct AliasElement : public TypeElement {
   explicit AliasElement(sus::Vec<Namespace> namespace_path, Comment comment,
                         std::string name, u32 sort_key,
                         sus::Vec<std::string> record_path,
                         sus::Vec<Namespace> target_namespace_path,
                         sus::Vec<std::string> target_record_path,
                         std::string target_name)
-      : CommentElement(sus::move(namespace_path), sus::move(comment),
-                       sus::move(name), sort_key),
-        record_path(sus::move(record_path)),
+      : TypeElement(sus::move(namespace_path), sus::move(comment),
+                    sus::move(name), sus::move(record_path), sort_key),
         target_namespace_path(sus::move(target_namespace_path)),
         target_record_path(sus::move(target_record_path)),
         target_name(sus::move(target_name)) {}
 
-  sus::Vec<std::string> record_path;
   sus::Vec<Namespace> target_namespace_path;
   sus::Vec<std::string> target_record_path;
   std::string target_name;
+};
+
+/// A typedef pulls a name into another context but can include template
+/// parameters, can specialize a template, and defines a new name.
+/// e.g. `using a = b;`
+struct TypedefElement : public TypeElement {
+  explicit TypedefElement(sus::Vec<Namespace> namespace_path, Comment comment,
+                          std::string name, u32 sort_key,
+                          sus::Vec<std::string> record_path,
+                          sus::Option<RequiresConstraints> constraints,
+                          LinkedType target_type)
+      : TypeElement(sus::move(namespace_path), sus::move(comment),
+                    sus::move(name), sus::move(record_path), sort_key),
+        constraints(sus::move(constraints)),
+        target_type(sus::move(target_type)) {}
+
+  sus::Option<RequiresConstraints> constraints;
+  LinkedType target_type;
 };
 
 struct FunctionElement : public CommentElement {
@@ -359,6 +377,20 @@ struct AliasId {
   };
 };
 
+struct TypedefId {
+  explicit TypedefId(std::string name) : name(sus::move(name)) {}
+
+  std::string name;
+
+  bool operator==(const TypedefId&) const = default;
+
+  struct Hash {
+    std::size_t operator()(const TypedefId& k) const {
+      return std::hash<std::string>()(k.name);
+    }
+  };
+};
+
 struct RecordId {
   explicit RecordId(std::string name) : name(sus::move(name)) {}
   explicit RecordId(std::string_view name) : name(name) {}
@@ -417,8 +449,6 @@ struct RecordElement : public TypeElement {
         template_params(sus::move(template_params)),
         final(final) {}
 
-  // TODO: Template parameters and requires clause.
-
   // TODO: Link to all base classes.
 
   RecordType record_type;
@@ -434,6 +464,7 @@ struct RecordElement : public TypeElement {
   std::unordered_map<FunctionId, FunctionElement, FunctionId::Hash> conversions;
   std::unordered_map<FunctionId, FunctionElement, FunctionId::Hash> methods;
   std::unordered_map<AliasId, AliasElement, AliasId::Hash> aliases;
+  std::unordered_map<TypedefId, TypedefElement, TypedefId::Hash> typedefs;
 
   bool has_any_comments() const noexcept {
     if (has_found_comment()) return true;
@@ -543,6 +574,20 @@ struct RecordElement : public TypeElement {
     return out;
   }
 
+  sus::Option<const CommentElement&> find_typedef_comment(
+      std::string_view comment_loc) const noexcept {
+    sus::Option<const CommentElement&> out;
+    for (const auto& [u, e] : typedefs) {
+      out = e.find_comment(comment_loc);
+      if (out.is_some()) return out;
+    }
+    for (const auto& [u, e] : records) {
+      out = e.find_typedef_comment(comment_loc);
+      if (out.is_some()) return out;
+    }
+    return out;
+  }
+
   sus::Option<const CommentElement&> find_field_comment(
       std::string_view comment_loc) const noexcept {
     sus::Option<const CommentElement&> out;
@@ -618,6 +663,7 @@ struct NamespaceElement : public CommentElement {
   std::unordered_map<RecordId, RecordElement, RecordId::Hash> records;
   std::unordered_map<FunctionId, FunctionElement, FunctionId::Hash> functions;
   std::unordered_map<AliasId, AliasElement, AliasId::Hash> aliases;
+  std::unordered_map<TypedefId, TypedefElement, TypedefId::Hash> typedefs;
 
   bool is_empty() const noexcept {
     return namespaces.empty() && records.empty() && functions.empty();
@@ -758,6 +804,24 @@ struct NamespaceElement : public CommentElement {
     }
     for (const auto& [u, e] : records) {
       out = e.find_alias_comment(comment_loc);
+      if (out.is_some()) return out;
+    }
+    return out;
+  }
+
+  sus::Option<const CommentElement&> find_typedef_comment(
+      std::string_view comment_loc) const noexcept {
+    sus::Option<const CommentElement&> out;
+    for (const auto& [u, e] : typedefs) {
+      out = e.find_comment(comment_loc);
+      if (out.is_some()) return out;
+    }
+    for (const auto& [u, e] : namespaces) {
+      out = e.find_typedef_comment(comment_loc);
+      if (out.is_some()) return out;
+    }
+    for (const auto& [u, e] : records) {
+      out = e.find_typedef_comment(comment_loc);
       if (out.is_some()) return out;
     }
     return out;
@@ -1136,6 +1200,17 @@ struct Database {
     return global.find_alias_comment(comment_loc);
   }
   sus::Option<const CommentElement&> find_alias_comment(
+      std::string_view comment_loc) && = delete;
+
+  /// Finds a comment whose location ends with the `comment_loc` suffix.
+  ///
+  /// The suffix can be used to look for the line:column and ignore the
+  /// filename in the comment location format `filename:line:col`.
+  sus::Option<const CommentElement&> find_typedef_comment(
+      std::string_view comment_loc) const& noexcept {
+    return global.find_typedef_comment(comment_loc);
+  }
+  sus::Option<const CommentElement&> find_typedef_comment(
       std::string_view comment_loc) && = delete;
 
   /// Finds a comment whose location ends with the `comment_loc` suffix.
