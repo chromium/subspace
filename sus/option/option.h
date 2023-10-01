@@ -533,12 +533,21 @@ class Option final {
   /// Converts from `Option<X>` to `Option<Y>` if `X` is convertible to `Y`.
   /// #[doc.overloads=ctor.convert]
   template <class U>
-    requires(std::convertible_to<U, T>)
+    requires(std::convertible_to<U, T> &&  //
+             std::is_reference_v<U> == std::is_reference_v<T>)
   constexpr Option(const Option<U>& other) : t_(other.t_) {}
   /// #[doc.overloads=ctor.convert]
   template <class U>
-    requires(std::convertible_to<U &&, T>)
+    requires(std::convertible_to<U &&, T> &&  //
+             std::is_reference_v<U> == std::is_reference_v<T>)
   constexpr Option(Option<U>&& other) : t_(::sus::move(other.t_)) {}
+  // Can not convert an Option<U> to Option<T&>. Use as_ref() to convert from
+  // Option<T> to Option<T&> or map() to perform a manual conversion to a
+  // reference.
+  /// #[doc.overloads=ctor.convert]
+  template <class U>
+    requires(!std::is_reference_v<U> && std::is_reference_v<T>)
+  constexpr Option(Option<U>&& other) = delete;
 
   /// Moves or copies `val` into a new option holding `Some(val)`.
   ///
