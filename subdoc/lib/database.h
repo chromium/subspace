@@ -1019,8 +1019,8 @@ struct Database {
           // right now.
           return sus::none();
         case Namespace::Tag::Named:
-          const std::string& name = n.as<Namespace::Tag::Named>();
-          auto it = ns_cursor->namespaces.find(NamespaceId(name));
+          const std::string& ns_name = n.as<Namespace::Tag::Named>();
+          auto it = ns_cursor->namespaces.find(NamespaceId(ns_name));
           if (it == ns_cursor->namespaces.end()) return sus::none();
           ns_cursor = &it->second;
       }
