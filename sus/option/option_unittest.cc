@@ -3186,6 +3186,11 @@ TEST(Option, NoExtraNeverValueConstruction) {
 }
 }  // namespace no_extra_never_value_construction
 
+template <class To, class From>
+concept CanConvertOption = requires {
+  { Option<To>(Option<From>()) };
+};
+
 TEST(Option, Convert) {
   struct SuperType {};
   struct SubType : public SuperType {};
@@ -3240,6 +3245,11 @@ TEST(Option, Convert) {
     Option<ConvertsTo> to = sus::move(from);
     return to.is_none();
   }());
+
+  static_assert(CanConvertOption<i32, i32>);
+  static_assert(CanConvertOption<const i32&, i32&>);
+  // Can't convert a value Option into a reference Option.
+  static_assert(!CanConvertOption<const i32&, i32>);
 }
 
 }  // namespace
