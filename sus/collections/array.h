@@ -31,6 +31,7 @@
 #include "sus/collections/slice.h"
 #include "sus/construct/default.h"
 #include "sus/fn/fn_concepts.h"
+#include "sus/iter/__private/iterator_loop.h"
 #include "sus/macros/__private/compiler_bugs.h"
 #include "sus/macros/lifetimebound.h"
 #include "sus/macros/no_unique_address.h"
@@ -596,11 +597,6 @@ constexpr inline std::partial_ordering operator<=>(
                               std::make_index_sequence<N>());
 }
 
-/// Implicit for-ranged loop iteration via `Array::iter()`.
-using ::sus::iter::__private::begin;
-/// Implicit for-ranged loop iteration via `Array::iter()`.
-using ::sus::iter::__private::end;
-
 /// Support for using structured bindings with `Array`.
 /// #[doc.overloads=array.structured.bindings]
 template <size_t I, class T, size_t N>
@@ -678,6 +674,13 @@ inline StreamType& operator<<(StreamType& stream, const Array<T, N>& value) {
 }
 
 }  // namespace sus::collections
+
+namespace sus::collections {
+// Documented in vec.h
+using ::sus::iter::__private::begin;
+// Documented in vec.h
+using ::sus::iter::__private::end;
+}
 
 // Promote Array into the `sus` namespace.
 namespace sus {
