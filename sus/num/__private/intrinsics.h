@@ -124,14 +124,14 @@ sus_pure_const sus_always_inline constexpr T unchecked_xor(T x, T y) noexcept {
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T>)
 sus_pure_const sus_always_inline constexpr T unchecked_shl(
-    T x, uint32_t y) noexcept {
+    T x, uint64_t y) noexcept {
   return static_cast<T>(MathType<T>{x} << y);
 }
 
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T>)
 sus_pure_const sus_always_inline constexpr T unchecked_shr(
-    T x, uint32_t y) noexcept {
+    T x, uint64_t y) noexcept {
   return static_cast<T>(MathType<T>{x} >> y);
 }
 
@@ -1049,7 +1049,7 @@ template <class T>
            (::sus::mem::size_of<T>() == 1 || ::sus::mem::size_of<T>() == 2 ||
             ::sus::mem::size_of<T>() == 4 || ::sus::mem::size_of<T>() == 8))
 sus_pure_const inline constexpr OverflowOut<T> shl_with_overflow(
-    T x, uint32_t shift) noexcept {
+    T x, uint64_t shift) noexcept {
   // Using `num_bits<T>() - 1` as a mask only works if num_bits<T>() is a power
   // of two, so we verify that ::sus::mem::size_of<T>() is a power of 2, which
   // implies the number of bits is as well (since each byte is 2^3 bits).
@@ -1065,7 +1065,7 @@ template <class T>
            (::sus::mem::size_of<T>() == 1 || ::sus::mem::size_of<T>() == 2 ||
             ::sus::mem::size_of<T>() == 4 || ::sus::mem::size_of<T>() == 8))
 sus_pure_const inline constexpr OverflowOut<T> shl_with_overflow(
-    T x, uint32_t shift) noexcept {
+    T x, uint64_t shift) noexcept {
   // Using `num_bits<T>() - 1` as a mask only works if num_bits<T>() is a power
   // of two, so we verify that ::sus::mem::size_of<T>() is a power of 2, which
   // implies the number of bits is as well (since each byte is 2^3 bits).
@@ -1082,7 +1082,7 @@ template <class T>
            (::sus::mem::size_of<T>() == 1 || ::sus::mem::size_of<T>() == 2 ||
             ::sus::mem::size_of<T>() == 4 || ::sus::mem::size_of<T>() == 8))
 sus_pure_const inline constexpr OverflowOut<T> shr_with_overflow(
-    T x, uint32_t shift) noexcept {
+    T x, uint64_t shift) noexcept {
   // Using `num_bits<T>() - 1` as a mask only works if num_bits<T>() is a power
   // of two, so we verify that ::sus::mem::size_of<T>() is a power of 2, which
   // implies the number of bits is as well (since each byte is 2^3 bits).
@@ -1098,7 +1098,7 @@ template <class T>
            (::sus::mem::size_of<T>() == 1 || ::sus::mem::size_of<T>() == 2 ||
             ::sus::mem::size_of<T>() == 4 || ::sus::mem::size_of<T>() == 8))
 sus_pure_const inline constexpr OverflowOut<T> shr_with_overflow(
-    T x, uint32_t shift) noexcept {
+    T x, uint64_t shift) noexcept {
   // Using `num_bits<T>() - 1` as a mask only works if num_bits<T>() is a power
   // of two, so we verify that ::sus::mem::size_of<T>() is a power of 2, which
   // implies the number of bits is as well (since each byte is 2^3 bits).
