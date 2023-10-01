@@ -495,7 +495,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             decl->getNameAsString(),
             decl->getASTContext().getSourceManager().getFileOffset(
                 decl->getLocation()),
-            sus::vec(),  // No record path.
+            sus::empty,  // No record path.
             AliasStyle::Forwarding,
             sus::none(),  // No constraints.
             AliasTarget::with<AliasOfType>(LinkedType::with_type(
@@ -528,7 +528,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             decl->getNameAsString(),
             decl->getASTContext().getSourceManager().getFileOffset(
                 decl->getLocation()),
-            sus::vec(),  // No record path.
+            sus::empty,  // No record path.
             AliasStyle::Forwarding,
             sus::none(),  // No constraints.
             AliasTarget::with<AliasOfConcept>(LinkedConcept::with_concept(
@@ -574,14 +574,14 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                 .collect_vec(),
             AliasStyle::Forwarding,
             sus::none(),  // No constraints.
-            AliasTarget::with<AliasOfMethod>(sus::tuple(
+            AliasTarget::with<AliasOfMethod>(
                 LinkedType::with_type(
                     build_local_type(
                         clang::QualType(context->getTypeForDecl(), 0u),
                         context->getASTContext().getSourceManager(),
                         preprocessor_, context->getBeginLoc()),
                     docs_db_),
-                method->getNameAsString())));
+                method->getNameAsString()));
         RecordElement& parent = docs_db_.find_record_mut(context).unwrap();
         add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(te),
                         parent.aliases, decl->getASTContext());
