@@ -857,6 +857,14 @@ class [[nodiscard]] Result final {
   /// Behavior.
   constexpr inline T unwrap_unchecked(
       ::sus::marker::UnsafeFnMarker) && noexcept {
+    if (state_ != ResultState::IsOk) {
+      // This enables Clang to drop any branches that were used to construct
+      // the Result. Without this, the optimizer keeps the whole Result
+      // construction, possibly because the `state_` gets clobbered below?
+      // The signed code version at https://godbolt.org/z/Gax47shsb improves
+      // greatly when the compiler is informed about the UB here.
+      sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    }
     state_ = ResultState::IsMoved;
     if constexpr (!std::is_void_v<T>) {
       return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
@@ -897,6 +905,11 @@ class [[nodiscard]] Result final {
   /// Behavior.
   constexpr inline E unwrap_err_unchecked(
       ::sus::marker::UnsafeFnMarker) && noexcept {
+    if (state_ != ResultState::IsErr) {
+      // Match the code in unwrap_unchecked, and tell the compiler that the
+      // `state_` is an Err before clobbering it.
+      sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    }
     state_ = ResultState::IsMoved;
     return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
                                          storage_.err_);

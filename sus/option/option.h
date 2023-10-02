@@ -847,7 +847,14 @@ class Option final {
   /// verified the value appropriately before use in order to not panic.
   constexpr inline T unwrap_unchecked(
       ::sus::marker::UnsafeFnMarker) && noexcept {
-    return t_.take_and_set_none();
+    if (t_.state() == Some) {
+      return t_.take_and_set_none();
+    } else {
+      // Result::unwrap_unchecked benefits from telling the compiler explicitly
+      // that the other states are never set. Match that here until shown it's
+      // actually not useful.
+      sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    }
   }
   constexpr inline T unwrap_unchecked(
       ::sus::marker::UnsafeFnMarker) const& noexcept
