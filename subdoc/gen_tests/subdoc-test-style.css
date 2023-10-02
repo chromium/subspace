@@ -231,11 +231,11 @@ pre > code span.punct {
     margin-bottom: 1em;
     font-weight: bold;
 }
-:is(.fields, .functions, .methods, .records, .concepts, .namespaces, .aliases) .section-header {
+:is(.fields, .functions, .methods, .records, .concepts, .namespaces, .aliases, .variables) .section-header {
     padding-bottom: 0.2em;
     border-bottom: 1px solid;
 }
-:is(.fields, .functions, .methods, .records, .concepts, .namespaces, .aliases) .section-header > a {
+:is(.fields, .functions, .methods, .records, .concepts, .namespaces, .aliases, .variables) .section-header > a {
     text-decoration: none;
     color: inherit;
 }

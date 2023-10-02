@@ -211,64 +211,15 @@ sus::Result<void, MarkdownToHtmlError> generate_record_fields(
     }
   }
   {
-    auto items_div = section_div.open_div();
-    items_div.add_class("section-items");
+    auto items_ul = section_div.open_ul();
+    items_ul.add_class("section-items");
 
     for (auto&& [name, sort_key, field_unique_symbol] : fields) {
       const FieldElement& fe = element.fields.at(field_unique_symbol);
-
-      auto field_div = items_div.open_div();
-      field_div.add_class("section-item");
-
-      {
-        auto name_div = field_div.open_div(HtmlWriter::SingleLine);
-        name_div.add_class("item-name");
-        name_div.add_class("member-signature");
-
-        {
-          auto anchor = name_div.open_a();
-          anchor.add_name(construct_html_url_anchor_for_field(fe));
-        }
-        if (!fe.template_params.is_empty()) {
-          auto template_div = name_div.open_div(HtmlWriter::SingleLine);
-          template_div.add_class("template");
-          template_div.write_text("template <");
-          for (const auto& [i, s] : fe.template_params.iter().enumerate()) {
-            if (i > 0u) template_div.write_text(", ");
-            template_div.write_text(s);
-          }
-          template_div.write_text(">");
-        }
-        if (static_fields) {
-          {
-            auto static_span = name_div.open_span(HtmlWriter::SingleLine);
-            static_span.add_class("static");
-            static_span.write_text("static");
-          }
-          name_div.write_text(" ");
-        }
-        generate_type(
-            name_div, fe.type,
-            sus::some(sus::dyn<sus::fn::DynFnMut<void(HtmlWriter::OpenDiv&)>>(
-                [&](HtmlWriter::OpenDiv& div) {
-                  auto anchor = div.open_a();
-                  anchor.add_href(construct_html_url_for_field(fe));
-                  anchor.add_class("field-name");
-                  anchor.write_text(fe.name);
-                })));
-      }
-      {
-        auto desc_div = field_div.open_div();
-        desc_div.add_class("description");
-        desc_div.add_class("long");
-        if (auto comment = fe.get_comment(); comment.is_some()) {
-          if (auto md_html = markdown_to_html(comment.as_value(), page_state);
-              md_html.is_err()) {
-            return sus::err(sus::move(md_html).unwrap_err());
-          } else {
-            desc_div.write_html(sus::move(md_html).unwrap().full_html);
-          }
-        }
+      if (auto result =
+              generate_field_reference(items_ul, fe, static_fields, page_state);
+          result.is_err()) {
+        return sus::err(sus::move(result).unwrap_err());
       }
     }
   }
@@ -630,6 +581,65 @@ sus::Result<void, MarkdownToHtmlError> generate_record_reference(
     }
   }
 
+  return sus::ok();
+}
+
+sus::Result<void, MarkdownToHtmlError> generate_field_reference(
+    HtmlWriter::OpenUl& ul, const FieldElement& element, bool static_fields,
+    ParseMarkdownPageState& page_state) noexcept {
+  auto li = ul.open_li();
+  li.add_class("section-item");
+
+  {
+    auto name_div = li.open_div(HtmlWriter::SingleLine);
+    name_div.add_class("item-name");
+    name_div.add_class("member-signature");
+
+    {
+      auto anchor = name_div.open_a();
+      anchor.add_name(construct_html_url_anchor_for_field(element));
+    }
+    if (!element.template_params.is_empty()) {
+      auto template_div = name_div.open_div(HtmlWriter::SingleLine);
+      template_div.add_class("template");
+      template_div.write_text("template <");
+      for (const auto& [i, s] : element.template_params.iter().enumerate()) {
+        if (i > 0u) template_div.write_text(", ");
+        template_div.write_text(s);
+      }
+      template_div.write_text(">");
+    }
+    if (static_fields) {
+      {
+        auto static_span = name_div.open_span(HtmlWriter::SingleLine);
+        static_span.add_class("static");
+        static_span.write_text("static");
+      }
+      name_div.write_text(" ");
+    }
+    generate_type(
+        name_div, element.type,
+        sus::some(sus::dyn<sus::fn::DynFnMut<void(HtmlWriter::OpenDiv&)>>(
+            [&](HtmlWriter::OpenDiv& div) {
+              auto anchor = div.open_a();
+              anchor.add_href(construct_html_url_for_field(element));
+              anchor.add_class("field-name");
+              anchor.write_text(element.name);
+            })));
+  }
+  {
+    auto desc_div = li.open_div();
+    desc_div.add_class("description");
+    desc_div.add_class("long");
+    if (auto comment = element.get_comment(); comment.is_some()) {
+      if (auto md_html = markdown_to_html(comment.as_value(), page_state);
+          md_html.is_err()) {
+        return sus::err(sus::move(md_html).unwrap_err());
+      } else {
+        desc_div.write_html(sus::move(md_html).unwrap().full_html);
+      }
+    }
+  }
   return sus::ok();
 }
 
