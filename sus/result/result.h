@@ -1286,15 +1286,17 @@ using sus::iter::begin;
 /// $sus::result::Result::iter).
 using sus::iter::end;
 
-/// Used to construct a Result<T, E> with an Ok(t) value.
+/// Used to construct a [`Result<T, E>`]($sus::result::Result) with an `Ok(t)`
+/// value.
 ///
 /// Calling `ok()` produces a hint to make a Result<T, E> but does not actually
-/// construct `Result<T, E>`. This is to deduce the actual types `T` and `E`
+/// construct [`Result<T, E>`]($sus::result::Result).
+/// This is to deduce the actual types `T` and `E`
 /// when it is constructed, avoid specifying them both here, and support
 /// conversions.
 ///
-/// `Result<void, E>` can also be constructed from calling `ok()` without an
-/// argument.
+/// [`Result<void, E>`]($sus::result::Result) can also be constructed from
+/// calling `ok()` without an argument.
 template <class T>
 [[nodiscard]] inline constexpr auto ok(T&& t sus_lifetimebound) noexcept {
   return __private::OkMarker<T&&>(::sus::forward<T>(t));
@@ -1304,10 +1306,12 @@ template <class T>
   return __private::OkVoidMarker();
 }
 
-/// Used to construct a Result<T, E> with an Err(e) value.
+/// Used to construct a [`Result<T, E>`]($sus::result::Result) with an `Err(e)`
+/// value.
 ///
-/// Calling err() produces a hint to make a Result<T, E> but does not actually
-/// construct Result<T, E>. This is to deduce the actual types `T` and `E`
+/// Calling `err()` produces a hint to make a Result<T, E> but does not actually
+/// construct [`Result<T, E>`]($sus::result::Result).
+/// This is to deduce the actual types `T` and `E`
 /// when it is constructed, avoid specifying them both here, and support
 /// conversions.
 template <class E>
