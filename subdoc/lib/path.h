@@ -153,6 +153,27 @@ inline sus::iter::Iterator<Namespace> auto iter_namespace_path(
   return __private::NamespaceIter(decl);
 }
 
+inline std::string namespace_path_to_string(
+    sus::iter::Iterator<const Namespace&> auto it) noexcept {
+  std::ostringstream s;
+  u32 count;
+  for (const Namespace& n : it) {
+    if (count > 0u) s << "::";
+    switch (n) {
+      case Namespace::Tag::Global: break;
+      case Namespace::Tag::Anonymous:
+        s << "<anonymous>";
+        count += 1u;
+        break;
+      case Namespace::Tag::Named:
+        s << n.as<Namespace::Tag::Named>();
+        count += 1u;
+        break;
+    }
+  }
+  return sus::move(s).str();
+}
+
 /// Whether the `decl` has `n` in its namespace path.
 bool path_contains_namespace(clang::Decl* decl, Namespace n) noexcept;
 

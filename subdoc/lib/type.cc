@@ -123,6 +123,85 @@ bool template_parameter_is_concept(
          parm.getDecl()->isImplicit();
 }
 
+clang::DeclContext* find_context(const clang::Type* type,
+                                 clang::SourceLocation loc,
+                                 const clang::SourceManager& sm) noexcept {
+  if (auto* auto_type = clang::dyn_cast<clang::AutoType>(type)) {
+    if (clang::ConceptDecl* condecl = auto_type->getTypeConstraintConcept()) {
+      return condecl->getDeclContext();
+    } else {
+      // No context.
+      return nullptr;
+    }
+  } else if (clang::isa<clang::BuiltinType>(type)) {
+    // No context.
+    return nullptr;
+  } else if (clang::isa<clang::DecltypeType>(type)) {
+    // No context.
+    return nullptr;
+  } else if (clang::isa<clang::DependentNameType>(type)) {
+    // No context.
+    return nullptr;
+  } else if (clang::isa<clang::FunctionProtoType>(type)) {
+    // No context.
+    return nullptr;
+  } else if (clang::isa<clang::MemberPointerType>(type)) {
+    // No context.
+    return nullptr;
+  } else if (auto* dep_spec_type =
+                 clang::dyn_cast<clang::DependentTemplateSpecializationType>(
+                     type)) {
+    clang::NestedNameSpecifier* spec = dep_spec_type->getQualifier();
+    switch (spec->getKind()) {
+      case clang::NestedNameSpecifier::Identifier: break;  // No context.
+      case clang::NestedNameSpecifier::Namespace:
+        return spec->getAsNamespace()->getDeclContext();
+        break;
+      case clang::NestedNameSpecifier::NamespaceAlias:
+        return spec->getAsNamespaceAlias()->getDeclContext();
+      case clang::NestedNameSpecifier::TypeSpec:
+        return find_context(spec->getAsType(), loc, sm);
+      case clang::NestedNameSpecifier::TypeSpecWithTemplate:
+        return find_context(spec->getAsType(), loc, sm);
+      case clang::NestedNameSpecifier::Global: return nullptr;  // No context.
+      case clang::NestedNameSpecifier::Super:
+        return spec->getAsRecordDecl()->getDeclContext();
+    }
+    sus::unreachable();
+  } else if (auto* tag_type = clang::dyn_cast<clang::TagType>(type)) {
+    return tag_type->getDecl()->getDeclContext();
+  } else if (auto* spec_type =
+                 clang::dyn_cast<clang::TemplateSpecializationType>(type)) {
+    return spec_type->getTemplateName().getAsTemplateDecl()->getDeclContext();
+  } else if (auto* tparm_type =
+                 clang::dyn_cast<clang::TemplateTypeParmType>(type)) {
+    if (template_parameter_is_concept(*tparm_type)) {
+      // This is a `Concept auto` parameter, get the context for the Concept.
+      return tparm_type->getDecl()
+          ->getTypeConstraint()
+          ->getNamedConcept()
+          ->getDeclContext();
+    } else {
+      // No context.
+      return nullptr;
+    }
+  } else if (auto* typedef_type = clang::dyn_cast<clang::TypedefType>(type)) {
+    return typedef_type->getDecl()->getDeclContext();
+  } else if (auto* un_using_type =
+                 clang::dyn_cast<clang::UnresolvedUsingType>(type)) {
+    return un_using_type->getDecl()->getDeclContext();
+  } else if (auto* using_type = clang::dyn_cast<clang::UsingType>(type)) {
+    return using_type->getFoundDecl()->getDeclContext();
+  } else if (auto* injected_type =
+                 clang::dyn_cast<clang::InjectedClassNameType>(type)) {
+    return injected_type->getDecl()->getDeclContext();
+  } else {
+    type->dump();
+    loc.dump(sm);
+    sus::unreachable();  // Find the context.
+  }
+}
+
 Type build_local_type_internal(
     clang::QualType qualtype, llvm::ArrayRef<clang::NamedDecl*> template_params,
     const clang::SourceManager& sm, clang::Preprocessor& preprocessor,
@@ -452,53 +531,7 @@ Type build_local_type_internal(
   }
 
   // Find the context from which to collect the namespace/record paths.
-  clang::DeclContext* context = nullptr;
-  if (auto* auto_type = clang::dyn_cast<clang::AutoType>(&*qualtype)) {
-    if (clang::ConceptDecl* condecl = auto_type->getTypeConstraintConcept()) {
-      context = condecl->getDeclContext();
-    }
-  } else if (clang::isa<clang::BuiltinType>(&*qualtype)) {
-    // No context.
-  } else if (clang::isa<clang::DecltypeType>(&*qualtype)) {
-    // No context.
-  } else if (clang::isa<clang::DependentNameType>(&*qualtype)) {
-    // No context.
-  } else if (clang::isa<clang::FunctionProtoType>(&*qualtype)) {
-    // No context.
-  } else if (clang::isa<clang::MemberPointerType>(&*qualtype)) {
-    // No context.
-  } else if (auto* tag_type = clang::dyn_cast<clang::TagType>(&*qualtype)) {
-    context = tag_type->getDecl()->getDeclContext();
-  } else if (auto* spec_type =
-                 clang::dyn_cast<clang::TemplateSpecializationType>(
-                     &*qualtype)) {
-    context =
-        spec_type->getTemplateName().getAsTemplateDecl()->getDeclContext();
-  } else if (auto* tparm_type =
-                 clang::dyn_cast<clang::TemplateTypeParmType>(&*qualtype)) {
-    if (template_parameter_is_concept(*tparm_type)) {
-      // This is a `Concept auto` parameter, get the context for the Concept.
-      context = tparm_type->getDecl()
-                    ->getTypeConstraint()
-                    ->getNamedConcept()
-                    ->getDeclContext();
-    }
-  } else if (auto* typedef_type =
-                 clang::dyn_cast<clang::TypedefType>(&*qualtype)) {
-    context = typedef_type->getDecl()->getDeclContext();
-  } else if (auto* un_using_type =
-                 clang::dyn_cast<clang::UnresolvedUsingType>(&*qualtype)) {
-    context = un_using_type->getDecl()->getDeclContext();
-  } else if (auto* using_type = clang::dyn_cast<clang::UsingType>(&*qualtype)) {
-    context = using_type->getFoundDecl()->getDeclContext();
-  } else if (auto* injected_type =
-                 clang::dyn_cast<clang::InjectedClassNameType>(&*qualtype)) {
-    context = injected_type->getDecl()->getDeclContext();
-  } else {
-    qualtype->dump();
-    loc.dump(sm);
-    sus::unreachable();  // Find the context.
-  }
+  clang::DeclContext* context = find_context(&*qualtype, loc, sm);
 
   sus::Vec<std::string> namespace_path;
   sus::Vec<std::string> record_path;

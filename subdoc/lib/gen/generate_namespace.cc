@@ -275,7 +275,7 @@ sus::Result<void, MarkdownToHtmlError> generate_concept_references(
   return sus::ok();
 }
 
-enum class AliasesOf { Types, Concepts };
+enum class AliasesOf { Types, Concepts, Functions };
 
 sus::Result<void, MarkdownToHtmlError> generate_alias_references(
     HtmlWriter::OpenDiv& namespace_div, AliasesOf aliases_of,
@@ -289,6 +289,7 @@ sus::Result<void, MarkdownToHtmlError> generate_alias_references(
   switch (aliases_of) {
     case AliasesOf::Types: section_div.add_class("types"); break;
     case AliasesOf::Concepts: section_div.add_class("concepts"); break;
+    case AliasesOf::Functions: section_div.add_class("functions"); break;
   }
 
   {
@@ -306,6 +307,11 @@ sus::Result<void, MarkdownToHtmlError> generate_alias_references(
         header_name.add_href("#aliases-concepts");
         header_name.write_text("Concept Aliases");
         break;
+      case AliasesOf::Functions:
+        header_name.add_name("aliases-functions");
+        header_name.add_href("#aliases-functions");
+        header_name.write_text("Function Aliases");
+        break;
     }
   }
   {
@@ -315,22 +321,9 @@ sus::Result<void, MarkdownToHtmlError> generate_alias_references(
 
     for (const SortedAliasByName& sorted_alias : aliases) {
       const AliasElement& ae = alias_element_from_sorted(element, sorted_alias);
-      switch (aliases_of) {
-        case AliasesOf::Types:
-          if (auto result =
-                  generate_alias_of_type_reference(items_list, ae, page_state);
-              result.is_err()) {
-            return sus::err(sus::move(result).unwrap_err());
-          }
-          break;
-        case AliasesOf::Concepts:
-          // TODO:
-          // if (auto result =
-          //generate_alias_of_concept_reference(items_list, ae, page_state);
-          //result.is_err()) {
-          //return sus::err(sus::move(result).unwrap_err());
-          //}
-          break;
+      if (auto result = generate_alias_reference(items_list, ae, page_state);
+          result.is_err()) {
+        return sus::err(sus::move(result).unwrap_err());
       }
     }
   }
@@ -523,7 +516,9 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
   sorted_concepts.sort_unstable_by(cmp_concepts_by_name);
 
   sus::Vec<SortedAliasByName> sorted_aliases_of_types;
+  sus::Vec<SortedAliasByName> sorted_aliases_of_functions;
   sus::Vec<SortedAliasByName> sorted_aliases_of_concepts;
+  // TODO: Methods, enum values, variables.
   for (const auto& [key, sub_element] : element.aliases) {
     if (sub_element.hidden()) continue;
 
@@ -536,11 +531,17 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
         sorted_aliases_of_concepts.push(
             sus::tuple(sub_element.name, sub_element.sort_key, key));
         break;
+      case AliasTarget::Tag::AliasOfFunction:
+        sorted_aliases_of_functions.push(
+            sus::tuple(sub_element.name, sub_element.sort_key, key));
+        break;
       case AliasTarget::Tag::AliasOfMethod: [[fallthrough]];
       case AliasTarget::Tag::AliasOfEnumConstant: break;
+      case AliasTarget::Tag::AliasOfVariable: break;
     }
   }
   sorted_aliases_of_types.sort_unstable_by(cmp_aliases_by_name);
+  sorted_aliases_of_functions.sort_unstable_by(cmp_aliases_by_name);
   sorted_aliases_of_concepts.sort_unstable_by(cmp_aliases_by_name);
 
   sus::Vec<SidebarLink> sidebar_links;
@@ -600,6 +601,69 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
           concept_element_from_sorted(element, sorted_concept);
       sidebar_links.push(SidebarLink(SidebarLinkStyle::Item, ce.name,
                                      construct_html_url_for_concept(ce)));
+    }
+  }
+  if (!sorted_aliases_of_types.is_empty()) {
+    sidebar_links.push(SidebarLink(SidebarLinkStyle::GroupHeader,
+                                   "Type Aliases", "#aliases-types"));
+    for (const SortedAliasByName& sorted_alias : sorted_aliases_of_types) {
+      const AliasElement& ae = alias_element_from_sorted(element, sorted_alias);
+      if (sus::Option<std::string> url = construct_html_url_for_alias(ae);
+          url.is_some()) {
+        // Link to where the alias links to.
+        sidebar_links.push(SidebarLink(SidebarLinkStyle::Item, ae.name,
+                                       sus::move(url).unwrap()));
+      } else {
+        // Link to the alias in this page since the alias itself doesn't connect
+        // to anything in the database.
+        std::ostringstream doc_url;
+        doc_url << "#";
+        doc_url << construct_html_url_anchor_for_alias(ae);
+        sidebar_links.push(SidebarLink(SidebarLinkStyle::Item, ae.name,
+                                       sus::move(doc_url).str()));
+      }
+    }
+  }
+  if (!sorted_aliases_of_functions.is_empty()) {
+    sidebar_links.push(SidebarLink(SidebarLinkStyle::GroupHeader,
+                                   "Function Aliases", "#aliases-functions"));
+    for (const SortedAliasByName& sorted_alias : sorted_aliases_of_functions) {
+      const AliasElement& ae = alias_element_from_sorted(element, sorted_alias);
+      if (sus::Option<std::string> url = construct_html_url_for_alias(ae);
+          url.is_some()) {
+        // Link to where the alias links to.
+        sidebar_links.push(SidebarLink(SidebarLinkStyle::Item, ae.name,
+                                       sus::move(url).unwrap()));
+      } else {
+        // Link to the alias in this page since the alias itself doesn't connect
+        // to anything in the database.
+        std::ostringstream doc_url;
+        doc_url << "#";
+        doc_url << construct_html_url_anchor_for_alias(ae);
+        sidebar_links.push(SidebarLink(SidebarLinkStyle::Item, ae.name,
+                                       sus::move(doc_url).str()));
+      }
+    }
+  }
+  if (!sorted_aliases_of_concepts.is_empty()) {
+    sidebar_links.push(SidebarLink(SidebarLinkStyle::GroupHeader,
+                                   "Concept Aliases", "#aliases-concepts"));
+    for (const SortedAliasByName& sorted_alias : sorted_aliases_of_concepts) {
+      const AliasElement& ae = alias_element_from_sorted(element, sorted_alias);
+      if (sus::Option<std::string> url = construct_html_url_for_alias(ae);
+          url.is_some()) {
+        // Link to where the alias links to.
+        sidebar_links.push(SidebarLink(SidebarLinkStyle::Item, ae.name,
+                                       sus::move(url).unwrap()));
+      } else {
+        // Link to the alias in this page since the alias itself doesn't connect
+        // to anything in the database.
+        std::ostringstream doc_url;
+        doc_url << "#";
+        doc_url << construct_html_url_anchor_for_alias(ae);
+        sidebar_links.push(SidebarLink(SidebarLinkStyle::Item, ae.name,
+                                       sus::move(doc_url).str()));
+      }
     }
   }
 
@@ -671,6 +735,15 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
     if (auto result = generate_alias_references(
             namespace_div, AliasesOf::Types, element,
             sorted_aliases_of_types.as_slice(), page_state);
+        result.is_err()) {
+      return sus::err(sus::move(result).unwrap_err());
+    }
+  }
+
+  if (!sorted_aliases_of_functions.is_empty()) {
+    if (auto result = generate_alias_references(
+            namespace_div, AliasesOf::Functions, element,
+            sorted_aliases_of_functions.as_slice(), page_state);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }

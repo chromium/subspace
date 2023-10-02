@@ -178,23 +178,27 @@ enum AliasTargetTag {
   AliasOfType,
   AliasOfConcept,
   AliasOfMethod,
+  AliasOfFunction,
   AliasOfEnumConstant,
+  AliasOfVariable,
 };
 using AliasTarget = sus::Choice<sus_choice_types(
     (AliasTargetTag::AliasOfType, LinkedType),
     (AliasTargetTag::AliasOfConcept, LinkedConcept),
-    (AliasTargetTag::AliasOfMethod, LinkedType, std::string /* method name */),
+    (AliasTargetTag::AliasOfMethod, LinkedType, std::string /* We want a LinkedFunction. */),
+    (AliasTargetTag::AliasOfFunction, LinkedFunction),
     (AliasTargetTag::AliasOfEnumConstant, LinkedType,
-     std::string /* constant name */))>;
+     std::string /* constant name */),
+    (AliasTargetTag::AliasOfVariable, void /* LinkedVariable? */))>;
 
 /// An alias can be Forwarding (`using a::b`) or NewType (`using a = b`).
 struct AliasElement : public TypeElement {
   explicit AliasElement(sus::Vec<Namespace> namespace_path, Comment comment,
-                          std::string name, u32 sort_key,
-                          sus::Vec<std::string> record_path,
-                          AliasStyle alias_style,
-                          sus::Option<RequiresConstraints> constraints,
-                          AliasTarget target)
+                        std::string name, u32 sort_key,
+                        sus::Vec<std::string> record_path,
+                        AliasStyle alias_style,
+                        sus::Option<RequiresConstraints> constraints,
+                        AliasTarget target)
       : TypeElement(sus::move(namespace_path), sus::move(comment),
                     sus::move(name), sus::move(record_path), sort_key),
         alias_style(alias_style),
@@ -801,19 +805,26 @@ struct NamespaceElement : public CommentElement {
       if (splits.len() == 1u) {
         out = sus::some(FoundName::with<FoundName::Tag::Namespace>(*this));
       } else {
-        for (auto& [k, e] : concepts) {
-          if (out = e.find_name(splits["1.."_r]); out.is_some()) return out;
-        }
-        for (auto& [k, e] : namespaces) {
-          if (out = e.find_name(splits["1.."_r]); out.is_some()) return out;
-        }
-        for (auto& [k, e] : records) {
-          if (out = e.find_name(splits["1.."_r]); out.is_some()) return out;
-        }
-        for (auto& [k, e] : functions) {
-          if (out = e.find_name(splits["1.."_r]); out.is_some()) return out;
-        }
+        out = find_name_inside(splits["1.."_r]);
       }
+    }
+    return out;
+  }
+
+  sus::Option<FoundName> find_name_inside(
+      const sus::Slice<std::string_view>& splits) const noexcept {
+    sus::Option<FoundName> out;
+    for (auto& [k, e] : concepts) {
+      if (out = e.find_name(splits); out.is_some()) return out;
+    }
+    for (auto& [k, e] : namespaces) {
+      if (out = e.find_name(splits); out.is_some()) return out;
+    }
+    for (auto& [k, e] : records) {
+      if (out = e.find_name(splits); out.is_some()) return out;
+    }
+    for (auto& [k, e] : functions) {
+      if (out = e.find_name(splits); out.is_some()) return out;
     }
     return out;
   }
@@ -1007,29 +1018,6 @@ struct Database {
     return sus::ok();
   }
 
-  sus::Option<const ConceptElement&> find_concept_ref(
-      sus::Slice<Namespace> namespace_path,
-      const std::string& name) const noexcept {
-    const NamespaceElement* ns_cursor = &global;
-    for (const Namespace& n : namespace_path) {
-      switch (n) {
-        case Namespace::Tag::Global: break;
-        case Namespace::Tag::Anonymous:
-          // We have nowhere to store an anonymous namespace in the database
-          // right now.
-          return sus::none();
-        case Namespace::Tag::Named:
-          const std::string& ns_name = n.as<Namespace::Tag::Named>();
-          auto it = ns_cursor->namespaces.find(NamespaceId(ns_name));
-          if (it == ns_cursor->namespaces.end()) return sus::none();
-          ns_cursor = &it->second;
-      }
-    }
-    auto cit = ns_cursor->concepts.find(ConceptId(name));
-    if (cit == ns_cursor->concepts.end()) return sus::none();
-    return sus::some(cit->second);
-  }
-
   sus::Vec<sus::Option<TypeRef>> collect_type_element_refs(
       const Type& type) const noexcept {
     sus::Vec<sus::Option<TypeRef>> vec;
@@ -1192,7 +1180,7 @@ struct Database {
   /// Finds an element in the database by its fully qualified C++ name, e.g.
   /// "sus::ops::Try".
   ///
-  /// If there's a #, what comes after it is used as the overload set
+  /// If there's a `!`, what comes after it is used as the overload set
   /// matcher for functions, which will match with what was specified in
   /// `#[doc.overloads=_]`.
   sus::Option<FoundName> find_name(std::string_view full_name) const noexcept {
@@ -1207,6 +1195,35 @@ struct Database {
     v.extend(sus::iter::from_range(splits).map(
         [](llvm::StringRef r) { return std::string_view(r); }));
     return global.find_name(v.as_slice());
+  }
+
+  /// Finds an element in the database when the full Namespace path is known.
+  /// This can't match things inside a record.
+  ///
+  /// If there's a `!`, what comes after it is used as the overload set
+  /// matcher for functions, which will match with what was specified in
+  /// `#[doc.overloads=_]`.
+  sus::Option<FoundName> find_name_in_namespace_path(
+      sus::Slice<Namespace> namespace_path,
+      std::string_view name) const noexcept {
+    const NamespaceElement* ns_cursor = &global;
+    for (const Namespace& n : namespace_path.iter().rev()) {
+      switch (n) {
+        case Namespace::Tag::Global: break;
+        case Namespace::Tag::Anonymous:
+          // We have nowhere to store an anonymous namespace in the database
+          // right now.
+          return sus::none();
+        case Namespace::Tag::Named:
+          const std::string& ns_name = n.as<Namespace::Tag::Named>();
+          auto it = ns_cursor->namespaces.find(NamespaceId(ns_name));
+          if (it == ns_cursor->namespaces.end()) return sus::none();
+          ns_cursor = &it->second;
+          break;
+      }
+    }
+    return ns_cursor->find_name_inside(
+        sus::Slice<std::string_view>::from({name}));
   }
 
  private:

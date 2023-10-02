@@ -14,6 +14,8 @@
 
 #include "subdoc/lib/linked_type.h"
 
+#include <sstream>
+
 #include "subdoc/lib/database.h"
 
 namespace subdoc {
@@ -23,19 +25,45 @@ LinkedType LinkedType::with_type(Type t, const Database& db) noexcept {
   return LinkedType(CONSTRUCT, sus::move(t), sus::move(refs));
 }
 
-LinkedConcept LinkedConcept::with_concept(
-    sus::Slice<Namespace> namespace_path, std::string name,
-    const Database& db) noexcept {
-  sus::Option<const ConceptElement&> elem =
-      db.find_concept_ref(namespace_path, name);
-  if (elem.is_some()) {
+LinkedConcept LinkedConcept::with_concept(sus::Slice<Namespace> namespace_path,
+                                          std::string name,
+                                          const Database& db) noexcept {
+  sus::Option<FoundName> found =
+      db.find_name_in_namespace_path(namespace_path, name);
+  if (found.is_some() && *found == FoundName::Tag::Concept) {
     return LinkedConcept{
         ConceptRefOrName::with<ConceptRefOrName::Tag::Ref>(
-            sus::move(elem).unwrap()),
+            found->as<FoundName::Tag::Concept>()),
     };
   } else {
+    std::ostringstream s;
+    s << namespace_path_to_string(namespace_path.iter());
+    s << sus::move(name);
     return LinkedConcept{
-        ConceptRefOrName::with<ConceptRefOrName::Tag::Name>(sus::move(name)),
+        ConceptRefOrName::with<ConceptRefOrName::Tag::Name>(sus::move(s).str()),
+    };
+  }
+}
+
+LinkedFunction LinkedFunction::with_function(
+    sus::Slice<Namespace> namespace_path, std::string name,
+    const Database& db) noexcept {
+  // TODO: The alias has to pick an overload set to link to, which one? Should
+  // all function overload sets be on one html page?
+  sus::Option<FoundName> found =
+      db.find_name_in_namespace_path(namespace_path, name);
+  if (found.is_some() && *found == FoundName::Tag::Function) {
+    return LinkedFunction{
+        FunctionRefOrName::with<FunctionRefOrName::Tag::Ref>(
+            found->as<FoundName::Tag::Function>()),
+    };
+  } else {
+    std::ostringstream s;
+    s << namespace_path_to_string(namespace_path.iter());
+    s << sus::move(name);
+    return LinkedFunction{
+        FunctionRefOrName::with<FunctionRefOrName::Tag::Name>(
+            sus::move(s).str()),
     };
   }
 }
