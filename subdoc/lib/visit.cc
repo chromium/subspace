@@ -331,6 +331,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         FieldElement::NonStatic,
         // Non-static fields can't have template parameters.
         sus::empty,
+        // Non-static fields can't have constraits.
+        sus::none(),
         decl->getASTContext().getSourceManager().getFileOffset(
             decl->getLocation()));
 
@@ -343,20 +345,29 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   }
 
   bool VisitVarDecl(clang::VarDecl* decl) noexcept {
-    // Static data members are represented as VarDecl, not FieldDecl. So we
-    // visit VarDecls but only for them.
-    if (!decl->isStaticDataMember()) return true;
+    // Static data members are represented as VarDecl, not FieldDecl.
     if (should_skip_decl(cx_, decl)) return true;
-    clang::RawComment* raw_comment = get_raw_comment(decl);
+
+    auto* context = decl->getDeclContext();
+    // TODO: Save the linkage spec (`extern "C"`) so we can show it.
+    while (clang::isa<clang::LinkageSpecDecl>(context))
+      context = context->getParent();
 
     // We only visit static data members, so the context is a record.
-    auto* record_decl = clang::cast<clang::RecordDecl>(decl->getDeclContext());
+    std::string self_name;
+    if (auto* record_ctx = clang::dyn_cast<clang::RecordDecl>(context)) {
+      self_name = record_ctx->getName();
+    }
+
+    clang::RawComment* raw_comment = get_raw_comment(decl);
     Comment comment = make_db_comment(decl->getASTContext(), raw_comment,
-                                      record_decl->getName());
+                                      sus::move(self_name));
 
     sus::Vec<std::string> template_params;
+    sus::Option<RequiresConstraints> constraints;
     if (clang::VarTemplateDecl* tmpl = decl->getDescribedVarTemplate()) {
       template_params = collect_template_params(tmpl, preprocessor_);
+      constraints = collect_template_constraints(tmpl, preprocessor_);
     }
 
     auto linked_type = LinkedType::with_type(
@@ -365,21 +376,39 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                          preprocessor_, decl->getBeginLoc()),
         docs_db_);
 
-    auto fe = FieldElement(
-        iter_namespace_path(decl).collect_vec(), sus::move(comment),
-        std::string(decl->getName()), sus::move(linked_type),
-        iter_record_path(record_decl)
-            .map([](std::string_view&& v) { return std::string(v); })
-            .collect_vec(),
-        // NonStatic data members are found in VisitFieldDecl.
-        FieldElement::Static, sus::move(template_params),
-        decl->getASTContext().getSourceManager().getFileOffset(
-            decl->getLocation()));
+    sus::Vec<std::string> record_path;
+    if (auto* record_ctx = clang::dyn_cast<clang::RecordDecl>(context)) {
+      record_path =
+          iter_record_path(record_ctx)
+              .map([](std::string_view&& v) { return std::string(v); })
+              .collect_vec();
+    }
 
-    if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
-            clang::cast<clang::RecordDecl>(decl->getDeclContext()));
-        parent.is_some()) {
-      add_comment_to_db(decl, sus::move(fe), parent->fields);
+    auto fe =
+        FieldElement(iter_namespace_path(decl).collect_vec(),
+                     sus::move(comment), std::string(decl->getName()),
+                     sus::move(linked_type), sus::move(record_path),
+                     // NonStatic data members are found in VisitFieldDecl.
+                     FieldElement::Static, sus::move(template_params),
+                     sus::move(constraints),
+                     decl->getASTContext().getSourceManager().getFileOffset(
+                         decl->getLocation()));
+
+    if (clang::isa<clang::RecordDecl>(context)) {
+      if (sus::Option<RecordElement&> parent =
+              docs_db_.find_record_mut(clang::cast<clang::RecordDecl>(context));
+          parent.is_some()) {
+        add_comment_to_db(decl, sus::move(fe), parent->fields);
+      }
+    } else if (clang::isa<clang::NamespaceDecl>(context)) {
+      if (sus::Option<NamespaceElement&> parent = docs_db_.find_namespace_mut(
+              clang::cast<clang::NamespaceDecl>(context));
+          parent.is_some()) {
+        add_comment_to_db(decl, sus::move(fe), parent->variables);
+      }
+    } else if (clang::isa<clang::TranslationUnitDecl>(context)) {
+      NamespaceElement& parent = docs_db_.find_namespace_mut(nullptr).unwrap();
+      add_comment_to_db(decl, sus::move(fe), parent.variables);
     }
     return true;
   }

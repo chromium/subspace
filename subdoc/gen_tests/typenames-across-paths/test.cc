@@ -62,6 +62,8 @@ struct __private::TemplateClass<int> {
 /// Renamed alias of [`S`]($other::subother::S).
 using RenamedUsingS = other::subother::S;
 /// Renamed alias of [`S`]($other::subother::S).
+///
+/// A reference to [RenamedUsingS]($n::RenamedUsingS).
 typedef other::subother::S RenamedTypedefS;
 
 /// Should show `S` as the return type, not the full path.

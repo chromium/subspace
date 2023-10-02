@@ -36,12 +36,12 @@
 
 namespace subdoc {
 
-struct NamespaceElement;
-struct FunctionElement;
-struct TypeElement;
 struct ConceptElement;
 struct FieldElement;
+struct FunctionElement;
+struct NamespaceElement;
 struct RecordElement;
+struct TypeElement;
 
 enum class FoundNameTag {
   Namespace,
@@ -185,7 +185,8 @@ enum AliasTargetTag {
 using AliasTarget = sus::Choice<sus_choice_types(
     (AliasTargetTag::AliasOfType, LinkedType),
     (AliasTargetTag::AliasOfConcept, LinkedConcept),
-    (AliasTargetTag::AliasOfMethod, LinkedType, std::string /* We want a LinkedFunction. */),
+    (AliasTargetTag::AliasOfMethod, LinkedType,
+     std::string /* We want a LinkedFunction. */),
     (AliasTargetTag::AliasOfFunction, LinkedFunction),
     (AliasTargetTag::AliasOfEnumConstant, LinkedType,
      std::string /* constant name */),
@@ -210,6 +211,21 @@ struct AliasElement : public TypeElement {
   AliasStyle alias_style;
   sus::Option<RequiresConstraints> constraints;
   AliasTarget target;
+
+
+  bool has_any_comments() const noexcept { return has_found_comment(); }
+
+  sus::Option<FoundName> find_name(
+      const sus::Slice<std::string_view>& splits) const noexcept {
+    if (!splits.is_empty() && splits[0u] == name) {
+      if (splits.len() == 1u) {
+        return sus::some(FoundName::with<FoundName::Tag::Type>(*this));
+      }
+    }
+    return sus::none();
+  }
+
+  void for_each_comment(sus::fn::FnMut<void(Comment&)> auto fn) { fn(comment); }
 };
 
 struct FunctionElement : public CommentElement {
@@ -310,13 +326,16 @@ struct FieldElement : public CommentElement {
                         Comment comment, std::string name,
                         LinkedType linked_type,
                         sus::Vec<std::string> record_path, StaticType is_static,
-                        sus::Vec<std::string> template_params, u32 sort_key)
+                        sus::Vec<std::string> template_params,
+                        sus::Option<RequiresConstraints> constraints,
+                        u32 sort_key)
       : CommentElement(sus::move(containing_namespaces), sus::move(comment),
                        sus::move(name), sort_key),
         record_path(sus::move(record_path)),
         type(sus::move(linked_type)),
         is_static(is_static),
-        template_params(sus::move(template_params)) {}
+        template_params(sus::move(template_params)),
+        constraints(sus::move(constraints)) {}
 
   sus::Vec<std::string> record_path;
   /// The complete type of the field, including any inner types in template
@@ -324,6 +343,7 @@ struct FieldElement : public CommentElement {
   LinkedType type;
   StaticType is_static;
   sus::Vec<std::string> template_params;
+  sus::Option<RequiresConstraints> constraints;
 
   bool has_any_comments() const noexcept { return has_found_comment(); }
 
@@ -639,6 +659,7 @@ struct NamespaceElement : public CommentElement {
   std::unordered_map<RecordId, RecordElement, RecordId::Hash> records;
   std::unordered_map<FunctionId, FunctionElement, FunctionId::Hash> functions;
   std::unordered_map<AliasId, AliasElement, AliasId::Hash> aliases;
+  std::unordered_map<UniqueSymbol, FieldElement> variables;
 
   bool is_empty() const noexcept {
     return namespaces.empty() && records.empty() && functions.empty();
@@ -656,6 +677,12 @@ struct NamespaceElement : public CommentElement {
       if (e.has_any_comments()) return true;
     }
     for (const auto& [u, e] : functions) {
+      if (e.has_any_comments()) return true;
+    }
+    for (const auto& [u, e] : aliases) {
+      if (e.has_any_comments()) return true;
+    }
+    for (const auto& [u, e] : variables) {
       if (e.has_any_comments()) return true;
     }
     return false;
@@ -798,6 +825,21 @@ struct NamespaceElement : public CommentElement {
     return out;
   }
 
+  sus::Option<const CommentElement&> find_variable_comment(
+      std::string_view comment_loc) const noexcept {
+    sus::Option<const CommentElement&> out;
+    for (const auto& [u, e] : namespaces) {
+      out = e.find_variable_comment(comment_loc);
+      if (out.is_some()) return out;
+    }
+    for (const auto& [u, e] : variables) {
+      out = e.find_comment(comment_loc);
+      if (out.is_some()) return out;
+    }
+    return out;
+  }
+
+
   sus::Option<FoundName> find_name(
       const sus::Slice<std::string_view>& splits) const noexcept {
     sus::Option<FoundName> out;
@@ -826,6 +868,12 @@ struct NamespaceElement : public CommentElement {
     for (auto& [k, e] : functions) {
       if (out = e.find_name(splits); out.is_some()) return out;
     }
+    for (auto& [k, e] : aliases) {
+      if (out = e.find_name(splits); out.is_some()) return out;
+    }
+    for (auto& [k, e] : variables) {
+      if (out = e.find_name(splits); out.is_some()) return out;
+    }
     return out;
   }
 
@@ -835,6 +883,8 @@ struct NamespaceElement : public CommentElement {
     for (auto& [k, e] : namespaces) e.for_each_comment(fn);
     for (auto& [k, e] : records) e.for_each_comment(fn);
     for (auto& [k, e] : functions) e.for_each_comment(fn);
+    for (auto& [k, e] : aliases) e.for_each_comment(fn);
+    for (auto& [k, e] : variables) e.for_each_comment(fn);
   }
 };
 
@@ -1175,6 +1225,17 @@ struct Database {
     return global.find_field_comment(comment_loc);
   }
   sus::Option<const CommentElement&> find_field_comment(
+      std::string_view comment_loc) && = delete;
+
+  /// Finds a comment whose location ends with the `comment_loc` suffix.
+  ///
+  /// The suffix can be used to look for the line:column and ignore the
+  /// filename in the comment location format `filename:line:col`.
+  sus::Option<const CommentElement&> find_variable_comment(
+      std::string_view comment_loc) const& noexcept {
+    return global.find_variable_comment(comment_loc);
+  }
+  sus::Option<const CommentElement&> find_variable_comment(
       std::string_view comment_loc) && = delete;
 
   /// Finds an element in the database by its fully qualified C++ name, e.g.

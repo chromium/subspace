@@ -111,6 +111,15 @@ class SubDocTest : public testing::Test {
                           comment_loc, comment_start);
   }
 
+  /// Returns whether a variable was found whose comment location ends with
+  /// `comment_loc` and whose comment begins with `comment_start`.
+  bool has_variable_comment(const subdoc::Database& db,
+                         std::string_view comment_loc,
+                         std::string_view comment_start) const noexcept {
+    return verify_comment("variable", db, db.find_variable_comment(comment_loc),
+                          comment_loc, comment_start);
+  }
+
   /// Returns whether an alias was found whose comment location ends with
   /// `comment_loc` and whose comment begins with `comment_start`.
   bool has_alias_comment(const subdoc::Database& db,
