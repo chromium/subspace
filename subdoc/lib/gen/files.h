@@ -212,6 +212,96 @@ inline std::string construct_html_url_for_function(
   }
 }
 
+/// The AliasElement may point to something not in the database, in which case
+/// a link to the alias's definition is produced.
+inline sus::Option<std::string> construct_html_url_for_alias(
+    const AliasElement& element) noexcept {
+  if (element.alias_style == AliasStyle::Forwarding) {
+    // Link through to the alias target directly, as the alias doesn't introduce
+    // a new symbol name.
+    switch (element.target) {
+      case AliasTarget::Tag::AliasOfType: {
+        const LinkedType& type =
+            element.target.as<AliasTarget::Tag::AliasOfType>();
+        sus::Option<const TypeRef&> maybe_ref =
+            type.type_element_refs.get(0u)
+                .map([](const sus::Option<TypeRef>& o) { return o.as_ref(); })
+                .flatten();
+        return maybe_ref.map([](const TypeRef& ref) {
+          switch (ref) {
+            case TypeRef::Tag::Concept: {
+              const ConceptElement& e = ref.as<TypeRef::Tag::Concept>();
+              sus::check_with_message(
+                  !e.hidden(),
+                  fmt::format("reference to hidden Concept {}", e.name));
+              return construct_html_url_for_concept(e);
+            }
+            case TypeRef::Tag::Record: {
+              const RecordElement& e = ref.as<TypeRef::Tag::Record>();
+              sus::check_with_message(
+                  !e.hidden(),
+                  fmt::format("reference to hidden Record {}", e.name));
+              return construct_html_url_for_type(e);
+            }
+          }
+          sus::unreachable();
+        });
+      }
+      case AliasTarget::Tag::AliasOfConcept: {
+        const LinkedConcept& con =
+            element.target.as<AliasTarget::Tag::AliasOfConcept>();
+        switch (con.ref_or_name) {
+          case ConceptRefOrName::Tag::Ref: {
+            const ConceptElement& e =
+                con.ref_or_name.as<ConceptRefOrName::Tag::Ref>();
+            return sus::some(construct_html_url_for_concept(e));
+          }
+          case ConceptRefOrName::Tag::Name: return sus::none();
+        }
+        sus::unreachable();
+      }
+      case AliasTarget::Tag::AliasOfMethod: {
+        // TODO: Link to method.
+        sus::unreachable();
+      }
+      case AliasTarget::Tag::AliasOfFunction: {
+        const LinkedFunction& fun =
+            element.target.as<AliasTarget::Tag::AliasOfFunction>();
+        switch (fun.ref_or_name) {
+          case FunctionRefOrName::Tag::Ref: {
+            const FunctionElement& e =
+                fun.ref_or_name.as<FunctionRefOrName::Tag::Ref>();
+            return sus::some(construct_html_url_for_function(e));
+          }
+          case FunctionRefOrName::Tag::Name: return sus::none();
+        }
+        sus::unreachable();
+      }
+      case AliasTarget::Tag::AliasOfEnumConstant: {
+        // TODO: Link to constant.
+        sus::unreachable();
+      }
+      case AliasTarget::Tag::AliasOfVariable: {
+        // TODO: Link to variable.
+        sus::unreachable();
+      }
+    }
+    sus::unreachable();
+  } else {
+    // TODO: Link to the alias' page.
+    return sus::some("TODO");
+  }
+}
+
+inline std::string construct_html_url_anchor_for_alias(
+    const AliasElement& element) noexcept {
+  std::ostringstream url;
+  url << "alias.";
+  url << element.name;
+  return sus::move(url).str();
+}
+
+
 inline std::filesystem::path construct_html_file_path_for_namespace(
     std::filesystem::path root, const NamespaceElement& element) noexcept {
   // The namespace path includes the namespace element itself, so drop

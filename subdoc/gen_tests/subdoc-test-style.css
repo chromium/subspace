@@ -162,7 +162,7 @@ nav.sidebar .sidebar-links li > .sidebar-header {
     margin-top: 0.5rem;
     font-size: 1.1em;
 }
-nav.sidebar .sidebar-links li > .sidebar-item {
+nav.sidebar .sidebar-links li > a.sidebar-item {
     color: rgb(250, 199, 121);
     font-size: 1.0em;
 }

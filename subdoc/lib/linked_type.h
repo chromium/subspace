@@ -24,6 +24,7 @@ namespace subdoc {
 
 struct ConceptElement;
 struct Database;
+struct FunctionElement;
 struct RecordElement;
 
 enum class TypeRefTag {
@@ -65,6 +66,23 @@ struct LinkedConcept {
       const Database& db) noexcept;
 
   ConceptRefOrName ref_or_name;
+};
+
+enum class FunctionRefOrNameTag {
+  Ref,
+  Name,
+};
+/// A reference to a concept in the `Database`, or name.
+using FunctionRefOrName = sus::Choice<sus_choice_types(
+    (FunctionRefOrNameTag::Ref, const FunctionElement&),
+    (FunctionRefOrNameTag::Name, std::string))>;
+
+struct LinkedFunction {
+  static LinkedFunction with_function(
+      sus::Slice<Namespace> namespace_path, std::string name,
+      const Database& db) noexcept;
+
+  FunctionRefOrName ref_or_name;
 };
 
 }  // namespace subdoc

@@ -139,7 +139,7 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
     }
   }
   {
-    auto type_sig_div = section_div.open_div();
+    auto type_sig_div = section_div.open_div(HtmlWriter::SingleLine);
     type_sig_div.add_class("type-signature");
     if (!element.template_params.is_empty()) {
       auto template_pre = type_sig_div.open_pre();
@@ -600,7 +600,7 @@ sus::Result<void, MarkdownToHtmlError> generate_record_reference(
     auto item_div = item_li.open_div();
     item_div.add_class("item-name");
 
-    auto type_sig_div = item_div.open_div();
+    auto type_sig_div = item_div.open_div(HtmlWriter::SingleLine);
     type_sig_div.add_class("type-signature");
 
     {

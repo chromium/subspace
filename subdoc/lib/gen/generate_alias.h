@@ -22,7 +22,7 @@
 
 namespace subdoc::gen {
 
-sus::Result<void, MarkdownToHtmlError> generate_alias_of_type_reference(
+sus::Result<void, MarkdownToHtmlError> generate_alias_reference(
     HtmlWriter::OpenUl& items_list, const AliasElement& element,
     ParseMarkdownPageState& page_state) noexcept;
 

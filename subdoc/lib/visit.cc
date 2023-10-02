@@ -431,13 +431,17 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             docs_db_)));
 
     if (auto* rec_ctx = clang::dyn_cast<clang::RecordDecl>(context)) {
-      RecordElement& parent = docs_db_.find_record_mut(rec_ctx).unwrap();
-      add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(te),
-                      parent.aliases, decl->getASTContext());
+      if (sus::Option<RecordElement&> parent =
+              docs_db_.find_record_mut(rec_ctx);
+          parent.is_some())
+        add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(te),
+                        parent->aliases, decl->getASTContext());
     } else if (auto* ns_ctx = clang::dyn_cast<clang::NamespaceDecl>(context)) {
-      NamespaceElement& parent = docs_db_.find_namespace_mut(ns_ctx).unwrap();
-      add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(te),
-                      parent.aliases, decl->getASTContext());
+      if (sus::Option<NamespaceElement&> parent =
+              docs_db_.find_namespace_mut(ns_ctx);
+          parent.is_some())
+        add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(te),
+                        parent->aliases, decl->getASTContext());
     } else {
       sus::check(clang::isa<clang::TranslationUnitDecl>(context));
       NamespaceElement& parent = docs_db_.find_namespace_mut(nullptr).unwrap();
@@ -507,6 +511,38 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             docs_db_.find_namespace_mut(context).unwrap();
         add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(te),
                         parent.aliases, decl->getASTContext());
+      } else if (auto* classtmpl = clang::dyn_cast<clang::ClassTemplateDecl>(
+                     shadow->getTargetDecl())) {
+        auto* context =
+            clang::dyn_cast<clang::NamespaceDecl>(decl->getDeclContext());
+        if (!context &&
+            !clang::isa<clang::TranslationUnitDecl>(decl->getDeclContext())) {
+          // The context for a using record/enum is a namespace or translation
+          // unit.
+          decl->dump();
+          decl->getDeclContext()->dumpAsDecl();
+          sus::unreachable();
+        }
+
+        auto te = AliasElement(
+            iter_namespace_path(decl).collect_vec(), sus::move(comment),
+            decl->getNameAsString(),
+            decl->getASTContext().getSourceManager().getFileOffset(
+                decl->getLocation()),
+            sus::empty,  // No record path.
+            AliasStyle::Forwarding,
+            sus::none(),  // No constraints.
+            AliasTarget::with<AliasOfType>(LinkedType::with_type(
+                build_local_type(
+                    clang::QualType(
+                        classtmpl->getTemplatedDecl()->getTypeForDecl(), 0u),
+                    classtmpl->getASTContext().getSourceManager(),
+                    preprocessor_, classtmpl->getBeginLoc()),
+                docs_db_)));
+        NamespaceElement& parent =
+            docs_db_.find_namespace_mut(context).unwrap();
+        add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(te),
+                        parent.aliases, decl->getASTContext());
       } else if (auto* condecl = clang::dyn_cast<clang::ConceptDecl>(
                      shadow->getTargetDecl())) {
         auto* context =
@@ -542,23 +578,22 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         ecdecl->dump();
         decl->dump();
         decl->getBeginLoc().dump(decl->getASTContext().getSourceManager());
-        // Put these into static fields on a record, and const global variables
-        //  on a namespace.
+        // TODO: Put these into static fields on a record, and const global
+        // variables on a namespace.
+        //sus::unreachable();
+      } else if (auto* vardecl =
+                     clang::dyn_cast<clang::VarDecl>(shadow->getTargetDecl())) {
+        vardecl->dump();
+        decl->dump();
+        decl->getBeginLoc().dump(decl->getASTContext().getSourceManager());
+        // TODO: Put these global variables on a namespace.
         //sus::unreachable();
       } else if (auto* method = clang::dyn_cast<clang::CXXMethodDecl>(
                      shadow->getTargetDecl())) {
         auto* context =
             clang::dyn_cast<clang::RecordDecl>(decl->getDeclContext());
         if (!context) {
-          // The context for a using record is a namespace or translation unit.
-          decl->dump();
-          decl->getDeclContext()->dumpAsDecl();
-          sus::unreachable();
-        }
-        auto* target_context =
-            clang::dyn_cast<clang::RecordDecl>(method->getDeclContext());
-        if (!target_context) {
-          // The context for a using record is a namespace or translation unit.
+          // The context for a using method is a record.
           decl->dump();
           decl->getDeclContext()->dumpAsDecl();
           sus::unreachable();
@@ -575,6 +610,10 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             AliasStyle::Forwarding,
             sus::none(),  // No constraints.
             AliasTarget::with<AliasOfMethod>(
+                // TODO: This should store a LinkedFunction instead of a
+                // LinkedType + string. But on failure to find something in the
+                // db we need enough info to write out the whole thing, so maybe
+                // a LinkedMethod so that we have a record path in there.
                 LinkedType::with_type(
                     build_local_type(
                         clang::QualType(context->getTypeForDecl(), 0u),
@@ -585,9 +624,75 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         RecordElement& parent = docs_db_.find_record_mut(context).unwrap();
         add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(te),
                         parent.aliases, decl->getASTContext());
+      } else if (auto* funcdecl = clang::dyn_cast<clang::FunctionDecl>(
+                     shadow->getTargetDecl())) {
+        auto* context =
+            clang::dyn_cast<clang::NamespaceDecl>(decl->getDeclContext());
+        if (!context &&
+            !clang::isa<clang::TranslationUnitDecl>(decl->getDeclContext())) {
+          // The context for a function is a namespace or translation unit.
+          decl->dump();
+          decl->getDeclContext()->dumpAsDecl();
+          sus::unreachable();
+        }
+
+        sus::Vec<Namespace> target_namespaces =
+            iter_namespace_path(funcdecl).collect_vec();
+        std::string target_name = funcdecl->getNameAsString();
+
+        auto te = AliasElement(
+            iter_namespace_path(decl).collect_vec(), sus::move(comment),
+            decl->getNameAsString(),
+            decl->getASTContext().getSourceManager().getFileOffset(
+                decl->getLocation()),
+            sus::empty,  // No record path.
+            AliasStyle::Forwarding,
+            sus::none(),  // No constraints.
+            AliasTarget::with<AliasOfFunction>(LinkedFunction::with_function(
+                target_namespaces.as_slice(), sus::move(target_name),
+                docs_db_)));
+        NamespaceElement& parent =
+            docs_db_.find_namespace_mut(context).unwrap();
+        add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(te),
+                        parent.aliases, decl->getASTContext());
+      } else if (auto* functmpldecl =
+                     clang::dyn_cast<clang::FunctionTemplateDecl>(
+                         shadow->getTargetDecl())) {
+        auto* context =
+            clang::dyn_cast<clang::NamespaceDecl>(decl->getDeclContext());
+        if (!context &&
+            !clang::isa<clang::TranslationUnitDecl>(decl->getDeclContext())) {
+          // The context for a function is a namespace or translation unit.
+          decl->dump();
+          decl->getDeclContext()->dumpAsDecl();
+          sus::unreachable();
+        }
+
+        sus::Vec<Namespace> target_namespaces =
+            iter_namespace_path(functmpldecl).collect_vec();
+        std::string target_name = functmpldecl->getNameAsString();
+
+        auto te = AliasElement(
+            iter_namespace_path(decl).collect_vec(), sus::move(comment),
+            decl->getNameAsString(),
+            decl->getASTContext().getSourceManager().getFileOffset(
+                decl->getLocation()),
+            sus::empty,  // No record path.
+            AliasStyle::Forwarding,
+            sus::none(),  // No constraints.
+            AliasTarget::with<AliasOfFunction>(LinkedFunction::with_function(
+                target_namespaces.as_slice(), sus::move(target_name),
+                docs_db_)));
+        NamespaceElement& parent =
+            docs_db_.find_namespace_mut(context).unwrap();
+        add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(te),
+                        parent.aliases, decl->getASTContext());
       } else {
+        fmt::println(stderr, "Unknown shadow target in forwarding using decl");
         decl->dump();
         decl->getBeginLoc().dump(decl->getASTContext().getSourceManager());
+        fmt::println(stderr, "");
+        shadow->getTargetDecl()->dump();
         sus::unreachable();
       }
     }
