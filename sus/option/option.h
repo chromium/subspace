@@ -54,8 +54,8 @@
 #include "sus/string/__private/any_formatter.h"
 #include "sus/string/__private/format_to_stream.h"
 
-// Have to forward declare a bunch of iterator stuff here because Iterator
-// includes Option, so it can't include iterator back.
+// Have to forward declare iterator stuff here because Iterator includes Option,
+// so Option can't include Iterator back.
 namespace sus::iter {
 template <class T>
   requires requires(const T& t) {
