@@ -23,15 +23,19 @@ namespace sus::marker {
 
 /// A marker that designates emptinesss, for constructing an empty collection.
 ///
-/// To use this type as an argument, use the global `empty`.
+/// To use this type as an argument, use the global [`empty`](
+/// $sus::marker::empty).
 struct EmptyMarker {
-  // `explicit` prevents `{}` or `{any values...}` from being used to construct
-  // an `Empty`. The marker should only be used as `empty`.
+  /// `explicit` prevents `{}` or `{any values...}` from being used to construct
+  /// an `Empty`. The marker should only be used as [`empty`](
+  /// $sus::marker::empty).
+  /// #[doc.hidden]
   explicit consteval EmptyMarker() {}
 };
 
-/// The global `EmptyMarker` which can be passed to constructors to allow type
-/// deduction instead of having to write out the full default constructor.
+/// The global [`EmptyMarker`]($sus::marker::EmptyMarker) which can be passed to
+/// constructors to allow type deduction instead of having to write out the full
+/// default constructor.
 constexpr inline auto empty = EmptyMarker();
 
 }  // namespace sus::marker

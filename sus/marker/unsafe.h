@@ -36,16 +36,20 @@ namespace sus::marker {
 /// it is even possible to reason about how they are met and to maintain that
 /// over time.
 ///
-/// To call such an unsafe function, pass it the global `unsafe_fn` object,
-/// which is brought into the global namespace by `#include "sus/prelude.h"`.
+/// To call such an unsafe function, pass it the global [`unsafe_fn`](
+/// $sus::marker::unsafe_fn) object, which is brought into the global namespace
+/// by `#include "sus/prelude.h"`.
 struct UnsafeFnMarker {
-  // `explicit` prevents `{}` or `{any values...}` from being used to construct
-  // an `UnsafeFnMarker`. The marker should only be used as `unsafe_fn`.
+  /// `explicit` prevents `{}` or `{any values...}` from being used to construct
+  /// an `UnsafeFnMarker`. The marker should only be used as [`unsafe_fn`](
+  /// $sus::marker::unsafe_fn).
+  /// #[doc.hidden]
   explicit consteval UnsafeFnMarker() {}
 };
 
-/// The global `UnsafeFnMarker` which can be passed to unsafe functions. See
-/// the `UnsafeFnMarker` type for an explanation.
+/// The global [`UnsafeFnMarker`]($sus::marker::UnsafeFnMarker) which can be
+/// passed to unsafe functions. See the [`UnsafeFnMarker`](
+/// $sus::marker::UnsafeFnMarker) type for an explanation.
 constexpr inline auto unsafe_fn = UnsafeFnMarker();
 
 }  // namespace sus::marker
