@@ -138,6 +138,14 @@ jobs:
           echo "CFLAGS=$CFLAGS -fsanitize=address -fsanitize=undefined -fno-sanitize=vptr -O0" >> $GITHUB_ENV
           echo "CXXFLAGS=$CXXFLAGS -fsanitize=address -fsanitize=undefined -fno-sanitize=vptr -O0" >> $GITHUB_ENV
 
+      # GCC has a warning on the LLVM 18 codebase now.
+      # https://github.com/llvm/llvm-project/issues/67942
+      - name: Disable GCC Warning
+        if: matrix.config.name == 'Ubuntu GCC'
+        run: |
+          echo "CFLAGS=$CFLAGS -Wno-non-template-friend" >> $GITHUB_ENV
+          echo "CXXFLAGS=$CXXFLAGS -Wno-non-template-friend" >> $GITHUB_ENV
+
       - name: Download Ninja
         id: ninja
         shell: cmake -P {0}
