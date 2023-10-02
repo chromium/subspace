@@ -86,7 +86,73 @@ sus::Result<void, MarkdownToHtmlError> generate_alias_reference(
     auto desc_div = item_li.open_div();
     desc_div.add_class("description");
     desc_div.add_class("short");
-    if (auto comment = element.get_comment(); comment.is_some()) {
+    sus::Option<const Comment&> comment;
+    if (element.alias_style == AliasStyle::Forwarding) {
+      switch (element.target) {
+        case AliasTarget::Tag::AliasOfType: {
+          const LinkedType& type =
+              element.target.as<AliasTarget::Tag::AliasOfType>();
+          sus::Option<const TypeRef&> maybe_ref =
+              type.type_element_refs.get(0u)
+                  .map([](const sus::Option<TypeRef>& o) { return o.as_ref(); })
+                  .flatten();
+          if (maybe_ref.is_some()) {
+            comment = maybe_ref->get<TypeRef::Tag::Record>().map(
+                &CommentElement::get_comment).flatten();
+          }
+          break;
+        }
+        case AliasTarget::Tag::AliasOfConcept: {
+          const LinkedConcept& con =
+              element.target.as<AliasTarget::Tag::AliasOfConcept>();
+          switch (con.ref_or_name) {
+            case ConceptRefOrName::Tag::Ref:
+              comment = con.ref_or_name.get<ConceptRefOrName::Tag::Ref>().map(
+                  &CommentElement::get_comment).flatten();
+              break;
+            case ConceptRefOrName::Tag::Name: break;
+          }
+          break;
+        }
+        case AliasTarget::Tag::AliasOfMethod: {
+          // TODO: Link to method.
+          sus::unreachable();
+        }
+        case AliasTarget::Tag::AliasOfFunction: {
+          const LinkedFunction& fun =
+              element.target.as<AliasTarget::Tag::AliasOfFunction>();
+          switch (fun.ref_or_name) {
+            case FunctionRefOrName::Tag::Ref:
+              comment = fun.ref_or_name.get<FunctionRefOrName::Tag::Ref>().map(
+                  &CommentElement::get_comment).flatten();
+              break;
+            case FunctionRefOrName::Tag::Name: break;
+          }
+          break;
+        }
+        case AliasTarget::Tag::AliasOfEnumConstant: {
+          // TODO: Link to constant.
+          sus::unreachable();
+        }
+        case AliasTarget::Tag::AliasOfVariable: {
+          const LinkedVariable& var =
+              element.target.as<AliasTarget::Tag::AliasOfVariable>();
+          switch (var.ref_or_name) {
+            case VariableRefOrName::Tag::Ref: {
+              comment = var.ref_or_name.get<VariableRefOrName::Tag::Ref>().map(
+                  &CommentElement::get_comment).flatten();
+              break;
+            }
+            case VariableRefOrName::Tag::Name: break;
+          }
+        }
+      }
+    }
+    if (comment.is_none()) {
+      // Fallback to the comment on the alias itself.
+      comment = element.get_comment();
+    }
+    if (comment.is_some()) {
       if (auto md_html = markdown_to_html(comment.as_value(), page_state);
           md_html.is_err()) {
         return sus::err(sus::move(md_html).unwrap_err());

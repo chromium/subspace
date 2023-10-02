@@ -284,13 +284,6 @@ inline sus::Option<std::string> construct_html_url_for_alias(
                 .flatten();
         return maybe_ref.map([](const TypeRef& ref) {
           switch (ref) {
-            case TypeRef::Tag::Concept: {
-              const ConceptElement& e = ref.as<TypeRef::Tag::Concept>();
-              sus::check_with_message(
-                  !e.hidden(),
-                  fmt::format("reference to hidden Concept {}", e.name));
-              return construct_html_url_for_concept(e);
-            }
             case TypeRef::Tag::Record: {
               const RecordElement& e = ref.as<TypeRef::Tag::Record>();
               sus::check_with_message(
@@ -298,6 +291,11 @@ inline sus::Option<std::string> construct_html_url_for_alias(
                   fmt::format("reference to hidden Record {}", e.name));
               return construct_html_url_for_type(e);
             }
+            case TypeRef::Tag::Concept:
+              // This doesn't occur for the top level type, as it's a type. This
+              // occurs for `Concept auto` types, which do not appear in
+              // aliases.
+              break;
           }
           sus::unreachable();
         });
