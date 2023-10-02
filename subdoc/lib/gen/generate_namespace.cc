@@ -40,6 +40,7 @@ using SortedConceptByName = sus::Tuple<std::string_view, u32, ConceptId>;
 using SortedFunctionByName = sus::Tuple<std::string_view, u32, FunctionId>;
 using SortedRecordByName = sus::Tuple<std::string_view, u32, RecordId>;
 using SortedAliasByName = sus::Tuple<std::string_view, u32, AliasId>;
+using SortedVariableByName = sus::Tuple<std::string_view, u32, UniqueSymbol>;
 
 const NamespaceElement& namespace_element_from_sorted(
     const NamespaceElement& element, const SortedNamespaceByName& s) noexcept {
@@ -64,6 +65,11 @@ const RecordElement& record_element_from_sorted(
 const AliasElement& alias_element_from_sorted(
     const NamespaceElement& element, const SortedAliasByName& s) noexcept {
   return element.aliases.at(s.at<2>());
+}
+
+const FieldElement& field_element_from_sorted(
+    const NamespaceElement& element, const SortedVariableByName& s) noexcept {
+  return element.variables.at(s.at<2>());
 }
 
 constexpr inline std::weak_ordering cmp_namespaces_by_name(
@@ -96,6 +102,13 @@ constexpr inline std::weak_ordering cmp_records_by_name(
 
 constexpr inline std::weak_ordering cmp_aliases_by_name(
     const SortedAliasByName& a, const SortedAliasByName& b) noexcept {
+  auto ord = a.at<0>() <=> b.at<0>();
+  if (ord != 0) return ord;
+  return a.at<1>() <=> b.at<1>();
+}
+
+constexpr inline std::weak_ordering cmp_variables_by_name(
+    const SortedVariableByName& a, const SortedVariableByName& b) noexcept {
   auto ord = a.at<0>() <=> b.at<0>();
   if (ord != 0) return ord;
   return a.at<1>() <=> b.at<1>();
@@ -275,7 +288,7 @@ sus::Result<void, MarkdownToHtmlError> generate_concept_references(
   return sus::ok();
 }
 
-enum class AliasesOf { Types, Concepts, Functions };
+enum class AliasesOf { Types, Concepts, Functions, Variables };
 
 sus::Result<void, MarkdownToHtmlError> generate_alias_references(
     HtmlWriter::OpenDiv& namespace_div, AliasesOf aliases_of,
@@ -290,6 +303,7 @@ sus::Result<void, MarkdownToHtmlError> generate_alias_references(
     case AliasesOf::Types: section_div.add_class("types"); break;
     case AliasesOf::Concepts: section_div.add_class("concepts"); break;
     case AliasesOf::Functions: section_div.add_class("functions"); break;
+    case AliasesOf::Variables: section_div.add_class("variables"); break;
   }
 
   {
@@ -311,6 +325,11 @@ sus::Result<void, MarkdownToHtmlError> generate_alias_references(
         header_name.add_name("aliases-functions");
         header_name.add_href("#aliases-functions");
         header_name.write_text("Function Aliases");
+        break;
+      case AliasesOf::Variables:
+        header_name.add_name("aliases-variables");
+        header_name.add_href("#aliases-variables");
+        header_name.write_text("Variable Aliases");
         break;
     }
   }
@@ -435,6 +454,43 @@ sus::Result<void, MarkdownToHtmlError> generate_function_references(
   return sus::ok();
 }
 
+sus::Result<void, MarkdownToHtmlError> generate_variable_references(
+    HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
+    sus::Slice<SortedVariableByName> variables,
+    ParseMarkdownPageState& page_state) {
+  if (variables.is_empty()) return sus::ok();
+
+  auto section_div = namespace_div.open_div();
+  section_div.add_class("section");
+  section_div.add_class("variables");
+
+  {
+    auto header_div = section_div.open_div();
+    header_div.add_class("section-header");
+
+    auto header_name = header_div.open_a();
+    header_name.add_name("variables");
+    header_name.add_href("#variables");
+    header_name.write_text("Variables");
+  }
+  {
+    auto items_list = section_div.open_ul();
+    items_list.add_class("section-items");
+    items_list.add_class("item-table");
+
+    for (const SortedVariableByName& sorted_var : variables) {
+      const FieldElement& fe = field_element_from_sorted(element, sorted_var);
+      if (auto result = generate_field_reference(
+              items_list, fe, /*static_fields=*/false, page_state);
+          result.is_err()) {
+        return sus::err(sus::move(result).unwrap_err());
+      }
+    }
+  }
+
+  return sus::ok();
+}
+
 }  // namespace
 
 sus::Result<void, MarkdownToHtmlError> generate_namespace(
@@ -505,6 +561,15 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
   }
   sorted_functions.sort_unstable_by(cmp_functions_by_name);
   sorted_operators.sort_unstable_by(cmp_functions_by_name);
+
+  sus::Vec<SortedVariableByName> sorted_variables;
+  for (const auto& [function_id, sub_element] : element.variables) {
+    if (sub_element.hidden()) continue;
+
+    sorted_variables.push(
+        sus::tuple(sub_element.name, sub_element.sort_key, function_id));
+  }
+  sorted_variables.sort_unstable_by(cmp_variables_by_name);
 
   sus::Vec<SortedConceptByName> sorted_concepts;
   for (const auto& [key, sub_element] : element.concepts) {
@@ -591,6 +656,15 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
           function_element_from_sorted(element, sorted_fn);
       sidebar_links.push(SidebarLink(SidebarLinkStyle::Item, fe.name,
                                      construct_html_url_for_function(fe)));
+    }
+  }
+  if (!sorted_variables.is_empty()) {
+    sidebar_links.push(
+        SidebarLink(SidebarLinkStyle::GroupHeader, "Variables", "#variables"));
+    for (const SortedVariableByName& sorted_var : sorted_variables) {
+      const FieldElement& fe = field_element_from_sorted(element, sorted_var);
+      sidebar_links.push(SidebarLink(SidebarLinkStyle::Item, fe.name,
+                                     construct_html_url_for_field(fe)));
     }
   }
   if (!sorted_concepts.is_empty()) {
@@ -718,6 +792,14 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
     if (auto result = generate_function_references(
             namespace_div, element, sorted_operators, GenerateOperators,
             page_state);
+        result.is_err()) {
+      return sus::err(sus::move(result).unwrap_err());
+    }
+  }
+
+  if (!sorted_variables.is_empty()) {
+    if (auto result = generate_variable_references(
+            namespace_div, element, sorted_variables, page_state);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }

@@ -65,6 +65,49 @@ inline std::filesystem::path construct_html_file_path(
   return p;
 }
 
+inline std::filesystem::path construct_html_namespace_file_path(
+    std::filesystem::path root, sus::Slice<Namespace> namespace_path) noexcept {
+  std::filesystem::path p = sus::move(root);
+
+  std::ostringstream fname;
+  // The namespace path includes the namespace element itself, so drop
+  // that one.
+  for (const Namespace& n : namespace_path.iter().skip(1u).rev()) {
+    switch (n) {
+      case Namespace::Tag::Global: break;
+      case Namespace::Tag::Anonymous:
+        fname << "anonymous";
+        fname << "-";
+        break;
+      case Namespace::Tag::Named:
+        fname << n.as<Namespace::Tag::Named>();
+        fname << "-";
+        break;
+    }
+  }
+
+  std::string name = [&]() {
+    switch (namespace_path[0u]) {
+      case Namespace::Tag::Global:
+        // We're generating the global namespace, which will go in `index.html`.
+        return std::string("index");
+      case Namespace::Tag::Anonymous: return std::string("anonymous");
+      case Namespace::Tag::Named:
+        // Otherwise, use `namespace.${name}` for the file name of the namespace,
+        // which prevents collisions with other html files that have the same name
+        // as a top level namespace, such as a top level namespace named "index".
+        return fmt::format("namespace.{}",
+                           namespace_path[0u].as<Namespace::Tag::Named>());
+    }
+    sus::unreachable();
+  }();
+
+  fname << name;
+  fname << ".html";
+  p.append(sus::move(fname).str());
+  return p;
+}
+
 inline std::filesystem::path construct_html_file_path_for_concept(
     std::filesystem::path root, const ConceptElement& element) noexcept {
   return construct_html_file_path(sus::move(root), element.namespace_path,
@@ -92,22 +135,34 @@ inline std::string construct_html_url_for_type(
 inline std::string construct_html_url_for_field(
     const FieldElement& element) noexcept {
   std::ostringstream p;
-  p << construct_html_file_path(
-           std::filesystem::path(), element.namespace_path,
-           element.record_path[sus::ops::range(0_usize,
-                                               element.record_path.len() - 1u)],
-           element.record_path.last().expect("Field has no record parent?"))
-           .string();
-  p << "#field.";
+  if (element.record_path.is_empty()) {
+    // A variable.
+    p << construct_html_namespace_file_path(std::filesystem::path(),
+                                            element.namespace_path)
+             .string();
+    p << "#variable.";
+  } else {
+    // A class field.
+    p << construct_html_file_path(
+             std::filesystem::path(), element.namespace_path,
+             element.record_path[sus::ops::range(
+                 0_usize, element.record_path.len() - 1u)],
+             element.record_path.last().expect("Field has no record parent?"))
+             .string();
+    p << "#field.";
+  }
   p << element.name;
   return sus::move(p).str();
 }
 
 inline std::string construct_html_url_anchor_for_field(
     const FieldElement& element) noexcept {
-  sus::check(!element.record_path.is_empty());
   std::ostringstream url;
-  url << "field.";
+  if (element.record_path.is_empty()) {
+    url << "variable.";
+  } else {
+    url << "field.";
+  }
   url << element.name;
   return sus::move(url).str();
 }
@@ -301,29 +356,10 @@ inline std::string construct_html_url_anchor_for_alias(
   return sus::move(url).str();
 }
 
-
 inline std::filesystem::path construct_html_file_path_for_namespace(
     std::filesystem::path root, const NamespaceElement& element) noexcept {
-  // The namespace path includes the namespace element itself, so drop
-  // that one.
-  sus::Slice<Namespace> short_namespace_path =
-      element.namespace_path.as_slice()["1.."_r];
-
-  std::string file_name = [&]() {
-    if (element.namespace_name.which() == Namespace::Tag::Global) {
-      // We're generating the global namespace, which will go in `index.html`.
-      return std::string("index");
-    } else {
-      // Otherwise, use `namespace.${name}` for the file name of the namespace,
-      // which prevents collisions with other html files that have the same name
-      // as a top level namespace, such as a top level namespace named "index".
-      return fmt::format("namespace.{}", element.name);
-    }
-  }();
-
-  return construct_html_file_path(sus::move(root), short_namespace_path,
-                                  sus::Slice<std::string>(),
-                                  sus::move(file_name));
+  return construct_html_namespace_file_path(sus::move(root),
+                                            element.namespace_path);
 }
 
 inline std::string construct_html_url_for_namespace(

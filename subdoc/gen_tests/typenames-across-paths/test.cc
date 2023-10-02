@@ -16,6 +16,8 @@ enum class A {
   AValue,
 };
 
+int var;
+
 }  // namespace other::subother
 
 namespace n {
@@ -41,6 +43,7 @@ namespace __private {
     PrivateAValue,
   };
   template <class T> struct TemplateClass {};
+  int var;
 }
 
 /// Alias of `PrivateS` which is not in the database.
@@ -70,6 +73,8 @@ typedef other::subother::S RenamedTypedefS;
 other::subother::S return_s();
 
 /// Should show `Nested` as the return type, not the full path.
+///
+/// A reference to [var]($other::subother::var).
 other::subother::S::FirstNested::Nested return_nested();
 
 /// Should show `S` as the paramter type, not the full path.
