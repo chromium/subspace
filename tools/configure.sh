@@ -9,6 +9,7 @@
 #   Default: true
 # * BENCHMARKS=[true|false] to build benchmarks.
 #   Default: true
+# * USE_BREW=[true|false] to use clang/libc++ from homebrew on MacOS.
 #
 # Requires LLVM:
 # * SUBDOC=[true|false] to build subdoc. This requires an LLVM installation.
@@ -38,6 +39,7 @@ if [[ $LLVM_ROOT == "" ]]; then LLVM_ROOT=$HOME/s/llvm/install; fi
 if [[ $USE_ASAN == "" ]]; then USE_ASAN=false; fi
 if [[ $USE_LLD == "" ]]; then USE_LLD=false; fi
 if [[ $USE_LLVM_CLANG == "" ]]; then USE_LLVM_CLANG=false; fi
+if [[ $USE_BREW == "" ]]; then USE_BREW=false; fi
 
 # System detection.
 if [[ $OSTYPE == darwin* ]]; then IS_MAC=true; else IS_MAC=false; fi
@@ -90,6 +92,11 @@ if [[ $IS_MAC == true && $USE_ASAN == true ]]; then
     if [[ $CXX == "" ]]; then CLANG=clang++; else CLANG=$CXX; fi
     RESOURCE_DIR=$($CLANG --print-resource-dir)
     run codesign -f -s - "$RESOURCE_DIR/lib/darwin/libclang_rt.asan_osx_dynamic.dylib"
+fi
+if [[ $USE_BREW == true ]]; then
+    set_env CC="/opt/homebrew/opt/llvm/bin/clang"
+    set_env CXX="/opt/homebrew/opt/llvm/bin/clang++"
+    set_env LDFLAGS="-L/opt/homebrew/opt/llvm/lib/c++ -Wl,-rpath,/opt/homebrew/opt/llvm/lib/c++ $LDFLAGS"
 fi
 
 set_env LLVM_DIR="$LLVM_ROOT/lib/cmake/llvm"
