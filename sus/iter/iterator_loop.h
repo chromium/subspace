@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// IWYU pragma: private
+// IWYU pragma: private, include "sus/iter/iterator.h"
 // IWYU pragma: friend "sus/.*"
 #pragma once
 
@@ -52,20 +52,24 @@ class [[nodiscard]] IteratorLoop final {
                                            decltype(iter_), decltype(item_));
 };
 
+}  // namespace sus::iter::__private
+
+namespace sus::iter {
+
 /// ADL helper to call `T::iter()` in a range-based for loop, which will call
 /// `begin(T)`.
 ///
 /// In the same namespace as a type that has iter(), place:
 /// ```
-/// using ::sus::iter::__private::begin;
-/// using ::sus::iter::__private::end;
+/// using ::sus::iter::begin;
+/// using ::sus::iter::end;
 /// ```
 template <class T>
   requires requires(const T& t) {
     { t.iter() };
   }
 constexpr auto begin(const T& t) noexcept {
-  return IteratorLoop(t.iter());
+  return __private::IteratorLoop(t.iter());
 }
 
 /// ADL helper to call `T::iter()` in a range-based for loop, which will call
@@ -73,15 +77,15 @@ constexpr auto begin(const T& t) noexcept {
 ///
 /// In the same namespace as a type that has iter(), place:
 /// ```
-/// using ::sus::iter::__private::begin;
-/// using ::sus::iter::__private::end;
+/// using ::sus::iter:::begin;
+/// using ::sus::iter::end;
 /// ```
 template <class T>
   requires requires(const T& t) {
     { t.iter() };
   }
 constexpr auto end(const T&) noexcept {
-  return ::sus::iter::__private::IteratorEnd();
+  return __private::IteratorEnd();
 }
 
-}  // namespace sus::iter::__private
+}  // namespace sus::iter

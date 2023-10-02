@@ -18,16 +18,17 @@
 
 #include <compare>
 
+#include "sus/cmp/eq.h"
 #include "sus/construct/default.h"
 #include "sus/construct/into.h"
 #include "sus/fn/fn.h"
 #include "sus/iter/__private/is_generator.h"
 #include "sus/iter/__private/iter_compare.h"
 #include "sus/iter/__private/iterator_end.h"
-#include "sus/iter/__private/iterator_loop.h"
 #include "sus/iter/extend.h"
 #include "sus/iter/from_iterator.h"
 #include "sus/iter/into_iterator.h"
+#include "sus/iter/iterator_loop.h"
 #include "sus/iter/product.h"
 #include "sus/iter/sum.h"
 #include "sus/lib/__private/forward_decl.h"
@@ -36,7 +37,6 @@
 #include "sus/mem/move.h"
 #include "sus/mem/size_of.h"
 #include "sus/num/unsigned_integer.h"
-#include "sus/cmp/eq.h"
 #include "sus/ops/try.h"
 #include "sus/option/option.h"
 #include "sus/tuple/tuple.h"

@@ -34,12 +34,12 @@
 #include "sus/collections/iterators/vec_iter.h"
 #include "sus/collections/slice.h"
 #include "sus/fn/fn_concepts.h"
-#include "sus/iter/__private/iterator_loop.h"
 #include "sus/iter/adaptors/by_ref.h"
 #include "sus/iter/adaptors/enumerate.h"
 #include "sus/iter/adaptors/take.h"
 #include "sus/iter/from_iterator.h"
 #include "sus/iter/into_iterator.h"
+#include "sus/iter/iterator_loop.h"
 #include "sus/iter/iterator_ref.h"
 #include "sus/lib/__private/forward_decl.h"
 #include "sus/macros/lifetimebound.h"
@@ -1096,15 +1096,14 @@ struct fmt::formatter<::sus::collections::Vec<T>, Char> {
 // Stream support.
 sus__format_to_stream(sus::collections, Vec, T);
 
-
 namespace sus::collections {
 /// Implicit for-ranged loop iteration for all collections via the `iter`
 /// method.
-using ::sus::iter::__private::begin;
+using ::sus::iter::begin;
 /// Implicit for-ranged loop iteration for all collections via the `iter`
 /// method.
-using ::sus::iter::__private::end;
-}
+using ::sus::iter::end;
+}  // namespace sus::collections
 
 // Promote Vec into the `sus` namespace.
 namespace sus {

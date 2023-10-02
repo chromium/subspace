@@ -31,7 +31,7 @@
 #include "sus/collections/slice.h"
 #include "sus/construct/default.h"
 #include "sus/fn/fn_concepts.h"
-#include "sus/iter/__private/iterator_loop.h"
+#include "sus/iter/iterator_loop.h"
 #include "sus/macros/__private/compiler_bugs.h"
 #include "sus/macros/lifetimebound.h"
 #include "sus/macros/no_unique_address.h"
@@ -677,10 +677,10 @@ inline StreamType& operator<<(StreamType& stream, const Array<T, N>& value) {
 
 namespace sus::collections {
 // Documented in vec.h
-using ::sus::iter::__private::begin;
+using ::sus::iter::begin;
 // Documented in vec.h
-using ::sus::iter::__private::end;
-}
+using ::sus::iter::end;
+}  // namespace sus::collections
 
 // Promote Array into the `sus` namespace.
 namespace sus {
