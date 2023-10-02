@@ -128,6 +128,14 @@ jobs:
           sudo apt-get install g++-13
           echo "CXXFLAGS=$CXXFLAGS" >> $GITHUB_ENV
 
+      # GCC has a warning on the LLVM 18 codebase now.
+      # https://github.com/llvm/llvm-project/issues/67942
+      - name: Disable GCC Warning
+        if: matrix.config.name == 'Ubuntu GCC'
+        run: |
+          echo "CFLAGS=$CFLAGS -Wno-non-template-friend" >> $GITHUB_ENV
+          echo "CXXFLAGS=$CXXFLAGS -Wno-non-template-friend" >> $GITHUB_ENV
+
       # vptr is incompatible with no-rtti. We turn off rtti to match the LLVM libraries.
       - name: Set Sanitizer Flags
         if: endsWith(matrix.config.name, 'Sanitizer')
