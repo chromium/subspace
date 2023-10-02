@@ -612,11 +612,35 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         //sus::unreachable();
       } else if (auto* vardecl =
                      clang::dyn_cast<clang::VarDecl>(shadow->getTargetDecl())) {
-        vardecl->dump();
-        decl->dump();
-        decl->getBeginLoc().dump(decl->getASTContext().getSourceManager());
-        // TODO: Put these global variables on a namespace.
-        //sus::unreachable();
+        auto* context =
+            clang::dyn_cast<clang::NamespaceDecl>(decl->getDeclContext());
+        if (!context &&
+            !clang::isa<clang::TranslationUnitDecl>(decl->getDeclContext())) {
+          // The context for a variable is a namespace or translation unit. You
+          // can't write an alias to a static class data member.
+          decl->dump();
+          decl->getDeclContext()->dumpAsDecl();
+          sus::unreachable();
+        }
+
+        sus::Vec<Namespace> target_namespaces =
+            iter_namespace_path(vardecl).collect_vec();
+        std::string target_name = vardecl->getNameAsString();
+
+        auto te = AliasElement(
+            iter_namespace_path(decl).collect_vec(), sus::move(comment),
+            decl->getNameAsString(),
+            decl->getASTContext().getSourceManager().getFileOffset(
+                decl->getLocation()),
+            sus::empty,  // No record path.
+            AliasStyle::Forwarding,
+            sus::none(),  // No constraints.
+            AliasTarget::with<AliasOfVariable>(LinkedVariable::with_variable(
+                target_namespaces, sus::move(target_name), docs_db_)));
+        NamespaceElement& parent =
+            docs_db_.find_namespace_mut(context).unwrap();
+        add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(te),
+                        parent.aliases, decl->getASTContext());
       } else if (auto* method = clang::dyn_cast<clang::CXXMethodDecl>(
                      shadow->getTargetDecl())) {
         auto* context =
