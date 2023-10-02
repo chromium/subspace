@@ -23,6 +23,7 @@
 #include "fmt/format.h"
 #include "sus/assertions/check.h"
 #include "sus/assertions/unreachable.h"
+#include "sus/cmp/__private/void_concepts.h"
 #include "sus/fn/fn_concepts.h"
 #include "sus/iter/into_iterator.h"
 #include "sus/iter/iterator_defn.h"
@@ -37,7 +38,6 @@
 #include "sus/mem/relocate.h"
 #include "sus/mem/replace.h"
 #include "sus/mem/take.h"
-#include "sus/cmp/__private/void_concepts.h"
 #include "sus/option/option.h"
 #include "sus/result/__private/marker.h"
 #include "sus/result/__private/result_state.h"
@@ -53,16 +53,16 @@ namespace result {}
 
 namespace sus::result {
 
+using ::sus::cmp::__private::VoidOrEq;
+using ::sus::cmp::__private::VoidOrOrd;
+using ::sus::cmp::__private::VoidOrPartialOrd;
+using ::sus::cmp::__private::VoidOrWeakOrd;
 using ::sus::iter::Once;
 using ::sus::mem::__private::IsTrivialCopyAssignOrRef;
 using ::sus::mem::__private::IsTrivialCopyCtorOrRef;
 using ::sus::mem::__private::IsTrivialDtorOrRef;
 using ::sus::mem::__private::IsTrivialMoveAssignOrRef;
 using ::sus::mem::__private::IsTrivialMoveCtorOrRef;
-using ::sus::cmp::__private::VoidOrEq;
-using ::sus::cmp::__private::VoidOrOrd;
-using ::sus::cmp::__private::VoidOrPartialOrd;
-using ::sus::cmp::__private::VoidOrWeakOrd;
 using ::sus::option::__private::StoragePointer;
 using ::sus::result::__private::ResultState;
 using ::sus::result::__private::Storage;
@@ -1279,9 +1279,12 @@ class [[nodiscard]] Result final {
       decltype(state_));
 };
 
-// Implicit for-ranged loop iteration via `Result::iter()`.
-using sus::iter::__private::begin;
-using sus::iter::__private::end;
+/// Implicit for-ranged loop iteration via [`Result::iter()`](
+/// $sus::result::Result::iter).
+using sus::iter::begin;
+/// Implicit for-ranged loop iteration via [`Result::iter()`](
+/// $sus::result::Result::iter).
+using sus::iter::end;
 
 /// Used to construct a Result<T, E> with an Ok(t) value.
 ///

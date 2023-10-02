@@ -524,10 +524,10 @@ class [[sus_trivial_abi]] SliceMut final {
 #define _self SliceMut<T>
 #include "__private/slice_methods_impl.inc"
 
-// Implicit for-ranged loop iteration via `Slice::iter()` and
-// `SliceMut::iter()`.
-using ::sus::iter::__private::begin;
-using ::sus::iter::__private::end;
+// Documented in vec.h
+using ::sus::iter::begin;
+// Documented in vec.h
+using ::sus::iter::end;
 
 }  // namespace sus::collections
 

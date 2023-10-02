@@ -57,7 +57,6 @@
 // Have to forward declare a bunch of iterator stuff here because Iterator
 // includes Option, so it can't include iterator back.
 namespace sus::iter {
-namespace __private {
 template <class T>
   requires requires(const T& t) {
     { t.iter() };
@@ -68,7 +67,6 @@ template <class T>
     { t.iter() };
   }
 constexpr auto end(const T& t) noexcept;
-}  // namespace __private
 }  // namespace sus::iter
 
 namespace sus {
@@ -448,19 +446,10 @@ namespace option {}
 }  // namespace sus
 
 namespace sus::option {
+using namespace sus::option::__private;
 
 template <class Item>
 class OptionIter;
-
-using State::None;
-using State::Some;
-using ::sus::mem::__private::IsTrivialCopyAssignOrRef;
-using ::sus::mem::__private::IsTrivialCopyCtorOrRef;
-using ::sus::mem::__private::IsTrivialDtorOrRef;
-using ::sus::mem::__private::IsTrivialMoveAssignOrRef;
-using ::sus::mem::__private::IsTrivialMoveCtorOrRef;
-using ::sus::option::__private::Storage;
-using ::sus::option::__private::StoragePointer;
 
 namespace __private {
 template <class T, ::sus::iter::Iterator<Option<T>> Iter>
@@ -612,11 +601,11 @@ class Option final {
   /// so we can use the default destructor, which allows
   /// [`Option<T>`]($sus::option::Option) to also be trivially destroyed.
   constexpr ~Option() noexcept
-    requires(IsTrivialDtorOrRef<T>)
+    requires(::sus::mem::__private::IsTrivialDtorOrRef<T>)
   = default;
 
   constexpr inline ~Option() noexcept
-    requires(!IsTrivialDtorOrRef<T>)
+    requires(!::sus::mem::__private::IsTrivialDtorOrRef<T>)
   {
     if (t_.state() == Some) t_.destroy();
   }
@@ -2004,12 +1993,12 @@ class Option final {
 template <class T>
 Option(T) -> Option<std::remove_cvref_t<T>>;
 
-/// Implicit for-ranged loop iteration via
-/// [`Option::iter`]($sus::option::Option::iter).
-using ::sus::iter::__private::begin;
-/// Implicit for-ranged loop iteration via
-/// [`Option::iter`]($sus::option::Option::iter).
-using ::sus::iter::__private::end;
+/// Implicit for-ranged loop iteration via [`Option::iter`](
+/// $sus::option::Option::iter).
+using ::sus::iter::begin;
+/// Implicit for-ranged loop iteration via [`Option::iter`](
+/// $sus::option::Option::iter).
+using ::sus::iter::end;
 
 /// Used to construct an option with a Some(t) value.
 ///
