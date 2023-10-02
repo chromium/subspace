@@ -34,6 +34,8 @@ using other::subother::subother_func;
 using other::subother::subother_func_with_overload;
 /// Forwarding alias of a value from [`A`]($other::subother::A).
 using other::subother::A::AValue;
+/// Forwarding alias of [`var`]($other::subother::var).
+using other::subother::var;
 
 namespace __private {
   struct PrivateS {};
@@ -43,7 +45,7 @@ namespace __private {
     PrivateAValue,
   };
   template <class T> struct TemplateClass {};
-  int var;
+  int private_var;
 }
 
 /// Alias of `PrivateS` which is not in the database.
@@ -54,6 +56,8 @@ using __private::PrivateC;
 using __private::private_func;
 /// Alias of `PrivateAValue` which is not in the database.
 using __private::PrivateA::PrivateAValue;
+/// Alias of `private_var` which is not in the database.
+using __private::private_var;
 
 template<>
 struct __private::TemplateClass<int> {

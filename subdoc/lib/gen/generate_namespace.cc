@@ -582,6 +582,7 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
 
   sus::Vec<SortedAliasByName> sorted_aliases_of_types;
   sus::Vec<SortedAliasByName> sorted_aliases_of_functions;
+  sus::Vec<SortedAliasByName> sorted_aliases_of_variables;
   sus::Vec<SortedAliasByName> sorted_aliases_of_concepts;
   // TODO: Methods, enum values, variables.
   for (const auto& [key, sub_element] : element.aliases) {
@@ -600,13 +601,17 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
         sorted_aliases_of_functions.push(
             sus::tuple(sub_element.name, sub_element.sort_key, key));
         break;
-      case AliasTarget::Tag::AliasOfMethod: [[fallthrough]];
+      case AliasTarget::Tag::AliasOfMethod: break;
       case AliasTarget::Tag::AliasOfEnumConstant: break;
-      case AliasTarget::Tag::AliasOfVariable: break;
+      case AliasTarget::Tag::AliasOfVariable:
+        sorted_aliases_of_variables.push(
+            sus::tuple(sub_element.name, sub_element.sort_key, key));
+        break;
     }
   }
   sorted_aliases_of_types.sort_unstable_by(cmp_aliases_by_name);
   sorted_aliases_of_functions.sort_unstable_by(cmp_aliases_by_name);
+  sorted_aliases_of_variables.sort_unstable_by(cmp_aliases_by_name);
   sorted_aliases_of_concepts.sort_unstable_by(cmp_aliases_by_name);
 
   sus::Vec<SidebarLink> sidebar_links;
@@ -702,6 +707,27 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
     sidebar_links.push(SidebarLink(SidebarLinkStyle::GroupHeader,
                                    "Function Aliases", "#aliases-functions"));
     for (const SortedAliasByName& sorted_alias : sorted_aliases_of_functions) {
+      const AliasElement& ae = alias_element_from_sorted(element, sorted_alias);
+      if (sus::Option<std::string> url = construct_html_url_for_alias(ae);
+          url.is_some()) {
+        // Link to where the alias links to.
+        sidebar_links.push(SidebarLink(SidebarLinkStyle::Item, ae.name,
+                                       sus::move(url).unwrap()));
+      } else {
+        // Link to the alias in this page since the alias itself doesn't connect
+        // to anything in the database.
+        std::ostringstream doc_url;
+        doc_url << "#";
+        doc_url << construct_html_url_anchor_for_alias(ae);
+        sidebar_links.push(SidebarLink(SidebarLinkStyle::Item, ae.name,
+                                       sus::move(doc_url).str()));
+      }
+    }
+  }
+  if (!sorted_aliases_of_variables.is_empty()) {
+    sidebar_links.push(SidebarLink(SidebarLinkStyle::GroupHeader,
+                                   "Variable Aliases", "#aliases-variables"));
+    for (const SortedAliasByName& sorted_alias : sorted_aliases_of_variables) {
       const AliasElement& ae = alias_element_from_sorted(element, sorted_alias);
       if (sus::Option<std::string> url = construct_html_url_for_alias(ae);
           url.is_some()) {
@@ -826,6 +852,15 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
     if (auto result = generate_alias_references(
             namespace_div, AliasesOf::Functions, element,
             sorted_aliases_of_functions.as_slice(), page_state);
+        result.is_err()) {
+      return sus::err(sus::move(result).unwrap_err());
+    }
+  }
+
+  if (!sorted_aliases_of_variables.is_empty()) {
+    if (auto result = generate_alias_references(
+            namespace_div, AliasesOf::Variables, element,
+            sorted_aliases_of_variables.as_slice(), page_state);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }

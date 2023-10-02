@@ -152,3 +152,17 @@ TEST_F(SubDocTest, AliasNamedTypeInRecord) {
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_alias_comment(db, "7:7", "<p>Alias comment headline</p>"));
 }
+
+TEST_F(SubDocTest, AliasUsingVariable) {
+  auto result = run_code(R"(
+    namespace a {
+    /// Comment headline
+    int i;
+    }
+    /// Using comment
+    using a::i;
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_alias_comment(db, "6:5", "<p>Using comment</p>"));
+}

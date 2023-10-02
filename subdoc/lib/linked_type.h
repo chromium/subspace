@@ -24,6 +24,7 @@ namespace subdoc {
 
 struct ConceptElement;
 struct Database;
+struct FieldElement;
 struct FunctionElement;
 struct RecordElement;
 
@@ -83,6 +84,23 @@ struct LinkedFunction {
       const Database& db) noexcept;
 
   FunctionRefOrName ref_or_name;
+};
+
+enum class VariableRefOrNameTag {
+  Ref,
+  Name,
+};
+/// A reference to a concept in the `Database`, or name.
+using VariableRefOrName = sus::Choice<sus_choice_types(
+    (VariableRefOrNameTag::Ref, const FieldElement&),
+    (VariableRefOrNameTag::Name, std::string))>;
+
+struct LinkedVariable {
+  static LinkedVariable with_variable(
+      sus::Slice<Namespace> namespace_path, std::string name,
+      const Database& db) noexcept;
+
+  VariableRefOrName ref_or_name;
 };
 
 }  // namespace subdoc

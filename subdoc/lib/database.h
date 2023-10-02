@@ -190,7 +190,7 @@ using AliasTarget = sus::Choice<sus_choice_types(
     (AliasTargetTag::AliasOfFunction, LinkedFunction),
     (AliasTargetTag::AliasOfEnumConstant, LinkedType,
      std::string /* constant name */),
-    (AliasTargetTag::AliasOfVariable, void /* LinkedVariable? */))>;
+    (AliasTargetTag::AliasOfVariable, LinkedVariable))>;
 
 /// An alias can be Forwarding (`using a::b`) or NewType (`using a = b`).
 struct AliasElement : public TypeElement {

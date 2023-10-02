@@ -337,7 +337,16 @@ inline sus::Option<std::string> construct_html_url_for_alias(
         sus::unreachable();
       }
       case AliasTarget::Tag::AliasOfVariable: {
-        // TODO: Link to variable.
+        const LinkedVariable& var =
+            element.target.as<AliasTarget::Tag::AliasOfVariable>();
+        switch (var.ref_or_name) {
+          case VariableRefOrName::Tag::Ref: {
+            const FieldElement& e =
+                var.ref_or_name.as<VariableRefOrName::Tag::Ref>();
+            return sus::some(construct_html_url_for_field(e));
+          }
+          case VariableRefOrName::Tag::Name: return sus::none();
+        }
         sus::unreachable();
       }
     }
