@@ -89,3 +89,18 @@ TEST_F(SubDocTest, FieldInNamespaces) {
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_field_comment(db, "4:7", "<p>Comment headline</p>"));
 }
+
+TEST_F(SubDocTest, Variables) {
+  auto result = run_code(R"(
+    /// Comment headline 1
+    int i;
+    namespace n {
+      /// Comment headline 2
+      int j;
+    }
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_variable_comment(db, "2:5", "<p>Comment headline 1</p>"));
+  EXPECT_TRUE(has_variable_comment(db, "5:7", "<p>Comment headline 2</p>"));
+}
