@@ -213,6 +213,7 @@ sus::Result<void, MarkdownToHtmlError> generate_record_fields(
   {
     auto items_ul = section_div.open_ul();
     items_ul.add_class("section-items");
+    items_ul.add_class("item-table");
 
     for (auto&& [name, sort_key, field_unique_symbol] : fields) {
       const FieldElement& fe = element.fields.at(field_unique_symbol);
@@ -593,14 +594,16 @@ sus::Result<void, MarkdownToHtmlError> generate_field_reference(
   {
     auto name_div = li.open_div(HtmlWriter::SingleLine);
     name_div.add_class("item-name");
-    name_div.add_class("member-signature");
+
+    auto sig_div = name_div.open_div(HtmlWriter::SingleLine);
+    sig_div.add_class("member-signature");
 
     {
-      auto anchor = name_div.open_a();
+      auto anchor = sig_div.open_a();
       anchor.add_name(construct_html_url_anchor_for_field(element));
     }
     if (!element.template_params.is_empty()) {
-      auto template_div = name_div.open_div(HtmlWriter::SingleLine);
+      auto template_div = sig_div.open_div(HtmlWriter::SingleLine);
       template_div.add_class("template");
       template_div.write_text("template <");
       for (const auto& [i, s] : element.template_params.iter().enumerate()) {
@@ -611,14 +614,14 @@ sus::Result<void, MarkdownToHtmlError> generate_field_reference(
     }
     if (static_fields) {
       {
-        auto static_span = name_div.open_span(HtmlWriter::SingleLine);
+        auto static_span = sig_div.open_span(HtmlWriter::SingleLine);
         static_span.add_class("static");
         static_span.write_text("static");
       }
-      name_div.write_text(" ");
+      sig_div.write_text(" ");
     }
     generate_type(
-        name_div, element.type,
+        sig_div, element.type,
         sus::some(sus::dyn<sus::fn::DynFnMut<void(HtmlWriter::OpenDiv&)>>(
             [&](HtmlWriter::OpenDiv& div) {
               auto anchor = div.open_a();
@@ -630,7 +633,7 @@ sus::Result<void, MarkdownToHtmlError> generate_field_reference(
   {
     auto desc_div = li.open_div();
     desc_div.add_class("description");
-    desc_div.add_class("long");
+    desc_div.add_class("short");
     if (auto comment = element.get_comment(); comment.is_some()) {
       if (auto md_html = markdown_to_html(comment.as_value(), page_state);
           md_html.is_err()) {

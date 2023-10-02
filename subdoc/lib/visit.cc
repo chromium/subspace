@@ -370,9 +370,16 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       constraints = collect_template_constraints(tmpl, preprocessor_);
     }
 
+    // If a variable is written as `auto x = Foo()` we want to get the deduced
+    // `Foo` type. We don't do this generally for all `auto` types.
+    clang::QualType type = decl->getType();
+    if (auto* auto_type = clang::dyn_cast<clang::AutoType>(&*type);
+        auto_type && auto_type->isDeduced()) {
+      type = type.getDesugaredType(decl->getASTContext());
+    }
+
     auto linked_type = LinkedType::with_type(
-        build_local_type(decl->getType(),
-                         decl->getASTContext().getSourceManager(),
+        build_local_type(type, decl->getASTContext().getSourceManager(),
                          preprocessor_, decl->getBeginLoc()),
         docs_db_);
 

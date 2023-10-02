@@ -16,7 +16,8 @@ enum class A {
   AValue,
 };
 
-int var;
+/// Deduces to `int var`.
+auto var = []() { return int(3); }();
 
 }  // namespace other::subother
 
