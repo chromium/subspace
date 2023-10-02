@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <bit>
 #include <sstream>
 #include <type_traits>
 
@@ -1798,8 +1799,9 @@ TEST(i32, Shr) {
 
   // ** Signed only.
   EXPECT_EQ(-4_i32 >> 1_u32,
-            i32(static_cast<int32_t>(static_cast<uint32_t>(-4) >> 1)));
-  EXPECT_EQ(-1_i32 >> 31_u32, 1_i32);
+            std::bit_cast<i32>((std::bit_cast<u32>(-4) >> 1u) |
+                               0b1000'0000'0000'0000'0000'0000'0000'0000));
+  EXPECT_EQ(-1_i32 >> 31_u32, std::bit_cast<i32>(0xffffffff));
 
   auto x = 4_i32;
   x >>= 1_u32;
@@ -1808,7 +1810,10 @@ TEST(i32, Shr) {
   // ** Signed only.
   x = -4_i32;
   x >>= 1_u32;
-  EXPECT_EQ(x, i32(static_cast<int32_t>(static_cast<uint32_t>(-4) >> 1)));
+  EXPECT_EQ(x, std::bit_cast<i32>((std::bit_cast<u32>(-4) >> 1u) |
+                                  0b1000'0000'0000'0000'0000'0000'0000'0000));
+
+  EXPECT_EQ(i32::MIN >> 7u, std::bit_cast<int32_t>(uint32_t{0xff000000u}));
 }
 
 TEST(i32DeathTest, ShrOverflow) {
@@ -1845,9 +1850,10 @@ TEST(i32, CheckedShr) {
   EXPECT_EQ((1_i32).checked_shr(64_u32), None);
 
   // ** Signed only.
-  EXPECT_EQ(
-      (-2_i32).checked_shr(1_u32),
-      Option<i32>(i32(static_cast<int32_t>(static_cast<uint32_t>(-2) >> 1))));
+  EXPECT_EQ((-2_i32).checked_shr(1_u32),
+            Option<i32>(std::bit_cast<i32>(
+                (std::bit_cast<u32>(-2) >> 1u) |
+                0b1000'0000'0000'0000'0000'0000'0000'0000u)));
   EXPECT_EQ((-1_i32).checked_shr(32_u32), None);
 }
 
@@ -1862,10 +1868,11 @@ TEST(i32, OverflowingShr) {
   EXPECT_EQ((4_i32).overflowing_shr(33_u32), (Tuple<i32, bool>(2_i32, true)));
 
   // ** Signed only.
-  EXPECT_EQ(
-      (-2_i32).overflowing_shr(1_u32),
-      (Tuple<i32, bool>(
-          i32(static_cast<int32_t>(static_cast<uint32_t>(-2) >> 1u)), false)));
+  EXPECT_EQ((-2_i32).overflowing_shr(1_u32),
+            (Tuple<i32, bool>(
+                std::bit_cast<i32>((std::bit_cast<u32>(-2) >> 1u) |
+                                   0b1000'0000'0000'0000'0000'0000'0000'0000u),
+                false)));
 }
 
 TEST(i32, WrappingShr) {
@@ -1880,7 +1887,8 @@ TEST(i32, WrappingShr) {
 
   // ** Signed only.
   EXPECT_EQ((-2_i32).wrapping_shr(1_u32),
-            i32(static_cast<int32_t>(static_cast<uint32_t>(-2) >> 1u)));
+            std::bit_cast<i32>((std::bit_cast<u32>(-2) >> 1u) |
+                               0b1000'0000'0000'0000'0000'0000'0000'0000u));
 }
 
 TEST(i32, Sub) {

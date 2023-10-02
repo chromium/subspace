@@ -195,6 +195,8 @@ constexpr inline P operator<<(P l, U r) noexcept = delete;
 
 /// Satisfies the [`Shr`]($sus::num::Shr) concept for signed primitive integers
 /// shifted by [`u64`]($sus::num::u64).
+///
+/// Performs sign extension, copying the sign bit to the right if its set.
 /// #[doc.overloads=signed.prim.>>u64]
 template <class P, Integer U>
   requires((SignedPrimitiveInteger<P> || SignedPrimitiveEnum<P>) &&
@@ -234,6 +236,8 @@ template <class U>
   requires(!std::convertible_to<U, u64>)
 constexpr inline i8 operator<<(i8 l, U r) noexcept = delete;
 /// Satisfies the [`Shr`]($sus::num::Shr) concept for signed integers.
+///
+/// Performs sign extension, copying the sign bit to the right if its set.
 ///
 /// #[doc.overloads=signedint.>>]
 [[nodiscard]] sus_pure_const constexpr inline i8 operator>>(
