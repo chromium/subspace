@@ -64,10 +64,10 @@ struct Storage<T, 0> final {};
 
 }  // namespace __private
 
-/// A collection of objects of type T, with a fixed size N.
+/// A collection of objects of type `T`, with a fixed size `N`.
 ///
-/// An Array can not be larger than `isize::MAX`, as subtracting a pointer at a
-/// greater distance results in Undefined Behaviour.
+/// An Array can not be larger than [`isize::MAX`]($sus::num::isize::MAX), as
+/// subtracting a pointer at a greater distance results in Undefined Behaviour.
 template <class T, size_t N>
 class Array final {
   static_assert(N <= ::sus::mog<usize>(isize::MAX));
@@ -82,8 +82,9 @@ class Array final {
   /// Default constructor of `Array` which default-constructs each object `T` in
   /// the array.
   ///
-  /// This satisifies `sus::construct::Default<Array<T, N>>`, but requires hat
-  /// `sus::construct::Default<T>` is true.
+  /// This satisifies [`Default`]($sus::construct::Default) for the
+  /// `Array<T, N>` if [`Default`]($sus::construct::Default) is satisifed for
+  /// `T`.
   /// #[doc.overloads=ctor.default]
   explicit constexpr Array() noexcept
     requires(::sus::construct::Default<T>)
