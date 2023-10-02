@@ -952,6 +952,8 @@ constexpr inline void operator<<=(u32 r) & noexcept {
   primitive_value = out.value;
 }
 /// Satisfies the [`ShrAssign<@doc.self>`]($sus::num::ShrAssign) concept.
+///
+/// Performs sign extension, copying the sign bit to the right if its set.
 constexpr inline void operator>>=(u32 r) & noexcept {
   const auto out =
       __private::shr_with_overflow(primitive_value, r.primitive_value);

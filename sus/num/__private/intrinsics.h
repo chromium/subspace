@@ -122,20 +122,6 @@ sus_pure_const sus_always_inline constexpr T unchecked_xor(T x, T y) noexcept {
 }
 
 template <class T>
-  requires(std::is_integral_v<T> && !std::is_signed_v<T>)
-sus_pure_const sus_always_inline constexpr T unchecked_shl(
-    T x, uint64_t y) noexcept {
-  return static_cast<T>(MathType<T>{x} << y);
-}
-
-template <class T>
-  requires(std::is_integral_v<T> && !std::is_signed_v<T>)
-sus_pure_const sus_always_inline constexpr T unchecked_shr(
-    T x, uint64_t y) noexcept {
-  return static_cast<T>(MathType<T>{x} >> y);
-}
-
-template <class T>
   requires(std::is_integral_v<T>)
 sus_pure_const sus_always_inline constexpr uint32_t num_bits() noexcept {
   return unchecked_mul(unchecked_sizeof<T>(), uint32_t{8});
@@ -464,6 +450,28 @@ sus_pure_const sus_always_inline constexpr T min_value() noexcept {
     return -340282346638528859811704183484516925440.f;
   else
     return -179769313486231570814527423731704356798070567525844996598917476803157260780028538760589558632766878171540458953514382464234321326889464182768467546703537516986049910576551282076245490090389328944075868508455133942304583236903222948165808559332123348274797826204144723168738177180919299881250404026184124858368.0;
+}
+
+template <class T>
+  requires(std::is_integral_v<T> && !std::is_signed_v<T>)
+sus_pure_const sus_always_inline constexpr T unchecked_shl(
+    T x, uint64_t y) noexcept {
+  return static_cast<T>(MathType<T>{x} << y);
+}
+
+template <class T>
+  requires(std::is_integral_v<T> && !std::is_signed_v<T>)
+sus_pure_const sus_always_inline constexpr T unchecked_shr(
+    T x, uint64_t y) noexcept {
+  return static_cast<T>(MathType<T>{x} >> y);
+}
+
+template <class T>
+  requires(std::is_integral_v<T> && std::is_signed_v<T>)
+sus_pure_const sus_always_inline constexpr T unchecked_shr(
+    T x, uint64_t y) noexcept {
+  // Performs sign extension.
+  return static_cast<T>(MathType<T>{x} >> y);
 }
 
 template <class T>
@@ -1105,9 +1113,8 @@ sus_pure_const inline constexpr OverflowOut<T> shr_with_overflow(
   const bool overflow = shift >= num_bits<T>();
   if (overflow) [[unlikely]]
     shift = shift & (unchecked_sub(num_bits<T>(), uint32_t{1}));
-  return OverflowOut sus_clang_bug_56394(<T>){
-      .overflow = overflow,
-      .value = into_signed(unchecked_shr(into_unsigned(x), shift))};
+  return OverflowOut sus_clang_bug_56394(<T>){.overflow = overflow,
+                                              .value = unchecked_shr(x, shift)};
 }
 
 template <class T>

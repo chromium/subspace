@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <bit>
 #include <type_traits>
 
 #include "googletest/include/gtest/gtest.h"
@@ -747,6 +748,30 @@ TEST(i16, fmt) {
   EXPECT_EQ(fmt::format("{}", -4321_i16), "-4321");
   EXPECT_EQ(fmt::format("{}", 12345_i16), "12345");
   EXPECT_EQ(fmt::format("{:+#x}", 12345_i16), "+0x3039");
+}
+
+TEST(i16, Shr) {
+  constexpr auto a = (5_i16) >> 1_u32;
+  EXPECT_EQ(a, 2_i16);
+  EXPECT_EQ(4_i16 >> 1_u32, 2_i16);
+
+  // ** Signed only.
+  EXPECT_EQ(-4_i16 >> 1_u32,
+            std::bit_cast<i16>((std::bit_cast<u16>(int16_t{-4}) >> 1u) |
+                               0b1000'0000'0000'0000_u16));
+  EXPECT_EQ(-1_i16 >> 15_u32, std::bit_cast<i16>(0xffff_u16));
+
+  auto x = 4_i16;
+  x >>= 1_u32;
+  EXPECT_EQ(x, 2_i16);
+
+  // ** Signed only.
+  x = -4_i16;
+  x >>= 1_u32;
+  EXPECT_EQ(x, std::bit_cast<i16>((std::bit_cast<u16>(int16_t{-4}) >> 1u) |
+                                  0b1000'0000'0000'0000_u16));
+
+  EXPECT_EQ(i16::MIN >> 7u, std::bit_cast<int16_t>(uint16_t{0xff00u}));
 }
 
 }  // namespace
