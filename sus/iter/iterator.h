@@ -14,6 +14,32 @@
 
 #pragma once
 
+namespace sus {
+
+/// Composable external iteration.
+///
+/// If you've found yourself with a collection of some kind, and needed to
+/// perform an operation on the elements of said collection, you'll quickly run
+/// into 'iterators'. Iterators are heavily used in idiomatic Rust code, so
+/// it's worth becoming familiar with them.
+///
+/// The use of iterators with collections is described in [the collections
+/// documentation]($sus::collections#iterators).
+///
+/// TODO: Write lots more here.
+///
+/// All iterators implement the [`Iterator`]($sus::iter::Iterator) concept. Part
+/// of implementing that requires inheriting from [`IteratorBase`](
+/// $sus::iter::IteratorBase) which provides a large number of methods for
+/// filtering or transforming the items produced by the iterator. All of these
+/// methods are "lazy" in that they construct a new iterator but do not touch
+/// the source which generates items until iteration begins.
+///
+/// Iterators can [interact with standard ranges]($sus::collections#ranges) as
+/// well.
+namespace iter {}
+}
+
 // IWYU pragma: begin_exports
 #include "sus/iter/iterator_defn.h"
 #include "sus/iter/iterator_impl.h"

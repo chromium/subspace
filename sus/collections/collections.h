@@ -246,7 +246,7 @@ namespace sus {
 /// # Ranges
 /// The collections in the Subspace C++ library can be used with standard ranges
 /// by calling the [`range()`]($sus::iter::IteratorBase::range) adaptor on any
-/// Subspace iterator. It will return an object that satisfies
+/// [`Iterator`]($sus::iter::Iterator). It will return an object that satisfies
 /// [`std::ranges::input_range`](https://en.cppreference.com/w/cpp/ranges/input_range)
 /// and
 /// [`std::ranges::viewable_range`](https://en.cppreference.com/w/cpp/ranges/viewable_range),
@@ -257,8 +257,9 @@ namespace sus {
 /// [`std::ranges::output_range`](https://en.cppreference.com/w/cpp/ranges/input_range),
 /// such as with `vec.iter_mut().range()`.
 ///
-/// Conversely, standard ranges, such as the types in the standard containers
-/// library, can be used to construct a Subspace iterator through
+/// Conversely, an [`Iterator`]($sus::iter::Iterator) can be constructed for
+/// a standard range such as [`std::vector`](
+/// https://en.cppreference.com/w/cpp/container/vector) through
 /// [`sus::iter::from_range`]($sus::iter::from_range).
 ///
 /// # Familiarity with Rust APIs
