@@ -252,8 +252,8 @@ namespace sus {
 /// [`std::ranges::viewable_range`](https://en.cppreference.com/w/cpp/ranges/viewable_range),
 /// such as with `vec.iter().range()`.
 ///
-/// Iterators over value types or mutable references when converted by `range()`
-/// will also satisfy
+/// Iterators over value types or mutable references when converted by
+/// [`range()`]($sus::iter::IteratorBase::range) will also satisfy
 /// [`std::ranges::output_range`](https://en.cppreference.com/w/cpp/ranges/input_range),
 /// such as with `vec.iter_mut().range()`.
 ///
@@ -268,6 +268,7 @@ namespace sus {
 /// and traits/concepts into C++. Additional changes are minimized to aid with
 /// familiarity and working across languages, but some are necessary for use in
 /// C++ or interop with the standard library. Subspace also provides additional
-/// containers specific to C++ when needed, such as `Array` (and TODO: FlatMap).
+/// containers specific to C++ when needed, such as [`Array`](
+/// $sus::collections::Array) (and TODO: FlatMap).
 namespace collections {}
 }  // namespace sus
