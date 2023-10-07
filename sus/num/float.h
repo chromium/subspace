@@ -40,12 +40,13 @@
 
 namespace sus::num {
 
-/// A 32-bit floating point type (specifically, this type holds the same values
-/// as the `float` type specified by the C++ standard).
+/// A 32-bit floating point type.
 ///
 /// This type can represent a wide range of decimal numbers, like 3.5, 27,
 /// -113.75, 0.0078125, 34359738368, 0, -1. So unlike integer types (such as
 /// `i32`), floating point types can represent non-integer numbers, too.
+/// Specifically, this type holds the same values
+/// as the `float` type specified by the C++ standard.
 ///
 /// See the [namespace level documentation]($sus::num) for more.
 struct [[sus_trivial_abi]] f32 final {
@@ -59,11 +60,12 @@ struct [[sus_trivial_abi]] f32 final {
 #define _suffix f
 #include "sus/num/__private/float_consts.inc"
 
-/// A 64-bit floating point type (specifically, this type holds the same values
-/// as the `double` type specified by the C++ standard).
+/// A 64-bit floating point type.
 ///
 /// This type is very similar to [`f32`]($sus::num::f32), but has increased precision by using
 /// twice as many bits.
+/// Specifically, this type holds the same values
+/// as the `double` type specified by the C++ standard.
 ///
 /// See the [namespace level documentation]($sus::num) for more.
 struct [[sus_trivial_abi]] f64 final {
