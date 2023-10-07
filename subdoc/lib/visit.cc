@@ -487,7 +487,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     return true;
   }
 
-  bool VisitUsingEnumDecl(clang::UsingEnumDecl* decl) noexcept {
+  bool FthiEnumDecl(clang::UsingEnumDecl* decl) noexcept {
     clang::RawComment* raw_comment = get_raw_comment(decl);
     if (raw_comment) {
       // `using enum` actually brings in each element of the enum, so a comment
@@ -950,7 +950,10 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
     std::string function_name = [&] {
       if (auto* mdecl = clang::dyn_cast<clang::CXXConstructorDecl>(decl)) {
-        return mdecl->getThisObjectType()->getAsRecordDecl()->getNameAsString();
+        return mdecl->getThisType()
+            ->getPointeeType()
+            ->getAsRecordDecl()
+            ->getNameAsString();
       } else if (auto* convdecl =
                      clang::dyn_cast<clang::CXXConversionDecl>(decl)) {
         Type t = build_local_type(convdecl->getReturnType(),
