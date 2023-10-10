@@ -58,13 +58,16 @@ void print_panic_location(const std::source_location& location) noexcept;
 
 /// Terminate the program.
 ///
-/// The default behaviour of this function is to `abort()`. The behaviour of
-/// this function can be overridden by defining a `SUS_PROVIDE_PANIC_HANDLER()`
-/// macro when compiling the library.
+/// The default behaviour of this function is to `__builtin_trap()` when
+/// possible and `abort() otherwise`. The behaviour of this function can be
+/// overridden by defining a `SUS_PROVIDE_PANIC_HANDLER()` macro when compiling
+/// the library.
 ///
 /// The panic message will be printed to stderr before aborting. This behaviour
 /// can be overridden by defining a `SUS_PROVIDE_PRINT_PANIC_LOCATION_HANDLER()`
-/// macro when compiling the library.
+/// macro when compiling. The same handler must be used as when building the
+/// library itself. So if used as a shared library, it can not be modified by
+/// the calling code.
 ///
 /// # Safety
 ///
@@ -78,8 +81,11 @@ void print_panic_location(const std::source_location& location) noexcept;
 #else
   __private::print_panic_location(location);
 #endif
+
 #if defined(SUS_PROVIDE_PANIC_HANDLER)
   SUS_PROVIDE_PANIC_HANDLER();
+#elif __has_builtin(__builtin_trap)
+  __builtin_trap();
 #else
   abort();
 #endif
