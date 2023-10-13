@@ -479,7 +479,7 @@ template <class T>
            ::sus::mem::size_of<T>() <= 8)
 sus_pure_const sus_always_inline constexpr uint32_t count_ones(
     T value) noexcept {
-#if _MSC_VER
+#if _MSC_VER && !IS_CLANG_CL
   if (std::is_constant_evaluated()) {
     using M = MathType<T>;
     auto mvalue = M{value};
@@ -522,8 +522,7 @@ sus_pure_const sus_always_inline constexpr uint32_t leading_zeros_nonzero(
     ::sus::marker::UnsafeFnMarker, T value) noexcept {
   if (std::is_constant_evaluated()) {
     uint32_t count = 0;
-    for (auto i = uint32_t{0};
-         i < unchecked_mul(unchecked_sizeof<T>(), uint32_t{8}); ++i) {
+    for (auto i = uint32_t{0}; i < num_bits<T>(); ++i) {
       const bool zero = (value & high_bit<T>()) == 0;
       if (!zero) break;
       count += 1;
@@ -532,7 +531,7 @@ sus_pure_const sus_always_inline constexpr uint32_t leading_zeros_nonzero(
     return count;
   }
 
-#if _MSC_VER
+#if _MSC_VER && !IS_CLANG_CL
   if constexpr (::sus::mem::size_of<T>() == 8u) {
 #if 1
     unsigned long index;
@@ -601,7 +600,7 @@ template <class T>
            ::sus::mem::size_of<T>() <= 8)
 sus_pure_const sus_always_inline constexpr uint32_t leading_zeros(
     T value) noexcept {
-  if (value == 0) return unchecked_mul(unchecked_sizeof<T>(), uint32_t{8});
+  if (value == 0) return num_bits<T>();
   return leading_zeros_nonzero(::sus::marker::unsafe_fn, value);
 }
 
@@ -616,8 +615,7 @@ sus_pure_const sus_always_inline constexpr uint32_t trailing_zeros_nonzero(
     ::sus::marker::UnsafeFnMarker, T value) noexcept {
   if (std::is_constant_evaluated()) {
     uint32_t count = 0;
-    for (auto i = uint32_t{0};
-         i < unchecked_mul(unchecked_sizeof<T>(), uint32_t{8}); ++i) {
+    for (auto i = uint32_t{0}; i < num_bits<T>(); ++i) {
       const bool zero = (value & 1) == 0;
       if (!zero) break;
       count += 1;
@@ -657,7 +655,6 @@ sus_pure_const sus_always_inline constexpr uint32_t trailing_zeros_nonzero(
 #endif
 }
 
-// TODO: Any way to make it constexpr?
 template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
@@ -671,7 +668,7 @@ template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
 sus_pure_const sus_always_inline constexpr T reverse_bits(T value) noexcept {
-#if __clang__
+#if COMPILER_IS_CLANG
   if constexpr (::sus::mem::size_of<T>() == 1) {
     return __builtin_bitreverse8(value);
   } else if constexpr (::sus::mem::size_of<T>() == 2) {
@@ -685,7 +682,7 @@ sus_pure_const sus_always_inline constexpr T reverse_bits(T value) noexcept {
 #else
   // Algorithm from Ken Raeburn:
   // http://graphics.stanford.edu/~seander/bithacks.html#ReverseParallel
-  uint32_t bits = unchecked_mul(unchecked_sizeof<T>(), uint32_t{8});
+  constexpr uint32_t bits = num_bits<T>();
   auto mask = unchecked_not(T(0));
   while ((bits >>= 1) > 0) {
     mask ^= unchecked_shl(mask, bits);
@@ -699,7 +696,9 @@ sus_pure_const sus_always_inline constexpr T reverse_bits(T value) noexcept {
 template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T>)
 sus_pure_const inline constexpr T rotate_left(T value, uint32_t n) noexcept {
-  const uint32_t num_bits = unchecked_mul(unchecked_sizeof<T>(), uint32_t{8});
+  // Use this:
+  // https://boringssl.googlesource.com/boringssl/+/refs/heads/master/crypto/internal.h#1098
+  constexpr uint32_t num_bits = num_bits<T>();
   // Try avoid slow % operation if we can. Comparisons are much faster than %.
   if (n >= num_bits) n %= num_bits;
   if (n == 0) return value;
@@ -710,7 +709,9 @@ sus_pure_const inline constexpr T rotate_left(T value, uint32_t n) noexcept {
 template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T>)
 sus_pure_const inline constexpr T rotate_right(T value, uint32_t n) noexcept {
-  const uint32_t num_bits = unchecked_mul(unchecked_sizeof<T>(), uint32_t{8});
+  // Use this:
+  // https://boringssl.googlesource.com/boringssl/+/refs/heads/master/crypto/internal.h#1098
+  constexpr uint32_t num_bits = num_bits<T>();
   // Try avoid slow % operation if we can. Comparisons are much faster than %.
   if (n >= num_bits) n %= num_bits;
   if (n == 0) return value;
@@ -830,8 +831,10 @@ sus_pure_const sus_always_inline constexpr auto into_signed(T x) noexcept {
     return static_cast<int64_t>(x);
 }
 
+/// Returns just the sign bit for a (signed) integer, keeping it in place.
 template <class T>
-  requires(::sus::mem::size_of<T>() <= 8)
+  requires(std::is_integral_v<T> && std::is_signed_v<T> &&
+           ::sus::mem::size_of<T>() <= 8)
 sus_pure_const sus_always_inline constexpr bool sign_bit(T x) noexcept {
   if constexpr (::sus::mem::size_of<T>() == 1)
     return (x & (T(1) << 7)) != 0;
@@ -848,7 +851,7 @@ template <class T>
            ::sus::mem::size_of<T>() <= 8)
 sus_pure_const inline constexpr OverflowOut<T> add_with_overflow(T x,
                                                                  T y) noexcept {
-  return OverflowOut sus_clang_bug_56394(<T>){
+  return OverflowOut<T>{
       .overflow = x > max_value<T>() - y,
       .value = unchecked_add(x, y),
   };
@@ -861,7 +864,7 @@ sus_pure_const inline constexpr OverflowOut<T> add_with_overflow(T x,
                                                                  T y) noexcept {
   const auto out =
       into_signed(unchecked_add(into_unsigned(x), into_unsigned(y)));
-  return OverflowOut sus_clang_bug_56394(<T>){
+  return OverflowOut<T>{
       .overflow = y >= 0 != out >= x,
       .value = out,
   };
@@ -873,7 +876,7 @@ template <class T, class U = decltype(into_signed(std::declval<T>()))>
            ::sus::mem::size_of<T>() == ::sus::mem::size_of<U>())
 sus_pure_const inline constexpr OverflowOut<T> add_with_overflow_signed(
     T x, U y) noexcept {
-  return OverflowOut sus_clang_bug_56394(<T>){
+  return OverflowOut<T>{
       .overflow = (y >= 0 && into_unsigned(y) > max_value<T>() - x) ||
                   (y < 0 && into_unsigned(-y) > x),
       .value = unchecked_add(x, into_unsigned(y)),
@@ -887,7 +890,7 @@ template <class T, class U = decltype(into_unsigned(std::declval<T>()))>
 sus_pure_const inline constexpr OverflowOut<T> add_with_overflow_unsigned(
     T x, U y) noexcept {
   const auto out = into_signed(unchecked_add(into_unsigned(x), y));
-  return OverflowOut sus_clang_bug_56394(<T>){
+  return OverflowOut<T>{
       .overflow = static_cast<U>(max_value<T>()) - static_cast<U>(x) < y,
       .value = out,
   };
@@ -898,7 +901,7 @@ template <class T>
            ::sus::mem::size_of<T>() <= 8)
 sus_pure_const inline constexpr OverflowOut<T> sub_with_overflow(T x,
                                                                  T y) noexcept {
-  return OverflowOut sus_clang_bug_56394(<T>){
+  return OverflowOut<T>{
       .overflow = x < unchecked_add(min_value<T>(), y),
       .value = unchecked_sub(x, y),
   };
@@ -911,7 +914,7 @@ sus_pure_const inline constexpr OverflowOut<T> sub_with_overflow(T x,
                                                                  T y) noexcept {
   const auto out =
       into_signed(unchecked_sub(into_unsigned(x), into_unsigned(y)));
-  return OverflowOut sus_clang_bug_56394(<T>){
+  return OverflowOut<T>{
       .overflow = y >= 0 != out <= x,
       .value = out,
   };
@@ -924,7 +927,7 @@ template <class T, class U = decltype(into_unsigned(std::declval<T>()))>
 sus_pure_const inline constexpr OverflowOut<T> sub_with_overflow_unsigned(
     T x, U y) noexcept {
   const auto out = into_signed(unchecked_sub(into_unsigned(x), y));
-  return OverflowOut sus_clang_bug_56394(<T>){
+  return OverflowOut<T>{
       .overflow = static_cast<U>(x) - static_cast<U>(min_value<T>()) < y,
       .value = out,
   };
@@ -946,8 +949,8 @@ sus_pure_const inline constexpr OverflowOut<T> mul_with_overflow(T x,
   // TODO: Can we use compiler intrinsics?
   auto out = unchecked_mul(into_widened(x), into_widened(y));
   using Wide = decltype(out);
-  return OverflowOut sus_clang_bug_56394(<T>){
-      .overflow = out > Wide{max_value<T>()}, .value = static_cast<T>(out)};
+  return OverflowOut<T>{.overflow = out > Wide{max_value<T>()},
+                        .value = static_cast<T>(out)};
 }
 
 template <class T>
@@ -959,21 +962,18 @@ sus_pure_const inline constexpr OverflowOut<T> mul_with_overflow(T x,
   if (std::is_constant_evaluated()) {
     const bool overflow =
         x > T{1} && y > T{1} && x > unchecked_div(max_value<T>(), y);
-    return OverflowOut sus_clang_bug_56394(<T>){.overflow = overflow,
-                                                .value = unchecked_mul(x, y)};
+    return OverflowOut<T>{.overflow = overflow, .value = unchecked_mul(x, y)};
   } else {
     // For MSVC, use _umul128, but what about constexpr?? If we can't do
     // it then make the whole function non-constexpr?
     uint64_t highbits;
     auto out = static_cast<T>(_umul128(x, y, &highbits));
-    return OverflowOut sus_clang_bug_56394(<T>){.overflow = highbits != 0,
-                                                .value = out};
+    return OverflowOut<T>{.overflow = highbits != 0, .value = out};
   }
 #else
   auto out = __uint128_t{x} * __uint128_t{y};
-  return OverflowOut sus_clang_bug_56394(<T>){
-      .overflow = out > __uint128_t{max_value<T>()},
-      .value = static_cast<T>(out)};
+  return OverflowOut<T>{.overflow = out > __uint128_t{max_value<T>()},
+                        .value = static_cast<T>(out)};
 #endif
 }
 
@@ -985,7 +985,7 @@ sus_pure_const inline constexpr OverflowOut<T> mul_with_overflow(T x,
   // TODO: Can we use compiler intrinsics?
   auto out = into_widened(x) * into_widened(y);
   using Wide = decltype(out);
-  return OverflowOut sus_clang_bug_56394(<T>){
+  return OverflowOut<T>{
       .overflow = out > Wide{max_value<T>()} || out < Wide{min_value<T>()},
       .value = static_cast<T>(out)};
 }
@@ -995,10 +995,9 @@ template <class T>
            ::sus::mem::size_of<T>() == 8)
 sus_pure_const inline constexpr OverflowOut<T> mul_with_overflow(T x,
                                                                  T y) noexcept {
-#if _MSC_VER
+#if _MSC_VER && !IS_CLANG_CL
   if (x == T{0} || y == T{0})
-    return OverflowOut sus_clang_bug_56394(<T>){.overflow = false,
-                                                .value = T{0}};
+    return OverflowOut<T>{.overflow = false, .value = T{0}};
 
   using U = decltype(into_unsigned(x));
   const auto absx =
@@ -1016,14 +1015,12 @@ sus_pure_const inline constexpr OverflowOut<T> mul_with_overflow(T x,
       unchecked_add(into_unsigned(max_value<T>()), U{mul_negative});
   const bool overflow = absx > unchecked_div(mul_max, absy);
   const auto mul_val = unchecked_mul(into_unsigned(x), into_unsigned(y));
-  return OverflowOut sus_clang_bug_56394(<T>){.overflow = overflow,
-                                              .value = into_signed(mul_val)};
+  return OverflowOut<T>{.overflow = overflow, .value = into_signed(mul_val)};
 #else
   auto out = __int128_t{x} * __int128_t{y};
-  return OverflowOut sus_clang_bug_56394(<T>){
-      .overflow =
-          out > __int128_t{max_value<T>()} || out < __int128_t{min_value<T>()},
-      .value = static_cast<T>(out)};
+  return OverflowOut<T>{.overflow = out > __int128_t{max_value<T>()} ||
+                                    out < __int128_t{min_value<T>()},
+                        .value = static_cast<T>(out)};
 #endif
 }
 
@@ -1031,9 +1028,7 @@ template <class T>
   requires(std::is_integral_v<T> && ::sus::mem::size_of<T>() <= 8)
 sus_pure_const inline constexpr OverflowOut<T> pow_with_overflow(
     T base, uint32_t exp) noexcept {
-  if (exp == 0)
-    return OverflowOut sus_clang_bug_56394(<T>){.overflow = false,
-                                                .value = T{1}};
+  if (exp == 0) return OverflowOut<T>{.overflow = false, .value = T{1}};
   auto acc = T{1};
   bool overflow = false;
   while (exp > 1) {
@@ -1048,8 +1043,7 @@ sus_pure_const inline constexpr OverflowOut<T> pow_with_overflow(
     base = r.value;
   }
   auto r = mul_with_overflow(acc, base);
-  return OverflowOut sus_clang_bug_56394(<T>){
-      .overflow = overflow || r.overflow, .value = r.value};
+  return OverflowOut<T>{.overflow = overflow || r.overflow, .value = r.value};
 }
 
 template <class T>
@@ -1064,8 +1058,7 @@ sus_pure_const inline constexpr OverflowOut<T> shl_with_overflow(
   const bool overflow = shift >= num_bits<T>();
   if (overflow) [[unlikely]]
     shift = shift & (unchecked_sub(num_bits<T>(), uint32_t{1}));
-  return OverflowOut sus_clang_bug_56394(<T>){.overflow = overflow,
-                                              .value = unchecked_shl(x, shift)};
+  return OverflowOut<T>{.overflow = overflow, .value = unchecked_shl(x, shift)};
 }
 
 template <class T>
@@ -1080,7 +1073,7 @@ sus_pure_const inline constexpr OverflowOut<T> shl_with_overflow(
   const bool overflow = shift >= num_bits<T>();
   if (overflow) [[unlikely]]
     shift = shift & (unchecked_sub(num_bits<T>(), uint32_t{1}));
-  return OverflowOut sus_clang_bug_56394(<T>){
+  return OverflowOut<T>{
       .overflow = overflow,
       .value = into_signed(unchecked_shl(into_unsigned(x), shift))};
 }
@@ -1097,8 +1090,7 @@ sus_pure_const inline constexpr OverflowOut<T> shr_with_overflow(
   const bool overflow = shift >= num_bits<T>();
   if (overflow) [[unlikely]]
     shift = shift & (unchecked_sub(num_bits<T>(), uint32_t{1}));
-  return OverflowOut sus_clang_bug_56394(<T>){.overflow = overflow,
-                                              .value = unchecked_shr(x, shift)};
+  return OverflowOut<T>{.overflow = overflow, .value = unchecked_shr(x, shift)};
 }
 
 template <class T>
@@ -1113,8 +1105,7 @@ sus_pure_const inline constexpr OverflowOut<T> shr_with_overflow(
   const bool overflow = shift >= num_bits<T>();
   if (overflow) [[unlikely]]
     shift = shift & (unchecked_sub(num_bits<T>(), uint32_t{1}));
-  return OverflowOut sus_clang_bug_56394(<T>){.overflow = overflow,
-                                              .value = unchecked_shr(x, shift)};
+  return OverflowOut<T>{.overflow = overflow, .value = unchecked_shr(x, shift)};
 }
 
 template <class T>
@@ -1207,15 +1198,14 @@ template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
 sus_pure_const sus_always_inline constexpr T wrapping_add(T x, T y) noexcept {
-  return x + y;
+  return unchecked_add(x, y);
 }
 
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
 sus_pure_const sus_always_inline constexpr T wrapping_add(T x, T y) noexcept {
-  // TODO: Are there cheaper intrinsics?
-  return add_with_overflow(x, y).value;
+  return into_signed(unchecked_add(into_unsigned(x), into_unsigned(y)));  // Test pass?
 }
 
 template <class T>
@@ -1229,23 +1219,21 @@ template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
 sus_pure_const sus_always_inline constexpr T wrapping_sub(T x, T y) noexcept {
-  // TODO: Are there cheaper intrinsics?
-  return sub_with_overflow(x, y).value;
+  return into_signed(unchecked_sub(into_unsigned(x), into_unsigned(y)));  // Test pass?
 }
 
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
 sus_pure_const sus_always_inline constexpr T wrapping_mul(T x, T y) noexcept {
-  return x * y;
+  return unchecked_mul(x, y);
 }
 
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
 sus_pure_const sus_always_inline constexpr T wrapping_mul(T x, T y) noexcept {
-  // TODO: Are there cheaper intrinsics?
-  return mul_with_overflow(x, y).value;
+  return into_signed(unchecked_mul(into_unsigned(x), into_unsigned(y)));  // Test pass?
 }
 
 template <class T>
@@ -1427,12 +1415,6 @@ sus_pure_const sus_always_inline constexpr int32_t max_10_exp() noexcept {
     return int32_t{38};
   else
     return int32_t{308};
-}
-
-template <class T>
-  requires(std::is_floating_point_v<T>)
-sus_pure_const sus_always_inline constexpr uint32_t radix() noexcept {
-  return 2;
 }
 
 template <class T>
@@ -1745,7 +1727,7 @@ sus_pure_const constexpr inline ::sus::num::FpCategory float_category(
     if (float_nonzero_is_subnormal(x)) return ::sus::num::FpCategory::Subnormal;
     return ::sus::num::FpCategory::Normal;
   } else {
-    // C++23 requires a constexpr way to do this.
+    // This is constexpr in C++23.
     switch (::fpclassify(x)) {
       case FP_NAN: return ::sus::num::FpCategory::Nan;
       case FP_INFINITE: return ::sus::num::FpCategory::Infinite;
