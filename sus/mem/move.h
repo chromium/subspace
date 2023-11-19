@@ -63,6 +63,12 @@ concept Move =
 template <class T>
 concept MoveOrRef = Move<T> || std::is_reference_v<T>;
 
+/// Matches types which are [`MoveOrRef`]($sus::mem::MoveOrRef) or are `void`.
+///
+/// A helper for genertic types which can hold void as a type.
+template <class T>
+concept MoveOrRefOrVoid = MoveOrRef<T> || std::is_void_v<T>;
+
 /// Cast `t` to an r-value reference so that it can be used to construct or be
 /// assigned to a (non-reference) object of type `T`.
 ///

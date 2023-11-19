@@ -1991,6 +1991,10 @@ class Option final {
   using StorageType =
       std::conditional_t<std::is_reference_v<U>, Storage<StoragePointer<U>>,
                          Storage<U>>;
+  // TODO: We can make this no_unique_address, however... if StorageType<T> has
+  // tail padding and Option was marked with no_unique_address, then
+  // constructing T may clobber stuff OUTSIDE the Option. So this can only be
+  // no_unique_address when StorageType<T> has no tail padding.
   StorageType<T> t_;
 
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,

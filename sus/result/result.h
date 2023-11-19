@@ -36,7 +36,6 @@
 #include "sus/mem/copy.h"
 #include "sus/mem/move.h"
 #include "sus/mem/relocate.h"
-#include "sus/mem/replace.h"
 #include "sus/mem/take.h"
 #include "sus/option/option.h"
 #include "sus/result/__private/marker.h"
@@ -65,7 +64,6 @@ using ::sus::mem::__private::IsTrivialMoveAssignOrRef;
 using ::sus::mem::__private::IsTrivialMoveCtorOrRef;
 using ::sus::option::__private::StoragePointer;
 using ::sus::result::__private::ResultState;
-using ::sus::result::__private::Storage;
 
 /// The representation of an Result's state, which can either be #Ok to
 /// represent it has a success value, or #Err for when it is holding an error
@@ -127,14 +125,14 @@ class [[nodiscard]] Result final {
     requires(!std::is_void_v<T> &&       //
              !std::is_reference_v<T> &&  //
              ::sus::mem::Move<T>)
-      : Result(WITH_OK, move_ok_to_storage(t)) {}
+      : Result(WITH_OK, ::sus::move(t)) {}
   /// #[doc.overloads=ctor.ok]
   template <std::convertible_to<TUnlessVoid> U>
   explicit constexpr Result(U&& t sus_lifetimebound) noexcept
     requires(!std::is_void_v<T> &&      //
              std::is_reference_v<T> &&  //
              sus::construct::SafelyConstructibleFromReference<T, U &&>)
-      : Result(WITH_OK, move_ok_to_storage(t)) {}
+      : Result(WITH_OK, make_ok_storage(::sus::forward<U>(t))) {}
 
   /// Construct an Result that is holding the given error value.
   static constexpr inline Result with_err(const E& e) noexcept
@@ -148,32 +146,13 @@ class [[nodiscard]] Result final {
     return Result(WITH_ERR, ::sus::move(e));
   }
 
-  /// Destructor for the Result.
+  /// Destructor for the `Result`.
   ///
-  /// Destroys the Ok or Err value contained within the Result.
+  /// Destroys the Ok or Err value contained within the `Result`.
   ///
-  /// If T and E can be trivially destroyed, we don't need to explicitly destroy
-  /// them, so we can use the default destructor, which allows Result<T, E> to
-  /// also be trivially destroyed.
-  constexpr ~Result()
-    requires((std::is_void_v<T> || IsTrivialDtorOrRef<T>) &&
-             IsTrivialDtorOrRef<E>)
-  = default;
-
-  constexpr inline ~Result() noexcept
-    requires(
-        // clang-format off
-      !((std::is_void_v<T> || IsTrivialDtorOrRef<T>) &&
-        IsTrivialDtorOrRef<E>)
-        // clang-format on
-    )
-  {
-    switch (state_) {
-      case ResultState::IsMoved: break;
-      case ResultState::IsOk: storage_.destroy_ok(); break;
-      case ResultState::IsErr: storage_.destroy_err(); break;
-    }
-  }
+  /// If T and E can be trivially destroyed, `Result<T, E>` can also be
+  /// trivially destroyed.
+  constexpr ~Result() = default;
 
   /// Copy constructor for `Result<T, E>` which satisfies
   /// [`sus::mem::Copy<Result<T, E>>`](sus-mem-Copy.html) if
@@ -185,43 +164,12 @@ class [[nodiscard]] Result final {
   ///
   /// #[doc.overloads=copy]
   constexpr Result(const Result&)
-    requires((std::is_void_v<T> || ::sus::mem::CopyOrRef<T>) &&
-             ::sus::mem::Copy<E> &&
-             (std::is_void_v<T> || IsTrivialCopyCtorOrRef<T>) &&
-             IsTrivialCopyCtorOrRef<E>)
+    requires(::sus::mem::CopyOrRefOrVoid<T> && ::sus::mem::Copy<E>)
   = default;
 
   /// #[doc.overloads=copy]
-  constexpr Result(const Result& rhs) noexcept
-    requires(
-        // clang-format off
-        (std::is_void_v<T> || ::sus::mem::CopyOrRef<T>) &&
-        ::sus::mem::Copy<E> &&
-        !((std::is_void_v<T> || IsTrivialCopyCtorOrRef<T>) &&
-          IsTrivialCopyCtorOrRef<E>)
-        // clang-format on
-        )
-      : state_(rhs.state_) {
-    ::sus::check(state_ != ResultState::IsMoved);
-    switch (state_) {
-      case ResultState::IsOk:
-        if constexpr (!std::is_void_v<T>)
-          std::construct_at(&storage_.ok_, rhs.storage_.ok_);
-        break;
-      case ResultState::IsErr:
-        std::construct_at(&storage_.err_, rhs.storage_.err_);
-        break;
-      case ResultState::IsMoved:
-        // SAFETY: The state_ is verified to be Ok or Err at the top of the
-        // function.
-        ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
-    }
-  }
-
-  /// #[doc.overloads=copy]
   constexpr Result(const Result&)
-    requires(!((std::is_void_v<T> || ::sus::mem::CopyOrRef<T>) &&
-               ::sus::mem::Copy<E>))
+    requires(!::sus::mem::CopyOrRefOrVoid<T> || !::sus::mem::Copy<E>)
   = delete;
 
   /// Copy assignment for `Result<T, E>` which satisfies
@@ -234,130 +182,36 @@ class [[nodiscard]] Result final {
   ///
   /// #[doc.overloads=copy]
   constexpr Result& operator=(const Result& o)
-    requires((std::is_void_v<T> || ::sus::mem::CopyOrRef<T>) &&
-             ::sus::mem::Copy<E> &&
-             (std::is_void_v<T> || IsTrivialCopyAssignOrRef<T>) &&
-             IsTrivialCopyAssignOrRef<E>)
+    requires(::sus::mem::CopyOrRefOrVoid<T> && ::sus::mem::Copy<E>)
   = default;
 
   /// #[doc.overloads=copy]
-  constexpr Result& operator=(const Result& o) noexcept
-    requires(
-        // clang-format off
-      (std::is_void_v<T> || ::sus::mem::CopyOrRef<T>) && ::sus::mem::Copy<E> &&
-       !((std::is_void_v<T> || IsTrivialCopyAssignOrRef<T>) &&
-         IsTrivialCopyAssignOrRef<E>)
-        // clang-format on
-    )
-  {
-    check(o.state_ != ResultState::IsMoved);
-    switch (state_) {
-      case ResultState::IsOk:
-        switch (state_ = o.state_) {
-          case ResultState::IsOk:
-            if constexpr (!std::is_void_v<T>) {
-              storage_.ok_ = o.storage_.ok_;
-            }
-            break;
-          case ResultState::IsErr:
-            storage_.destroy_ok();
-            std::construct_at(&storage_.err_, o.storage_.err_);
-            break;
-          // SAFETY: This condition is check()'d at the top of the function.
-          case ResultState::IsMoved:
-            ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
-        }
-        break;
-      case ResultState::IsErr:
-        switch (state_ = o.state_) {
-          case ResultState::IsErr: storage_.err_ = o.storage_.err_; break;
-          case ResultState::IsOk:
-            storage_.destroy_err();
-            if constexpr (!std::is_void_v<T>)
-              std::construct_at(&storage_.ok_, o.storage_.ok_);
-            break;
-          // SAFETY: This condition is check()'d at the top of the function.
-          case ResultState::IsMoved:
-            ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
-        }
-        break;
-      case ResultState::IsMoved:
-        switch (state_ = o.state_) {
-          case ResultState::IsErr:
-            std::construct_at(&storage_.err_, o.storage_.err_);
-            break;
-          case ResultState::IsOk:
-            if constexpr (!std::is_void_v<T>)
-              std::construct_at(&storage_.ok_, o.storage_.ok_);
-            break;
-            // SAFETY: This condition is check()'d at the top of the function.
-          case ResultState::IsMoved:
-            ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
-        }
-        break;
-    }
-    return *this;
-  }
-
-  /// #[doc.overloads=copy]
   constexpr Result& operator=(const Result&)
-    requires(!((std::is_void_v<T> || ::sus::mem::CopyOrRef<T>) &&
-               ::sus::mem::Copy<E>))
+    requires(!::sus::mem::CopyOrRefOrVoid<T> || !::sus::mem::Copy<E>)
   = delete;
 
   /// Move constructor for `Result<T, E>` which satisfies
-  /// [`sus::mem::Move<Result<T, E>>`](sus-mem-Move.html) if
-  /// [`Move<T>`](sus-mem-Move.html) and
-  /// [`Move<E>`](sus-mem-Move.html) are satisfied.
+  /// [`Move`]($sus::mem::Move), if `T` and `E` both satisfy
+  /// [`Move`]($sus::mem::Move).
   ///
   /// If `T` and `E` can be trivially move-constructed, then `Result<T, E>` can
   /// also be trivially move-constructed. When trivially-moved, the `Result` is
-  /// copied on move, and the moved-from Result is unchanged but should still
+  /// copied on move, and the moved-from `Result` is unchanged but should still
   /// not be used thereafter without reinitializing it.
   ///
   /// #[doc.overloads=move]
   constexpr Result(Result&&)
-    requires((std::is_void_v<T> || ::sus::mem::MoveOrRef<T>) &&
-             ::sus::mem::Move<E> &&
-             (std::is_void_v<T> || IsTrivialMoveCtorOrRef<T>) &&
-             IsTrivialMoveCtorOrRef<E>)
+    requires(::sus::mem::MoveOrRefOrVoid<T> && ::sus::mem::Move<E>)
   = default;
 
   /// #[doc.overloads=move]
-  constexpr Result(Result&& rhs) noexcept
-    requires(
-        // clang-format off
-      (std::is_void_v<T> || ::sus::mem::MoveOrRef<T>) && ::sus::mem::Move<E> &&
-      !((std::is_void_v<T> || IsTrivialMoveCtorOrRef<T>) &&
-        IsTrivialMoveCtorOrRef<E>)
-        // clang-format on
-        )
-      : state_(::sus::mem::replace(rhs.state_, ResultState::IsMoved)) {
-    ::sus::check(state_ != ResultState::IsMoved);
-    switch (state_) {
-      case ResultState::IsOk:
-        std::construct_at(&storage_.ok_, ::sus::move(rhs.storage_.ok_));
-        break;
-      case ResultState::IsErr:
-        std::construct_at(&storage_.err_, ::sus::move(rhs.storage_.err_));
-        break;
-      case ResultState::IsMoved:
-        // SAFETY: The state_ is verified to be Ok or Err at the top of the
-        // function.
-        ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
-    }
-  }
-
-  /// #[doc.overloads=move]
   constexpr Result(Result&&)
-    requires(!((std::is_void_v<T> || ::sus::mem::MoveOrRef<T>) &&
-               ::sus::mem::Move<E>))
+    requires(!::sus::mem::MoveOrRefOrVoid<T> || !::sus::mem::Move<E>)
   = delete;
 
   /// Move assignment for `Result<T, E>` which satisfies
-  /// [`sus::mem::Move<Result<T, E>>`](sus-mem-Move.html) if
-  /// [`Move<T>`](sus-mem-Move.html) and
-  /// [`Move<E>`](sus-mem-Move.html) are satisfied.
+  /// [`Move`]($sus::mem::Move), if `T` and `E` both satisfy
+  ///  [`Move`]($sus::mem::Move).
   ///
   /// If `T` and `E` can be trivially move-assigned, then `Result<T, E>` can
   /// also be trivially move-assigned. When trivially-moved, the `Result` is
@@ -365,121 +219,55 @@ class [[nodiscard]] Result final {
   /// not be used thereafter without reinitializing it.
   ///
   /// #[doc.overloads=move]
-  constexpr Result& operator=(Result&& o)
-    requires((std::is_void_v<T> || ::sus::mem::MoveOrRef<T>) &&
-             ::sus::mem::Move<E> &&
-             (std::is_void_v<T> || IsTrivialMoveAssignOrRef<T>) &&
-             IsTrivialMoveAssignOrRef<E>)
+  constexpr Result& operator=(Result&&)
+    requires(::sus::mem::MoveOrRefOrVoid<T> && ::sus::mem::Move<E>)
   = default;
 
   /// #[doc.overloads=move]
-  constexpr Result& operator=(Result&& o) noexcept
-    requires(
-        // clang-format off
-      (std::is_void_v<T> || ::sus::mem::MoveOrRef<T>) && ::sus::mem::Move<E> &&
-      !((std::is_void_v<T> || IsTrivialMoveAssignOrRef<T>) &&
-        IsTrivialMoveAssignOrRef<E>)
-        // clang-format on
-    )
-  {
-    check(o.state_ != ResultState::IsMoved);
-    switch (state_) {
-      case ResultState::IsOk:
-        switch (state_ = ::sus::mem::replace(o.state_, ResultState::IsMoved)) {
-          case ResultState::IsOk:
-            storage_.ok_ = ::sus::move(o.storage_.ok_);
-            break;
-          case ResultState::IsErr:
-            storage_.destroy_ok();
-            std::construct_at(&storage_.err_, ::sus::move(o.storage_.err_));
-            break;
-          // SAFETY: This condition is check()'d at the top of the function.
-          case ResultState::IsMoved:
-            ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
-        }
-        break;
-      case ResultState::IsErr:
-        switch (state_ = ::sus::mem::replace(o.state_, ResultState::IsMoved)) {
-          case ResultState::IsErr:
-            storage_.err_ = ::sus::move(o.storage_.err_);
-            break;
-          case ResultState::IsOk:
-            storage_.destroy_err();
-            std::construct_at(&storage_.ok_, ::sus::move(o.storage_.ok_));
-            break;
-          // SAFETY: This condition is check()'d at the top of the function.
-          case ResultState::IsMoved:
-            ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
-        }
-        break;
-      case ResultState::IsMoved:
-        switch (state_ = ::sus::mem::replace(o.state_, ResultState::IsMoved)) {
-          case ResultState::IsErr:
-            std::construct_at(&storage_.err_, ::sus::move(o.storage_.err_));
-            break;
-          case ResultState::IsOk:
-            std::construct_at(&storage_.ok_, ::sus::move(o.storage_.ok_));
-            break;
-            // SAFETY: This condition is check()'d at the top of the function.
-          case ResultState::IsMoved:
-            ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
-        }
-        break;
-    }
-    return *this;
-  }
-
-  /// #[doc.overloads=move]
-  constexpr Result& operator=(Result&& o)
-    requires(!(std::is_void_v<T> || ::sus::mem::MoveOrRef<T>) ||
-             !::sus::mem::Move<E>)
+  constexpr Result& operator=(Result&&)
+    requires(!::sus::mem::MoveOrRefOrVoid<T> || !::sus::mem::Move<E>)
   = delete;
 
   constexpr Result clone() const& noexcept
     requires((std::is_void_v<T> || ::sus::mem::Clone<T>) &&
              ::sus::mem::Clone<E> &&
-             !((std::is_void_v<T> || ::sus::mem::CopyOrRef<T>) &&
-               ::sus::mem::Copy<E>))
+             !(::sus::mem::CopyOrRefOrVoid<T> && ::sus::mem::Copy<E>))
   {
-    ::sus::check(state_ != ResultState::IsMoved);
-    switch (state_) {
-      case ResultState::IsOk:
-        if constexpr (std::is_void_v<T>)
-          return Result(WITH_OK);
-        else
-          return Result(WITH_OK, ::sus::clone(storage_.ok_));
-      case ResultState::IsErr:
-        return Result(WITH_ERR, ::sus::clone(storage_.err_));
-      case ResultState::IsMoved: break;
+    if (storage_.is_ok()) {
+      if constexpr (std::is_void_v<T>)
+        return Result(WITH_OK);
+      else
+        return Result(WITH_OK, ::sus::clone(storage_.template get_ok<T>()));
+    } else if (storage_.is_err()) {
+      return Result(WITH_ERR, ::sus::clone(storage_.get_err()));
+    } else {
+      panic_with_message("Result used after move");
     }
-    // SAFETY: The state_ is verified to be Ok or Err at the top of the
-    // function.
-    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
 
   constexpr void clone_from(const Result& source) &
     requires((std::is_void_v<T> || ::sus::mem::Clone<T>) &&
              ::sus::mem::Clone<E> &&
-             !((std::is_void_v<T> || ::sus::mem::CopyOrRef<T>) &&
-               ::sus::mem::Copy<E>))
+             !(::sus::mem::CopyOrRefOrVoid<T> && ::sus::mem::Copy<E>))
   {
-    ::sus::check(source.state_ != ResultState::IsMoved);
-    if (&source == this) [[unlikely]]
-      return;
-    if (state_ == source.state_) {
-      switch (state_) {
-        case ResultState::IsOk:
-          if constexpr (!std::is_void_v<T>)
-            ::sus::clone_into(storage_.ok_, source.storage_.ok_);
-          break;
-        case ResultState::IsErr:
-          ::sus::clone_into(storage_.err_, source.storage_.err_);
-          break;
-        case ResultState::IsMoved:
-          ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
-      }
-    } else {
+    if (source.storage_.is_moved()) [[unlikely]] {
+      panic_with_message("Result used after move");
+    } else if (&source == this) [[unlikely]] {
+      // Nothing to do.
+    } else if (storage_.is_moved()) {
+      *this = source.clone();  // Replace the moved self.
+    } else if (storage_.is_ok() != source.storage_.is_ok()) {
+      // Moving to a different state, replace everything.
       *this = source.clone();
+    } else {
+      // Both are in the same state. So recursively clone_into.
+      if (storage_.is_ok()) {
+        if constexpr (!std::is_void_v<T>)
+          ::sus::clone_into(storage_.template get_ok_mut<T>(),
+                            source.storage_.template get_ok<T>());
+      } else {
+        ::sus::clone_into(storage_.get_err_mut(), source.storage_.get_err());
+      }
     }
   }
 
@@ -589,14 +377,14 @@ class [[nodiscard]] Result final {
 
   /// Returns true if the result is `Ok`.
   constexpr inline bool is_ok() const& noexcept {
-    ::sus::check(state_ != ResultState::IsMoved);
-    return state_ == ResultState::IsOk;
+    ::sus::check(!storage_.is_moved());
+    return storage_.is_ok();
   }
 
   /// Returns true if the result is `Err`.
   constexpr inline bool is_err() const& noexcept {
-    ::sus::check(state_ != ResultState::IsMoved);
-    return state_ == ResultState::IsErr;
+    ::sus::check(!storage_.is_moved());
+    return storage_.is_err();
   }
 
   /// An operator which returns the state of the Result, either #Ok or #Err.
@@ -617,8 +405,11 @@ class [[nodiscard]] Result final {
   /// }
   /// ```
   constexpr inline operator State() const& noexcept {
-    ::sus::check(state_ != ResultState::IsMoved);
-    return static_cast<State>(state_);
+    ::sus::check(!storage_.is_moved());
+    if (storage_.is_ok())
+      return State::Ok;
+    else
+      return State::Err;
   }
 
   /// Calls `op` if the result is `Ok`, otherwise returns the `Err` value of
@@ -627,64 +418,53 @@ class [[nodiscard]] Result final {
   ///  This function can be used for control flow based on `Result` values.
   template <::sus::fn::FnOnce<::sus::fn::NonVoid(TUnlessVoid&&)> AndFn>
     requires(
-        !std::is_void_v<T> &&  //
+        // TODO: FnOnce should let us plug in our own type check instead of
+        // NonVoid. Then this becomes part of the FnOnce constraint.
         __private::IsResultWithErrType<sus::fn::ReturnOnce<AndFn, T &&>, E>)
   constexpr sus::fn::ReturnOnce<AndFn, TUnlessVoid&&> and_then(
       AndFn op) && noexcept {
-    ::sus::check(state_ != ResultState::IsMoved);
-    switch (::sus::mem::replace(state_, ResultState::IsMoved)) {
-      case ResultState::IsOk:
-        return ::sus::fn::call_once(
-            ::sus::move(op), ::sus::mem::take_and_destruct(
-                                 ::sus::marker::unsafe_fn, storage_.ok_));
-      case ResultState::IsErr:
-        return sus::fn::ReturnOnce<AndFn, T&&>::with_err(
-            ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
-                                          storage_.err_));
-      case ResultState::IsMoved: break;
+    if (storage_.is_ok()) {
+      return ::sus::fn::call_once(::sus::move(op),
+                                  storage_.template take_ok<T>());
+    } else if (storage_.is_err()) {
+      return sus::fn::ReturnOnce<AndFn>::with_err(storage_.take_err());
+    } else {
+      panic_with_message("Result used after move");
     }
-    // SAFETY: The state_ is verified to be Ok or Err at the top of the
-    // function.
-    sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
   template <::sus::fn::FnOnce<::sus::fn::NonVoid()> AndFn>
     requires(std::is_void_v<T> &&  //
+             // TODO: FnOnce should let us plug in our own type check instead of
+             // NonVoid. Then this becomes part of the FnOnce constraint.
              __private::IsResultWithErrType<sus::fn::ReturnOnce<AndFn>, E>)
   constexpr sus::fn::ReturnOnce<AndFn> and_then(AndFn op) && noexcept {
-    ::sus::check(state_ != ResultState::IsMoved);
-    switch (::sus::mem::replace(state_, ResultState::IsMoved)) {
-      case ResultState::IsOk: return ::sus::fn::call_once(::sus::move(op));
-      case ResultState::IsErr:
-        return sus::fn::ReturnOnce<AndFn>::with_err(
-            ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
-                                          storage_.err_));
-      case ResultState::IsMoved: break;
+    if (storage_.is_ok()) {
+      storage_.drop_ok();
+      return ::sus::fn::call_once(::sus::move(op));
+    } else if (storage_.is_err()) {
+      return sus::fn::ReturnOnce<AndFn>::with_err(storage_.take_err());
+    } else {
+      panic_with_message("Result used after move");
     }
-    // SAFETY: The state_ is verified to be Ok or Err at the top of the
-    // function.
-    sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
-  /// Converts from `Result<T, E>` to `Option<T>`.
+  /// Converts from `Result<T, E>` to [`Option<T>`]($sus::option::Option).
   ///
   /// Converts self into an `Option<T>`, consuming self, and discarding the
   /// error, if any.
+  ///
+  /// [`Option`]($sus::option::Option) can not hold `void`, so this method is
+  /// not present on `Result<void, E>`.
   constexpr inline Option<T> ok() && noexcept
     requires(!std::is_void_v<T>)
   {
-    ::sus::check(state_ != ResultState::IsMoved);
-    switch (::sus::mem::replace(state_, ResultState::IsMoved)) {
-      case ResultState::IsOk:
-        // SAFETY: The static_cast is needed to convert the pointer storage type
-        // to a `const T&`, which does not create a temporary as it's converting
-        // a pointer to a reference.
-        return Option<T>(static_cast<T>(::sus::mem::take_and_destruct(
-            ::sus::marker::unsafe_fn, storage_.ok_)));
-      case ResultState::IsErr: storage_.destroy_err(); return Option<T>();
-      case ResultState::IsMoved: break;
+    if (storage_.is_ok()) {
+      return Option<T>(storage_.template take_ok<T>());
+    } else if (storage_.is_err()) {
+      storage_.drop_err();
+      return Option<T>();
+    } else {
+      panic_with_message("Result used after move");
     }
-    // SAFETY: The state_ is verified to be Ok or Err at the top of the
-    // function.
-    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
 
   /// Converts from `Result<T, E>` to `Option<E>`.
@@ -692,17 +472,14 @@ class [[nodiscard]] Result final {
   /// Converts self into an `Option<E>`, consuming self, and discarding the
   /// success value, if any.
   constexpr inline Option<E> err() && noexcept {
-    ::sus::check(state_ != ResultState::IsMoved);
-    switch (::sus::mem::replace(state_, ResultState::IsMoved)) {
-      case ResultState::IsOk: storage_.destroy_ok(); return Option<E>();
-      case ResultState::IsErr:
-        return Option<E>(::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
-                                                       storage_.err_));
-      case ResultState::IsMoved: break;
+    if (storage_.is_ok()) {
+      storage_.drop_ok();
+      return Option<E>();
+    } else if (storage_.is_err()) {
+      return Option<E>(storage_.take_err());
+    } else {
+      panic_with_message("Result used after move");
     }
-    // SAFETY: The state_ is verified to be Ok or Err at the top of the
-    // function.
-    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
 
   /// Returns a const reference to the contained `Ok` value.
@@ -712,18 +489,17 @@ class [[nodiscard]] Result final {
   constexpr const std::remove_reference_t<TUnlessVoid>& as_value() const&
     requires(!std::is_void_v<T>)
   {
-    if (state_ != ResultState::IsOk) [[unlikely]] {
-      if (state_ == ResultState::IsErr) {
-        if constexpr (fmt::is_formattable<E>::value) {
-          panic_with_message(fmt::to_string(storage_.err_));
-        } else {
-          panic_with_message("Result has error state");
-        }
+    if (storage_.is_ok()) [[likely]] {
+      return storage_.template get_ok<T>();
+    } else if (storage_.is_err()) {
+      if constexpr (fmt::is_formattable<E>::value) {
+        panic_with_message(fmt::to_string(storage_.get_err()));
       } else {
-        panic_with_message("Result used after move");
+        panic_with_message("Result has error state");
       }
+    } else {
+      panic_with_message("Result used after move");
     }
-    return storage_.ok_;
   }
   constexpr const std::remove_reference_t<TUnlessVoid>& as_value() && = delete;
 
@@ -734,42 +510,38 @@ class [[nodiscard]] Result final {
   constexpr std::remove_reference_t<TUnlessVoid>& as_value_mut() &
     requires(!std::is_void_v<T>)
   {
-    if (state_ != ResultState::IsOk) [[unlikely]] {
-      if (state_ == ResultState::IsErr) {
-        if constexpr (fmt::is_formattable<E>::value) {
-          panic_with_message(fmt::to_string(storage_.err_));
-        } else {
-          panic_with_message("Result has error state");
-        }
+    if (storage_.is_ok()) [[likely]] {
+      return storage_.template get_ok_mut<T>();
+    } else if (storage_.is_err()) {
+      if constexpr (fmt::is_formattable<E>::value) {
+        panic_with_message(fmt::to_string(storage_.get_err()));
       } else {
-        panic_with_message("Result used after move");
+        panic_with_message("Result has error state");
       }
+    } else {
+      panic_with_message("Result used after move");
     }
-    return storage_.ok_;
   }
   /// Returns a const reference to the contained `Err` value.
   ///
   /// # Panics
   /// Panics if the value is an `Ok` or the Result is moved from.
-  constexpr const std::remove_reference_t<E>& as_err() const& {
-    if (state_ != ResultState::IsErr) [[unlikely]] {
-      if (state_ == ResultState::IsOk) {
-        if constexpr (!std::is_void_v<T>) {
-          if constexpr (fmt::is_formattable<T>::value) {
-            panic_with_message(fmt::to_string(storage_.ok_));
-          } else {
-            panic_with_message("Result has ok state");
-          }
-        } else {
-          panic_with_message("Result has ok state");
-        }
+  constexpr const E& as_err() const& {
+    if (storage_.is_err()) [[likely]] {
+      return storage_.get_err();
+    } else if (storage_.is_ok()) {
+      if constexpr (std::is_void_v<T>) {
+        panic_with_message("Result has ok state");
+      } else if constexpr (!fmt::is_formattable<T>::value) {
+        panic_with_message("Result has ok state");
       } else {
-        panic_with_message("Result used after move");
+        panic_with_message(fmt::to_string(storage_.template get_ok<T>()));
       }
+    } else {
+      panic_with_message("Result used after move");
     }
-    return storage_.err_;
   }
-  constexpr const std::remove_reference_t<E>& as_err() && = delete;
+  constexpr const E& as_err() && = delete;
 
   /// Returns the contained `Ok` value, consuming the self value.
   ///
@@ -781,21 +553,16 @@ class [[nodiscard]] Result final {
   /// # Panics
   /// Panics if the value is an `Err` or the Result is moved from.
   constexpr inline T unwrap() && noexcept {
-    ResultState was = ::sus::mem::replace(state_, ResultState::IsMoved);
-    if (was != ResultState::IsOk) [[unlikely]] {
-      if (was == ResultState::IsErr) {
-        if constexpr (fmt::is_formattable<E>::value) {
-          panic_with_message(fmt::to_string(storage_.err_));
-        } else {
-          panic_with_message("Result has error state");
-        }
+    if (storage_.is_ok()) [[likely]] {
+      return storage_.template take_ok<T>();
+    } else if (storage_.is_err()) {
+      if constexpr (fmt::is_formattable<E>::value) {
+        panic_with_message(fmt::to_string(storage_.get_err()));
       } else {
-        panic_with_message("Result used after move");
+        panic_with_message("Result has error state");
       }
-    }
-    if constexpr (!std::is_void_v<T>) {
-      return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
-                                           storage_.ok_);
+    } else {
+      panic_with_message("Result used after move");
     }
   }
 
@@ -809,21 +576,16 @@ class [[nodiscard]] Result final {
   /// Panics if the value is an Err, with a panic message including the passed
   /// message, and the content of the Err.
   constexpr inline T expect(const char* msg) && noexcept {
-    ResultState was = ::sus::mem::replace(state_, ResultState::IsMoved);
-    if (was != ResultState::IsOk) [[unlikely]] {
-      if (was == ResultState::IsErr) {
-        if constexpr (fmt::is_formattable<E>::value) {
-          panic_with_message(fmt::format("{}: {}", msg, storage_.err_));
-        } else {
-          panic_with_message(msg);
-        }
+    if (storage_.is_ok()) [[likely]] {
+      return storage_.template take_ok<T>();
+    } else if (storage_.is_err()) {
+      if constexpr (fmt::is_formattable<E>::value) {
+        panic_with_message(fmt::format("{}: {}", msg, storage_.get_err()));
       } else {
-        panic_with_message("Result used after move");
+        panic_with_message(msg);
       }
-    }
-    if constexpr (!std::is_void_v<T>) {
-      return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
-                                           storage_.ok_);
+    } else {
+      panic_with_message("Result used after move");
     }
   }
 
@@ -835,17 +597,16 @@ class [[nodiscard]] Result final {
     requires(!std::is_reference_v<T> &&
              (std::is_void_v<T> || ::sus::construct::Default<T>))
   {
-    ResultState was = ::sus::mem::replace(state_, ResultState::IsMoved);
-    check_with_message(
-        was != ResultState::IsMoved,
-        "called `Result::unwrap_or_default()` on a moved Result");
-    if constexpr (!std::is_void_v<T>) {
-      if (was == ResultState::IsOk) {
-        return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
-                                             storage_.ok_);
-      } else {
+    if (storage_.is_ok()) {
+      return storage_.template take_ok<T>();
+    } else if (storage_.is_err()) {
+      storage_.drop_err();
+      if constexpr (!std::is_void_v<T>)
         return T();
-      }
+      else
+        return;
+    } else {
+      panic_with_message("Result used after move");
     }
   }
 
@@ -857,7 +618,7 @@ class [[nodiscard]] Result final {
   /// Behavior.
   constexpr inline T unwrap_unchecked(
       ::sus::marker::UnsafeFnMarker) && noexcept {
-    if (state_ != ResultState::IsOk) {
+    if (!storage_.is_ok()) {
       // This enables Clang to drop any branches that were used to construct
       // the Result. Without this, the optimizer keeps the whole Result
       // construction, possibly because the `state_` gets clobbered below?
@@ -865,11 +626,7 @@ class [[nodiscard]] Result final {
       // greatly when the compiler is informed about the UB here.
       sus::unreachable_unchecked(::sus::marker::unsafe_fn);
     }
-    state_ = ResultState::IsMoved;
-    if constexpr (!std::is_void_v<T>) {
-      return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
-                                           storage_.ok_);
-    }
+    return storage_.template take_ok<T>();
   }
 
   /// Returns the contained `Err` value, consuming the self value.
@@ -877,24 +634,19 @@ class [[nodiscard]] Result final {
   /// # Panics
   /// Panics if the value is an `Ok` or the Result is moved from.
   constexpr inline E unwrap_err() && noexcept {
-    ResultState was = ::sus::mem::replace(state_, ResultState::IsMoved);
-    if (was != ResultState::IsErr) [[unlikely]] {
-      if (was == ResultState::IsOk) {
-        if constexpr (!std::is_void_v<T>) {
-          if constexpr (fmt::is_formattable<T>::value) {
-            panic_with_message(fmt::to_string(storage_.ok_));
-          } else {
-            panic_with_message("Result has ok state");
-          }
-        } else {
-          panic_with_message("Result has ok state");
-        }
+    if (storage_.is_err()) [[likely]] {
+      return storage_.take_err();
+    } else if (storage_.is_ok()) {
+      if constexpr (std::is_void_v<T>) {
+        panic_with_message("Result has ok state");
+      } else if constexpr (!fmt::is_formattable<T>::value) {
+        panic_with_message("Result has ok state");
       } else {
-        panic_with_message("Result used after move");
+        panic_with_message(fmt::to_string(storage_.template get_ok<T>()));
       }
+    } else {
+      panic_with_message("Result used after move");
     }
-    return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
-                                         storage_.err_);
   }
 
   /// Returns the contained `Err` value, consuming the self value, without
@@ -905,14 +657,12 @@ class [[nodiscard]] Result final {
   /// Behavior.
   constexpr inline E unwrap_err_unchecked(
       ::sus::marker::UnsafeFnMarker) && noexcept {
-    if (state_ != ResultState::IsErr) {
+    if (!storage_.is_err()) {
       // Match the code in unwrap_unchecked, and tell the compiler that the
       // `state_` is an Err before clobbering it.
       sus::unreachable_unchecked(::sus::marker::unsafe_fn);
     }
-    state_ = ResultState::IsMoved;
-    return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
-                                         storage_.err_);
+    return storage_.take_err();
   }
 
   /// Returns the contained `Ok` value or computes it from a closure.
@@ -927,14 +677,13 @@ class [[nodiscard]] Result final {
   /// auto err = sus::Result<i32, ECode>::with_err(ItsHappening);
   /// sus::check(sus::move(err).unwrap_or_else(conv) == -1);
   /// ```
-  template <::sus::fn::FnOnce<T(E&&)> F>
-  constexpr T unwrap_or_else(F&& op) && noexcept {
-    if (is_ok()) {
-      return ::sus::move(*this).unwrap_unchecked(::sus::marker::unsafe_fn);
+  constexpr T unwrap_or_else(::sus::fn::FnOnce<T(E&&)> auto op) && noexcept {
+    if (storage_.is_ok()) {
+      return storage_.template take_ok<T>();
+    } else if (storage_.is_err()) {
+      return ::sus::fn::call_once(::sus::move(op), storage_.take_err());
     } else {
-      return ::sus::fn::call_once(
-          ::sus::move(op),
-          ::sus::move(*this).unwrap_err_unchecked(::sus::marker::unsafe_fn));
+      panic_with_message("Result used after move");
     }
   }
 
@@ -943,17 +692,15 @@ class [[nodiscard]] Result final {
   iter() const& noexcept
     requires(!std::is_void_v<T>)
   {
-    ::sus::check(state_ != ResultState::IsMoved);
-    if (state_ == ResultState::IsOk) {
+    if (storage_.is_ok()) {
       return ::sus::option::OptionIter<const std::remove_reference_t<T>&>(
-          // SAFETY: The static_cast is needed to convert the pointer storage
-          // type to a `const T&`, which does not create a temporary as it's
-          // converting a pointer to a reference.
           Option<const std::remove_reference_t<T>&>(
-              static_cast<const std::remove_reference_t<T>&>(storage_.ok_)));
-    } else {
+              storage_.template get_ok<T>()));
+    } else if (storage_.is_err()) {
       return ::sus::option::OptionIter<const std::remove_reference_t<T>&>(
           Option<const std::remove_reference_t<T>&>());
+    } else {
+      panic_with_message("Result used after move");
     }
   }
   constexpr ::sus::option::OptionIter<
@@ -961,58 +708,57 @@ class [[nodiscard]] Result final {
   iter() && noexcept
     requires(!std::is_void_v<T> && std::is_reference_v<T>)
   {
-    ::sus::check(state_ != ResultState::IsMoved);
-    if (::sus::mem::replace(state_, ResultState::IsMoved) ==
-        ResultState::IsOk) {
+    if (storage_.is_ok()) {
       return ::sus::option::OptionIter<const std::remove_reference_t<T>&>(
-          // SAFETY: The static_cast is needed to convert the pointer storage
-          // type to a `const T&`, which does not create a temporary as it's
-          // converting a pointer to a reference.
           Option<const std::remove_reference_t<T>&>(
-              static_cast<const std::remove_reference_t<T>&>(storage_.ok_)));
-    } else {
-      storage_.destroy_err();
+              storage_.template take_ok<T>()));
+    } else if (storage_.is_err()) {
+      storage_.drop_err();
       return ::sus::option::OptionIter<const std::remove_reference_t<T>&>(
           Option<const std::remove_reference_t<T>&>());
+    } else {
+      panic_with_message("Result used after move");
     }
   }
 
   constexpr ::sus::option::OptionIter<TUnlessVoid&> iter_mut() & noexcept
     requires(!std::is_void_v<T>)
   {
-    ::sus::check(state_ != ResultState::IsMoved);
-    if (state_ == ResultState::IsOk) {
-      return ::sus::option::OptionIter<T&>(Option<T&>(storage_.ok_));
-    } else {
+    if (storage_.is_ok()) {
+      return ::sus::option::OptionIter<T&>(
+          Option<T&>(storage_.template get_ok_mut<T>()));
+    } else if (storage_.is_err()) {
       return ::sus::option::OptionIter<T&>(Option<T&>());
+    } else {
+      panic_with_message("Result used after move");
     }
   }
   constexpr ::sus::option::OptionIter<TUnlessVoid&> iter_mut() && noexcept
     requires(!std::is_void_v<T> &&  //
              std::is_reference_v<T>)
   {
-    ::sus::check(state_ != ResultState::IsMoved);
-    if (::sus::mem::replace(state_, ResultState::IsMoved) ==
-        ResultState::IsOk) {
-      return ::sus::option::OptionIter<T&>(Option<T&>(storage_.ok_));
-    } else {
-      storage_.destroy_err();
+    if (storage_.is_ok()) {
+      return ::sus::option::OptionIter<T&>(
+          Option<T&>(storage_.template take_ok<T>()));
+    } else if (storage_.is_err()) {
+      storage_.drop_err();
       return ::sus::option::OptionIter<T&>(Option<T&>());
+    } else {
+      panic_with_message("Result used after move");
     }
   }
 
   constexpr ::sus::option::OptionIter<T> into_iter() && noexcept
     requires(!std::is_void_v<T>)
   {
-    ::sus::check(state_ != ResultState::IsMoved);
-    if (::sus::mem::replace(state_, ResultState::IsMoved) ==
-        ResultState::IsOk) {
+    if (storage_.is_ok()) {
       return ::sus::option::OptionIter<T>(
-          Option<T>(::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
-                                                  storage_.ok_)));
-    } else {
-      storage_.destroy_err();
+          Option<T>(storage_.template take_ok<T>()));
+    } else if (storage_.is_err()) {
+      storage_.drop_err();
       return ::sus::option::OptionIter<T>(Option<T>());
+    } else {
+      panic_with_message("Result used after move");
     }
   }
 
@@ -1027,35 +773,13 @@ class [[nodiscard]] Result final {
   friend constexpr bool operator==(const Result& l, const Result& r) noexcept
     requires(VoidOrEq<T> && ::sus::cmp::Eq<E>)
   {
-    ::sus::check(l.state_ != ResultState::IsMoved);
-    switch (l.state_) {
-      case ResultState::IsOk:
-        if constexpr (!std::is_void_v<T>)
-          return r.is_ok() && l.storage_.ok_ == r.storage_.ok_;
-        else
-          return r.is_ok();
-      case ResultState::IsErr:
-        return r.is_err() && l.storage_.err_ == r.storage_.err_;
-      case ResultState::IsMoved: break;
-    }
-    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    return eq(l, r);
   }
   template <class U, class F>
     requires(VoidOrEq<T, U> && ::sus::cmp::Eq<E, F>)
   friend constexpr bool operator==(const Result& l,
                                    const Result<U, F>& r) noexcept {
-    ::sus::check(l.state_ != ResultState::IsMoved);
-    switch (l.state_) {
-      case ResultState::IsOk:
-        if constexpr (!std::is_void_v<T>)
-          return r.is_ok() && l.storage_.ok_ == r.storage_.ok_;
-        else
-          return r.is_ok();
-      case ResultState::IsErr:
-        return r.is_err() && l.storage_.err_ == r.storage_.err_;
-      case ResultState::IsMoved: break;
-    }
-    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    return eq(l, r);
   }
   template <class U, class F>
     requires(!(VoidOrEq<T, U> && ::sus::cmp::Eq<E, F>))
@@ -1078,49 +802,13 @@ class [[nodiscard]] Result final {
                                                     const Result& r) noexcept
     requires(VoidOrOrd<T> && ::sus::cmp::StrongOrd<E>)
   {
-    ::sus::check(l.state_ != ResultState::IsMoved);
-    switch (l.state_) {
-      case ResultState::IsOk:
-        if (r.is_ok()) {
-          if constexpr (!std::is_void_v<T>)
-            return std::strong_order(l.storage_.ok_, r.storage_.ok_);
-          else
-            return std::strong_ordering::equivalent;
-        } else {
-          return std::strong_ordering::greater;
-        }
-      case ResultState::IsErr:
-        if (r.is_err())
-          return std::strong_order(l.storage_.err_, r.storage_.err_);
-        else
-          return std::strong_ordering::less;
-      case ResultState::IsMoved: break;
-    }
-    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    return cmp<std::strong_ordering>(l, r);
   }
   template <class U, class F>
     requires(VoidOrOrd<T, U> && ::sus::cmp::StrongOrd<E, F>)
   friend constexpr std::strong_ordering operator<=>(
       const Result& l, const Result<U, F>& r) noexcept {
-    ::sus::check(l.state_ != ResultState::IsMoved);
-    switch (l.state_) {
-      case ResultState::IsOk:
-        if (r.is_ok()) {
-          if constexpr (!std::is_void_v<T>)
-            return std::strong_order(l.storage_.ok_, r.storage_.ok_);
-          else
-            return std::strong_ordering::equivalent;
-        } else {
-          return std::strong_ordering::greater;
-        }
-      case ResultState::IsErr:
-        if (r.is_err())
-          return std::strong_order(l.storage_.err_, r.storage_.err_);
-        else
-          return std::strong_ordering::less;
-      case ResultState::IsMoved: break;
-    }
-    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    return cmp<std::strong_ordering>(l, r);
   }
 
   // sus::cmp::Ord<Result<T, E>> trait.
@@ -1129,50 +817,14 @@ class [[nodiscard]] Result final {
     requires((!VoidOrOrd<T> || !::sus::cmp::StrongOrd<E>) && VoidOrWeakOrd<T> &&
              ::sus::cmp::Ord<E>)
   {
-    ::sus::check(l.state_ != ResultState::IsMoved);
-    switch (l.state_) {
-      case ResultState::IsOk:
-        if (r.is_ok()) {
-          if constexpr (!std::is_void_v<T>)
-            return std::weak_order(l.storage_.ok_, r.storage_.ok_);
-          else
-            return std::weak_ordering::equivalent;
-        } else {
-          return std::weak_ordering::greater;
-        }
-      case ResultState::IsErr:
-        if (r.is_err())
-          return std::weak_order(l.storage_.err_, r.storage_.err_);
-        else
-          return std::weak_ordering::less;
-      case ResultState::IsMoved: break;
-    }
-    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    return cmp<std::weak_ordering>(l, r);
   }
   template <class U, class F>
     requires((!VoidOrOrd<T, U> || !::sus::cmp::StrongOrd<E, F>) &&
              VoidOrWeakOrd<T, U> && ::sus::cmp::Ord<E, F>)
   friend constexpr std::weak_ordering operator<=>(
       const Result& l, const Result<U, F>& r) noexcept {
-    ::sus::check(l.state_ != ResultState::IsMoved);
-    switch (l.state_) {
-      case ResultState::IsOk:
-        if (r.is_ok()) {
-          if constexpr (!std::is_void_v<T>)
-            return std::weak_order(l.storage_.ok_, r.storage_.ok_);
-          else
-            return std::weak_ordering::equivalent;
-        } else {
-          return std::weak_ordering::greater;
-        }
-      case ResultState::IsErr:
-        if (r.is_err())
-          return std::weak_order(l.storage_.err_, r.storage_.err_);
-        else
-          return std::weak_ordering::less;
-      case ResultState::IsMoved: break;
-    }
-    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    return cmp<std::weak_ordering>(l, r);
   }
 
   // sus::cmp::PartialOrd<Result<T, E>> trait.
@@ -1181,50 +833,14 @@ class [[nodiscard]] Result final {
     requires((!VoidOrWeakOrd<T> || !::sus::cmp::Ord<E>) &&
              VoidOrPartialOrd<T> && ::sus::cmp::PartialOrd<E>)
   {
-    ::sus::check(l.state_ != ResultState::IsMoved);
-    switch (l.state_) {
-      case ResultState::IsOk:
-        if (r.is_ok()) {
-          if constexpr (!std::is_void_v<T>)
-            return std::partial_order(l.storage_.ok_, r.storage_.ok_);
-          else
-            return std::partial_ordering::equivalent;
-        } else {
-          return std::partial_ordering::greater;
-        }
-      case ResultState::IsErr:
-        if (r.is_err())
-          return std::partial_order(l.storage_.err_, r.storage_.err_);
-        else
-          return std::partial_ordering::less;
-      case ResultState::IsMoved: break;
-    }
-    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    return cmp<std::partial_ordering>(l, r);
   }
   template <class U, class F>
     requires((!VoidOrWeakOrd<T, U> || !::sus::cmp::Ord<E, F>) &&
              VoidOrPartialOrd<T, U> && ::sus::cmp::PartialOrd<E, F>)
   friend constexpr std::partial_ordering operator<=>(
       const Result& l, const Result<U, F>& r) noexcept {
-    ::sus::check(l.state_ != ResultState::IsMoved);
-    switch (l.state_) {
-      case ResultState::IsOk:
-        if (r.is_ok()) {
-          if constexpr (!std::is_void_v<T>)
-            return std::partial_order(l.storage_.ok_, r.storage_.ok_);
-          else
-            return std::partial_ordering::equivalent;
-        } else {
-          return std::partial_ordering::greater;
-        }
-      case ResultState::IsErr:
-        if (r.is_err())
-          return std::partial_order(l.storage_.err_, r.storage_.err_);
-        else
-          return std::partial_ordering::less;
-      case ResultState::IsMoved: break;
-    }
-    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    return cmp<std::partial_ordering>(l, r);
   }
 
   template <class U, class F>
@@ -1237,59 +853,85 @@ class [[nodiscard]] Result final {
   friend class Result;
 
   // Since `T` may be a reference or a value type, this constructs the correct
-  // storage from a `T` object or a `T&&` (which is received as `T&`).
+  // storage type for `T`.
   template <class U>
-  static constexpr inline decltype(auto) copy_ok_to_storage(const U& t) {
+    requires(!std::is_void_v<U>)
+  static constexpr inline decltype(auto) make_ok_storage(U&& t) {
     if constexpr (std::is_reference_v<T>)
       return StoragePointer<T>(t);
     else
-      return t;
+      return ::sus::forward<U>(t);
   }
-  // Since `T` may be a reference or a value type, this constructs the correct
-  // storage from a `T` object or a `T&&` (which is received as `T&`).
-  template <class U>
-  static constexpr inline decltype(auto) move_ok_to_storage(U&& t) {
-    if constexpr (std::is_reference_v<T>)
-      return StoragePointer<T>(t);
-    else
-      return ::sus::move(t);
+
+  template <class U, class F>
+  static constexpr bool eq(const Result& l, const Result<U, F>& r) noexcept {
+    ::sus::check(!l.storage_.is_moved() && !r.storage_.is_moved());
+    if (l.storage_.is_ok()) {
+      if constexpr (std::is_void_v<T>) {
+        return r.storage_.is_ok();
+      } else if (r.storage_.is_ok()) {
+        return l.storage_.template get_ok<T>() ==
+               r.storage_.template get_ok<U>();
+      } else {
+        return false;
+      }
+    } else {
+      if (r.storage_.is_err()) {
+        return l.storage_.get_err() == r.storage_.get_err();
+      } else {
+        return false;
+      }
+    }
+  }
+
+  template <::sus::cmp::Ordering O, class U, class F>
+  static constexpr O cmp(const Result& l, const Result<U, F>& r) noexcept {
+    ::sus::check(!l.storage_.is_moved() && !r.storage_.is_moved());
+    if (l.storage_.is_ok()) {
+      if (r.storage_.is_ok()) {
+        if constexpr (std::is_void_v<T>) {
+          return O::equivalent;
+        } else {
+          return l.storage_.template get_ok<T>() <=>
+                 r.storage_.template get_ok<U>();
+        }
+      } else {
+        return O::greater;
+      }
+    } else {
+      if (r.storage_.is_err()) {
+        return l.storage_.get_err() <=> r.storage_.get_err();
+      } else {
+        return O::less;
+      }
+    }
   }
 
   // Constructors for `Ok`.
   enum WithOk { WITH_OK };
   constexpr inline Result(WithOk) noexcept
     requires(std::is_void_v<T>)
-      : storage_(), state_(ResultState::IsOk) {}
-  template <std::convertible_to<T> U>
-  constexpr inline Result(WithOk, const U& t) noexcept
-      : storage_(__private::kWithT, t), state_(ResultState::IsOk) {}
-  template <std::convertible_to<T> U>
-  constexpr inline Result(WithOk, U&& t) noexcept
-    requires(::sus::mem::Move<T>)
-      : storage_(__private::kWithT, ::sus::move(t)),
-        state_(ResultState::IsOk) {}
+      : storage_(__private::WITH_T) {}
+  template <class U>
+  constexpr inline Result(WithOk, U&& u) noexcept
+    requires(!std::is_void_v<T>)
+      : storage_(__private::WITH_T, ::sus::forward<U>(u)) {}
   // Constructors for `Err`.
   enum WithErr { WITH_ERR };
-  constexpr inline Result(WithErr, const E& e) noexcept
-      : storage_(__private::kWithE, e), state_(ResultState::IsErr) {}
-  constexpr inline Result(WithErr, E&& e) noexcept
-    requires(::sus::mem::Move<E>)
-      : storage_(__private::kWithE, ::sus::move(e)),
-        state_(ResultState::IsErr) {}
+  template <class F>
+  constexpr inline Result(WithErr, F&& f) noexcept
+      : storage_(__private::WITH_E, ::sus::forward<F>(f)) {}
 
-  struct VoidStorage {};
   using OkStorageType =
-      std::conditional_t<std::is_reference_v<T>, StoragePointer<T>,
-                         std::conditional_t<std::is_void_v<T>, VoidStorage, T>>;
+      std::conditional_t<std::is_reference_v<T>, StoragePointer<T>, T>;
+  using Storage = std::conditional_t<  //
+      std::is_void_v<T>,               //
+      __private::StorageVoid<E>,       //
+      __private::StorageNonVoid<OkStorageType, E>>;
+  [[no_unique_address]] Storage storage_;
 
-  [[sus_no_unique_address]] Storage<OkStorageType, E> storage_;
-  ResultState state_;
-
-  sus_class_trivially_relocatable_if_types(
-      ::sus::marker::unsafe_fn,
-      std::remove_const_t<std::remove_reference_t<decltype(storage_.ok_)>>,
-      std::remove_const_t<std::remove_reference_t<decltype(storage_.err_)>>,
-      decltype(state_));
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(storage_));
 };
 
 /// Implicit for-ranged loop iteration via [`Result::iter()`](

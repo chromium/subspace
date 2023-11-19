@@ -161,6 +161,11 @@ struct Storage<T, false> final {
 
  private:
   union {
+    // TODO: We can make this T [[no_unique_address]], however then
+    // we can not construct_at on it. Instead, we would need to only
+    // construct_at the Storage class, and have the ctor set them both.
+    //
+    // See also https://github.com/llvm/llvm-project/issues/70494
     T val_;
   };
   State state_ = None;
