@@ -59,9 +59,31 @@ struct TailPadding {
   i32 j;
   // 4 bytes of tail padding, which the Result can use for its own state.
 };
+// The Result's state can go into the tail padding of T and E.
 // MSVC doesn't take advantage of `[[no_unique_address]]`.
 static_assert(sizeof(Result<i32, TailPadding>) ==
               sizeof(TailPadding) + sus_if_msvc_else(8, 0));
+static_assert(sizeof(Result<void, TailPadding>) ==
+              sizeof(TailPadding) + sus_if_msvc_else(8, 0));
+
+template <class T>
+struct Holds {
+  [[sus_no_unique_address]] T t;
+  char c = 0;
+};
+// An element in the Result's union has tail padding, so it can't allow anything
+// outside the Result from ending up inside there.
+static_assert(sizeof(Holds<Result<i32, TailPadding>>) ==
+              sizeof(Result<i32, TailPadding>) + 8);
+static_assert(sizeof(Holds<Result<void, TailPadding>>) ==
+              sizeof(Result<void, TailPadding>) + 8);
+// Nothing in the Result's union has tail padding, the tail padding of the
+// Result itself can be used externally.
+// MSVC doesn't take advantage of `[[no_unique_address]]`.
+static_assert(sizeof(Holds<Result<i32, i64>>) ==
+              sizeof(Result<i32, i64>) + sus_if_msvc_else(8, 0));
+static_assert(sizeof(Holds<Result<void, i64>>) ==
+              sizeof(Result<void, i64>) + sus_if_msvc_else(8, 0));
 
 struct Error {};
 
@@ -576,6 +598,7 @@ TEST(Result, Expect) {
 
 TEST(ResultDeathTest, Unwrap) {
 #if GTEST_HAS_DEATH_TEST
+  struct Foo {};  // clang-tidy does weird things here without this.
   {
     auto r = Result<i32, Error>::with_err(Error());
     EXPECT_DEATH(r.as_value(), "PANIC! at 'Result has error state'");

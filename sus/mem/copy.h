@@ -84,4 +84,10 @@ concept TrivialCopy =
 template <class T>
 concept CopyOrRef = Copy<T> || std::is_reference_v<T>;
 
+/// Matches types which are [`CopyOrRef`]($sus::mem::CopyOrRef) or are `void`.
+///
+/// A helper for genertic types which can hold void as a type.
+template <class T>
+concept CopyOrRefOrVoid = CopyOrRef<T> || std::is_void_v<T>;
+
 }  // namespace sus::mem

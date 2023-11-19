@@ -68,7 +68,7 @@ struct TriviallyMoveableNotDestructible final {
       TriviallyMoveableNotDestructible&&) = default;
   constexpr TriviallyMoveableNotDestructible& operator=(
       TriviallyMoveableNotDestructible&&) = default;
-  constexpr ~TriviallyMoveableNotDestructible(){};
+  constexpr ~TriviallyMoveableNotDestructible() {}
   constexpr TriviallyMoveableNotDestructible(int i) : i(i) {}
   int i;
 };
