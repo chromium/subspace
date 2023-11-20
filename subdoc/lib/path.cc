@@ -36,17 +36,28 @@ bool path_contains_namespace(clang::Decl* decl, Namespace n) noexcept {
 }
 
 bool path_is_private(clang::NamedDecl* decl) noexcept {
+  // clang::Linkage members were renamed in 18.
+#if CLANG_VERSION_MAJOR >= 18
+  constexpr auto ModuleLinkage = clang::Linkage::Module;
+  constexpr auto ExternalLinkage = clang::Linkage::External;
+  constexpr auto NoneLinkage = clang::Linkage::None;
+#else
+  constexpr auto ModuleLinkage = clang::Linkage::ModuleLinkage;
+  constexpr auto ExternalLinkage = clang::Linkage::ExternalLinkage;
+  constexpr auto NoneLinkage = clang::Linkage::NoLinkage;
+#endif
+
   clang::Linkage linkage = decl->getLinkageInternal();
-  if (linkage != clang::Linkage::ModuleLinkage &&
-      linkage != clang::Linkage::ExternalLinkage) {
-    // NoLinkage describes itself as "can only be referred to from within its
-    // scope".
+  if (linkage != ModuleLinkage &&
+      linkage != ExternalLinkage) {
+    // Linkage::None describes itself as "can only be referred to from within
+    // its scope".
     //
     // However `namespace a { using b::S; }` brings S into `a` in a way that is
-    // usable publicly from other scopes. So we accept `NoLinkage` for
+    // usable publicly from other scopes. So we accept `Linkage::None` for
     // `UsingDecl` and `UsingEnumDecl` (aka `BaseUsingDecl`). Similar for
     // type aliases.
-    if (!(linkage == clang::Linkage::NoLinkage &&
+    if (!(linkage == NoneLinkage &&
           (clang::isa<clang::BaseUsingDecl>(decl) ||
            clang::isa<clang::TypedefNameDecl>(decl)))) {
       return true;
