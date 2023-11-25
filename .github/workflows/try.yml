@@ -15,83 +15,83 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          #- {
-          #    name: "Windows MSVC",
-          #    artifact: "Windows-MSVC.tar.xz",
-          #    # MSVC 17.6.3 can no longer build Subspace. 16 doesn't work either.
-          #    # https://developercommunity.visualstudio.com/t/Update-to-1763-now-rejects-valid-C-i/10394500
-          #    os: windows-latest,
-          #    build_type: "Release",
-          #    cc: "cl",
-          #    cxx: "cl",
-          #    environment_script: "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvars64.bat",
-          #  }
-          #- {
-          #    name: "Windows MinGW", artifact: "Windows-MinGW.tar.xz",
-          #    os: windows-latest,
-          #    build_type: "Release", cc: "gcc", cxx: "g++"
-          #  }
+        # MSVC is broken: https://github.com/chromium/subspace/issues/267
+        #- {
+        #    name: "Windows MSVC",
+        #    artifact: "Windows-MSVC.tar.xz",
+        #    os: windows-latest,
+        #    build_type: "Release",
+        #    cc: "cl",
+        #    cxx: "cl",
+        #    environment_script: "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvars64.bat",
+        #  }
 
-          - {
-              name: "Ubuntu Clang-16 Debug",
-              os: ubuntu-latest,
-              build_type: "Debug",
-              cc: "clang-16",
-              cxx: "clang++-16",
-              clang_version: 16,
-              installed_clang_version: 14
-            }
+        #- {
+        #    name: "Windows MinGW", artifact: "Windows-MinGW.tar.xz",
+        #    os: windows-latest,
+        #    build_type: "Release", cc: "gcc", cxx: "g++"
+        #  }
 
-          - {
-              name: "Ubuntu Clang-17 Debug",
-              os: ubuntu-latest,
-              build_type: "Debug",
-              cc: "clang-17",
-              cxx: "clang++-17",
-              clang_version: 17,
-              installed_clang_version: 14
-            }
+        - {
+            name: "Ubuntu Clang-16 Debug",
+            os: ubuntu-latest,
+            build_type: "Debug",
+            cc: "clang-16",
+            cxx: "clang++-16",
+            clang_version: 16,
+            installed_clang_version: 14
+          }
 
-          - {
-              name: "Ubuntu Clang-17 Sanitizer",
-              os: ubuntu-latest,
-              build_type: "Release",
-              cc: "clang-17",
-              cxx: "clang++-17",
-              clang_version: 17,
-              installed_clang_version: 14
-            }
+        - {
+            name: "Ubuntu Clang-17 Debug",
+            os: ubuntu-latest,
+            build_type: "Debug",
+            cc: "clang-17",
+            cxx: "clang++-17",
+            clang_version: 17,
+            installed_clang_version: 14
+          }
 
-          - {
-              name: "Ubuntu Clang-18 Debug",
-              os: ubuntu-latest,
-              build_type: "Debug",
-              cc: "clang-18",
-              cxx: "clang++-18",
-              clang_version: 18,
-              installed_clang_version: 14
-            }
+        - {
+            name: "Ubuntu Clang-17 Sanitizer",
+            os: ubuntu-latest,
+            build_type: "Release",
+            cc: "clang-17",
+            cxx: "clang++-17",
+            clang_version: 17,
+            installed_clang_version: 14
+          }
 
-          - {
-              name: "Ubuntu GCC",
-              os: ubuntu-latest,
-              build_type: "Release",
-              cc: "gcc-13",
-              cxx: "g++-13",
-              clang_version: 18,
-              installed_clang_version: 14
-            }
+        - {
+            name: "Ubuntu Clang-18 Debug",
+            os: ubuntu-latest,
+            build_type: "Debug",
+            cc: "clang-18",
+            cxx: "clang++-18",
+            clang_version: 18,
+            installed_clang_version: 14
+          }
 
-          # Clang doesn't have good enough C++20 support to compile this library
-          # yet.
-          #- {
-          #    name: "macOS Latest Clang",
-          #    artifact: "macOS.tar.xz",
-          #    os: macos-latest,
-          #    build_type: "Release",
-          #    cc: "clang",
-          #    cxx: "clang++",
-          #  }
+        - {
+            name: "Ubuntu GCC",
+            os: ubuntu-latest,
+            build_type: "Release",
+            cc: "gcc-13",
+            cxx: "g++-13",
+            clang_version: 18,
+            installed_clang_version: 14
+          }
+
+        # Clang doesn't have good enough C++20 support to compile this library
+        # yet.
+        #- {
+        #    name: "macOS Latest Clang",
+        #    artifact: "macOS.tar.xz",
+        #    os: macos-latest,
+        #    build_type: "Release",
+        #    cc: "clang",
+        #    cxx: "clang++",
+        #  }
 
     steps:
       - uses: actions/checkout@v3
