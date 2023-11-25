@@ -31,7 +31,7 @@ struct VarError {
 
   /// This struct acts as a proxy for the Reason enum, so it can be implicitly
   /// constructed from the reason value.
-  VarError(Reason r) : reason(r) {}
+  constexpr VarError(Reason r) : reason(r) {}
 
   Reason reason;
 
