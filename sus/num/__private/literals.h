@@ -20,7 +20,7 @@
 #include "sus/assertions/check.h"
 #endif
 
-#if _MSC_VER && !defined(__clang__)
+#if _MSC_VER && !SUS_COMPILER_IS_CLANG
 /// Literal integer value.
 #define _sus__integer_literal(Name, T)                                                               \
   /* A `constexpr` workaround for MSVC bug that doesn't constant-evaluate                            \

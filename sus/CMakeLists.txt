@@ -131,7 +131,6 @@ target_sources(subspace PUBLIC
     "iter/zip.h"
     "macros/__private/compiler_bugs.h"
     "macros/assume.h"
-    "macros/arch.h"
     "macros/builtin.h"
     "macros/compiler.h"
     "macros/eval_macro.h"
