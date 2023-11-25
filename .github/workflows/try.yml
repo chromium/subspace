@@ -78,7 +78,7 @@ jobs:
             build_type: "Release",
             cc: "gcc-13",
             cxx: "g++-13",
-            clang_version: 18,
+            clang_version: 17,
             installed_clang_version: 14
           }
 
