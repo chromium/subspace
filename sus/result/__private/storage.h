@@ -509,8 +509,8 @@ struct StorageNonVoid {
       {}
 
       Union(const Union&)
-        requires(std::is_trivially_copy_assignable_v<T> &&
-                 std::is_trivially_copy_assignable_v<E>)
+        requires(std::is_trivially_copy_constructible_v<T> &&
+                 std::is_trivially_copy_constructible_v<E>)
       = default;
       Union& operator=(const Union&)
         requires(std::is_trivially_copy_assignable_v<T> &&
