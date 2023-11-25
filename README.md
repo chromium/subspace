@@ -56,7 +56,7 @@ check out which compiler versions are used by the
 |------------|---------|
 | **Clang:** | 16 and up |
 | **GCC**:   | 13 and up |
-| **MSVC**:   | 17.4.2 (not [newer versions](https://github.com/chromium/subspace/issues/267)) |
+| **MSVC**:   | VS2022 17.8.1 (Build 17.8.34316.72) and up |
 
 We attempt to work around bugs when reasonable, to widen compiler version
 support. See [compiler_bugs.h](sus/macros/__private/compiler_bugs.h) for
