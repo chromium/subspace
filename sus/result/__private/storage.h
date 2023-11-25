@@ -65,12 +65,12 @@ struct StorageVoid {
     requires(std::is_move_constructible_v<E>)
       : inner_(WITH_E, ::sus::move(e)) {}
 
-  constexpr ~StorageVoid() noexcept = default;
+  ~StorageVoid() noexcept = default;
 
-  constexpr StorageVoid(const StorageVoid&) noexcept = default;
-  constexpr StorageVoid& operator=(const StorageVoid&) noexcept = default;
-  constexpr StorageVoid(StorageVoid&&) noexcept = default;
-  constexpr StorageVoid& operator=(StorageVoid&&) noexcept = default;
+  StorageVoid(const StorageVoid&) noexcept = default;
+  StorageVoid& operator=(const StorageVoid&) noexcept = default;
+  StorageVoid(StorageVoid&&) noexcept = default;
+  StorageVoid& operator=(StorageVoid&&) noexcept = default;
 
   constexpr bool is_moved() const noexcept { return inner_.v.state == Moved; }
   constexpr bool is_ok() const noexcept { return inner_.v.state == Ok; }
@@ -115,7 +115,7 @@ struct StorageVoid {
     constexpr Inner(WithE, U&& err)
         : u(WITH_E, ::sus::forward<U>(err)), state(Err) {}
 
-    constexpr ~Inner() noexcept
+    ~Inner() noexcept
       requires(std::is_trivially_destructible_v<E>)
     = default;
     constexpr ~Inner() noexcept
@@ -128,11 +128,12 @@ struct StorageVoid {
       }
     }
 
-    constexpr Inner(const Inner&)
+    Inner(const Inner&)
       requires(std::is_trivially_copy_constructible_v<E>)
     = default;
     constexpr Inner(const Inner& o)
-      requires(!std::is_trivially_copy_constructible_v<E>)
+      requires(!std::is_trivially_copy_constructible_v<E> &&
+               std::is_copy_constructible_v<E>)
     {
       switch (o.state) {
         case Ok: break;
@@ -144,11 +145,12 @@ struct StorageVoid {
       state = o.state;
     }
 
-    constexpr Inner& operator=(const Inner&)
+    Inner& operator=(const Inner&)
       requires(std::is_trivially_copy_assignable_v<E>)
     = default;
     constexpr Inner& operator=(const Inner& o)
-      requires(!std::is_trivially_copy_assignable_v<E>)
+      requires(!std::is_trivially_copy_assignable_v<E> &&
+               std::is_copy_assignable_v<E>)
     {
       check_with_message(o.state != Moved, "Result used after move");
       if (state == o.state) {
@@ -178,7 +180,7 @@ struct StorageVoid {
       return *this;
     }
 
-    constexpr Inner(Inner&&)
+    Inner(Inner&&)
       requires(std::is_trivially_move_constructible_v<E>)
     = default;
     constexpr Inner(Inner&& o)
@@ -194,7 +196,7 @@ struct StorageVoid {
       state = ::sus::mem::replace(o.state, Moved);
     }
 
-    constexpr Inner& operator=(Inner&&)
+    Inner& operator=(Inner&&)
       requires(std::is_trivially_move_assignable_v<E>)
     = default;
     constexpr Inner& operator=(Inner&& o)
@@ -238,7 +240,7 @@ struct StorageVoid {
       template <class U>
       constexpr Union(WithE, U&& err) noexcept : err(::sus::forward<U>(err)) {}
 
-      constexpr ~Union() noexcept
+      ~Union() noexcept
         requires(std::is_trivially_destructible_v<E>)
       = default;
       constexpr ~Union() noexcept
@@ -292,12 +294,12 @@ struct StorageNonVoid {
     requires(std::is_move_constructible_v<E>)
       : inner_(WITH_E, ::sus::move(e)) {}
 
-  constexpr ~StorageNonVoid() noexcept = default;
+  ~StorageNonVoid() noexcept = default;
 
-  constexpr StorageNonVoid(const StorageNonVoid& o) noexcept = default;
-  constexpr StorageNonVoid& operator=(const StorageNonVoid&) noexcept = default;
-  constexpr StorageNonVoid(StorageNonVoid&&) noexcept = default;
-  constexpr StorageNonVoid& operator=(StorageNonVoid&&) noexcept = default;
+  StorageNonVoid(const StorageNonVoid& o) noexcept = default;
+  StorageNonVoid& operator=(const StorageNonVoid&) noexcept = default;
+  StorageNonVoid(StorageNonVoid&&) noexcept = default;
+  StorageNonVoid& operator=(StorageNonVoid&&) noexcept = default;
 
   constexpr bool is_moved() const noexcept { return inner_.v.state == Moved; }
   constexpr bool is_ok() const noexcept { return inner_.v.state == Ok; }
@@ -354,7 +356,7 @@ struct StorageNonVoid {
     constexpr Inner(WithE, U&& err)
         : u(WITH_E, ::sus::forward<U>(err)), state(Err) {}
 
-    constexpr ~Inner() noexcept
+    ~Inner() noexcept
       requires(std::is_trivially_destructible_v<T> &&
                std::is_trivially_destructible_v<E>)
     = default;
@@ -369,13 +371,15 @@ struct StorageNonVoid {
       }
     }
 
-    constexpr Inner(const Inner&)
+    Inner(const Inner&)
       requires(std::is_trivially_copy_constructible_v<T> &&
                std::is_trivially_copy_constructible_v<E>)
     = default;
     constexpr Inner(const Inner& o)
-      requires(!std::is_trivially_copy_constructible_v<T> ||
-               !std::is_trivially_copy_constructible_v<E>)
+      requires((!std::is_trivially_copy_constructible_v<T> ||
+                !std::is_trivially_copy_constructible_v<E>) &&
+               std::is_copy_constructible_v<T> &&
+               std::is_copy_constructible_v<E>)
     {
       switch (o.state) {
         case Ok: std::construct_at(&u.ok, o.u.ok); break;
@@ -387,13 +391,14 @@ struct StorageNonVoid {
       state = o.state;
     }
 
-    constexpr Inner& operator=(const Inner&)
+    Inner& operator=(const Inner&)
       requires(std::is_trivially_copy_assignable_v<T> &&
                std::is_trivially_copy_assignable_v<E>)
     = default;
     constexpr Inner& operator=(const Inner& o)
-      requires(!std::is_trivially_copy_assignable_v<T> ||
-               !std::is_trivially_copy_assignable_v<E>)
+      requires((!std::is_trivially_copy_assignable_v<T> ||
+                !std::is_trivially_copy_assignable_v<E>) &&
+               std::is_copy_assignable_v<T> && std::is_copy_assignable_v<E>)
     {
       check_with_message(o.state != Moved, "Result used after move");
       if (state == o.state) {
@@ -423,13 +428,15 @@ struct StorageNonVoid {
       return *this;
     }
 
-    constexpr Inner(Inner&&)
+    Inner(Inner&&)
       requires(std::is_trivially_move_constructible_v<T> &&
                std::is_trivially_move_constructible_v<E>)
     = default;
     constexpr Inner(Inner&& o)
-      requires(!std::is_trivially_move_constructible_v<T> ||
-               !std::is_trivially_move_constructible_v<E>)
+      requires((!std::is_trivially_move_constructible_v<T> ||
+                !std::is_trivially_move_constructible_v<E>) &&
+               std::is_move_constructible_v<T> &&
+               std::is_move_constructible_v<E>)
     {
       switch (o.state) {
         case Ok: std::construct_at(&u.ok, ::sus::move(o.u.ok)); break;
@@ -441,13 +448,14 @@ struct StorageNonVoid {
       state = ::sus::mem::replace(o.state, Moved);
     }
 
-    constexpr Inner& operator=(Inner&&)
+    Inner& operator=(Inner&&)
       requires(std::is_trivially_move_assignable_v<T> &&
                std::is_trivially_move_assignable_v<E>)
     = default;
     constexpr Inner& operator=(Inner&& o)
-      requires(!std::is_trivially_move_assignable_v<T> ||
-               !std::is_trivially_move_assignable_v<E>)
+      requires((!std::is_trivially_move_assignable_v<T> ||
+                !std::is_trivially_move_assignable_v<E>) &&
+               std::is_move_assignable_v<T> && std::is_move_assignable_v<E>)
     {
       check_with_message(o.state != Moved, "Result used after move");
       if (state == o.state) {
@@ -491,7 +499,7 @@ struct StorageNonVoid {
       template <class U>
       constexpr Union(WithE, U&& err) : err(::sus::forward<U>(err)) {}
 
-      constexpr ~Union() noexcept
+      ~Union() noexcept
         requires(std::is_trivially_destructible_v<T> &&
                  std::is_trivially_destructible_v<E>)
       = default;
