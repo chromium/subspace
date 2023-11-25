@@ -24,9 +24,7 @@ using sus::Slice;
 
 constexpr usize array_padding = 0u
     // No support for no_unique_address in clang-cl.
-    sus_clang_bug_49358(+sizeof(i32))
-    // MSVC bug with no_unique_address and arrays, so not used here.
-    sus_clang_bug_49358_else(sus_msvc_bug_10416202(+sizeof(i32)));
+    sus_clang_bug_49358(+sizeof(i32));
 
 static_assert(alignof(Array<i32, 5>) == alignof(i32));
 static_assert(sizeof(Array<i32, 5>) == sizeof(i32) * 5 + array_padding);
