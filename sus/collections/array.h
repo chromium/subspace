@@ -54,9 +54,8 @@ namespace __private {
 
 template <class T, size_t N>
 struct Storage final {
-  sus_msvc_bug_10416202_else(
-      [[sus_no_unique_address]]) sus::iter::IterRefCounter iter_refs_;
-  T data_[N];
+  [[sus_no_unique_address]] sus::iter::IterRefCounter iter_refs_;
+  [[sus_no_unique_address]] T data_[N];
 };
 
 template <class T>
