@@ -268,7 +268,7 @@ jobs:
     name: Generate Subdoc
     runs-on: ubuntu-latest
     env:
-      clang_version: 17
+      clang_version: 16
       installed_clang_version: 14
 
     steps:
