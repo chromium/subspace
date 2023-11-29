@@ -327,8 +327,17 @@ if(${SUBSPACE_BUILD_TESTS})
     )
 
     add_executable(subspace_overflow_unittests
+        "num/i8_overflow_unittest.cc"
+        "num/i16_overflow_unittest.cc"
         "num/i32_overflow_unittest.cc"
+        "num/i64_overflow_unittest.cc"
+        "num/isize_overflow_unittest.cc"
+        "num/u8_overflow_unittest.cc"
+        "num/u16_overflow_unittest.cc"
         "num/u32_overflow_unittest.cc"
+        "num/u64_overflow_unittest.cc"
+        "num/uptr_overflow_unittest.cc"
+        "num/usize_overflow_unittest.cc"
     )
 
     # Subspace test support

@@ -125,7 +125,7 @@ TEST(u32OverflowDeathTest, WrappingRemByZero) {
 #endif
 }
 
-TEST(u32OverflowDeathTest, ShlOverflow) { EXPECT_EQ(1_u32 << 33_u32, 2u); }
+TEST(u32OverflowDeathTest, ShlOverflow) { EXPECT_EQ(1_u32 << 33_u32, 2_u32); }
 
 TEST(u32OverflowDeathTest, ShrOverflow) {
   EXPECT_EQ(u32::MAX >> 33_u32, u32::MAX >> 1_u32);
