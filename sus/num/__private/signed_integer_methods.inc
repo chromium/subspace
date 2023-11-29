@@ -568,12 +568,12 @@ operator<=>(_self l, SignedPrimitiveInteger auto r) noexcept {
 
 /// Satisfies the [`Neg<@doc.self>`]($sus::num::Neg) concept.
 sus_pure constexpr inline _self operator-() const& noexcept {
-#if SUS_CHECK_INTEGER_OVERFLOW
-  ::sus::check(primitive_value != MIN_PRIMITIVE);
-  return __private::unchecked_neg(primitive_value);
-#else
-  return wrapping_neg();
-#endif
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    ::sus::check(primitive_value != MIN_PRIMITIVE);
+    return __private::unchecked_neg(primitive_value);
+  } else {
+    return wrapping_neg();
+  }
 }
 /// Satisfies the [`BitNot<@doc.self>`]($sus::num::BitNot) concept.
 sus_pure constexpr inline _self operator~() const& noexcept {
@@ -595,14 +595,14 @@ sus_pure constexpr inline _self operator~() const& noexcept {
 /// #[doc.overloads=signedint.+]
 [[nodiscard]] sus_pure_const friend constexpr inline _self operator+(
     _self l, _self r) noexcept {
-#if SUS_CHECK_INTEGER_OVERFLOW
-  const auto out =
-      __private::add_with_overflow(l.primitive_value, r.primitive_value);
-  ::sus::check(!out.overflow);
-  return out.value;
-#else
-  return l.wrapping_add(r);
-#endif
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::add_with_overflow(l.primitive_value, r.primitive_value);
+    ::sus::check(!out.overflow);
+    return out.value;
+  } else {
+    return l.wrapping_add(r);
+  }
 }
 /// #[doc.overloads=signedint.+]
 template <std::convertible_to<_self> U>
@@ -642,14 +642,14 @@ friend constexpr inline _self operator+(U l, _self r) noexcept = delete;
 /// #[doc.overloads=signedint.-]
 [[nodiscard]] sus_pure_const friend constexpr inline _self operator-(
     _self l, _self r) noexcept {
-#if SUS_CHECK_INTEGER_OVERFLOW
-  const auto out =
-      __private::sub_with_overflow(l.primitive_value, r.primitive_value);
-  ::sus::check(!out.overflow);
-  return out.value;
-#else
-  return l.wrapping_sub(r);
-#endif
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::sub_with_overflow(l.primitive_value, r.primitive_value);
+    ::sus::check(!out.overflow);
+    return out.value;
+  } else {
+    return l.wrapping_sub(r);
+  }
 }
 /// #[doc.overloads=signedint.-]
 template <std::convertible_to<_self> U>
@@ -689,14 +689,14 @@ friend constexpr inline _self operator-(U l, _self r) noexcept = delete;
 /// #[doc.overloads=signedint.*]
 [[nodiscard]] sus_pure_const friend constexpr inline _self operator*(
     _self l, _self r) noexcept {
-#if SUS_CHECK_INTEGER_OVERFLOW
-  const auto out =
-      __private::mul_with_overflow(l.primitive_value, r.primitive_value);
-  ::sus::check(!out.overflow);
-  return out.value;
-#else
-  return l.wrapping_mul(r);
-#endif
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::mul_with_overflow(l.primitive_value, r.primitive_value);
+    ::sus::check(!out.overflow);
+    return out.value;
+  } else {
+    return l.wrapping_mul(r);
+  }
 }
 /// #[doc.overloads=signedint.*]
 template <std::convertible_to<_self> U>
@@ -920,14 +920,14 @@ friend constexpr inline _self operator^(U l, _self r) noexcept = delete;
 /// This operator will panic on overflow when [overflow checks](
 /// $sus::num#overflow-behaviour) are enabled.
 constexpr inline void operator+=(_self r) & noexcept {
-#if SUS_CHECK_INTEGER_OVERFLOW
-  const auto out =
-      __private::add_with_overflow(primitive_value, r.primitive_value);
-  ::sus::check(!out.overflow);
-  primitive_value = out.value;
-#else
-  primitive_value = wrapping_add(r).primitive_value;
-#endif
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::add_with_overflow(primitive_value, r.primitive_value);
+    ::sus::check(!out.overflow);
+    primitive_value = out.value;
+  } else {
+    primitive_value = wrapping_add(r).primitive_value;
+  }
 }
 /// Satisfies the [`SubAssign<@doc.self>`]($sus::num::SubAssign) concept.
 ///
@@ -935,14 +935,14 @@ constexpr inline void operator+=(_self r) & noexcept {
 /// This operator will panic on overflow when [overflow checks](
 /// $sus::num#overflow-behaviour) are enabled.
 constexpr inline void operator-=(_self r) & noexcept {
-#if SUS_CHECK_INTEGER_OVERFLOW
-  const auto out =
-      __private::sub_with_overflow(primitive_value, r.primitive_value);
-  ::sus::check(!out.overflow);
-  primitive_value = out.value;
-#else
-  primitive_value = wrapping_sub(r).primitive_value;
-#endif
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::sub_with_overflow(primitive_value, r.primitive_value);
+    ::sus::check(!out.overflow);
+    primitive_value = out.value;
+  } else {
+    primitive_value = wrapping_sub(r).primitive_value;
+  }
 }
 /// Satisfies the [`MulAssign<@doc.self>`]($sus::num::MulAssign) concept.
 ///
@@ -950,14 +950,14 @@ constexpr inline void operator-=(_self r) & noexcept {
 /// This operator will panic on overflow when [overflow checks](
 /// $sus::num#overflow-behaviour) are enabled.
 constexpr inline void operator*=(_self r) & noexcept {
-#if SUS_CHECK_INTEGER_OVERFLOW
-  const auto out =
-      __private::mul_with_overflow(primitive_value, r.primitive_value);
-  ::sus::check(!out.overflow);
-  primitive_value = out.value;
-#else
-  primitive_value = wrapping_mul(r).primitive_value;
-#endif
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::mul_with_overflow(primitive_value, r.primitive_value);
+    ::sus::check(!out.overflow);
+    primitive_value = out.value;
+  } else {
+    primitive_value = wrapping_mul(r).primitive_value;
+  }
 }
 /// Satisfies the [`DivAssign<@doc.self>`]($sus::num::DivAssign) concept.
 ///
@@ -999,14 +999,14 @@ constexpr inline void operator^=(_self r) & noexcept {
 /// [`@doc.self::BITS`]($sus::num::@doc.self::BITS) and [overflow checks](
 /// $sus::num#overflow-behaviour) are enabled.
 constexpr inline void operator<<=(u64 r) & noexcept {
-#if SUS_CHECK_INTEGER_OVERFLOW
-  const auto out =
-      __private::shl_with_overflow(primitive_value, r.primitive_value);
-  ::sus::check(!out.overflow);
-  primitive_value = out.value;
-#else
-  primitive_value = wrapping_shl(r).primitive_value;
-#endif
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::shl_with_overflow(primitive_value, r.primitive_value);
+    ::sus::check(!out.overflow);
+    primitive_value = out.value;
+  } else {
+    primitive_value = wrapping_shl(r).primitive_value;
+  }
 }
 /// Satisfies the [`ShrAssign<@doc.self>`]($sus::num::ShrAssign) concept.
 ///
@@ -1017,14 +1017,14 @@ constexpr inline void operator<<=(u64 r) & noexcept {
 /// [`@doc.self::BITS`]($sus::num::@doc.self::BITS) and [overflow checks](
 /// $sus::num#overflow-behaviour) are enabled.
 constexpr inline void operator>>=(u64 r) & noexcept {
-#if SUS_CHECK_INTEGER_OVERFLOW
-  const auto out =
-      __private::shr_with_overflow(primitive_value, r.primitive_value);
-  ::sus::check(!out.overflow);
-  primitive_value = out.value;
-#else
-  primitive_value = wrapping_shr(r).primitive_value;
-#endif
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::shr_with_overflow(primitive_value, r.primitive_value);
+    ::sus::check(!out.overflow);
+    primitive_value = out.value;
+  } else {
+    primitive_value = wrapping_shr(r).primitive_value;
+  }
 }
 
 /// Computes the absolute value of itself.
@@ -1822,9 +1822,9 @@ sus_pure constexpr _self swap_bytes() const& noexcept {
 sus_pure constexpr inline _self pow(u32 rhs) const& noexcept {
   const auto out =
       __private::pow_with_overflow(primitive_value, rhs.primitive_value);
-#if SUS_CHECK_INTEGER_OVERFLOW
-  ::sus::check(!out.overflow);
-#endif
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    ::sus::check(!out.overflow);
+  }
   return out.value;
 }
 
