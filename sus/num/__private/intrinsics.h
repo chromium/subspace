@@ -460,6 +460,13 @@ sus_pure_const sus_always_inline constexpr T unchecked_shl(
 }
 
 template <class T>
+  requires(std::is_integral_v<T> && std::is_signed_v<T>)
+sus_pure_const sus_always_inline constexpr T unchecked_shl(
+    T x, uint64_t y) noexcept {
+  return static_cast<T>(MathType<T>{x} << y);
+}
+
+template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T>)
 sus_pure_const sus_always_inline constexpr T unchecked_shr(
     T x, uint64_t y) noexcept {
@@ -1080,9 +1087,8 @@ sus_pure_const inline constexpr OverflowOut<T> shl_with_overflow(
   const bool overflow = shift >= num_bits<T>();
   if (overflow) [[unlikely]]
     shift = shift & (unchecked_sub(num_bits<T>(), uint32_t{1}));
-  return OverflowOut sus_clang_bug_56394(<T>){
-      .overflow = overflow,
-      .value = into_signed(unchecked_shl(into_unsigned(x), shift))};
+  return OverflowOut sus_clang_bug_56394(<T>){.overflow = overflow,
+                                              .value = unchecked_shl(x, shift)};
 }
 
 template <class T>

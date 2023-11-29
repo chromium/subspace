@@ -1570,7 +1570,7 @@ sus_pure constexpr _self wrapping_rem_euclid(_self rhs) const& noexcept {
 /// Checked shift left. Computes `self << rhs`, returning `None` if `rhs` is
 /// larger than or equal to the number of bits in `self`.
 sus_pure constexpr ::sus::option::Option<_self> checked_shl(
-    u32 rhs) const& noexcept;
+    u64 rhs) const& noexcept;
 
 /// Shifts self left by `rhs` bits.
 ///
@@ -1579,7 +1579,7 @@ sus_pure constexpr ::sus::option::Option<_self> checked_shl(
 /// bits. If the shift value is too large, then value is masked by `(N-1)` where
 /// `N` is the number of bits, and this value is then used to perform the shift.
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_shl(
-    u32 rhs) const& noexcept;
+    u64 rhs) const& noexcept;
 
 /// Panic-free bitwise shift-left; yields `self << mask(rhs)`, where mask
 /// removes any high-order bits of `rhs` that would cause the shift to exceed
@@ -1591,15 +1591,12 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_shl(
 /// integer types all implement a [`rotate_left`](
 /// $sus::num::@doc.self::rotate_left) function, which may be what you
 /// want instead.
-sus_pure constexpr _self wrapping_shl(u32 rhs) const& noexcept {
-  return _self(
-      __private::shl_with_overflow(primitive_value, rhs.primitive_value).value);
-}
+sus_pure constexpr _self wrapping_shl(u64 rhs) const& noexcept;
 
 /// Checked shift right. Computes `self >> rhs`, returning `None` if `rhs` is
 /// larger than or equal to the number of bits in `self`.
 sus_pure constexpr ::sus::option::Option<_self> checked_shr(
-    u32 rhs) const& noexcept;
+    u64 rhs) const& noexcept;
 
 /// Shifts self right by `rhs` bits.
 ///
@@ -1609,7 +1606,7 @@ sus_pure constexpr ::sus::option::Option<_self> checked_shr(
 /// where `N` is the number of bits, and this value is then used to perform the
 /// shift.
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_shr(
-    u32 rhs) const& noexcept;
+    u64 rhs) const& noexcept;
 
 /// Panic-free bitwise shift-right; yields `self >> mask(rhs)`, where mask
 /// removes any high-order bits of `rhs` that would cause the shift to exceed
@@ -1621,10 +1618,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_shr(
 /// integer types all implement a [`rotate_right`](
 /// $sus::num::@doc.self::rotate_right) function, which may be what you
 /// want instead.
-sus_pure constexpr _self wrapping_shr(u32 rhs) const& noexcept {
-  return _self(
-      __private::shr_with_overflow(primitive_value, rhs.primitive_value).value);
-}
+sus_pure constexpr _self wrapping_shr(u64 rhs) const& noexcept;
 
 /// Checked integer subtraction. Computes `self - rhs`, returning `None` if
 /// overflow occurred.

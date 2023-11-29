@@ -672,7 +672,7 @@ TEST(i32DeathTest, Abs) {
   EXPECT_DEATH(
       {
         auto x = i32::MIN.abs();
-        EXPECT_GT(x, 0);
+        ensure_use(&x);
       },
       "");
 #endif

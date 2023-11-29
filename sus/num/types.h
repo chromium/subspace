@@ -39,9 +39,10 @@ namespace sus {
 /// The Subspace library numeric types can interoperate with primitive C++
 /// types, but are safer than primitive C++ types and eliminate many classes of
 /// bugs that often lead to security vulnerabilities:
-/// * Integer overflow is not allowed by default, and will
-///   [`panic`]($sus::assertions::panic) to terminate the
-///   program. Intentional overflow can be achieved through methods like
+/// * Integer overflow is not allowed by default (see [Overflow behaviour](
+///   #overflow-behaviour), and will [`panic`]($sus::assertions::panic)
+///   to terminate the program.
+///   Intentional overflow can be achieved through methods like
 ///   [`wrapping_add`]($sus::num::i32::wrapping_add) or
 ///   [`saturating_mul`]($sus::num::i32::saturating_mul). The
 ///   [`OverflowInteger`]($sus::num::OverflowInteger) type can be used for a
@@ -65,6 +66,19 @@ namespace sus {
 /// operations, such as [`abs`]($sus::num::i32::abs),
 /// [`pow`]($sus::num::i32::pow), [`log10`]($sus::num::i32::log10), or
 /// [`leading_ones`]($sus::num::i32::leading_ones).
+///
+/// # Overflow behaviour
+///
+/// The default build configuration will panic on integer overflow in arithmetic
+/// operations (`+`, `-`, `*`, `/`, etc). These checks can be disabled by
+/// defining `SUS_CHECK_INTEGER_OVERFLOW` to false during compilation. Both
+/// signed and unsigned integers will then overflow by performing wrapping
+/// operations. There is no Undefined Behaviour with signed or unsigned integers
+/// unless going through the unchecked operations explicitly, such as
+/// [`unchecked_add`]($sus::num::i32::unchecked_add).
+///
+/// Division by zero, or overflow in integer division will panic regardless of
+/// whether overflow checks are enabled.
 ///
 /// # Conversions
 ///
