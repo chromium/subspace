@@ -299,14 +299,12 @@ if(${SUBSPACE_BUILD_TESTS})
         "num/f64_unittest.cc"
         "num/i8_unittest.cc"
         "num/i16_unittest.cc"
-        "num/i32_overflow_unittest.cc"
         "num/i32_unittest.cc"
         "num/i64_unittest.cc"
         "num/isize_unittest.cc"
         "num/overflow_integer_unittest.cc"
         "num/u8_unittest.cc"
         "num/u16_unittest.cc"
-        "num/u32_overflow_unittest.cc"
         "num/u32_unittest.cc"
         "num/u64_unittest.cc"
         "num/uptr_unittest.cc"
@@ -328,6 +326,11 @@ if(${SUBSPACE_BUILD_TESTS})
         "tuple/tuple_unittest.cc"
     )
 
+    add_executable(subspace_overflow_unittests
+        "num/i32_overflow_unittest.cc"
+        "num/u32_overflow_unittest.cc"
+    )
+
     # Subspace test support
     subspace_test_default_compile_options(subspace_test_support)
     target_link_libraries(subspace_test_support subspace::lib)
@@ -339,7 +342,18 @@ if(${SUBSPACE_BUILD_TESTS})
         subspace::test_support
         gtest_main
     )
-
     gtest_discover_tests(subspace_unittests)
+
+    # Subspace overflow unittests
+    subspace_test_default_compile_options(subspace_overflow_unittests)
+    target_compile_options(subspace_overflow_unittests PUBLIC
+        -DSUS_CHECK_INTEGER_OVERFLOW=false
+    )
+    target_link_libraries(subspace_overflow_unittests
+        subspace::lib
+        subspace::test_support
+        gtest_main
+    )
+    gtest_discover_tests(subspace_overflow_unittests)
 endif()
 
