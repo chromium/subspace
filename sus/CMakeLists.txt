@@ -306,6 +306,7 @@ if(${SUBSPACE_BUILD_TESTS})
         "num/overflow_integer_unittest.cc"
         "num/u8_unittest.cc"
         "num/u16_unittest.cc"
+        "num/u32_overflow_unittest.cc"
         "num/u32_unittest.cc"
         "num/u64_unittest.cc"
         "num/uptr_unittest.cc"

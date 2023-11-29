@@ -705,8 +705,8 @@ sus_pure_const sus_always_inline constexpr T reverse_bits(T value) noexcept {
 
 template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T>)
-sus_pure_const inline constexpr T rotate_left(T value, uint32_t n) noexcept {
-  const uint32_t num_bits = unchecked_mul(unchecked_sizeof<T>(), uint32_t{8});
+sus_pure_const inline constexpr T rotate_left(T value, uint64_t n) noexcept {
+  const uint64_t num_bits = unchecked_mul(unchecked_sizeof<T>(), uint32_t{8});
   // Try avoid slow % operation if we can. Comparisons are much faster than %.
   if (n >= num_bits) n %= num_bits;
   if (n == 0) return value;
@@ -716,8 +716,8 @@ sus_pure_const inline constexpr T rotate_left(T value, uint32_t n) noexcept {
 
 template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T>)
-sus_pure_const inline constexpr T rotate_right(T value, uint32_t n) noexcept {
-  const uint32_t num_bits = unchecked_mul(unchecked_sizeof<T>(), uint32_t{8});
+sus_pure_const inline constexpr T rotate_right(T value, uint64_t n) noexcept {
+  const uint64_t num_bits = unchecked_mul(unchecked_sizeof<T>(), uint32_t{8});
   // Try avoid slow % operation if we can. Comparisons are much faster than %.
   if (n >= num_bits) n %= num_bits;
   if (n == 0) return value;

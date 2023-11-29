@@ -627,11 +627,15 @@ sus_pure constexpr inline _self operator~() const& noexcept {
 /// #[doc.overloads=unsignedint.+]
 [[nodiscard]] sus_pure_const friend constexpr inline _self operator+(
     _self l, _self r) noexcept {
-  const auto out =
-      __private::add_with_overflow(l.primitive_value, r.primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(!out.overflow);
-  return _self(out.value);
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::add_with_overflow(l.primitive_value, r.primitive_value);
+    ::sus::check(!out.overflow);
+    return _self(out.value);
+  } else {
+    return _self(
+        __private::unchecked_add(l.primitive_value, r.primitive_value));
+  }
 }
 #if _pointer
 /// #[doc.overloads=unsignedint.+]
@@ -689,11 +693,15 @@ friend constexpr inline _self operator+(U l, _self r) noexcept = delete;
 /// #[doc.overloads=unsignedint.-]
 [[nodiscard]] sus_pure_const friend constexpr inline _self operator-(
     _self l, _self r) noexcept {
-  const auto out =
-      __private::sub_with_overflow(l.primitive_value, r.primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(!out.overflow);
-  return _self(out.value);
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::sub_with_overflow(l.primitive_value, r.primitive_value);
+    ::sus::check(!out.overflow);
+    return _self(out.value);
+  } else {
+    return _self(
+        __private::unchecked_sub(l.primitive_value, r.primitive_value));
+  }
 }
 #if _pointer
 /// #[doc.overloads=unsignedint.-]
@@ -751,11 +759,15 @@ friend constexpr inline _self operator-(U l, _self r) noexcept = delete;
 /// #[doc.overloads=unsignedint.*]
 [[nodiscard]] sus_pure_const friend constexpr inline _self operator*(
     _self l, _self r) noexcept {
-  const auto out =
-      __private::mul_with_overflow(l.primitive_value, r.primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(!out.overflow);
-  return _self(out.value);
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::mul_with_overflow(l.primitive_value, r.primitive_value);
+    ::sus::check(!out.overflow);
+    return _self(out.value);
+  } else {
+    return _self(
+        __private::unchecked_mul(l.primitive_value, r.primitive_value));
+  }
 }
 #if _pointer
 /// #[doc.overloads=unsignedint.*]
@@ -813,7 +825,6 @@ friend constexpr inline _self operator*(U l, _self r) noexcept = delete;
 /// #[doc.overloads=unsignedint./]
 [[nodiscard]] sus_pure_const friend constexpr inline _self operator/(
     _self l, _self r) noexcept {
-  // TODO: Allow opting out of all overflow checks?
   ::sus::check(r.primitive_value != 0u);
   return _self(__private::unchecked_div(l.primitive_value, r.primitive_value));
 }
@@ -873,7 +884,6 @@ friend constexpr inline _self operator/(U l, _self r) noexcept = delete;
 /// #[doc.overloads=unsignedint.%]
 [[nodiscard]] sus_pure_const friend constexpr inline _self operator%(
     _self l, _self r) noexcept {
-  // TODO: Allow opting out of all overflow checks?
   ::sus::check(r.primitive_value != 0u);
   return _self(__private::unchecked_rem(l.primitive_value, r.primitive_value));
 }
@@ -1101,11 +1111,15 @@ friend constexpr inline _self operator^(U l, _self r) noexcept = delete;
 
 /// Satisfies the [`AddAssign<@doc.self>`]($sus::num::AddAssign) concept.
 constexpr inline void operator+=(_self r) & noexcept {
-  const auto out =
-      __private::add_with_overflow(primitive_value, r.primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(!out.overflow);
-  primitive_value = out.value;
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::add_with_overflow(primitive_value, r.primitive_value);
+    ::sus::check(!out.overflow);
+    primitive_value = out.value;
+  } else {
+    primitive_value =
+        __private::unchecked_add(primitive_value, r.primitive_value);
+  }
 }
 #if _pointer  // uptr can't be created from other safe numerics.
 constexpr inline void operator+=(_pointer_sized r) & noexcept {
@@ -1114,11 +1128,15 @@ constexpr inline void operator+=(_pointer_sized r) & noexcept {
 #endif
 /// Satisfies the [`SubAssign<@doc.self>`]($sus::num::SubAssign) concept.
 constexpr inline void operator-=(_self r) & noexcept {
-  const auto out =
-      __private::sub_with_overflow(primitive_value, r.primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(!out.overflow);
-  primitive_value = out.value;
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::sub_with_overflow(primitive_value, r.primitive_value);
+    ::sus::check(!out.overflow);
+    primitive_value = out.value;
+  } else {
+    primitive_value =
+        __private::unchecked_sub(primitive_value, r.primitive_value);
+  }
 }
 #if _pointer  // uptr can't be created from other safe numerics.
 constexpr inline void operator-=(_pointer_sized r) & noexcept {
@@ -1127,11 +1145,15 @@ constexpr inline void operator-=(_pointer_sized r) & noexcept {
 #endif
 /// Satisfies the [`MulAssign<@doc.self>`]($sus::num::MulAssign) concept.
 constexpr inline void operator*=(_self r) & noexcept {
-  const auto out =
-      __private::mul_with_overflow(primitive_value, r.primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(!out.overflow);
-  primitive_value = out.value;
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::mul_with_overflow(primitive_value, r.primitive_value);
+    ::sus::check(!out.overflow);
+    primitive_value = out.value;
+  } else {
+    primitive_value =
+        __private::unchecked_mul(primitive_value, r.primitive_value);
+  }
 }
 #if _pointer  // uptr can't be created from other safe numerics.
 constexpr inline void operator*=(_pointer_sized r) & noexcept {
@@ -1140,7 +1162,6 @@ constexpr inline void operator*=(_pointer_sized r) & noexcept {
 #endif
 /// Satisfies the [`DivAssign<@doc.self>`]($sus::num::DivAssign) concept.
 constexpr inline void operator/=(_self r) & noexcept {
-  // TODO: Allow opting out of all overflow checks?
   ::sus::check(r.primitive_value != 0u);
   primitive_value /= r.primitive_value;
 }
@@ -1151,7 +1172,6 @@ constexpr inline void operator/=(_pointer_sized r) & noexcept {
 #endif
 /// Satisfies the [`RemAssign<@doc.self>`]($sus::num::RemAssign) concept.
 constexpr inline void operator%=(_self r) & noexcept {
-  // TODO: Allow opting out of all overflow checks?
   ::sus::check(r.primitive_value != 0u);
   primitive_value %= r.primitive_value;
 }
@@ -1191,17 +1211,9 @@ constexpr inline void operator^=(_pointer_sized r) & noexcept {
 }
 #endif
 /// Satisfies the [`ShlAssign<@doc.self>`]($sus::num::ShlAssign) concept.
-constexpr inline void operator<<=(u32 r) & noexcept {
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(r < u32(__private::num_bits<_primitive>()));
-  primitive_value <<= r.primitive_value;
-}
+constexpr inline void operator<<=(u64 r) & noexcept;
 /// Satisfies the [`ShrAssign<@doc.self>`]($sus::num::ShrAssign) concept.
-constexpr inline void operator>>=(u32 r) & noexcept {
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(r < u32(__private::num_bits<_primitive>()));
-  primitive_value >>= r.primitive_value;
-}
+constexpr inline void operator>>=(u64 r) & noexcept;
 
 /// Computes the absolute difference between `self` and `other`.
 sus_pure constexpr _self abs_diff(_self other) const& noexcept {
@@ -1334,7 +1346,6 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_div(
 /// # Panics
 /// This function will panic if `rhs` is 0.
 sus_pure constexpr _self saturating_div(_self rhs) const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
   ::sus::check(rhs.primitive_value != 0u);
   return _self(__private::unchecked_div(primitive_value, rhs.primitive_value));
 }
@@ -1347,7 +1358,6 @@ sus_pure constexpr _self saturating_div(_self rhs) const& noexcept {
 /// # Panics
 /// This function will panic if `rhs` is 0.
 sus_pure constexpr _self wrapping_div(_self rhs) const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
   ::sus::check(rhs.primitive_value != 0u);
   return _self(__private::unchecked_div(primitive_value, rhs.primitive_value));
 }
@@ -1463,7 +1473,6 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_rem(
 /// # Panics
 /// This function will panic if `rhs` is 0.
 sus_pure constexpr _self wrapping_rem(_self rhs) const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
   ::sus::check(rhs.primitive_value != 0u);
   return _self(__private::unchecked_rem(primitive_value, rhs.primitive_value));
 }
@@ -1476,7 +1485,6 @@ sus_pure constexpr _self wrapping_rem(_self rhs) const& noexcept {
 /// # Panics
 /// This function will panic if `rhs` is 0.
 sus_pure constexpr _self div_euclid(_self rhs) const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
   ::sus::check(rhs.primitive_value != 0u);
   return _self(__private::unchecked_div(primitive_value, rhs.primitive_value));
 }
@@ -1512,7 +1520,6 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_div_euclid(
 /// # Panics
 /// This function will panic if `rhs` is 0.
 sus_pure constexpr _self wrapping_div_euclid(_self rhs) const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
   ::sus::check(rhs.primitive_value != 0u);
   return _self(__private::unchecked_div(primitive_value, rhs.primitive_value));
 }
@@ -1525,7 +1532,6 @@ sus_pure constexpr _self wrapping_div_euclid(_self rhs) const& noexcept {
 /// # Panics
 /// This function will panic if `rhs` is 0.
 sus_pure constexpr _self rem_euclid(_self rhs) const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
   ::sus::check(rhs.primitive_value != 0u);
   return _self(__private::unchecked_rem(primitive_value, rhs.primitive_value));
 }
@@ -1562,7 +1568,6 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_rem_euclid(
 /// # Panics
 /// This function will panic if `rhs` is 0.
 sus_pure constexpr _self wrapping_rem_euclid(_self rhs) const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
   ::sus::check(rhs.primitive_value != 0u);
   return _self(__private::unchecked_rem(primitive_value, rhs.primitive_value));
 }
@@ -1725,17 +1730,13 @@ sus_pure constexpr _self reverse_bits() const& noexcept {
 /// truncated bits to the end of the resulting integer.
 ///
 /// Please note this isn't the same operation as the `<<` shifting operator!
-sus_pure constexpr _self rotate_left(u32 n) const& noexcept {
-  return _self(__private::rotate_left(primitive_value, n.primitive_value));
-}
+sus_pure constexpr _self rotate_left(u64 n) const& noexcept;
 
 /// Shifts the bits to the right by a specified amount, n, wrapping the
 /// truncated bits to the beginning of the resulting integer.
 ///
 /// Please note this isn't the same operation as the >> shifting operator!
-sus_pure constexpr _self rotate_right(u32 n) const& noexcept {
-  return _self(__private::rotate_right(primitive_value, n.primitive_value));
-}
+sus_pure constexpr _self rotate_right(u64 n) const& noexcept;
 
 /// Reverses the byte order of the integer.
 sus_pure constexpr _self swap_bytes() const& noexcept {
@@ -1746,8 +1747,9 @@ sus_pure constexpr _self swap_bytes() const& noexcept {
 sus_pure constexpr _self pow(u32 rhs) const& noexcept {
   const auto out =
       __private::pow_with_overflow(primitive_value, rhs.primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(!out.overflow);
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    ::sus::check(!out.overflow);
+  }
   return _self(out.value);
 }
 
