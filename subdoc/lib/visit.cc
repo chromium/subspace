@@ -1048,6 +1048,14 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             .is_ctor = clang::isa<clang::CXXConstructorDecl>(decl),
             .is_dtor = clang::isa<clang::CXXDestructorDecl>(decl),
             .is_conversion = clang::isa<clang::CXXConversionDecl>(decl),
+            .is_explicit =
+                [](const clang::CXXConstructorDecl* ctor) {
+                  if (ctor) {
+                    return ctor->isExplicit();
+                  } else {
+                    return false;
+                  }
+                }(clang::dyn_cast<clang::CXXConstructorDecl>(decl)),
             .qualifier =
                 [mdecl]() {
                   switch (mdecl->getRefQualifier()) {
