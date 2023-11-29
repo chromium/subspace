@@ -1236,9 +1236,7 @@ template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
 sus_pure constexpr ::sus::option::Option<_self> checked_add(
-    U rhs) const& noexcept {
-  return checked_add(_self(_primitive{rhs}));
-}
+    U rhs) const& noexcept;
 #endif
 
 #if !_pointer
@@ -1263,9 +1261,7 @@ template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
 sus_pure constexpr sus::tuple_type::Tuple<_self, bool> overflowing_add(
-    U rhs) const& noexcept {
-  return overflowing_add(_self(_primitive{rhs}));
-}
+    U rhs) const& noexcept;
 #endif
 
 #if !_pointer
@@ -1378,9 +1374,7 @@ template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
 sus_pure constexpr ::sus::option::Option<_self> checked_div(
-    U rhs) const& noexcept {
-  return checked_div(_self(_primitive{rhs}));
-}
+    U rhs) const& noexcept;
 #endif
 
 /// Calculates the divisor when `self` is divided by `rhs`.
@@ -1399,9 +1393,7 @@ template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_div(
-    U rhs) const& noexcept {
-  return overflowing_div(_self(_primitive{rhs}));
-}
+    U rhs) const& noexcept;
 #endif
 
 /// Saturating integer division. Computes `self / rhs`, saturating at the
@@ -1456,9 +1448,7 @@ template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
 sus_pure constexpr ::sus::option::Option<_self> checked_mul(
-    U rhs) const& noexcept {
-  return checked_mul(_self(_primitive{rhs}));
-}
+    U rhs) const& noexcept;
 #endif
 
 /// Calculates the multiplication of `self` and `rhs`.
@@ -1474,9 +1464,7 @@ template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_mul(
-    U rhs) const& noexcept {
-  return overflowing_mul(_self(_primitive{rhs}));
-}
+    U rhs) const& noexcept;
 #endif
 
 /// Saturating integer multiplication. Computes `self * rhs`, saturating at the
@@ -1586,9 +1574,7 @@ template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
 sus_pure constexpr ::sus::option::Option<_self> checked_rem(
-    U rhs) const& noexcept {
-  return checked_rem(_self(_primitive{rhs}));
-}
+    U rhs) const& noexcept;
 #endif
 
 /// Calculates the remainder when `self` is divided by `rhs`.
@@ -1608,9 +1594,7 @@ template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_rem(
-    U rhs) const& noexcept {
-  return overflowing_rem(_self(_primitive{rhs}));
-}
+    U rhs) const& noexcept;
 #endif
 
 /// Wrapping (modular) remainder. Computes `self % rhs`. Wrapped remainder
@@ -1666,9 +1650,7 @@ template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
 sus_pure constexpr ::sus::option::Option<_self> checked_div_euclid(
-    U rhs) const& noexcept {
-  return checked_div_euclid(_self(_primitive{rhs}));
-}
+    U rhs) const& noexcept;
 #endif
 
 /// Calculates the quotient of Euclidean division `self.`[`div_euclid`](
@@ -1690,9 +1672,7 @@ template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_div_euclid(
-    U rhs) const& noexcept {
-  return overflowing_div_euclid(_self(_primitive{rhs}));
-}
+    U rhs) const& noexcept;
 #endif
 
 /// Wrapping Euclidean division. Computes `self.`[`div_euclid`](
@@ -1752,9 +1732,7 @@ template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
 sus_pure constexpr ::sus::option::Option<_self> checked_rem_euclid(
-    U rhs) const& noexcept {
-  return checked_rem_euclid(_self(_primitive{rhs}));
-}
+    U rhs) const& noexcept;
 #endif
 
 /// Calculates the remainder `self.`[`rem_euclid`](
@@ -1776,9 +1754,7 @@ template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_rem_euclid(
-    U rhs) const& noexcept {
-  return overflowing_rem_euclid(_self(_primitive{rhs}));
-}
+    U rhs) const& noexcept;
 #endif
 
 /// Wrapping Euclidean modulo. Computes `self.`[`rem_euclid`](
@@ -1868,9 +1844,7 @@ template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
 sus_pure constexpr ::sus::option::Option<_self> checked_sub(
-    U rhs) const& noexcept {
-  return checked_sub(_self(_primitive{rhs}));
-}
+    U rhs) const& noexcept;
 #endif
 
 /// Calculates `self - rhs`.
@@ -1886,9 +1860,7 @@ template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_sub(
-    U rhs) const& noexcept {
-  return overflowing_sub(_self(_primitive{rhs}));
-}
+    U rhs) const& noexcept;
 #endif
 
 /// Saturating integer subtraction. Computes `self - rhs`, saturating at the
@@ -2091,9 +2063,7 @@ template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
 sus_pure constexpr ::sus::option::Option<u32> checked_log(
-    U rhs) const& noexcept {
-  return checked_log(_self(_primitive{rhs}));
-}
+    U rhs) const& noexcept;
 #endif
 
 /// Returns the logarithm of the number with respect to an arbitrary base,
@@ -2113,9 +2083,7 @@ sus_pure constexpr u32 log(_self base) const& noexcept;
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr u32 log(U rhs) const& noexcept {
-  return log(_self(_primitive{rhs}));
-}
+sus_pure constexpr u32 log(U rhs) const& noexcept;
 #endif
 
 /// Returns `true` if and only if `self == 2^k` for some `k`.

@@ -169,6 +169,16 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_add(
     return ::sus::option::Option<_self>();
 }
 
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::option::Option<_self> _self::checked_add(
+    U rhs) const& noexcept {
+  return checked_add(_self(_primitive{rhs}));
+}
+#endif
+
 #if !_pointer  // No `_signed` for uptr.
 
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_add_signed(
@@ -189,6 +199,16 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_add(
       __private::add_with_overflow(primitive_value, rhs.primitive_value);
   return ::sus::tuple_type::Tuple<_self, bool>(_self(out.value), out.overflow);
 }
+
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr sus::tuple_type::Tuple<_self, bool> _self::overflowing_add(
+    U rhs) const& noexcept {
+  return overflowing_add(_self(_primitive{rhs}));
+}
+#endif
 
 #if !_pointer  // No `_signed` for uptr.
 
@@ -233,6 +253,16 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_div(
     return ::sus::option::Option<_self>();
 }
 
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::option::Option<_self> _self::checked_div(
+    U rhs) const& noexcept {
+  return checked_div(_self(_primitive{rhs}));
+}
+#endif
+
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_div(
     _self rhs) const& noexcept {
   ::sus::check(rhs.primitive_value != 0u);
@@ -240,6 +270,16 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_div(
       _self(__private::unchecked_div(primitive_value, rhs.primitive_value)),
       false);
 }
+
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_div(
+    U rhs) const& noexcept {
+  return overflowing_div(_self(_primitive{rhs}));
+}
+#endif
 
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_mul(
     _self rhs) const& noexcept {
@@ -251,12 +291,32 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_mul(
     return ::sus::option::Option<_self>();
 }
 
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::option::Option<_self> _self::checked_mul(
+    U rhs) const& noexcept {
+  return checked_mul(_self(_primitive{rhs}));
+}
+#endif
+
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_mul(
     _self rhs) const& noexcept {
   const auto out =
       __private::mul_with_overflow(primitive_value, rhs.primitive_value);
   return ::sus::tuple_type::Tuple<_self, bool>(_self(out.value), out.overflow);
 }
+
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_mul(
+    U rhs) const& noexcept {
+  return overflowing_mul(_self(_primitive{rhs}));
+}
+#endif
 
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_neg()
     const& noexcept {
@@ -281,6 +341,16 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_rem(
     return ::sus::option::Option<_self>();
 }
 
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::option::Option<_self> _self::checked_rem(
+    U rhs) const& noexcept {
+  return checked_rem(_self(_primitive{rhs}));
+}
+#endif
+
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_rem(
     _self rhs) const& noexcept {
   ::sus::check(rhs.primitive_value != 0u);
@@ -288,6 +358,16 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_rem(
       _self(__private::unchecked_rem(primitive_value, rhs.primitive_value)),
       false);
 }
+
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_rem(
+    U rhs) const& noexcept {
+  return overflowing_rem(_self(_primitive{rhs}));
+}
+#endif
 
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_div_euclid(
     _self rhs) const& noexcept {
@@ -299,6 +379,16 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_div_euclid(
   }
 }
 
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::option::Option<_self> _self::checked_div_euclid(
+    U rhs) const& noexcept {
+  return checked_div_euclid(_self(_primitive{rhs}));
+}
+#endif
+
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
 _self::overflowing_div_euclid(_self rhs) const& noexcept {
   ::sus::check(rhs.primitive_value != 0u);
@@ -306,6 +396,16 @@ _self::overflowing_div_euclid(_self rhs) const& noexcept {
       _self(__private::unchecked_div(primitive_value, rhs.primitive_value)),
       false);
 }
+
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+_self::overflowing_div_euclid(U rhs) const& noexcept {
+  return overflowing_div_euclid(_self(_primitive{rhs}));
+}
+#endif
 
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_rem_euclid(
     _self rhs) const& noexcept {
@@ -317,6 +417,16 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_rem_euclid(
   }
 }
 
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::option::Option<_self> _self::checked_rem_euclid(
+    U rhs) const& noexcept {
+  return checked_rem_euclid(_self(_primitive{rhs}));
+}
+#endif
+
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
 _self::overflowing_rem_euclid(_self rhs) const& noexcept {
   ::sus::check(rhs.primitive_value != 0u);
@@ -324,6 +434,16 @@ _self::overflowing_rem_euclid(_self rhs) const& noexcept {
       _self(__private::unchecked_rem(primitive_value, rhs.primitive_value)),
       false);
 }
+
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+_self::overflowing_rem_euclid(U rhs) const& noexcept {
+  return overflowing_rem_euclid(_self(_primitive{rhs}));
+}
+#endif
 
 constexpr inline void _self::operator<<=(u64 r) & noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
@@ -397,12 +517,32 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_sub(
     return ::sus::option::Option<_self>();
 }
 
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::option::Option<_self> _self::checked_sub(
+    U rhs) const& noexcept {
+  return checked_sub(_self(_primitive{rhs}));
+}
+#endif
+
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_sub(
     _self rhs) const& noexcept {
   const auto out =
       __private::sub_with_overflow(primitive_value, rhs.primitive_value);
   return ::sus::tuple_type::Tuple<_self, bool>(_self(out.value), out.overflow);
 }
+
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_sub(
+    U rhs) const& noexcept {
+  return overflowing_sub(_self(_primitive{rhs}));
+}
+#endif
 
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_pow(
     u32 rhs) const& noexcept {
@@ -476,10 +616,29 @@ sus_pure constexpr ::sus::option::Option<u32> _self::checked_log(
   }
 }
 
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::option::Option<u32> _self::checked_log(
+    U rhs) const& noexcept {
+  return checked_log(_self(_primitive{rhs}));
+}
+#endif
+
 sus_pure constexpr u32 _self::log(_self base) const& noexcept {
   return checked_log(base).expect(
       "argument of integer logarithm must be positive");
 }
+
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr u32 _self::log(U rhs) const& noexcept {
+  return log(_self(_primitive{rhs}));
+}
+#endif
 
 sus_pure constexpr ::sus::option::Option<_self>
 _self::checked_next_power_of_two() const& noexcept {
