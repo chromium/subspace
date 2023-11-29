@@ -1228,6 +1228,16 @@ sus_pure constexpr _self abs_diff(_self other) const& noexcept {
 sus_pure constexpr ::sus::option::Option<_self> checked_add(
     _self rhs) const& noexcept;
 
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::option::Option<_self> checked_add(
+    U rhs) const& noexcept {
+  return checked_add(_self(_primitive{rhs}));
+}
+#endif
+
 #if !_pointer
 
 /// Checked integer addition with a signed `rhs`. Computes `self + rhs`,
@@ -1244,6 +1254,16 @@ sus_pure constexpr ::sus::option::Option<_self> checked_add_signed(
 /// wrapped value is returned.
 sus_pure constexpr sus::tuple_type::Tuple<_self, bool> overflowing_add(
     _self rhs) const& noexcept;
+
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr sus::tuple_type::Tuple<_self, bool> overflowing_add(
+    U rhs) const& noexcept {
+  return overflowing_add(_self(_primitive{rhs}));
+}
+#endif
 
 #if !_pointer
 
@@ -1262,6 +1282,15 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_add_signed(
 sus_pure constexpr _self saturating_add(_self rhs) const& noexcept {
   return _self(__private::saturating_add(primitive_value, rhs.primitive_value));
 }
+
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr _self saturating_add(U rhs) const& noexcept {
+  return saturating_add(_self(_primitive{rhs}));
+}
+#endif
 
 #if !_pointer
 
@@ -1303,6 +1332,14 @@ sus_pure inline constexpr _self unchecked_add(::sus::marker::UnsafeFnMarker,
   return _self(__private::unchecked_add(primitive_value, rhs.primitive_value));
 }
 
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr _self unchecked_add(::sus::marker::UnsafeFnMarker,
+                                       U rhs) const& noexcept {
+  return _self(__private::unchecked_add(primitive_value, _primitive{rhs}));
+}
+
 #endif
 
 /// Wrapping (modular) addition. Computes `self + rhs`, wrapping around at the
@@ -1310,6 +1347,15 @@ sus_pure inline constexpr _self unchecked_add(::sus::marker::UnsafeFnMarker,
 sus_pure constexpr _self wrapping_add(_self rhs) const& noexcept {
   return _self(__private::wrapping_add(primitive_value, rhs.primitive_value));
 }
+
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr _self wrapping_add(U rhs) const& noexcept {
+  return wrapping_add(_self(_primitive{rhs}));
+}
+#endif
 
 #if !_pointer
 
@@ -1324,6 +1370,16 @@ sus_pure constexpr _self wrapping_add_signed(_signed rhs) const& noexcept;
 sus_pure constexpr ::sus::option::Option<_self> checked_div(
     _self rhs) const& noexcept;
 
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::option::Option<_self> checked_div(
+    U rhs) const& noexcept {
+  return checked_div(_self(_primitive{rhs}));
+}
+#endif
+
 /// Calculates the divisor when `self` is divided by `rhs`.
 ///
 /// Returns a tuple of the divisor along with a boolean indicating whether an
@@ -1334,6 +1390,16 @@ sus_pure constexpr ::sus::option::Option<_self> checked_div(
 /// This function will panic if `rhs` is 0.
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_div(
     _self rhs) const& noexcept;
+
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_div(
+    U rhs) const& noexcept {
+  return overflowing_div(_self(_primitive{rhs}));
+}
+#endif
 
 /// Saturating integer division. Computes `self / rhs`, saturating at the
 /// numeric bounds instead of overflowing. Note that for unsigned integers
@@ -1347,6 +1413,15 @@ sus_pure constexpr _self saturating_div(_self rhs) const& noexcept {
   return _self(__private::unchecked_div(primitive_value, rhs.primitive_value));
 }
 
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr _self saturating_div(U rhs) const& noexcept {
+  return saturating_div(_self(_primitive{rhs}));
+}
+#endif
+
 /// Wrapping (modular) division. Computes `self / rhs`. Wrapped division on
 /// unsigned types is just normal division. There's no way wrapping could ever
 /// happen. This function exists, so that all operations are accounted for in
@@ -1359,10 +1434,29 @@ sus_pure constexpr _self wrapping_div(_self rhs) const& noexcept {
   return _self(__private::unchecked_div(primitive_value, rhs.primitive_value));
 }
 
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr _self wrapping_div(U rhs) const& noexcept {
+  return wrapping_div(_self(_primitive{rhs}));
+}
+#endif
+
 /// Checked integer multiplication. Computes `self * rhs`, returning `None` if
 /// overflow occurred.
 sus_pure constexpr ::sus::option::Option<_self> checked_mul(
     _self rhs) const& noexcept;
+
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::option::Option<_self> checked_mul(
+    U rhs) const& noexcept {
+  return checked_mul(_self(_primitive{rhs}));
+}
+#endif
 
 /// Calculates the multiplication of `self` and `rhs`.
 ///
@@ -1372,11 +1466,30 @@ sus_pure constexpr ::sus::option::Option<_self> checked_mul(
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_mul(
     _self rhs) const& noexcept;
 
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_mul(
+    U rhs) const& noexcept {
+  return overflowing_mul(_self(_primitive{rhs}));
+}
+#endif
+
 /// Saturating integer multiplication. Computes `self * rhs`, saturating at the
 /// numeric bounds instead of overflowing.
 sus_pure constexpr _self saturating_mul(_self rhs) const& noexcept {
   return _self(__private::saturating_mul(primitive_value, rhs.primitive_value));
 }
+
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr _self saturating_mul(U rhs) const& noexcept {
+  return saturating_mul(_self(_primitive{rhs}));
+}
+#endif
 
 #if !_pointer
 
@@ -1410,6 +1523,13 @@ sus_pure constexpr _self unchecked_mul(::sus::marker::UnsafeFnMarker,
   return _self(__private::unchecked_mul(primitive_value, rhs.primitive_value));
 }
 
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr _self unchecked_mul(::sus::marker::UnsafeFnMarker,
+                                       U rhs) const& noexcept {
+  return _self(__private::unchecked_mul(primitive_value, _primitive{rhs}));
+}
 #endif
 
 /// Wrapping (modular) multiplication. Computes `self * rhs`, wrapping around
@@ -1417,6 +1537,15 @@ sus_pure constexpr _self unchecked_mul(::sus::marker::UnsafeFnMarker,
 sus_pure constexpr _self wrapping_mul(_self rhs) const& noexcept {
   return _self(__private::wrapping_mul(primitive_value, rhs.primitive_value));
 }
+
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr _self wrapping_mul(U rhs) const& noexcept {
+  return wrapping_mul(_self(_primitive{rhs}));
+}
+#endif
 
 /// Checked negation. Computes `-self`, returning None unless `self == 0`.
 ///
@@ -1449,6 +1578,16 @@ sus_pure constexpr _self wrapping_neg() const& noexcept {
 sus_pure constexpr ::sus::option::Option<_self> checked_rem(
     _self rhs) const& noexcept;
 
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::option::Option<_self> checked_rem(
+    U rhs) const& noexcept {
+  return checked_rem(_self(_primitive{rhs}));
+}
+#endif
+
 /// Calculates the remainder when `self` is divided by `rhs`.
 ///
 /// Returns a tuple of the remainder after dividing along with a boolean
@@ -1460,6 +1599,16 @@ sus_pure constexpr ::sus::option::Option<_self> checked_rem(
 /// This function will panic if `rhs` is 0.
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_rem(
     _self rhs) const& noexcept;
+
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_rem(
+    U rhs) const& noexcept {
+  return overflowing_rem(_self(_primitive{rhs}));
+}
+#endif
 
 /// Wrapping (modular) remainder. Computes `self % rhs`. Wrapped remainder
 /// calculation on unsigned types is just the regular remainder calculation.
@@ -1474,6 +1623,15 @@ sus_pure constexpr _self wrapping_rem(_self rhs) const& noexcept {
   return _self(__private::unchecked_rem(primitive_value, rhs.primitive_value));
 }
 
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr _self wrapping_rem(U rhs) const& noexcept {
+  return wrapping_rem(_self(_primitive{rhs}));
+}
+#endif
+
 /// Performs Euclidean division.
 ///
 /// Since, for the positive integers, all common definitions of division are
@@ -1486,10 +1644,29 @@ sus_pure constexpr _self div_euclid(_self rhs) const& noexcept {
   return _self(__private::unchecked_div(primitive_value, rhs.primitive_value));
 }
 
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr _self div_euclid(U rhs) const& noexcept {
+  return div_euclid(_self(_primitive{rhs}));
+}
+#endif
+
 /// Checked Euclidean division. Computes `self.`[`div_euclid`](
 /// $sus::num::@doc.self::div_euclid)`(rhs)`, returning `None` if `rhs == 0`.
 sus_pure constexpr ::sus::option::Option<_self> checked_div_euclid(
     _self rhs) const& noexcept;
+
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::option::Option<_self> checked_div_euclid(
+    U rhs) const& noexcept {
+  return checked_div_euclid(_self(_primitive{rhs}));
+}
+#endif
 
 /// Calculates the quotient of Euclidean division `self.`[`div_euclid`](
 /// $sus::num::@doc.self::div_euclid)`(rhs)`.
@@ -1504,6 +1681,16 @@ sus_pure constexpr ::sus::option::Option<_self> checked_div_euclid(
 /// This function will panic if `rhs` is 0.
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_div_euclid(
     _self rhs) const& noexcept;
+
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_div_euclid(
+    U rhs) const& noexcept {
+  return overflowing_div_euclid(_self(_primitive{rhs}));
+}
+#endif
 
 /// Wrapping Euclidean division. Computes `self.`[`div_euclid`](
 /// $sus::num::@doc.self::div_euclid)`(rhs)`. Wrapped division
@@ -1521,6 +1708,15 @@ sus_pure constexpr _self wrapping_div_euclid(_self rhs) const& noexcept {
   return _self(__private::unchecked_div(primitive_value, rhs.primitive_value));
 }
 
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr _self wrapping_div_euclid(U rhs) const& noexcept {
+  return wrapping_div_euclid(_self(_primitive{rhs}));
+}
+#endif
+
 /// Calculates the least remainder of `self` (mod `rhs`).
 ///
 /// Since, for the positive integers, all common definitions of division are
@@ -1533,11 +1729,30 @@ sus_pure constexpr _self rem_euclid(_self rhs) const& noexcept {
   return _self(__private::unchecked_rem(primitive_value, rhs.primitive_value));
 }
 
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr _self rem_euclid(U rhs) const& noexcept {
+  return rem_euclid(_self(_primitive{rhs}));
+}
+#endif
+
 /// Checked Euclidean modulo. Computes `self.`[`rem_euclid`](
 /// $sus::num::@doc.self::rem_euclid)`(rhs)`, returning `None` if
 /// `rhs == 0`.
 sus_pure constexpr ::sus::option::Option<_self> checked_rem_euclid(
     _self rhs) const& noexcept;
+
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::option::Option<_self> checked_rem_euclid(
+    U rhs) const& noexcept {
+  return checked_rem_euclid(_self(_primitive{rhs}));
+}
+#endif
 
 /// Calculates the remainder `self.`[`rem_euclid`](
 /// $sus::num::@doc.self::rem_euclid)`(rhs)` as if by Euclidean division.
@@ -1552,6 +1767,16 @@ sus_pure constexpr ::sus::option::Option<_self> checked_rem_euclid(
 /// This function will panic if `rhs` is 0.
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_rem_euclid(
     _self rhs) const& noexcept;
+
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_rem_euclid(
+    U rhs) const& noexcept {
+  return overflowing_rem_euclid(_self(_primitive{rhs}));
+}
+#endif
 
 /// Wrapping Euclidean modulo. Computes `self.`[`rem_euclid`](
 /// $sus::num::@doc.self::rem_euclid)`(rhs)`. Wrapped modulo
@@ -1568,6 +1793,15 @@ sus_pure constexpr _self wrapping_rem_euclid(_self rhs) const& noexcept {
   ::sus::check(rhs.primitive_value != 0u);
   return _self(__private::unchecked_rem(primitive_value, rhs.primitive_value));
 }
+
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr _self wrapping_rem_euclid(U rhs) const& noexcept {
+  return wrapping_rem_euclid(_self(_primitive{rhs}));
+}
+#endif
 
 /// Checked shift left. Computes `self << rhs`, returning `None` if `rhs` is
 /// larger than or equal to the number of bits in `self`.
@@ -1626,6 +1860,16 @@ sus_pure constexpr _self wrapping_shr(u64 rhs) const& noexcept;
 /// overflow occurred.
 sus_pure constexpr ::sus::option::Option<_self> checked_sub(_self rhs) const&;
 
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::option::Option<_self> checked_sub(
+    U rhs) const& noexcept {
+  return checked_sub(_self(_primitive{rhs}));
+}
+#endif
+
 /// Calculates `self - rhs`.
 ///
 /// Returns a tuple of the subtraction along with a boolean indicating whether
@@ -1634,11 +1878,30 @@ sus_pure constexpr ::sus::option::Option<_self> checked_sub(_self rhs) const&;
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_sub(
     _self rhs) const& noexcept;
 
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_sub(
+    U rhs) const& noexcept {
+  return overflowing_sub(_self(_primitive{rhs}));
+}
+#endif
+
 /// Saturating integer subtraction. Computes `self - rhs`, saturating at the
 /// numeric bounds instead of overflowing.
 sus_pure constexpr _self saturating_sub(_self rhs) const& {
   return _self(__private::saturating_sub(primitive_value, rhs.primitive_value));
 }
+
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr _self saturating_sub(U rhs) const& noexcept {
+  return saturating_sub(_self(_primitive{rhs}));
+}
+#endif
 
 #if !_pointer
 
@@ -1672,6 +1935,14 @@ sus_pure constexpr _self unchecked_sub(::sus::marker::UnsafeFnMarker,
   return _self(__private::unchecked_sub(primitive_value, rhs.primitive_value));
 }
 
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr _self unchecked_sub(::sus::marker::UnsafeFnMarker,
+                                       U rhs) const& noexcept {
+  return _self(__private::unchecked_sub(primitive_value, _primitive{rhs}));
+}
+
 #endif
 
 /// Wrapping (modular) subtraction. Computes `self - rhs`, wrapping around at
@@ -1679,6 +1950,15 @@ sus_pure constexpr _self unchecked_sub(::sus::marker::UnsafeFnMarker,
 sus_pure constexpr _self wrapping_sub(_self rhs) const& noexcept {
   return _self(__private::wrapping_sub(primitive_value, rhs.primitive_value));
 }
+
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr _self wrapping_sub(U rhs) const& noexcept {
+  return wrapping_sub(_self(_primitive{rhs}));
+}
+#endif
 
 /// Returns the number of ones in the binary representation of the current
 /// value.
@@ -1803,6 +2083,16 @@ sus_pure constexpr u32 log10() const& noexcept;
 sus_pure constexpr ::sus::option::Option<u32> checked_log(
     _self base) const& noexcept;
 
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::option::Option<u32> checked_log(
+    U rhs) const& noexcept {
+  return checked_log(_self(_primitive{rhs}));
+}
+#endif
+
 /// Returns the logarithm of the number with respect to an arbitrary base,
 /// rounded down.
 ///
@@ -1815,6 +2105,15 @@ sus_pure constexpr ::sus::option::Option<u32> checked_log(
 /// When the number is zero, or if the base is not at least 2, the function will
 /// panic.
 sus_pure constexpr u32 log(_self base) const& noexcept;
+
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr u32 log(U rhs) const& noexcept {
+  return log(_self(_primitive{rhs}));
+}
+#endif
 
 /// Returns `true` if and only if `self == 2^k` for some `k`.
 sus_pure constexpr bool is_power_of_two() const& noexcept {

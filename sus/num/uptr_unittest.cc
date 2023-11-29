@@ -15,14 +15,14 @@
 #include <type_traits>
 
 #include "googletest/include/gtest/gtest.h"
+#include "sus/cmp/eq.h"
+#include "sus/cmp/ord.h"
 #include "sus/collections/array.h"
 #include "sus/construct/into.h"
 #include "sus/iter/__private/step.h"
 #include "sus/num/num_concepts.h"
 #include "sus/num/signed_integer.h"
 #include "sus/num/unsigned_integer.h"
-#include "sus/cmp/eq.h"
-#include "sus/cmp/ord.h"
 #include "sus/prelude.h"
 #include "sus/tuple/tuple.h"
 
@@ -414,10 +414,8 @@ TEST(uptr, Operators) {
   static_assert(CanOperator<uptr, u8>);
   static_assert(CanOperator<uptr, u16>);
   static_assert(CanOperator<uptr, u32>);
-  static_assert(!(sizeof(uptr) >= sizeof(u64)) ||
-                CanOperator<uptr, u64>);
-  static_assert(!(sizeof(uptr) < sizeof(u64)) ||
-                CantOperator<uptr, u64>);
+  static_assert(!(sizeof(uptr) >= sizeof(u64)) || CanOperator<uptr, u64>);
+  static_assert(!(sizeof(uptr) < sizeof(u64)) || CantOperator<uptr, u64>);
 
   static_assert(CantOperator<uptr, i8>);
   static_assert(CantOperator<uptr, i16>);
@@ -758,6 +756,322 @@ TEST(uptr, PointerArithmetic) {
   EXPECT_EQ(*p, 3);
   p = (p -= 1_usize) - 1_usize;
   EXPECT_EQ(*p, 1);
+}
+
+// uptr can't convert from smaller integers, unlike other integer types. So it
+// needs special overloads to do arithmetic with them.
+TEST(uptr, ArithemticWithSmallerIntegers) {
+  const auto i = uptr().with_addr(11u);
+  const auto p = uint16_t{11u};
+  const auto u = 11_u16;
+
+  static_assert(std::same_as<uptr, decltype(i + i)>);
+  static_assert(std::same_as<uptr, decltype(i + p)>);
+  static_assert(std::same_as<uptr, decltype(i + u)>);
+  static_assert(std::same_as<uptr, decltype(p + i)>);
+  static_assert(std::same_as<uptr, decltype(u + i)>);
+  EXPECT_EQ(i + p, i + i);
+  EXPECT_EQ(i + u, i + i);
+  EXPECT_EQ(p + i, i + i);
+  EXPECT_EQ(u + i, i + i);
+
+  static_assert(std::same_as<Option<uptr>, decltype(i.checked_add(i))>);
+  static_assert(std::same_as<Option<uptr>, decltype(i.checked_add(p))>);
+  static_assert(std::same_as<Option<uptr>, decltype(i.checked_add(u))>);
+  EXPECT_EQ(i.checked_add(p), i.checked_add(i));
+  EXPECT_EQ(i.checked_add(u), i.checked_add(i));
+
+  static_assert(
+      std::same_as<Tuple<uptr, bool>, decltype(i.overflowing_add(i))>);
+  static_assert(
+      std::same_as<Tuple<uptr, bool>, decltype(i.overflowing_add(p))>);
+  static_assert(
+      std::same_as<Tuple<uptr, bool>, decltype(i.overflowing_add(u))>);
+  EXPECT_EQ(i.overflowing_add(p), i.overflowing_add(i));
+  EXPECT_EQ(i.overflowing_add(u), i.overflowing_add(i));
+
+  static_assert(std::same_as<uptr, decltype(i.saturating_add(i))>);
+  static_assert(std::same_as<uptr, decltype(i.saturating_add(p))>);
+  static_assert(std::same_as<uptr, decltype(i.saturating_add(u))>);
+  EXPECT_EQ(i.saturating_add(p), i.saturating_add(i));
+  EXPECT_EQ(i.saturating_add(u), i.saturating_add(i));
+
+  static_assert(std::same_as<uptr, decltype(i.unchecked_add(unsafe_fn, i))>);
+  static_assert(std::same_as<uptr, decltype(i.unchecked_add(unsafe_fn, p))>);
+  static_assert(std::same_as<uptr, decltype(i.unchecked_add(unsafe_fn, u))>);
+  EXPECT_EQ(i.unchecked_add(unsafe_fn, p), i.unchecked_add(unsafe_fn, i));
+  EXPECT_EQ(i.unchecked_add(unsafe_fn, u), i.unchecked_add(unsafe_fn, i));
+
+  static_assert(std::same_as<uptr, decltype(i.wrapping_add(i))>);
+  static_assert(std::same_as<uptr, decltype(i.wrapping_add(p))>);
+  static_assert(std::same_as<uptr, decltype(i.wrapping_add(u))>);
+  EXPECT_EQ(i.wrapping_add(p), i.wrapping_add(i));
+  EXPECT_EQ(i.wrapping_add(u), i.wrapping_add(i));
+
+  static_assert(std::same_as<uptr, decltype(i / i)>);
+  static_assert(std::same_as<uptr, decltype(i / p)>);
+  static_assert(std::same_as<uptr, decltype(i / u)>);
+  static_assert(std::same_as<uptr, decltype(p / i)>);
+  static_assert(std::same_as<uptr, decltype(u / i)>);
+  EXPECT_EQ(i / p, i / i);
+  EXPECT_EQ(i / u, i / i);
+  EXPECT_EQ(p / i, i / i);
+  EXPECT_EQ(u / i, i / i);
+
+  static_assert(std::same_as<Option<uptr>, decltype(i.checked_div(i))>);
+  static_assert(std::same_as<Option<uptr>, decltype(i.checked_div(p))>);
+  static_assert(std::same_as<Option<uptr>, decltype(i.checked_div(u))>);
+  EXPECT_EQ(i.checked_div(p), i.checked_div(i));
+  EXPECT_EQ(i.checked_div(u), i.checked_div(i));
+
+  static_assert(
+      std::same_as<Tuple<uptr, bool>, decltype(i.overflowing_div(i))>);
+  static_assert(
+      std::same_as<Tuple<uptr, bool>, decltype(i.overflowing_div(p))>);
+  static_assert(
+      std::same_as<Tuple<uptr, bool>, decltype(i.overflowing_div(u))>);
+  EXPECT_EQ(i.overflowing_div(p), i.overflowing_div(i));
+  EXPECT_EQ(i.overflowing_div(u), i.overflowing_div(i));
+
+  static_assert(std::same_as<uptr, decltype(i.saturating_div(i))>);
+  static_assert(std::same_as<uptr, decltype(i.saturating_div(p))>);
+  static_assert(std::same_as<uptr, decltype(i.saturating_div(u))>);
+  EXPECT_EQ(i.saturating_div(p), i.saturating_div(i));
+  EXPECT_EQ(i.saturating_div(u), i.saturating_div(i));
+
+  // No unchecked_div.
+
+  static_assert(std::same_as<uptr, decltype(i.wrapping_div(i))>);
+  static_assert(std::same_as<uptr, decltype(i.wrapping_div(p))>);
+  static_assert(std::same_as<uptr, decltype(i.wrapping_div(u))>);
+  EXPECT_EQ(i.wrapping_div(p), i.wrapping_div(i));
+  EXPECT_EQ(i.wrapping_div(u), i.wrapping_div(i));
+
+  static_assert(std::same_as<uptr, decltype(i * i)>);
+  static_assert(std::same_as<uptr, decltype(i * p)>);
+  static_assert(std::same_as<uptr, decltype(i * u)>);
+  static_assert(std::same_as<uptr, decltype(p * i)>);
+  static_assert(std::same_as<uptr, decltype(u * i)>);
+  EXPECT_EQ(i * p, i * i);
+  EXPECT_EQ(i * u, i * i);
+  EXPECT_EQ(p * i, i * i);
+  EXPECT_EQ(u * i, i * i);
+
+  static_assert(std::same_as<Option<uptr>, decltype(i.checked_mul(i))>);
+  static_assert(std::same_as<Option<uptr>, decltype(i.checked_mul(p))>);
+  static_assert(std::same_as<Option<uptr>, decltype(i.checked_mul(u))>);
+  EXPECT_EQ(i.checked_mul(p), i.checked_mul(i));
+  EXPECT_EQ(i.checked_mul(u), i.checked_mul(i));
+
+  static_assert(
+      std::same_as<Tuple<uptr, bool>, decltype(i.overflowing_mul(i))>);
+  static_assert(
+      std::same_as<Tuple<uptr, bool>, decltype(i.overflowing_mul(p))>);
+  static_assert(
+      std::same_as<Tuple<uptr, bool>, decltype(i.overflowing_mul(u))>);
+  EXPECT_EQ(i.overflowing_mul(p), i.overflowing_mul(i));
+  EXPECT_EQ(i.overflowing_mul(u), i.overflowing_mul(i));
+
+  static_assert(std::same_as<uptr, decltype(i.saturating_mul(i))>);
+  static_assert(std::same_as<uptr, decltype(i.saturating_mul(p))>);
+  static_assert(std::same_as<uptr, decltype(i.saturating_mul(u))>);
+  EXPECT_EQ(i.saturating_mul(p), i.saturating_mul(i));
+  EXPECT_EQ(i.saturating_mul(u), i.saturating_mul(i));
+
+  static_assert(std::same_as<uptr, decltype(i.unchecked_mul(unsafe_fn, i))>);
+  static_assert(std::same_as<uptr, decltype(i.unchecked_mul(unsafe_fn, p))>);
+  static_assert(std::same_as<uptr, decltype(i.unchecked_mul(unsafe_fn, u))>);
+  EXPECT_EQ(i.unchecked_mul(unsafe_fn, p), i.unchecked_mul(unsafe_fn, i));
+  EXPECT_EQ(i.unchecked_mul(unsafe_fn, u), i.unchecked_mul(unsafe_fn, i));
+
+  static_assert(std::same_as<uptr, decltype(i.wrapping_mul(i))>);
+  static_assert(std::same_as<uptr, decltype(i.wrapping_mul(p))>);
+  static_assert(std::same_as<uptr, decltype(i.wrapping_mul(u))>);
+  EXPECT_EQ(i.wrapping_mul(p), i.wrapping_mul(i));
+  EXPECT_EQ(i.wrapping_mul(u), i.wrapping_mul(i));
+
+  static_assert(std::same_as<uptr, decltype(i % i)>);
+  static_assert(std::same_as<uptr, decltype(i % p)>);
+  static_assert(std::same_as<uptr, decltype(i % u)>);
+  static_assert(std::same_as<uptr, decltype(p % i)>);
+  static_assert(std::same_as<uptr, decltype(u % i)>);
+  EXPECT_EQ(i % p, i % i);
+  EXPECT_EQ(i % u, i % i);
+  EXPECT_EQ(p % i, i % i);
+  EXPECT_EQ(u % i, i % i);
+
+  static_assert(std::same_as<Option<uptr>, decltype(i.checked_rem(i))>);
+  static_assert(std::same_as<Option<uptr>, decltype(i.checked_rem(p))>);
+  static_assert(std::same_as<Option<uptr>, decltype(i.checked_rem(u))>);
+  EXPECT_EQ(i.checked_rem(p), i.checked_rem(i));
+  EXPECT_EQ(i.checked_rem(u), i.checked_rem(i));
+
+  static_assert(
+      std::same_as<Tuple<uptr, bool>, decltype(i.overflowing_rem(i))>);
+  static_assert(
+      std::same_as<Tuple<uptr, bool>, decltype(i.overflowing_rem(p))>);
+  static_assert(
+      std::same_as<Tuple<uptr, bool>, decltype(i.overflowing_rem(u))>);
+  EXPECT_EQ(i.overflowing_rem(p), i.overflowing_rem(i));
+  EXPECT_EQ(i.overflowing_rem(u), i.overflowing_rem(i));
+
+  // No saturating_rem.
+
+  // No unchecked_rem.
+
+  static_assert(std::same_as<uptr, decltype(i.wrapping_rem(i))>);
+  static_assert(std::same_as<uptr, decltype(i.wrapping_rem(p))>);
+  static_assert(std::same_as<uptr, decltype(i.wrapping_rem(u))>);
+  EXPECT_EQ(i.wrapping_rem(p), i.wrapping_rem(i));
+  EXPECT_EQ(i.wrapping_rem(u), i.wrapping_rem(i));
+
+  static_assert(std::same_as<uptr, decltype(i << i)>);
+  static_assert(std::same_as<uptr, decltype(i - p)>);
+  static_assert(std::same_as<uptr, decltype(i - u)>);
+  static_assert(std::same_as<uptr, decltype(p - i)>);
+  static_assert(std::same_as<uptr, decltype(u - i)>);
+  EXPECT_EQ(i - p, i - i);
+  EXPECT_EQ(i - u, i - i);
+  EXPECT_EQ(p - i, i - i);
+  EXPECT_EQ(u - i, i - i);
+
+  static_assert(std::same_as<Option<uptr>, decltype(i.checked_sub(i))>);
+  static_assert(std::same_as<Option<uptr>, decltype(i.checked_sub(p))>);
+  static_assert(std::same_as<Option<uptr>, decltype(i.checked_sub(u))>);
+  EXPECT_EQ(i.checked_sub(p), i.checked_sub(i));
+  EXPECT_EQ(i.checked_sub(u), i.checked_sub(i));
+
+  static_assert(
+      std::same_as<Tuple<uptr, bool>, decltype(i.overflowing_sub(i))>);
+  static_assert(
+      std::same_as<Tuple<uptr, bool>, decltype(i.overflowing_sub(p))>);
+  static_assert(
+      std::same_as<Tuple<uptr, bool>, decltype(i.overflowing_sub(u))>);
+  EXPECT_EQ(i.overflowing_sub(p), i.overflowing_sub(i));
+  EXPECT_EQ(i.overflowing_sub(u), i.overflowing_sub(i));
+
+  static_assert(std::same_as<uptr, decltype(i.saturating_sub(i))>);
+  static_assert(std::same_as<uptr, decltype(i.saturating_sub(p))>);
+  static_assert(std::same_as<uptr, decltype(i.saturating_sub(u))>);
+  EXPECT_EQ(i.saturating_sub(p), i.saturating_sub(i));
+  EXPECT_EQ(i.saturating_sub(u), i.saturating_sub(i));
+
+  static_assert(std::same_as<uptr, decltype(i.unchecked_sub(unsafe_fn, i))>);
+  static_assert(std::same_as<uptr, decltype(i.unchecked_sub(unsafe_fn, p))>);
+  static_assert(std::same_as<uptr, decltype(i.unchecked_sub(unsafe_fn, u))>);
+  EXPECT_EQ(i.unchecked_sub(unsafe_fn, p), i.unchecked_sub(unsafe_fn, i));
+  EXPECT_EQ(i.unchecked_sub(unsafe_fn, u), i.unchecked_sub(unsafe_fn, i));
+
+  static_assert(std::same_as<uptr, decltype(i.wrapping_sub(i))>);
+  static_assert(std::same_as<uptr, decltype(i.wrapping_sub(p))>);
+  static_assert(std::same_as<uptr, decltype(i.wrapping_sub(u))>);
+  EXPECT_EQ(i.wrapping_sub(p), i.wrapping_sub(i));
+  EXPECT_EQ(i.wrapping_sub(u), i.wrapping_sub(i));
+
+  static_assert(std::same_as<uptr, decltype(i - i)>);
+  static_assert(std::same_as<uptr, decltype(i - p)>);
+  static_assert(std::same_as<uptr, decltype(i - u)>);
+  static_assert(std::same_as<uptr, decltype(p - i)>);
+  static_assert(std::same_as<uptr, decltype(u - i)>);
+  EXPECT_EQ(i - p, i - i);
+  EXPECT_EQ(i - u, i - i);
+  EXPECT_EQ(p - i, i - i);
+  EXPECT_EQ(u - i, i - i);
+
+  static_assert(std::same_as<Option<uptr>, decltype(i.checked_sub(i))>);
+  static_assert(std::same_as<Option<uptr>, decltype(i.checked_sub(p))>);
+  static_assert(std::same_as<Option<uptr>, decltype(i.checked_sub(u))>);
+  EXPECT_EQ(i.checked_sub(p), i.checked_sub(i));
+  EXPECT_EQ(i.checked_sub(u), i.checked_sub(i));
+
+  static_assert(
+      std::same_as<Tuple<uptr, bool>, decltype(i.overflowing_sub(i))>);
+  static_assert(
+      std::same_as<Tuple<uptr, bool>, decltype(i.overflowing_sub(p))>);
+  static_assert(
+      std::same_as<Tuple<uptr, bool>, decltype(i.overflowing_sub(u))>);
+  EXPECT_EQ(i.overflowing_sub(p), i.overflowing_sub(i));
+  EXPECT_EQ(i.overflowing_sub(u), i.overflowing_sub(i));
+
+  static_assert(std::same_as<uptr, decltype(i.saturating_sub(i))>);
+  static_assert(std::same_as<uptr, decltype(i.saturating_sub(p))>);
+  static_assert(std::same_as<uptr, decltype(i.saturating_sub(u))>);
+  EXPECT_EQ(i.saturating_sub(p), i.saturating_sub(i));
+  EXPECT_EQ(i.saturating_sub(u), i.saturating_sub(i));
+
+  static_assert(std::same_as<uptr, decltype(i.unchecked_sub(unsafe_fn, i))>);
+  static_assert(std::same_as<uptr, decltype(i.unchecked_sub(unsafe_fn, p))>);
+  static_assert(std::same_as<uptr, decltype(i.unchecked_sub(unsafe_fn, u))>);
+  EXPECT_EQ(i.unchecked_sub(unsafe_fn, p), i.unchecked_sub(unsafe_fn, i));
+  EXPECT_EQ(i.unchecked_sub(unsafe_fn, u), i.unchecked_sub(unsafe_fn, i));
+
+  static_assert(std::same_as<uptr, decltype(i.wrapping_sub(i))>);
+  static_assert(std::same_as<uptr, decltype(i.wrapping_sub(p))>);
+  static_assert(std::same_as<uptr, decltype(i.wrapping_sub(u))>);
+  EXPECT_EQ(i.wrapping_sub(p), i.wrapping_sub(i));
+  EXPECT_EQ(i.wrapping_sub(u), i.wrapping_sub(i));
+
+  // Euclidean math.
+
+  static_assert(std::same_as<uptr, decltype(i.div_euclid(i))>);
+  static_assert(std::same_as<uptr, decltype(i.div_euclid(p))>);
+  static_assert(std::same_as<uptr, decltype(i.div_euclid(u))>);
+  EXPECT_EQ(i.div_euclid(p), i.div_euclid(i));
+  EXPECT_EQ(i.div_euclid(u), i.div_euclid(i));
+  static_assert(std::same_as<Option<uptr>, decltype(i.checked_div_euclid(i))>);
+  static_assert(std::same_as<Option<uptr>, decltype(i.checked_div_euclid(p))>);
+  static_assert(std::same_as<Option<uptr>, decltype(i.checked_div_euclid(u))>);
+  EXPECT_EQ(i.checked_div_euclid(p), i.checked_div_euclid(i));
+  EXPECT_EQ(i.checked_div_euclid(u), i.checked_div_euclid(i));
+  static_assert(
+      std::same_as<Tuple<uptr, bool>, decltype(i.overflowing_div_euclid(i))>);
+  static_assert(
+      std::same_as<Tuple<uptr, bool>, decltype(i.overflowing_div_euclid(p))>);
+  static_assert(
+      std::same_as<Tuple<uptr, bool>, decltype(i.overflowing_div_euclid(u))>);
+  EXPECT_EQ(i.overflowing_div_euclid(p), i.overflowing_div_euclid(i));
+  EXPECT_EQ(i.overflowing_div_euclid(u), i.overflowing_div_euclid(i));
+  static_assert(std::same_as<uptr, decltype(i.wrapping_div_euclid(i))>);
+  static_assert(std::same_as<uptr, decltype(i.wrapping_div_euclid(p))>);
+  static_assert(std::same_as<uptr, decltype(i.wrapping_div_euclid(u))>);
+  EXPECT_EQ(i.wrapping_div_euclid(p), i.wrapping_div_euclid(i));
+  EXPECT_EQ(i.wrapping_div_euclid(u), i.wrapping_div_euclid(i));
+
+  static_assert(std::same_as<uptr, decltype(i.rem_euclid(i))>);
+  static_assert(std::same_as<uptr, decltype(i.rem_euclid(p))>);
+  static_assert(std::same_as<uptr, decltype(i.rem_euclid(u))>);
+  EXPECT_EQ(i.rem_euclid(p), i.rem_euclid(i));
+  EXPECT_EQ(i.rem_euclid(u), i.rem_euclid(i));
+  static_assert(std::same_as<Option<uptr>, decltype(i.checked_rem_euclid(i))>);
+  static_assert(std::same_as<Option<uptr>, decltype(i.checked_rem_euclid(p))>);
+  static_assert(std::same_as<Option<uptr>, decltype(i.checked_rem_euclid(u))>);
+  EXPECT_EQ(i.checked_rem_euclid(p), i.checked_rem_euclid(i));
+  EXPECT_EQ(i.checked_rem_euclid(u), i.checked_rem_euclid(i));
+  static_assert(
+      std::same_as<Tuple<uptr, bool>, decltype(i.overflowing_rem_euclid(i))>);
+  static_assert(
+      std::same_as<Tuple<uptr, bool>, decltype(i.overflowing_rem_euclid(p))>);
+  static_assert(
+      std::same_as<Tuple<uptr, bool>, decltype(i.overflowing_rem_euclid(u))>);
+  EXPECT_EQ(i.overflowing_rem_euclid(p), i.overflowing_rem_euclid(i));
+  EXPECT_EQ(i.overflowing_rem_euclid(u), i.overflowing_rem_euclid(i));
+  static_assert(std::same_as<uptr, decltype(i.wrapping_rem_euclid(i))>);
+  static_assert(std::same_as<uptr, decltype(i.wrapping_rem_euclid(p))>);
+  static_assert(std::same_as<uptr, decltype(i.wrapping_rem_euclid(u))>);
+  EXPECT_EQ(i.wrapping_rem_euclid(p), i.wrapping_rem_euclid(i));
+  EXPECT_EQ(i.wrapping_rem_euclid(u), i.wrapping_rem_euclid(i));
+
+  // Log math.
+  static_assert(std::same_as<u32, decltype(i.log(i))>);
+  static_assert(std::same_as<u32, decltype(i.log(p))>);
+  static_assert(std::same_as<u32, decltype(i.log(u))>);
+  EXPECT_EQ(i.log(p), i.log(i));
+  EXPECT_EQ(i.log(u), i.log(i));
+  static_assert(std::same_as<Option<u32>, decltype(i.checked_log(i))>);
+  static_assert(std::same_as<Option<u32>, decltype(i.checked_log(p))>);
+  static_assert(std::same_as<Option<u32>, decltype(i.checked_log(u))>);
+  EXPECT_EQ(i.checked_log(p), i.checked_log(i));
+  EXPECT_EQ(i.checked_log(u), i.checked_log(i));
 }
 
 TEST(uptr, fmt) {
