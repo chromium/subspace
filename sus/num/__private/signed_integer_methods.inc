@@ -998,7 +998,7 @@ constexpr inline void operator^=(_self r) & noexcept {
 /// This operator will panic if the shift amount is not less than
 /// [`@doc.self::BITS`]($sus::num::@doc.self::BITS) and [overflow checks](
 /// $sus::num#overflow-behaviour) are enabled.
-constexpr inline void operator<<=(u32 r) & noexcept {
+constexpr inline void operator<<=(u64 r) & noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
         __private::shl_with_overflow(primitive_value, r.primitive_value);
@@ -1016,7 +1016,7 @@ constexpr inline void operator<<=(u32 r) & noexcept {
 /// This operator will panic if the shift amount is not less than
 /// [`@doc.self::BITS`]($sus::num::@doc.self::BITS) and [overflow checks](
 /// $sus::num#overflow-behaviour) are enabled.
-constexpr inline void operator>>=(u32 r) & noexcept {
+constexpr inline void operator>>=(u64 r) & noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
         __private::shr_with_overflow(primitive_value, r.primitive_value);
@@ -1798,7 +1798,7 @@ sus_pure constexpr _self reverse_bits() const& noexcept {
 /// truncated bits to the end of the resulting integer.
 ///
 /// Please note this isn't the same operation as the `<<` shifting operator!
-sus_pure constexpr _self rotate_left(u32 n) const& noexcept {
+sus_pure constexpr _self rotate_left(u64 n) const& noexcept {
   return __private::into_signed(__private::rotate_left(
       __private::into_unsigned(primitive_value), n.primitive_value));
 }
@@ -1807,7 +1807,7 @@ sus_pure constexpr _self rotate_left(u32 n) const& noexcept {
 /// truncated bits to the beginning of the resulting integer.
 ///
 /// Please note this isn't the same operation as the >> shifting operator!
-sus_pure constexpr _self rotate_right(u32 n) const& noexcept {
+sus_pure constexpr _self rotate_right(u64 n) const& noexcept {
   return __private::into_signed(__private::rotate_right(
       __private::into_unsigned(primitive_value), n.primitive_value));
 }
