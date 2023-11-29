@@ -40,6 +40,16 @@ jobs:
           }
 
         - {
+            name: "Ubuntu Clang-16 Sanitizer",
+            os: ubuntu-latest,
+            build_type: "Release",
+            cc: "clang-16",
+            cxx: "clang++-16",
+            clang_version: 16,
+            installed_clang_version: 14
+          }
+
+        - {
             name: "Ubuntu Clang-17 Debug",
             os: ubuntu-latest,
             build_type: "Debug",
@@ -75,7 +85,7 @@ jobs:
             build_type: "Release",
             cc: "gcc-13",
             cxx: "g++-13",
-            clang_version: 17,
+            clang_version: 16,
             installed_clang_version: 14
           }
 
