@@ -326,12 +326,12 @@ _self::overflowing_rem_euclid(_self rhs) const& noexcept {
 }
 
 constexpr inline void _self::operator<<=(u64 r) & noexcept {
-  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    ::sus::check(r < u64(__private::num_bits<_primitive>()));
-    primitive_value <<= r.primitive_value;
-  } else {
-    primitive_value = wrapping_shl(r).primitive_value;
-  }
+#if SUS_CHECK_INTEGER_OVERFLOW
+  ::sus::check(r < u64(__private::num_bits<_primitive>()));
+  primitive_value <<= r.primitive_value;
+#else
+  primitive_value = wrapping_shl(r).primitive_value;
+#endif
 }
 
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_shl(
@@ -357,12 +357,12 @@ sus_pure constexpr _self _self::wrapping_shl(u64 rhs) const& noexcept {
 }
 
 constexpr inline void _self::operator>>=(u64 r) & noexcept {
-  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    ::sus::check(r < u64(__private::num_bits<_primitive>()));
-    primitive_value >>= r.primitive_value;
-  } else {
-    primitive_value = wrapping_shr(r).primitive_value;
-  }
+#if SUS_CHECK_INTEGER_OVERFLOW
+  ::sus::check(r < u64(__private::num_bits<_primitive>()));
+  primitive_value >>= r.primitive_value;
+#else
+  primitive_value = wrapping_shr(r).primitive_value;
+#endif
 }
 
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_shr(
