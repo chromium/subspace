@@ -112,7 +112,7 @@ class [[sus_trivial_abi]] Slice final {
   /// which is Undefined Behaviour in C++. To support dangling pointers, those
   /// methods would need `length == 0` branches. Care must be applied when
   /// converting slices between languages as a result.
-  sus_pure static constexpr inline Slice from_raw_parts(
+  sus_pure static constexpr Slice from_raw_parts(
       ::sus::marker::UnsafeFnMarker, const T* data sus_lifetimebound,
       usize len) noexcept {
     ::sus::check(len <= ::sus::mog<usize>(isize::MAX));
@@ -147,7 +147,7 @@ class [[sus_trivial_abi]] Slice final {
   /// which is Undefined Behaviour in C++. To support dangling pointers, those
   /// methods would need `length == 0` branches. Care must be applied when
   /// converting slices between languages as a result.
-  sus_pure static constexpr inline Slice from_raw_collection(
+  sus_pure static constexpr Slice from_raw_collection(
       ::sus::marker::UnsafeFnMarker, ::sus::iter::IterRefCounter refs,
       const T* data sus_lifetimebound, usize len) noexcept {
     ::sus::check(len <= ::sus::mog<usize>(isize::MAX));
@@ -164,8 +164,7 @@ class [[sus_trivial_abi]] Slice final {
   /// #[doc.overloads=from.array]
   template <size_t N>
     requires(N <= ::sus::mog<usize>(isize::MAX))
-  sus_pure static constexpr inline Slice from(
-      const T (&data)[N] sus_lifetimebound) {
+  sus_pure static constexpr Slice from(const T (&data)[N] sus_lifetimebound) {
     // We strip the `const` off `data`, however only const access is provided
     // through this class. This is done so that mutable types can compose Slice
     // and store a mutable pointer.
@@ -186,8 +185,8 @@ class [[sus_trivial_abi]] Slice final {
   /// #[doc.overloads=slice.eq]
   template <class U>
     requires(::sus::cmp::Eq<T, U>)
-  friend constexpr inline bool operator==(const Slice<T>& l,
-                                          const Slice<U>& r) noexcept {
+  friend constexpr bool operator==(const Slice<T>& l,
+                                   const Slice<U>& r) noexcept {
     if (l.len() != r.len()) return false;
     for (usize i = l.len(); i > 0u; i -= 1u) {
       if (!(l[i - 1u] == r[i - 1u])) return false;
@@ -197,24 +196,24 @@ class [[sus_trivial_abi]] Slice final {
 
   template <class U>
     requires(!::sus::cmp::Eq<T, U>)
-  friend constexpr inline bool operator==(const Slice<T>& l,
-                                          const Slice<U>& r) = delete;
+  friend constexpr bool operator==(const Slice<T>& l,
+                                   const Slice<U>& r) = delete;
 
   /// Returns a reference to the element at position `i` in the Slice.
   ///
   /// # Panics
   /// If the index `i` is beyond the end of the slice, the function will panic.
   /// #[doc.overloads=slice.index.usize]
-  sus_pure constexpr inline const T& operator[](usize i) const& noexcept {
+  sus_pure constexpr const T& operator[](usize i) const& noexcept {
     ::sus::check(i < len());
     return *(as_ptr() + i);
   }
 
   /// Returns a subslice which contains elements in `range`, which specifies a
-  /// start and a length.
+  /// start and an end.
   ///
   /// The start is the index of the first element to be returned in the
-  /// subslice, and the length is the number of elements in the output slice.
+  /// subslice, and the end one past the last element in the output slice.
   /// As such, `r.get_range(Range(0u, r.len()))` returns a slice over the
   /// full set of elements in `r`.
   ///
@@ -222,19 +221,12 @@ class [[sus_trivial_abi]] Slice final {
   /// If the Range would otherwise contain an element that is out of bounds,
   /// the function will panic.
   /// #[doc.overloads=slice.index.range]
-  sus_pure constexpr inline Slice<T> operator[](
+  sus_pure constexpr Slice<T> operator[](
       const ::sus::ops::RangeBounds<usize> auto range) const& noexcept {
     const usize length = len();
     const usize rstart = range.start_bound().unwrap_or(0u);
     const usize rend = range.end_bound().unwrap_or(length);
-    const usize rlen = rend >= rstart ? rend - rstart : 0u;
-    ::sus::check(rlen <= length);  // Avoid underflow below.
-    // We allow rstart == len() && rend == len(), which returns an empty
-    // slice.
-    ::sus::check(rstart <= length && rstart <= length - rlen);
-    return Slice<T>::from_raw_collection(::sus::marker::unsafe_fn,
-                                         iter_refs_.to_view_from_view(),
-                                         as_ptr() + rstart, rlen);
+    return subrange(rstart, rend);
   }
 
   /// Stops tracking iterator invalidation.
@@ -347,7 +339,7 @@ class [[sus_trivial_abi]] SliceMut final {
   /// which is Undefined Behaviour in C++. To support dangling pointers, those
   /// methods would need `length == 0` branches. Care must be applied when
   /// converting slices between languages as a result.
-  sus_pure static constexpr inline SliceMut from_raw_parts_mut(
+  sus_pure static constexpr SliceMut from_raw_parts_mut(
       ::sus::marker::UnsafeFnMarker, T* data sus_lifetimebound,
       usize len) noexcept {
     ::sus::check(len <= ::sus::mog<usize>(isize::MAX));
@@ -377,7 +369,7 @@ class [[sus_trivial_abi]] SliceMut final {
   /// which is Undefined Behaviour in C++. To support dangling pointers, those
   /// methods would need `length == 0` branches. Care must be applied when
   /// converting slices between languages as a result.
-  sus_pure static constexpr inline SliceMut from_raw_collection_mut(
+  sus_pure static constexpr SliceMut from_raw_collection_mut(
       ::sus::marker::UnsafeFnMarker, ::sus::iter::IterRefCounter refs,
       T* data sus_lifetimebound, usize len) noexcept {
     ::sus::check(len <= ::sus::mog<usize>(isize::MAX));
@@ -391,8 +383,7 @@ class [[sus_trivial_abi]] SliceMut final {
   /// #[doc.overloads=from.array]
   template <size_t N>
     requires(N <= ::sus::mog<usize>(isize::MAX_PRIMITIVE))
-  sus_pure static constexpr inline SliceMut from(
-      T (&data)[N] sus_lifetimebound) {
+  sus_pure static constexpr SliceMut from(T (&data)[N] sus_lifetimebound) {
     return SliceMut(::sus::iter::IterRefCounter::empty_for_view(), data, N);
   }
 
@@ -409,51 +400,44 @@ class [[sus_trivial_abi]] SliceMut final {
   /// #[doc.overloads=slicemut.eq]
   template <class U>
     requires(::sus::cmp::Eq<T, U>)
-  friend constexpr inline bool operator==(const SliceMut<T>& l,
-                                          const SliceMut<U>& r) noexcept {
+  friend constexpr bool operator==(const SliceMut<T>& l,
+                                   const SliceMut<U>& r) noexcept {
     return l.as_slice() == r.as_slice();
   }
 
   template <class U>
     requires(!::sus::cmp::Eq<T, U>)
-  friend constexpr inline bool operator==(const SliceMut<T>& l,
-                                          const SliceMut<U>& r) = delete;
+  friend constexpr bool operator==(const SliceMut<T>& l,
+                                   const SliceMut<U>& r) = delete;
 
   /// Returns a reference to the element at position `i` in the Slice.
   ///
   /// # Panics
   /// If the index `i` is beyond the end of the slice, the function will panic.
   /// #[doc.overloads=slicemut.index.usize]
-  sus_pure constexpr inline T& operator[](usize i) const& noexcept {
+  sus_pure constexpr T& operator[](usize i) const& noexcept {
     ::sus::check(i < len());
     return *(as_mut_ptr() + i);
   }
 
   /// Returns a subslice which contains elements in `range`, which specifies a
-  /// start and a length.
+  /// start and an end.
   ///
   /// The start is the index of the first element to be returned in the
-  /// subslice, and the length is the number of elements in the output slice.
+  /// subslice, and the end one past the last element in the output slice.
   /// As such, `r.get_range(Range(0u, r.len()))` returns a slice over the
   /// full set of elements in `r`.
   ///
   /// # Panics
   /// If the Range would otherwise contain an element that is out of bounds,
   /// the function will panic.
-  /// #[doc.overloads=slice.index.range]
-  sus_pure constexpr inline SliceMut<T> operator[](
+  /// #[doc.overloads=slicemut.index.range]
+  sus_pure constexpr SliceMut<T> operator[](
       const ::sus::ops::RangeBounds<usize> auto range) const& noexcept {
     const usize length = len();
     const usize rstart = range.start_bound().unwrap_or(0u);
     const usize rend = range.end_bound().unwrap_or(length);
-    const usize rlen = rend >= rstart ? rend - rstart : 0u;
-    ::sus::check(rlen <= length);  // Avoid underflow below.
-    // We allow rstart == len() && rend == len(), which returns an empty
-    // slice.
-    ::sus::check(rstart <= length && rstart <= length - rlen);
-    return SliceMut<T>::from_raw_collection_mut(
-        ::sus::marker::unsafe_fn, slice_.iter_refs_.to_view_from_view(),
-        as_mut_ptr() + rstart, rlen);
+    return subrange_mut(rstart, rend);
   }
 
   // TODO: Impl AsRef -> Slice<T>.

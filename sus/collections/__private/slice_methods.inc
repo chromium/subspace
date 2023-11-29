@@ -863,6 +863,45 @@ constexpr ::sus::Option<Slice<T>> strip_suffix(const Slice<T>& suffix) const& =
     delete;
 #endif
 
+/// Returns a subslice which contains elements in the range which is specified
+/// by a `start` and an `end`.
+/// This is an alias for the subscript operator with a [`RangeBounds`](
+/// $sus::ops::RangeBounds) argument, but without the need to construct a
+/// [`RangeBounds`]($sus::ops::RangeBounds).
+///
+/// The returned slice contains all indices in `start <= x < end`.  It is
+/// empty if `start >= end`.
+///
+/// NOTE: This is different from std::span::subspan which uses a start and a
+/// length. Instead, this matches the construction of a
+/// [`Range`]($sus::ops::Range) in C++ and a [`Range`](
+/// https://doc.rust-lang.org/stable/std/ops/struct.Range.html) in Rust.
+///
+/// # Panics
+/// If the Range would otherwise contain an element that is out of bounds,
+/// the function will panic.
+sus_pure constexpr Slice<T> subrange(usize start) const& noexcept {
+  const usize length = len();
+  ::sus::check(start <= length);
+  return Slice<T>::from_raw_collection(::sus::marker::unsafe_fn,
+                                       _iter_refs_view_expr, as_ptr() + start,
+                                       length - start);
+}
+sus_pure constexpr Slice<T> subrange(usize start, usize end) const& noexcept {
+  const usize rlen = end >= start ? end - start : 0u;
+  const usize length = len();
+  ::sus::check(rlen <= length);  // Avoid underflow below.
+  // We allow start == len() && end == len(), which returns an empty
+  // slice.
+  ::sus::check(start <= length && start <= length - rlen);
+  return Slice<T>::from_raw_collection(
+      ::sus::marker::unsafe_fn, _iter_refs_view_expr, as_ptr() + start, rlen);
+}
+#if _delete_rvalue
+constexpr Slice<T> subrange(usize start) && noexcept = delete;
+constexpr Slice<T> subrange(usize start, usize end) && noexcept = delete;
+#endif
+
 /// Constructs a `Vec<T>` by cloning each value in the Slice.
 ///
 /// The caller can choose traits for the Vec by specifying the trait type.

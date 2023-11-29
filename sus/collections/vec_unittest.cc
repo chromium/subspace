@@ -14,6 +14,7 @@
 
 #include "sus/collections/vec.h"
 
+#include <concepts>
 #include <sstream>
 
 #include "googletest/include/gtest/gtest.h"
@@ -223,18 +224,123 @@ static_assert(!HasGetUncheckedMut<const Vec<i32>, usize>);
 static_assert(HasGetUncheckedMut<Vec<i32>, usize>);
 
 TEST(Vec, OperatorIndex) {
-  auto v = Vec<i32>();
-  v.push(2_i32);
+  auto v = Vec<i32>(2, 3, 4);
   const auto& r = v;
-  EXPECT_EQ(r[0u], 2_i32);
+  static_assert(std::same_as<decltype(r[0u]), const i32&>);
+  static_assert(std::same_as<decltype(r["0.."_r]), sus::Slice<i32>>);
+  EXPECT_EQ(r[0u], 2);
+  EXPECT_EQ(r[2u], 4);
+  EXPECT_EQ(r["1..1"_r], sus::Vec<i32>());
+  EXPECT_EQ(r["0..2"_r], sus::Vec<i32>(2, 3));
+  EXPECT_EQ(r["1..2"_r], sus::Vec<i32>(3));
+  EXPECT_EQ(r["1.."_r], sus::Vec<i32>(3, 4));
+  // end..end is valid.
+  EXPECT_EQ(r["3..3"_r], sus::Vec<i32>());
+}
+
+TEST(VecDeathTest, OperatorIndexOutOfRange) {
+  const auto v = Vec<i32>(2, 3, 4);
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(
+      {
+        auto s = v[3u];
+        ensure_use(&s);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto s = v[usize::MAX];
+        ensure_use(&s);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto s = v["0..4"_r];
+        ensure_use(&s);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto s = v["3..4"_r];
+        ensure_use(&s);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto s = v["4..4"_r];
+        ensure_use(&s);
+      },
+      "");
+#endif
+}
+
+TEST(Vec, Subrange) {
+  const auto v = Vec<i32>(2, 3, 4);
+  static_assert(std::same_as<decltype(v.subrange(0u, 1u)), sus::Slice<i32>>);
+  static_assert(std::same_as<decltype(v.subrange(0u)), sus::Slice<i32>>);
+  EXPECT_EQ(v.subrange(0u, 2u), sus::Vec<i32>(2, 3));
+  EXPECT_EQ(v.subrange(1u, 2u), sus::Vec<i32>(3));
+  EXPECT_EQ(v.subrange(1u), sus::Vec<i32>(3, 4));
 }
 
 TEST(Vec, OperatorIndexMut) {
-  auto v = Vec<i32>();
-  v.push(2_i32);
-  // operator[] gives a mutable reference into the vector.
-  v[0u] += 1_i32;
-  EXPECT_EQ(v[0u], 3_i32);
+  auto v = Vec<i32>(2, 3, 4);
+  static_assert(std::same_as<decltype(v[0u]), i32&>);
+  static_assert(std::same_as<decltype(v["0.."_r]), sus::SliceMut<i32>>);
+  EXPECT_EQ(v[0u], 2);
+  EXPECT_EQ(v[2u], 4);
+  EXPECT_EQ(v["1..1"_r], sus::Vec<i32>());
+  EXPECT_EQ(v["0..2"_r], sus::Vec<i32>(2, 3));
+  EXPECT_EQ(v["1..2"_r], sus::Vec<i32>(3));
+  EXPECT_EQ(v["1.."_r], sus::Vec<i32>(3, 4));
+  // end..end is valid.
+  EXPECT_EQ(v["3..3"_r], sus::Vec<i32>());
+}
+
+TEST(VecDeathTest, OperatorIndexMutOutOfRange) {
+  auto v = Vec<i32>(2, 3, 4);
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(
+      {
+        auto s = v[3u];
+        ensure_use(&s);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto s = v[usize::MAX];
+        ensure_use(&s);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto s = v["0..4"_r];
+        ensure_use(&s);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto s = v["3..4"_r];
+        ensure_use(&s);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto s = v["4..4"_r];
+        ensure_use(&s);
+      },
+      "");
+#endif
+}
+
+TEST(Vec, SubrangeMut) {
+  auto v = Vec<i32>(2, 3, 4);
+  static_assert(
+      std::same_as<decltype(v.subrange_mut(0u, 1u)), sus::SliceMut<i32>>);
+  static_assert(std::same_as<decltype(v.subrange_mut(0u)), sus::SliceMut<i32>>);
+  EXPECT_EQ(v.subrange_mut(0u, 2u), sus::Vec<i32>(2, 3));
+  EXPECT_EQ(v.subrange_mut(1u, 2u), sus::Vec<i32>(3));
+  EXPECT_EQ(v.subrange_mut(1u), sus::Vec<i32>(3, 4));
 }
 
 TEST(Vec, AsPtr) {
