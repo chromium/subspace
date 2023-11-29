@@ -278,7 +278,9 @@ constexpr inline P operator>>(P l, U r) noexcept = delete;
   return u8(
       __private::unchecked_shl(l.primitive_value, u64(r).primitive_value));
 #else
-  return l.wrapping_shl(u64(r));
+  return u8(
+      __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value)
+          .value);
 #endif
 }
 /// #[doc.overloads=unsignedint.<<]
@@ -295,7 +297,9 @@ constexpr inline u8 operator<<(u8 l, U r) noexcept = delete;
   return u8(
       __private::unchecked_shr(l.primitive_value, u64(r).primitive_value));
 #else
-  return l.wrapping_shr(u64(r));
+  return u8(
+      __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value)
+          .value);
 #endif
 }
 /// #[doc.overloads=unsignedint.>>]
@@ -310,7 +314,9 @@ constexpr inline u8 operator>>(u8 l, U r) noexcept = delete;
   return u16(
       __private::unchecked_shl(l.primitive_value, u64(r).primitive_value));
 #else
-  return l.wrapping_shl(u64(r));
+  return u16(
+      __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value)
+          .value);
 #endif
 }
 /// #[doc.overloads=unsignedint.<<]
@@ -325,7 +331,9 @@ constexpr inline u16 operator<<(u16 l, U r) noexcept = delete;
   return u16(
       __private::unchecked_shr(l.primitive_value, u64(r).primitive_value));
 #else
-  return l.wrapping_shr(u64(r));
+  return u16(
+      __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value)
+          .value);
 #endif
 }
 /// #[doc.overloads=unsignedint.>>]
@@ -340,7 +348,9 @@ constexpr inline u16 operator>>(u16 l, U r) noexcept = delete;
   return u32(
       __private::unchecked_shl(l.primitive_value, u64(r).primitive_value));
 #else
-  return l.wrapping_shl(u64(r));
+  return u32(
+      __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value)
+          .value);
 #endif
 }
 /// #[doc.overloads=unsignedint.<<]
@@ -355,7 +365,9 @@ constexpr inline u32 operator<<(u32 l, U r) noexcept = delete;
   return u32(
       __private::unchecked_shr(l.primitive_value, u64(r).primitive_value));
 #else
-  return l.wrapping_shr(u64(r));
+  return u32(
+      __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value)
+          .value);
 #endif
 }
 /// #[doc.overloads=unsignedint.>>]
@@ -370,7 +382,9 @@ constexpr inline u32 operator>>(u32 l, U r) noexcept = delete;
   return u64(
       __private::unchecked_shl(l.primitive_value, u64(r).primitive_value));
 #else
-  return l.wrapping_shl(u64(r));
+  return u64(
+      __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value)
+          .value);
 #endif
 }
 /// #[doc.overloads=unsignedint.<<]
@@ -385,7 +399,9 @@ constexpr inline u64 operator<<(u64 l, U r) noexcept = delete;
   return u64(
       __private::unchecked_shr(l.primitive_value, u64(r).primitive_value));
 #else
-  return l.wrapping_shr(u64(r));
+  return u64(
+      __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value)
+          .value);
 #endif
 }
 /// #[doc.overloads=unsignedint.>>]
@@ -400,7 +416,9 @@ constexpr inline u64 operator>>(u64 l, U r) noexcept = delete;
   return usize(
       __private::unchecked_shl(l.primitive_value, u64(r).primitive_value));
 #else
-  return l.wrapping_shl(u64(r));
+  return usize(
+      __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value)
+          .value);
 #endif
 }
 /// #[doc.overloads=unsignedint.<<]
@@ -415,7 +433,9 @@ constexpr inline usize operator<<(usize l, U r) noexcept = delete;
   return usize(
       __private::unchecked_shr(l.primitive_value, u64(r).primitive_value));
 #else
-  return l.wrapping_shr(u64(r));
+  return usize(
+      __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value)
+          .value);
 #endif
 }
 /// #[doc.overloads=unsignedint.>>]
@@ -430,7 +450,9 @@ constexpr inline usize operator>>(usize l, U r) noexcept = delete;
   return uptr(
       __private::unchecked_shl(l.primitive_value, u64(r).primitive_value));
 #else
-  return l.wrapping_shl(u64(r));
+  return uptr(
+      __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value)
+          .value);
 #endif
 }
 /// #[doc.overloads=unsignedint.<<]
@@ -445,7 +467,9 @@ constexpr inline uptr operator<<(uptr l, U r) noexcept = delete;
   return uptr(
       __private::unchecked_shr(l.primitive_value, u64(r).primitive_value));
 #else
-  return l.wrapping_shr(u64(r));
+  return uptr(
+      __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value)
+          .value);
 #endif
 }
 /// #[doc.overloads=unsignedint.>>]

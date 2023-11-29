@@ -1059,6 +1059,10 @@ sus_pure_const inline constexpr OverflowOut<T> pow_with_overflow(
       .overflow = overflow || r.overflow, .value = r.value};
 }
 
+/// Shift left operation, wrapping the rhs if it's as large or larger than
+/// num_bits<T>.
+///
+/// Returns the wrapped result along with whether the rhs overflowed.
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> &&
            (::sus::mem::size_of<T>() == 1 || ::sus::mem::size_of<T>() == 2 ||
@@ -1075,6 +1079,10 @@ sus_pure_const inline constexpr OverflowOut<T> shl_with_overflow(
                                               .value = unchecked_shl(x, shift)};
 }
 
+/// Shift left operation, wrapping the rhs if it's as large or larger than
+/// num_bits<T>.
+///
+/// Returns the wrapped result along with whether the rhs overflowed.
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            (::sus::mem::size_of<T>() == 1 || ::sus::mem::size_of<T>() == 2 ||
@@ -1091,6 +1099,10 @@ sus_pure_const inline constexpr OverflowOut<T> shl_with_overflow(
                                               .value = unchecked_shl(x, shift)};
 }
 
+/// Shift right operation, wrapping the rhs if it's as large or larger than
+/// num_bits<T>.
+///
+/// Returns the wrapped result along with whether the rhs overflowed.
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> &&
            (::sus::mem::size_of<T>() == 1 || ::sus::mem::size_of<T>() == 2 ||
@@ -1107,6 +1119,10 @@ sus_pure_const inline constexpr OverflowOut<T> shr_with_overflow(
                                               .value = unchecked_shr(x, shift)};
 }
 
+/// Shift right operation, wrapping the rhs if it's as large or larger than
+/// num_bits<T>.
+///
+/// Returns the wrapped result along with whether the rhs overflowed.
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            (::sus::mem::size_of<T>() == 1 || ::sus::mem::size_of<T>() == 2 ||
