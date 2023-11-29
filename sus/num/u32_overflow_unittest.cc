@@ -27,6 +27,10 @@ TEST(u32Overflow, AddOverflow) {
 
   EXPECT_EQ(1_u16 + u32::MAX, u32::MIN);
   EXPECT_EQ(u32::MAX + 1_u16, u32::MIN);
+
+  auto i = u32::MAX;
+  i += 1_u32;
+  EXPECT_EQ(i, u32::MIN);
 }
 
 // Division overflow still panics.
@@ -81,6 +85,10 @@ TEST(u32OverflowDeathTest, WrappingDivByZero) {
 
 TEST(u32Overflow, MulOverflow) {
   EXPECT_EQ(u32::MAX * 2_u32, u32::MAX - 1_u32);
+
+  auto i = u32::MAX;
+  i *= 2_u32;
+  EXPECT_EQ(i, u32::MAX - 1_u32);
 }
 
 TEST(u32OverflowDeathTest, RemOverflow) {
@@ -130,6 +138,10 @@ TEST(u32Overflow, SubOverflow) {
 
   EXPECT_EQ(1_u16 - 2_u32, u32::MAX);
   EXPECT_EQ(u32::MIN - 1_u16, u32::MAX);
+
+  auto i = u32::MIN;
+  i -= 1_u32;
+  EXPECT_EQ(i, u32::MAX);
 }
 
 TEST(u32OverflowDeathTest, PowOverflow) {

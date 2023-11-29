@@ -22,9 +22,7 @@ namespace {
 
 using sus::test::ensure_use;
 
-TEST(i32OverflowDeathTest, Abs) {
-  EXPECT_EQ(i32::MIN.abs(), i32::MIN);
-}
+TEST(i32OverflowDeathTest, Abs) { EXPECT_EQ(i32::MIN.abs(), i32::MIN); }
 
 TEST(i32Overflow, AddOverflow) {
   EXPECT_EQ(i32::MAX + 1_i32, i32::MIN);
@@ -32,6 +30,10 @@ TEST(i32Overflow, AddOverflow) {
 
   EXPECT_EQ(1_i16 + i32::MAX, i32::MIN);
   EXPECT_EQ(i32::MAX + 1_i16, i32::MIN);
+
+  auto i = i32::MAX;
+  i += 1_i32;
+  EXPECT_EQ(i, i32::MIN);
 }
 
 // Division overflow still panics.
@@ -94,6 +96,10 @@ TEST(i32OverflowDeathTest, WrappingDivByZero) {
 TEST(i32Overflow, MulOverflow) {
   EXPECT_EQ(i32::MAX * 2_i32, -2);
   EXPECT_EQ(i32::MAX * -2_i32, 2);
+
+  auto i = i32::MAX;
+  i *= 2_i32;
+  EXPECT_EQ(i, -2);
 }
 
 TEST(i32OverflowDeathTest, NegOverflow) {  //
@@ -155,6 +161,10 @@ TEST(i32Overflow, SubOverflow) {
 
   EXPECT_EQ(1_i16 - -i32::MAX, i32::MIN);
   EXPECT_EQ(i32::MIN - 1_i16, i32::MAX);
+
+  auto i = u32::MIN;
+  i -= 1_u32;
+  EXPECT_EQ(i, u32::MAX);
 }
 
 TEST(i32OverflowDeathTest, PowOverflow) { EXPECT_EQ((i32::MAX).pow(2_u32), 1); }
