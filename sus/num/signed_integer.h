@@ -224,8 +224,8 @@ constexpr inline P operator>>(P l, U r) noexcept = delete;
 /// `sus::construct::From` (explicit conversion).
 ///
 /// # Panics
-/// This operator will panic if the shift amount is not less than
-/// [`@doc.self::BITS`]($sus::num::@doc.self::BITS) and [overflow checks](
+/// This operator will panic if the shift amount is not less than the number of
+/// bits in the integer and [overflow checks](
 /// $sus::num#overflow-behaviour) are enabled.
 ///
 /// #[doc.overloads=signedint.<<]
@@ -249,8 +249,8 @@ constexpr inline i8 operator<<(i8 l, U r) noexcept = delete;
 /// Performs sign extension, copying the sign bit to the right if its set.
 ///
 /// # Panics
-/// This operator will panic if the shift amount is not less than
-/// [`@doc.self::BITS`]($sus::num::@doc.self::BITS) and [overflow checks](
+/// This operator will panic if the shift amount is not less than the number of
+/// bits in the integer and [overflow checks](
 /// $sus::num#overflow-behaviour) are enabled.
 ///
 /// #[doc.overloads=signedint.>>]
