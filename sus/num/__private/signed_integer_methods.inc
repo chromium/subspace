@@ -536,41 +536,44 @@ sus_pure constexpr _self signum() const& noexcept {
 
 /// Satisfies the [`Eq`]($sus::cmp::Eq) concept for signed integers.
 /// #[doc.overloads=int.eq]
-[[nodiscard]] sus_pure friend constexpr inline bool operator==(
+[[nodiscard]] sus_pure_const friend constexpr inline bool operator==(
     _self l, _self r) noexcept = default;
 /// #[doc.overloads=int.eq]
-[[nodiscard]] sus_pure friend constexpr inline bool operator==(
+[[nodiscard]] sus_pure_const friend constexpr inline bool operator==(
     _self l, Signed auto r) noexcept {
   return l.primitive_value == r.primitive_value;
 }
 /// #[doc.overloads=int.eq]
-[[nodiscard]] sus_pure friend constexpr inline bool operator==(
+[[nodiscard]] sus_pure_const friend constexpr inline bool operator==(
     _self l, SignedPrimitiveInteger auto r) noexcept {
   return l.primitive_value == r;
 }
 /// Satisfies the [`StrongOrd`]($sus::cmp::StrongOrd) concept for signed
 /// integers.
 /// #[doc.overloads=int.strongord]
-[[nodiscard]] sus_pure friend constexpr inline std::strong_ordering operator<=>(
-    _self l, _self r) noexcept {
+[[nodiscard]] sus_pure_const friend constexpr inline std::strong_ordering
+operator<=>(_self l, _self r) noexcept {
   return l.primitive_value <=> r.primitive_value;
 }
 /// #[doc.overloads=int.strongord]
-[[nodiscard]] sus_pure friend constexpr inline std::strong_ordering operator<=>(
-    _self l, Signed auto r) noexcept {
+[[nodiscard]] sus_pure_const friend constexpr inline std::strong_ordering
+operator<=>(_self l, Signed auto r) noexcept {
   return l.primitive_value <=> r.primitive_value;
 }
 /// #[doc.overloads=int.strongord]
-[[nodiscard]] sus_pure friend constexpr inline std::strong_ordering operator<=>(
-    _self l, SignedPrimitiveInteger auto r) noexcept {
+[[nodiscard]] sus_pure_const friend constexpr inline std::strong_ordering
+operator<=>(_self l, SignedPrimitiveInteger auto r) noexcept {
   return l.primitive_value <=> r;
 }
 
 /// Satisfies the [`Neg<@doc.self>`]($sus::num::Neg) concept.
 sus_pure constexpr inline _self operator-() const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(primitive_value != MIN_PRIMITIVE);
-  return __private::unchecked_neg(primitive_value);
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    ::sus::check(primitive_value != MIN_PRIMITIVE);
+    return __private::unchecked_neg(primitive_value);
+  } else {
+    return wrapping_neg();
+  }
 }
 /// Satisfies the [`BitNot<@doc.self>`]($sus::num::BitNot) concept.
 sus_pure constexpr inline _self operator~() const& noexcept {
@@ -585,14 +588,21 @@ sus_pure constexpr inline _self operator~() const& noexcept {
 /// However enum class is excluded as they require an explicit conversion to an
 /// integer.
 ///
+/// # Panics
+/// This operator will panic on overflow when [overflow checks](
+/// $sus::num#overflow-behaviour) are enabled.
+///
 /// #[doc.overloads=signedint.+]
 [[nodiscard]] sus_pure_const friend constexpr inline _self operator+(
     _self l, _self r) noexcept {
-  const auto out =
-      __private::add_with_overflow(l.primitive_value, r.primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(!out.overflow);
-  return out.value;
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::add_with_overflow(l.primitive_value, r.primitive_value);
+    ::sus::check(!out.overflow);
+    return out.value;
+  } else {
+    return l.wrapping_add(r);
+  }
 }
 /// #[doc.overloads=signedint.+]
 template <std::convertible_to<_self> U>
@@ -625,14 +635,21 @@ friend constexpr inline _self operator+(U l, _self r) noexcept = delete;
 /// However enum class is excluded as they require an explicit conversion to an
 /// integer.
 ///
+/// # Panics
+/// This operator will panic on overflow when [overflow checks](
+/// $sus::num#overflow-behaviour) are enabled.
+///
 /// #[doc.overloads=signedint.-]
-[[nodiscard]] sus_pure friend constexpr inline _self operator-(
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator-(
     _self l, _self r) noexcept {
-  const auto out =
-      __private::sub_with_overflow(l.primitive_value, r.primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(!out.overflow);
-  return out.value;
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::sub_with_overflow(l.primitive_value, r.primitive_value);
+    ::sus::check(!out.overflow);
+    return out.value;
+  } else {
+    return l.wrapping_sub(r);
+  }
 }
 /// #[doc.overloads=signedint.-]
 template <std::convertible_to<_self> U>
@@ -665,14 +682,21 @@ friend constexpr inline _self operator-(U l, _self r) noexcept = delete;
 /// However enum class is excluded as they require an explicit conversion to an
 /// integer.
 ///
+/// # Panics
+/// This operator will panic on overflow when [overflow checks](
+/// $sus::num#overflow-behaviour) are enabled.
+///
 /// #[doc.overloads=signedint.*]
-[[nodiscard]] sus_pure friend constexpr inline _self operator*(
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator*(
     _self l, _self r) noexcept {
-  const auto out =
-      __private::mul_with_overflow(l.primitive_value, r.primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(!out.overflow);
-  return out.value;
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::mul_with_overflow(l.primitive_value, r.primitive_value);
+    ::sus::check(!out.overflow);
+    return out.value;
+  } else {
+    return l.wrapping_mul(r);
+  }
 }
 /// #[doc.overloads=signedint.*]
 template <std::convertible_to<_self> U>
@@ -705,13 +729,14 @@ friend constexpr inline _self operator*(U l, _self r) noexcept = delete;
 /// However enum class is excluded as they require an explicit conversion to an
 /// integer.
 ///
+/// # Panics
+/// This operator will panic when dividing by zero or when division will
+/// overflow.
+///
 /// #[doc.overloads=signedint./]
-[[nodiscard]] sus_pure friend constexpr inline _self operator/(
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator/(
     _self l, _self r) noexcept {
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(r.primitive_value != 0);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(l.primitive_value != MIN_PRIMITIVE || r.primitive_value != -1);
+  ::sus::check(!__private::div_overflows(l.primitive_value, r.primitive_value));
   return static_cast<_primitive>(l.primitive_value / r.primitive_value);
 }
 /// #[doc.overloads=signedint./]
@@ -745,13 +770,14 @@ friend constexpr inline _self operator/(U l, _self r) noexcept = delete;
 /// However enum class is excluded as they require an explicit conversion to an
 /// integer.
 ///
+/// # Panics
+/// This operator will panic when dividing by zero or when division will
+/// overflow.
+///
 /// #[doc.overloads=signedint.%]
-[[nodiscard]] sus_pure friend constexpr inline _self operator%(
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator%(
     _self l, _self r) noexcept {
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(r.primitive_value != 0);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(l.primitive_value != MIN_PRIMITIVE || r.primitive_value != -1);
+  ::sus::check(!__private::div_overflows(l.primitive_value, r.primitive_value));
   return static_cast<_primitive>(l.primitive_value % r.primitive_value);
 }
 /// #[doc.overloads=signedint.%]
@@ -787,7 +813,7 @@ friend constexpr inline _self operator%(U l, _self r) noexcept = delete;
 /// integer.
 ///
 /// #[doc.overloads=signedint.&]
-[[nodiscard]] sus_pure friend constexpr inline _self operator&(
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator&(
     _self l, _self r) noexcept {
   return static_cast<_primitive>(l.primitive_value & r.primitive_value);
 }
@@ -823,7 +849,7 @@ friend constexpr inline _self operator&(U l, _self r) noexcept = delete;
 /// integer.
 ///
 /// #[doc.overloads=signedint.|]
-[[nodiscard]] sus_pure friend constexpr inline _self operator|(
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator|(
     _self l, _self r) noexcept {
   return static_cast<_primitive>(l.primitive_value | r.primitive_value);
 }
@@ -859,7 +885,7 @@ friend constexpr inline _self operator|(U l, _self r) noexcept = delete;
 /// integer.
 ///
 /// #[doc.overloads=signedint.^]
-[[nodiscard]] sus_pure friend constexpr inline _self operator^(
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator^(
     _self l, _self r) noexcept {
   return static_cast<_primitive>(l.primitive_value ^ r.primitive_value);
 }
@@ -889,48 +915,71 @@ template <class U>
 friend constexpr inline _self operator^(U l, _self r) noexcept = delete;
 
 /// Satisfies the [`AddAssign<@doc.self>`]($sus::num::AddAssign) concept.
+///
+/// # Panics
+/// This operator will panic on overflow when [overflow checks](
+/// $sus::num#overflow-behaviour) are enabled.
 constexpr inline void operator+=(_self r) & noexcept {
-  const auto out =
-      __private::add_with_overflow(primitive_value, r.primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(!out.overflow);
-  primitive_value = out.value;
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::add_with_overflow(primitive_value, r.primitive_value);
+    ::sus::check(!out.overflow);
+    primitive_value = out.value;
+  } else {
+    primitive_value = wrapping_add(r).primitive_value;
+  }
 }
 /// Satisfies the [`SubAssign<@doc.self>`]($sus::num::SubAssign) concept.
+///
+/// # Panics
+/// This operator will panic on overflow when [overflow checks](
+/// $sus::num#overflow-behaviour) are enabled.
 constexpr inline void operator-=(_self r) & noexcept {
-  const auto out =
-      __private::sub_with_overflow(primitive_value, r.primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(!out.overflow);
-  primitive_value = out.value;
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::sub_with_overflow(primitive_value, r.primitive_value);
+    ::sus::check(!out.overflow);
+    primitive_value = out.value;
+  } else {
+    primitive_value = wrapping_sub(r).primitive_value;
+  }
 }
 /// Satisfies the [`MulAssign<@doc.self>`]($sus::num::MulAssign) concept.
+///
+/// # Panics
+/// This operator will panic on overflow when [overflow checks](
+/// $sus::num#overflow-behaviour) are enabled.
 constexpr inline void operator*=(_self r) & noexcept {
-  const auto out =
-      __private::mul_with_overflow(primitive_value, r.primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(!out.overflow);
-  primitive_value = out.value;
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::mul_with_overflow(primitive_value, r.primitive_value);
+    ::sus::check(!out.overflow);
+    primitive_value = out.value;
+  } else {
+    primitive_value = wrapping_mul(r).primitive_value;
+  }
 }
 /// Satisfies the [`DivAssign<@doc.self>`]($sus::num::DivAssign) concept.
+///
+/// # Panics
+/// This operator will panic when dividing by zero or when division will
+/// overflow.
 constexpr inline void operator/=(_self r) & noexcept {
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(r.primitive_value != 0);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(primitive_value != MIN_PRIMITIVE || r.primitive_value != -1);
+  ::sus::check(!__private::div_overflows(primitive_value, r.primitive_value));
   primitive_value /= r.primitive_value;
 }
 /// Satisfies the [`RemAssign<@doc.self>`]($sus::num::RemAssign) concept.
 constexpr inline void operator%=(_self r) & noexcept {
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(r.primitive_value != 0);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(primitive_value != MIN_PRIMITIVE || r.primitive_value != -1);
+  ::sus::check(!__private::div_overflows(primitive_value, r.primitive_value));
   primitive_value %= r.primitive_value;
 }
 
 /// Satisfies the [`BitAndAssign<@doc.self>`]($sus::num::BitAndAssign)
 /// concept.
+///
+/// # Panics
+/// This operator will panic when dividing by zero or when division will
+/// overflow.
 constexpr inline void operator&=(_self r) & noexcept {
   primitive_value &= r.primitive_value;
 }
@@ -944,44 +993,61 @@ constexpr inline void operator^=(_self r) & noexcept {
   primitive_value ^= r.primitive_value;
 }
 /// Satisfies the [`ShlAssign<@doc.self>`]($sus::num::ShlAssign) concept.
+///
+/// # Panics
+/// This operator will panic if the shift amount is not less than
+/// [`@doc.self::BITS`]($sus::num::@doc.self::BITS) and [overflow checks](
+/// $sus::num#overflow-behaviour) are enabled.
 constexpr inline void operator<<=(u32 r) & noexcept {
-  const auto out =
-      __private::shl_with_overflow(primitive_value, r.primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(!out.overflow);
-  primitive_value = out.value;
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::shl_with_overflow(primitive_value, r.primitive_value);
+    ::sus::check(!out.overflow);
+    primitive_value = out.value;
+  } else {
+    primitive_value = wrapping_shl(r).primitive_value;
+  }
 }
 /// Satisfies the [`ShrAssign<@doc.self>`]($sus::num::ShrAssign) concept.
 ///
 /// Performs sign extension, copying the sign bit to the right if its set.
+///
+/// # Panics
+/// This operator will panic if the shift amount is not less than
+/// [`@doc.self::BITS`]($sus::num::@doc.self::BITS) and [overflow checks](
+/// $sus::num#overflow-behaviour) are enabled.
 constexpr inline void operator>>=(u32 r) & noexcept {
-  const auto out =
-      __private::shr_with_overflow(primitive_value, r.primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(!out.overflow);
-  primitive_value = out.value;
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::shr_with_overflow(primitive_value, r.primitive_value);
+    ::sus::check(!out.overflow);
+    primitive_value = out.value;
+  } else {
+    primitive_value = wrapping_shr(r).primitive_value;
+  }
 }
 
 /// Computes the absolute value of itself.
 ///
 /// The absolute value of @doc.self::MIN cannot be represented as an @doc.self,
-/// and attempting to calculate it will panic.
+/// and attempting to calculate it will panic when [overflow checks](
+/// $sus::num#overflow-behaviour) are enabled.
 sus_pure constexpr inline _self abs() const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(primitive_value != MIN_PRIMITIVE);
   if (primitive_value >= 0)
-    return primitive_value;
+    return *this;
   else
-    return __private::unchecked_neg(primitive_value);
+    return -*this;
 }
 
 /// Checked absolute value. Computes [`abs`](
 /// $sus::num::@doc.self::abs), returning `None` if the current
 /// value is [`MIN`]($sus::num::@doc.self::MIN).
 sus_pure constexpr Option<_self> checked_abs() const& noexcept {
-  if (primitive_value != MIN_PRIMITIVE) [[likely]]
-    return Option<_self>(abs());
-  else
+  if (primitive_value >= 0)
+    return Option<_self>(*this);
+  else if (primitive_value != MIN_PRIMITIVE)
+    return Option<_self>(-*this);
+  else [[unlikely]]
     return Option<_self>();
 }
 
@@ -1166,7 +1232,6 @@ sus_pure constexpr Option<_self> checked_div(_self rhs) const& noexcept {
 /// This function will panic if `rhs` is 0.
 template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
 sus_pure constexpr Tuple overflowing_div(_self rhs) const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
   ::sus::check(rhs.primitive_value != 0);
   if (__private::div_overflows_nonzero(::sus::marker::unsafe_fn,
                                        primitive_value, rhs.primitive_value))
@@ -1184,7 +1249,6 @@ sus_pure constexpr Tuple overflowing_div(_self rhs) const& noexcept {
 /// # Panics
 /// This function will panic if `rhs` is 0.
 sus_pure constexpr _self saturating_div(_self rhs) const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
   ::sus::check(rhs.primitive_value != 0);
   if (__private::div_overflows_nonzero(::sus::marker::unsafe_fn,
                                        primitive_value, rhs.primitive_value))
@@ -1209,7 +1273,6 @@ sus_pure constexpr _self saturating_div(_self rhs) const& noexcept {
 /// # Panics
 /// This function will panic if `rhs` is 0.
 sus_pure constexpr _self wrapping_div(_self rhs) const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
   ::sus::check(rhs.primitive_value != 0);
   if (__private::div_overflows_nonzero(::sus::marker::unsafe_fn,
                                        primitive_value, rhs.primitive_value))
@@ -1339,7 +1402,6 @@ sus_pure constexpr Option<_self> checked_rem(_self rhs) const& noexcept {
 /// This function will panic if `rhs` is 0.
 template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
 sus_pure constexpr Tuple overflowing_rem(_self rhs) const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
   ::sus::check(rhs.primitive_value != 0);
   if (__private::div_overflows_nonzero(::sus::marker::unsafe_fn,
                                        primitive_value, rhs.primitive_value))
@@ -1358,7 +1420,6 @@ sus_pure constexpr Tuple overflowing_rem(_self rhs) const& noexcept {
 /// artifacts make `x % y` invalid for `MIN / -1` on a signed type (where `MIN`
 /// is the negative minimal value). In such a case, this function returns 0.
 sus_pure constexpr _self wrapping_rem(_self rhs) const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
   ::sus::check(rhs.primitive_value != 0);
   if (__private::div_overflows_nonzero(::sus::marker::unsafe_fn,
                                        primitive_value, rhs.primitive_value))
@@ -1381,7 +1442,6 @@ sus_pure constexpr _self wrapping_rem(_self rhs) const& noexcept {
 /// # Panics
 /// This function will panic if `rhs` is 0 or the division results in overflow.
 sus_pure constexpr _self div_euclid(_self rhs) const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
   ::sus::check(!__private::div_overflows(primitive_value, rhs.primitive_value));
   return __private::div_euclid(::sus::marker::unsafe_fn, primitive_value,
                                rhs.primitive_value);
@@ -1411,7 +1471,6 @@ sus_pure constexpr Option<_self> checked_div_euclid(_self rhs) const& noexcept {
 /// This function will panic if `rhs` is 0.
 template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
 sus_pure constexpr Tuple overflowing_div_euclid(_self rhs) const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
   ::sus::check(rhs.primitive_value != 0);
   if (__private::div_overflows_nonzero(::sus::marker::unsafe_fn,
                                        primitive_value, rhs.primitive_value))
@@ -1436,7 +1495,6 @@ sus_pure constexpr Tuple overflowing_div_euclid(_self rhs) const& noexcept {
 /// # Panics
 /// This function will panic if `rhs` is 0.
 sus_pure constexpr _self wrapping_div_euclid(_self rhs) const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
   ::sus::check(rhs.primitive_value != 0);
   if (__private::div_overflows_nonzero(::sus::marker::unsafe_fn,
                                        primitive_value, rhs.primitive_value))
@@ -1457,7 +1515,6 @@ sus_pure constexpr _self wrapping_div_euclid(_self rhs) const& noexcept {
 /// # Panics
 /// This function will panic if `rhs` is 0 or the division results in overflow.
 sus_pure constexpr _self rem_euclid(_self rhs) const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
   ::sus::check(!__private::div_overflows(primitive_value, rhs.primitive_value));
   return __private::rem_euclid(::sus::marker::unsafe_fn, primitive_value,
                                rhs.primitive_value);
@@ -1487,7 +1544,6 @@ sus_pure constexpr Option<_self> checked_rem_euclid(_self rhs) const& noexcept {
 /// This function will panic if `rhs` is 0.
 template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
 sus_pure constexpr Tuple overflowing_rem_euclid(_self rhs) const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
   ::sus::check(rhs.primitive_value != 0);
   if (__private::div_overflows_nonzero(::sus::marker::unsafe_fn,
                                        primitive_value, rhs.primitive_value))
@@ -1511,7 +1567,6 @@ sus_pure constexpr Tuple overflowing_rem_euclid(_self rhs) const& noexcept {
 /// # Panics
 /// This function will panic if `rhs` is 0.
 sus_pure constexpr _self wrapping_rem_euclid(_self rhs) const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
   ::sus::check(rhs.primitive_value != 0);
   if (__private::div_overflows_nonzero(::sus::marker::unsafe_fn,
                                        primitive_value, rhs.primitive_value))
@@ -1525,7 +1580,7 @@ sus_pure constexpr _self wrapping_rem_euclid(_self rhs) const& noexcept {
 
 /// Checked shift left. Computes `self << rhs`, returning `None` if `rhs` is
 /// larger than or equal to the number of bits in `self`.
-sus_pure constexpr Option<_self> checked_shl(u32 rhs) const& noexcept {
+sus_pure constexpr Option<_self> checked_shl(u64 rhs) const& noexcept {
   const auto out =
       __private::shl_with_overflow(primitive_value, rhs.primitive_value);
   if (!out.overflow) [[likely]]
@@ -1542,7 +1597,7 @@ sus_pure constexpr Option<_self> checked_shl(u32 rhs) const& noexcept {
 /// where `N` is the number of bits, and this value is then used to perform the
 /// shift.
 template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
-sus_pure constexpr Tuple overflowing_shl(u32 rhs) const& noexcept {
+sus_pure constexpr Tuple overflowing_shl(u64 rhs) const& noexcept {
   const auto out =
       __private::shl_with_overflow(primitive_value, rhs.primitive_value);
   return Tuple(out.value, out.overflow);
@@ -1558,14 +1613,14 @@ sus_pure constexpr Tuple overflowing_shl(u32 rhs) const& noexcept {
 /// integer types all implement a
 // [`rotate_left`]($sus::num::@doc.self::rotate_left) function, which may be
 /// what you want instead.
-sus_pure constexpr _self wrapping_shl(u32 rhs) const& noexcept {
+sus_pure constexpr _self wrapping_shl(u64 rhs) const& noexcept {
   return __private::shl_with_overflow(primitive_value, rhs.primitive_value)
       .value;
 }
 
 /// Checked shift right. Computes `self >> rhs`, returning `None` if `rhs` is
 /// larger than or equal to the number of bits in `self`.
-sus_pure constexpr Option<_self> checked_shr(u32 rhs) const& noexcept {
+sus_pure constexpr Option<_self> checked_shr(u64 rhs) const& noexcept {
   const auto out =
       __private::shr_with_overflow(primitive_value, rhs.primitive_value);
   if (!out.overflow) [[likely]]
@@ -1582,7 +1637,7 @@ sus_pure constexpr Option<_self> checked_shr(u32 rhs) const& noexcept {
 /// where `N` is the number of bits, and this value is then used to perform the
 /// shift.
 template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
-sus_pure constexpr Tuple overflowing_shr(u32 rhs) const& noexcept {
+sus_pure constexpr Tuple overflowing_shr(u64 rhs) const& noexcept {
   const auto out =
       __private::shr_with_overflow(primitive_value, rhs.primitive_value);
   return Tuple(out.value, out.overflow);
@@ -1598,7 +1653,7 @@ sus_pure constexpr Tuple overflowing_shr(u32 rhs) const& noexcept {
 /// integer types all implement a
 /// [`rotate_right`]($sus::num::@doc.self::rotate_right) function, which may be
 /// what you want instead.
-sus_pure constexpr _self wrapping_shr(u32 rhs) const& noexcept {
+sus_pure constexpr _self wrapping_shr(u64 rhs) const& noexcept {
   return __private::shr_with_overflow(primitive_value, rhs.primitive_value)
       .value;
 }
@@ -1767,8 +1822,9 @@ sus_pure constexpr _self swap_bytes() const& noexcept {
 sus_pure constexpr inline _self pow(u32 rhs) const& noexcept {
   const auto out =
       __private::pow_with_overflow(primitive_value, rhs.primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(!out.overflow);
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    ::sus::check(!out.overflow);
+  }
   return out.value;
 }
 
@@ -1777,7 +1833,6 @@ sus_pure constexpr inline _self pow(u32 rhs) const& noexcept {
 sus_pure constexpr Option<_self> checked_pow(u32 rhs) const& noexcept {
   const auto out =
       __private::pow_with_overflow(primitive_value, rhs.primitive_value);
-  // TODO: Allow opting out of all overflow checks?
   if (!out.overflow) [[likely]]
     return Option<_self>(out.value);
   else
@@ -1821,8 +1876,8 @@ sus_pure constexpr Option<u32> checked_log2() const& noexcept {
 /// # Panics
 /// When the number is zero or negative the function will panic.
 sus_pure constexpr u32 log2() const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
-  return checked_log2().unwrap();
+  return checked_log2().expect(
+      "argument of integer logarithm must be positive");
 }
 
 /// Returns the base 10 logarithm of the number, rounded down.
@@ -1841,8 +1896,8 @@ sus_pure constexpr Option<u32> checked_log10() const& noexcept {
 /// # Panics
 /// When the number is zero or negative the function will panic.
 sus_pure constexpr u32 log10() const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
-  return checked_log10().unwrap();
+  return checked_log10().expect(
+      "argument of integer logarithm must be positive");
 }
 
 /// Returns the logarithm of the number with respect to an arbitrary base,
@@ -1883,7 +1938,8 @@ sus_pure constexpr Option<u32> checked_log(_self base) const& noexcept {
 /// # Panics
 /// When the number is negative, zero, or if the `base` is not at least 2.
 sus_pure constexpr u32 log(_self base) const& noexcept {
-  return checked_log(base).unwrap();
+  return checked_log(base).expect(
+      "argument of integer logarithm must be positive");
 }
 
 /// Converts an integer from big endian to the target's endianness.

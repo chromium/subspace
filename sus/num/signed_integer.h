@@ -30,6 +30,7 @@
 #include "sus/mem/move.h"
 #include "sus/mem/relocate.h"
 #include "sus/mem/size_of.h"
+#include "sus/num/__private/check_integer_overflow.h"
 #include "sus/num/__private/int_log10.h"
 #include "sus/num/__private/intrinsics.h"
 #include "sus/num/__private/literals.h"
@@ -222,14 +223,22 @@ constexpr inline P operator>>(P l, U r) noexcept = delete;
 /// Thus the bound is `std::convertible_to` (implicit conversion) instead of
 /// `sus::construct::From` (explicit conversion).
 ///
+/// # Panics
+/// This operator will panic if the shift amount is not less than
+/// [`@doc.self::BITS`]($sus::num::@doc.self::BITS) and [overflow checks](
+/// $sus::num#overflow-behaviour) are enabled.
+///
 /// #[doc.overloads=signedint.<<]
 [[nodiscard]] sus_pure_const constexpr inline i8 operator<<(
     i8 l, std::convertible_to<u64> auto r) noexcept {
-  const auto out =
-      __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(!out.overflow);
-  return out.value;
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value);
+    ::sus::check(!out.overflow);
+    return out.value;
+  } else {
+    return l.wrapping_shl(u64(r).primitive_value);
+  }
 }
 /// #[doc.overloads=signedint.<<]
 template <class U>
@@ -239,14 +248,22 @@ constexpr inline i8 operator<<(i8 l, U r) noexcept = delete;
 ///
 /// Performs sign extension, copying the sign bit to the right if its set.
 ///
+/// # Panics
+/// This operator will panic if the shift amount is not less than
+/// [`@doc.self::BITS`]($sus::num::@doc.self::BITS) and [overflow checks](
+/// $sus::num#overflow-behaviour) are enabled.
+///
 /// #[doc.overloads=signedint.>>]
 [[nodiscard]] sus_pure_const constexpr inline i8 operator>>(
     i8 l, std::convertible_to<u64> auto r) noexcept {
-  const auto out =
-      __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(!out.overflow);
-  return out.value;
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value);
+    ::sus::check(!out.overflow);
+    return out.value;
+  } else {
+    return l.wrapping_shr(u64(r).primitive_value);
+  }
 }
 /// #[doc.overloads=signedint.>>]
 template <class U>
@@ -255,11 +272,14 @@ constexpr inline i8 operator>>(i8 l, U r) noexcept = delete;
 /// #[doc.overloads=signedint.<<]
 [[nodiscard]] sus_pure_const constexpr inline i16 operator<<(
     i16 l, std::convertible_to<u64> auto r) noexcept {
-  const auto out =
-      __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(!out.overflow);
-  return out.value;
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value);
+    ::sus::check(!out.overflow);
+    return out.value;
+  } else {
+    return l.wrapping_shl(u64(r).primitive_value);
+  }
 }
 /// #[doc.overloads=signedint.<<]
 template <class U>
@@ -268,11 +288,14 @@ constexpr inline i16 operator<<(i16 l, U r) noexcept = delete;
 /// #[doc.overloads=signedint.>>]
 [[nodiscard]] sus_pure_const constexpr inline i16 operator>>(
     i16 l, std::convertible_to<u64> auto r) noexcept {
-  const auto out =
-      __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(!out.overflow);
-  return out.value;
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value);
+    ::sus::check(!out.overflow);
+    return out.value;
+  } else {
+    return l.wrapping_shr(u64(r).primitive_value);
+  }
 }
 /// #[doc.overloads=signedint.>>]
 template <class U>
@@ -281,11 +304,14 @@ constexpr inline i16 operator>>(i16 l, U r) noexcept = delete;
 /// #[doc.overloads=signedint.<<]
 [[nodiscard]] sus_pure_const constexpr inline i32 operator<<(
     i32 l, std::convertible_to<u64> auto r) noexcept {
-  const auto out =
-      __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(!out.overflow);
-  return out.value;
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value);
+    ::sus::check(!out.overflow);
+    return out.value;
+  } else {
+    return l.wrapping_shl(u64(r).primitive_value);
+  }
 }
 /// #[doc.overloads=signedint.<<]
 template <class U>
@@ -294,11 +320,14 @@ constexpr inline i32 operator<<(i32 l, U r) noexcept = delete;
 /// #[doc.overloads=signedint.>>]
 [[nodiscard]] sus_pure_const constexpr inline i32 operator>>(
     i32 l, std::convertible_to<u64> auto r) noexcept {
-  const auto out =
-      __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(!out.overflow);
-  return out.value;
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value);
+    ::sus::check(!out.overflow);
+    return out.value;
+  } else {
+    return l.wrapping_shr(u64(r).primitive_value);
+  }
 }
 /// #[doc.overloads=signedint.>>]
 template <class U>
@@ -307,11 +336,14 @@ constexpr inline i32 operator>>(i32 l, U r) noexcept = delete;
 /// #[doc.overloads=signedint.<<]
 [[nodiscard]] sus_pure_const constexpr inline i64 operator<<(
     i64 l, std::convertible_to<u64> auto r) noexcept {
-  const auto out =
-      __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(!out.overflow);
-  return out.value;
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value);
+    ::sus::check(!out.overflow);
+    return out.value;
+  } else {
+    return l.wrapping_shl(u64(r).primitive_value);
+  }
 }
 /// #[doc.overloads=signedint.<<]
 template <class U>
@@ -320,11 +352,14 @@ constexpr inline i64 operator<<(i64 l, U r) noexcept = delete;
 /// #[doc.overloads=signedint.>>]
 [[nodiscard]] sus_pure_const constexpr inline i64 operator>>(
     i64 l, std::convertible_to<u64> auto r) noexcept {
-  const auto out =
-      __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(!out.overflow);
-  return out.value;
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value);
+    ::sus::check(!out.overflow);
+    return out.value;
+  } else {
+    return l.wrapping_shr(u64(r).primitive_value);
+  }
 }
 /// #[doc.overloads=signedint.>>]
 template <class U>
@@ -333,11 +368,14 @@ constexpr inline i64 operator>>(i64 l, U r) noexcept = delete;
 /// #[doc.overloads=signedint.<<]
 [[nodiscard]] sus_pure_const constexpr inline isize operator<<(
     isize l, std::convertible_to<u64> auto r) noexcept {
-  const auto out =
-      __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(!out.overflow);
-  return out.value;
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value);
+    ::sus::check(!out.overflow);
+    return out.value;
+  } else {
+    return l.wrapping_shl(u64(r).primitive_value);
+  }
 }
 /// #[doc.overloads=signedint.<<]
 template <class U>
@@ -346,11 +384,14 @@ constexpr inline isize operator<<(isize l, U r) noexcept = delete;
 /// #[doc.overloads=signedint.>>]
 [[nodiscard]] sus_pure_const constexpr inline isize operator>>(
     isize l, std::convertible_to<u64> auto r) noexcept {
-  const auto out =
-      __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(!out.overflow);
-  return out.value;
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value);
+    ::sus::check(!out.overflow);
+    return out.value;
+  } else {
+    return l.wrapping_shr(u64(r).primitive_value);
+  }
 }
 /// #[doc.overloads=signedint.>>]
 template <class U>

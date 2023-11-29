@@ -36,6 +36,7 @@
 #include "sus/num/__private/intrinsics.h"
 #include "sus/num/__private/literals.h"
 #include "sus/num/__private/primitive_type.h"
+#include "sus/num/__private/check_integer_overflow.h"
 #include "sus/num/float_concepts.h"
 #include "sus/num/integer_concepts.h"
 #include "sus/num/try_from_int_error.h"

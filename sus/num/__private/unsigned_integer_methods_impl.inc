@@ -330,7 +330,7 @@ _self::overflowing_rem_euclid(_self rhs) const& noexcept {
 }
 
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_shl(
-    u32 rhs) const& noexcept {
+    u64 rhs) const& noexcept {
   const auto out =
       __private::shl_with_overflow(primitive_value, rhs.primitive_value);
   if (!out.overflow) [[likely]]
@@ -340,14 +340,19 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_shl(
 }
 
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_shl(
-    u32 rhs) const& noexcept {
+    u64 rhs) const& noexcept {
   const auto out =
       __private::shl_with_overflow(primitive_value, rhs.primitive_value);
   return ::sus::tuple_type::Tuple<_self, bool>(_self(out.value), out.overflow);
 }
 
+sus_pure constexpr _self _self::wrapping_shl(u64 rhs) const& noexcept {
+  return _self(
+      __private::shl_with_overflow(primitive_value, rhs.primitive_value).value);
+}
+
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_shr(
-    u32 rhs) const& noexcept {
+    u64 rhs) const& noexcept {
   const auto out =
       __private::shr_with_overflow(primitive_value, rhs.primitive_value);
   if (!out.overflow) [[likely]]
@@ -357,10 +362,15 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_shr(
 }
 
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_shr(
-    u32 rhs) const& noexcept {
+    u64 rhs) const& noexcept {
   const auto out =
       __private::shr_with_overflow(primitive_value, rhs.primitive_value);
   return ::sus::tuple_type::Tuple<_self, bool>(_self(out.value), out.overflow);
+}
+
+sus_pure constexpr _self _self::wrapping_shr(u64 rhs) const& noexcept {
+  return _self(
+      __private::shr_with_overflow(primitive_value, rhs.primitive_value).value);
 }
 
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_sub(
@@ -410,8 +420,8 @@ sus_pure constexpr ::sus::option::Option<u32> _self::checked_log2()
 }
 
 sus_pure constexpr u32 _self::log2() const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
-  return checked_log2().unwrap();
+  return checked_log2().expect(
+      "argument of integer logarithm must be positive");
 }
 
 sus_pure constexpr ::sus::option::Option<u32> _self::checked_log10()
@@ -425,8 +435,8 @@ sus_pure constexpr ::sus::option::Option<u32> _self::checked_log10()
 }
 
 sus_pure constexpr u32 _self::log10() const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
-  return checked_log10().unwrap();
+  return checked_log10().expect(
+      "argument of integer logarithm must be positive");
 }
 
 sus_pure constexpr ::sus::option::Option<u32> _self::checked_log(
@@ -446,7 +456,8 @@ sus_pure constexpr ::sus::option::Option<u32> _self::checked_log(
 }
 
 sus_pure constexpr u32 _self::log(_self base) const& noexcept {
-  return checked_log(base).unwrap();
+  return checked_log(base).expect(
+      "argument of integer logarithm must be positive");
 }
 
 sus_pure constexpr ::sus::option::Option<_self>
