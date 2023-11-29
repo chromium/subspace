@@ -944,6 +944,43 @@ constexpr ::sus::Option<SliceMut<T>> strip_suffix_mut(const Slice<T>& suffix)
   return ::sus::Option<SliceMut<T>>();
 }
 
+/// Returns a mutable subslice which contains elements in the range which is
+/// specified by a `start` and an `end`.
+/// This is an alias for the subscript operator with a [`RangeBounds`](
+/// $sus::ops::RangeBounds) argument, but without the need to construct a
+/// [`RangeBounds`]($sus::ops::RangeBounds).
+///
+/// The returned slice contains all indices in `start <= x < end`.  It is
+/// empty if `start >= end`.
+///
+/// NOTE: This is different from std::span::subspan which uses a start and a
+/// length. Instead, this matches the construction of a
+/// [`Range`]($sus::ops::Range) in C++ and a [`Range`](
+/// https://doc.rust-lang.org/stable/std/ops/struct.Range.html) in Rust.
+///
+/// # Panics
+/// If the Range would otherwise contain an element that is out of bounds,
+/// the function will panic.
+sus_pure constexpr SliceMut<T> subrange_mut(usize start) RETURN_REF noexcept {
+  const usize length = len();
+  ::sus::check(start <= length);
+  return SliceMut<T>::from_raw_collection_mut(
+      ::sus::marker::unsafe_fn, _iter_refs_view_expr, as_mut_ptr() + start,
+      length - start);
+}
+sus_pure constexpr SliceMut<T> subrange_mut(usize start,
+                                            usize end) RETURN_REF noexcept {
+  const usize rlen = end >= start ? end - start : 0u;
+  const usize length = len();
+  ::sus::check(rlen <= length);  // Avoid underflow below.
+  // We allow rstart == len() && rend == len(), which returns an empty
+  // slice.
+  ::sus::check(start <= length && start <= length - rlen);
+  return SliceMut<T>::from_raw_collection_mut(::sus::marker::unsafe_fn,
+                                              _iter_refs_view_expr,
+                                              as_mut_ptr() + start, rlen);
+}
+
 /// Swaps two elements in the slice.
 ///
 /// # Arguments
