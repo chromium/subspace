@@ -231,14 +231,14 @@ constexpr inline P operator>>(P l, U r) noexcept = delete;
 /// #[doc.overloads=signedint.<<]
 [[nodiscard]] sus_pure_const constexpr inline i8 operator<<(
     i8 l, std::convertible_to<u64> auto r) noexcept {
-#if SUS_CHECK_INTEGER_OVERFLOW
-  const auto out =
-      __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value);
-  ::sus::check(!out.overflow);
-  return out.value;
-#else
-  return l.wrapping_shl(u64(r).primitive_value);
-#endif
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value);
+    ::sus::check(!out.overflow);
+    return out.value;
+  } else {
+    return l.wrapping_shl(u64(r).primitive_value);
+  }
 }
 /// #[doc.overloads=signedint.<<]
 template <class U>
@@ -256,14 +256,14 @@ constexpr inline i8 operator<<(i8 l, U r) noexcept = delete;
 /// #[doc.overloads=signedint.>>]
 [[nodiscard]] sus_pure_const constexpr inline i8 operator>>(
     i8 l, std::convertible_to<u64> auto r) noexcept {
-#if SUS_CHECK_INTEGER_OVERFLOW
-  const auto out =
-      __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value);
-  ::sus::check(!out.overflow);
-  return out.value;
-#else
-  return l.wrapping_shr(u64(r).primitive_value);
-#endif
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value);
+    ::sus::check(!out.overflow);
+    return out.value;
+  } else {
+    return l.wrapping_shr(u64(r).primitive_value);
+  }
 }
 /// #[doc.overloads=signedint.>>]
 template <class U>
@@ -272,14 +272,14 @@ constexpr inline i8 operator>>(i8 l, U r) noexcept = delete;
 /// #[doc.overloads=signedint.<<]
 [[nodiscard]] sus_pure_const constexpr inline i16 operator<<(
     i16 l, std::convertible_to<u64> auto r) noexcept {
-#if SUS_CHECK_INTEGER_OVERFLOW
-  const auto out =
-      __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value);
-  ::sus::check(!out.overflow);
-  return out.value;
-#else
-  return l.wrapping_shl(u64(r).primitive_value);
-#endif
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value);
+    ::sus::check(!out.overflow);
+    return out.value;
+  } else {
+    return l.wrapping_shl(u64(r).primitive_value);
+  }
 }
 /// #[doc.overloads=signedint.<<]
 template <class U>
@@ -288,14 +288,14 @@ constexpr inline i16 operator<<(i16 l, U r) noexcept = delete;
 /// #[doc.overloads=signedint.>>]
 [[nodiscard]] sus_pure_const constexpr inline i16 operator>>(
     i16 l, std::convertible_to<u64> auto r) noexcept {
-#if SUS_CHECK_INTEGER_OVERFLOW
-  const auto out =
-      __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value);
-  ::sus::check(!out.overflow);
-  return out.value;
-#else
-  return l.wrapping_shr(u64(r).primitive_value);
-#endif
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value);
+    ::sus::check(!out.overflow);
+    return out.value;
+  } else {
+    return l.wrapping_shr(u64(r).primitive_value);
+  }
 }
 /// #[doc.overloads=signedint.>>]
 template <class U>
@@ -304,14 +304,14 @@ constexpr inline i16 operator>>(i16 l, U r) noexcept = delete;
 /// #[doc.overloads=signedint.<<]
 [[nodiscard]] sus_pure_const constexpr inline i32 operator<<(
     i32 l, std::convertible_to<u64> auto r) noexcept {
-#if SUS_CHECK_INTEGER_OVERFLOW
-  const auto out =
-      __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value);
-  ::sus::check(!out.overflow);
-  return out.value;
-#else
-  return l.wrapping_shl(u64(r).primitive_value);
-#endif
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value);
+    ::sus::check(!out.overflow);
+    return out.value;
+  } else {
+    return l.wrapping_shl(u64(r).primitive_value);
+  }
 }
 /// #[doc.overloads=signedint.<<]
 template <class U>
@@ -320,14 +320,14 @@ constexpr inline i32 operator<<(i32 l, U r) noexcept = delete;
 /// #[doc.overloads=signedint.>>]
 [[nodiscard]] sus_pure_const constexpr inline i32 operator>>(
     i32 l, std::convertible_to<u64> auto r) noexcept {
-#if SUS_CHECK_INTEGER_OVERFLOW
-  const auto out =
-      __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value);
-  ::sus::check(!out.overflow);
-  return out.value;
-#else
-  return l.wrapping_shr(u64(r).primitive_value);
-#endif
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value);
+    ::sus::check(!out.overflow);
+    return out.value;
+  } else {
+    return l.wrapping_shr(u64(r).primitive_value);
+  }
 }
 /// #[doc.overloads=signedint.>>]
 template <class U>
@@ -336,14 +336,14 @@ constexpr inline i32 operator>>(i32 l, U r) noexcept = delete;
 /// #[doc.overloads=signedint.<<]
 [[nodiscard]] sus_pure_const constexpr inline i64 operator<<(
     i64 l, std::convertible_to<u64> auto r) noexcept {
-#if SUS_CHECK_INTEGER_OVERFLOW
-  const auto out =
-      __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value);
-  ::sus::check(!out.overflow);
-  return out.value;
-#else
-  return l.wrapping_shl(u64(r).primitive_value);
-#endif
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value);
+    ::sus::check(!out.overflow);
+    return out.value;
+  } else {
+    return l.wrapping_shl(u64(r).primitive_value);
+  }
 }
 /// #[doc.overloads=signedint.<<]
 template <class U>
@@ -352,14 +352,14 @@ constexpr inline i64 operator<<(i64 l, U r) noexcept = delete;
 /// #[doc.overloads=signedint.>>]
 [[nodiscard]] sus_pure_const constexpr inline i64 operator>>(
     i64 l, std::convertible_to<u64> auto r) noexcept {
-#if SUS_CHECK_INTEGER_OVERFLOW
-  const auto out =
-      __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value);
-  ::sus::check(!out.overflow);
-  return out.value;
-#else
-  return l.wrapping_shr(u64(r).primitive_value);
-#endif
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value);
+    ::sus::check(!out.overflow);
+    return out.value;
+  } else {
+    return l.wrapping_shr(u64(r).primitive_value);
+  }
 }
 /// #[doc.overloads=signedint.>>]
 template <class U>
@@ -368,14 +368,14 @@ constexpr inline i64 operator>>(i64 l, U r) noexcept = delete;
 /// #[doc.overloads=signedint.<<]
 [[nodiscard]] sus_pure_const constexpr inline isize operator<<(
     isize l, std::convertible_to<u64> auto r) noexcept {
-#if SUS_CHECK_INTEGER_OVERFLOW
-  const auto out =
-      __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value);
-  ::sus::check(!out.overflow);
-  return out.value;
-#else
-  return l.wrapping_shl(u64(r).primitive_value);
-#endif
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value);
+    ::sus::check(!out.overflow);
+    return out.value;
+  } else {
+    return l.wrapping_shl(u64(r).primitive_value);
+  }
 }
 /// #[doc.overloads=signedint.<<]
 template <class U>
@@ -384,14 +384,14 @@ constexpr inline isize operator<<(isize l, U r) noexcept = delete;
 /// #[doc.overloads=signedint.>>]
 [[nodiscard]] sus_pure_const constexpr inline isize operator>>(
     isize l, std::convertible_to<u64> auto r) noexcept {
-#if SUS_CHECK_INTEGER_OVERFLOW
-  const auto out =
-      __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value);
-  ::sus::check(!out.overflow);
-  return out.value;
-#else
-  return l.wrapping_shr(u64(r).primitive_value);
-#endif
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    const auto out =
+        __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value);
+    ::sus::check(!out.overflow);
+    return out.value;
+  } else {
+    return l.wrapping_shr(u64(r).primitive_value);
+  }
 }
 /// #[doc.overloads=signedint.>>]
 template <class U>
