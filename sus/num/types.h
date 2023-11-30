@@ -84,15 +84,15 @@ namespace sus {
 ///
 /// To explicitly invoke a lossless conversion, use
 /// [`From`]($sus::construct::From). Use [`Into`]($sus::construct::Into) to
-/// constain inputs in generic code, and [`sus::into()`]($sus::construct::into)
+/// constrain inputs in generic code, and [`sus::into()`]($sus::construct::into)
 /// to type-deduce for conversions. Some lossless conversions are also allowed
 /// to happen implicitly, though explicit conversion is better.
 ///
 /// To convert and handle the case where data is lost, use
 /// [`TryFrom`]($sus::construct::TryFrom), or
 /// [`TryInto`]($sus::construct::TryInto) in generic code. Using
-/// `T::try_from(U).unwrap()` is a quick way to convert and find out if there
-/// are values out of range, or to terminate on malicious inputs. Or
+/// `T::try_from(U).unwrap()` is a quick way to convert and find out if the
+/// value was out of range, or to terminate on malicious inputs. Or
 /// `T::try_from(U).unwrap_or_default()` to convert to the input value or else
 /// to zero.
 ///
