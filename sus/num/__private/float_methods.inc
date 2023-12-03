@@ -228,8 +228,8 @@ static constexpr _self from_product(
 /// ```
 ///
 /// Potentially-lossy type conversions can be forced through the
-/// [`Transmogrify`]($sus::construct::Transmogrify) concept, such as
-/// `sus::mog<float>(3_f64)` or `sus::mog<f32>(3_f64)`.
+/// [`Cast`]($sus::construct::Cast) concept, such as
+/// `sus::cast<float>(3_f64)` or `sus::cast<f32>(3_f64)`.
 template <PrimitiveFloat U>
   requires(::sus::mem::size_of<U>() >= ::sus::mem::size_of<_primitive>())
 sus_pure constexpr inline operator U() const noexcept {
@@ -774,7 +774,7 @@ sus_pure inline _self round_ties() const& noexcept {
 }
 /// Returns the nearest [`i8`]($sus::num::i8) representable by `self`.
 ///
-/// This is equivalent to `sus::mog<i8>(self.round_ties())` but it may require
+/// This is equivalent to `sus::cast<i8>(self.round_ties())` but it may require
 /// fewer instructions on some platforms.
 ///
 /// Like [`round_ties`]($sus::num::@doc.self::round_ties), but unlike
@@ -789,7 +789,7 @@ sus_pure inline i8 round_to_i8() const& noexcept {
 }
 /// Returns the nearest [`i16`]($sus::num::i16) representable by `self`.
 ///
-/// This is equivalent to `sus::mog<i16>(self.round_ties())` but it may require
+/// This is equivalent to `sus::cast<i16>(self.round_ties())` but it may require
 /// fewer instructions on some platforms.
 ///
 /// Like [`round_ties`]($sus::num::@doc.self::round_ties), but unlike
@@ -804,7 +804,7 @@ sus_pure inline i16 round_to_i16() const& noexcept {
 }
 /// Returns the nearest [`i32`]($sus::num::i32) representable by `self`.
 ///
-/// This is equivalent to `sus::mog<i32>(self.round_ties())` but it may require
+/// This is equivalent to `sus::cast<i32>(self.round_ties())` but it may require
 /// fewer instructions on some platforms.
 ///
 /// Like [`round_ties`]($sus::num::@doc.self::round_ties), but unlike
@@ -819,7 +819,7 @@ sus_pure inline i32 round_to_i32() const& noexcept {
 }
 /// Returns the nearest [`i64`]($sus::num::i64) representable by `self`.
 ///
-/// This is equivalent to `sus::mog<i64>(self.round_ties())` but it may require
+/// This is equivalent to `sus::cast<i64>(self.round_ties())` but it may require
 /// fewer instructions on some platforms.
 ///
 /// Like [`round_ties`]($sus::num::@doc.self::round_ties), but unlike
@@ -834,7 +834,7 @@ sus_pure inline i64 round_to_i64() const& noexcept {
 }
 /// Returns the nearest [`isize`]($sus::num::isize) representable by `self`.
 ///
-/// This is equivalent to `sus::mog<isize>(self.round_ties())` but it may
+/// This is equivalent to `sus::cast<isize>(self.round_ties())` but it may
 /// require fewer instructions on some platforms.
 ///
 /// Like [`round_ties`]($sus::num::@doc.self::round_ties), but unlike
@@ -947,7 +947,7 @@ sus_pure constexpr inline I to_int_unchecked(
 /// If you don’t care about signalingness (very likely), then there is no
 /// portability concern.
 ///
-/// Note that this function is distinct from `Transmogrify` casting, which
+/// Note that this function is distinct from `Cast` casting, which
 /// attempts to preserve the *numeric* value, and not the bitwise value.
 ///
 /// # Examples
@@ -970,7 +970,7 @@ sus_pure static _self from_bits(_unsigned v) noexcept {
 /// See `from_bits()` for some discussion of the portability of this operation
 /// (there are almost no issues).
 ///
-/// Note that this function is distinct from `Transmogrify` casting, which
+/// Note that this function is distinct from `Cast` casting, which
 /// attempts to preserve the *numeric* value, and not the bitwise value.
 sus_pure constexpr inline _unsigned to_bits() const& noexcept {
   return std::bit_cast<decltype(_unsigned::primitive_value)>(primitive_value);

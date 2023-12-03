@@ -90,9 +90,9 @@ sus_pure inline constexpr _self _self::from_ne_bytes(
   if (std::is_constant_evaluated()) {
     val = Unsigned{0};
     for (usize i; i < ::sus::mem::size_of<_primitive>(); i += 1u) {
-      // size_of<_primitive>() is <= u32::MAX so the mog<u32>() is not lossy.
+      // size_of<_primitive>() is <= u32::MAX so the cast<u32>() is not lossy.
       static_assert(::sus::mem::size_of<_primitive>() <= u32::MAX);
-      val |= uint8_t{bytes[i] << sus::mog<u32>(
+      val |= uint8_t{bytes[i] << sus::cast<u32>(
                          ::sus::mem::size_of<_primitive>() - 1u - i)};
     }
   } else {

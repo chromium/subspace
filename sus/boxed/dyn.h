@@ -256,7 +256,7 @@ namespace sus::boxed {
 /// In order to ensure the target of the `DynC&` reference outlives the function
 /// it can be constructed as a stack variable before calling the function.
 /// ```
-/// std::srand(sus::mog<unsigned>(std::time(nullptr)));
+/// std::srand(sus::cast<unsigned>(std::time(nullptr)));
 ///
 /// auto x = [](sus::Option<sus::fn::DynFn<std::string()>&> fn) {
 ///   if (fn.is_some())

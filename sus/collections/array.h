@@ -69,7 +69,7 @@ struct Storage<T, 0> final {};
 /// subtracting a pointer at a greater distance results in Undefined Behaviour.
 template <class T, size_t N>
 class Array final {
-  static_assert(N <= ::sus::mog<usize>(isize::MAX));
+  static_assert(N <= ::sus::cast<usize>(isize::MAX));
   static_assert(!std::is_reference_v<T>,
                 "Array<T&, N> is invalid as Array must hold value types. Use "
                 "Array<T*, N> instead.");

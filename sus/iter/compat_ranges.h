@@ -24,7 +24,7 @@
 #include "sus/macros/__private/compiler_bugs.h"
 #include "sus/macros/lifetimebound.h"
 #include "sus/mem/move.h"
-#include "sus/num/transmogrify.h"
+#include "sus/num/cast.h"
 #include "sus/num/unsigned_integer.h"
 #include "sus/option/option.h"
 
