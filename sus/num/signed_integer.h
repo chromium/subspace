@@ -234,7 +234,8 @@ constexpr inline P operator>>(P l, U r) noexcept = delete;
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
         __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value);
-    ::sus::check(!out.overflow);
+    ::sus::check_with_message(!out.overflow,
+                              "attempt to shift left with overflow");
     return out.value;
   } else {
     return l.wrapping_shl(u64(r).primitive_value);
@@ -259,7 +260,8 @@ constexpr inline i8 operator<<(i8 l, U r) noexcept = delete;
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
         __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value);
-    ::sus::check(!out.overflow);
+    ::sus::check_with_message(!out.overflow,
+                              "attempt to shift right with overflow");
     return out.value;
   } else {
     return l.wrapping_shr(u64(r).primitive_value);
@@ -275,7 +277,8 @@ constexpr inline i8 operator>>(i8 l, U r) noexcept = delete;
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
         __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value);
-    ::sus::check(!out.overflow);
+    ::sus::check_with_message(!out.overflow,
+                              "attempt to shift left with overflow");
     return out.value;
   } else {
     return l.wrapping_shl(u64(r).primitive_value);
@@ -291,7 +294,8 @@ constexpr inline i16 operator<<(i16 l, U r) noexcept = delete;
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
         __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value);
-    ::sus::check(!out.overflow);
+    ::sus::check_with_message(!out.overflow,
+                              "attempt to shift right with overflow");
     return out.value;
   } else {
     return l.wrapping_shr(u64(r).primitive_value);
@@ -307,7 +311,8 @@ constexpr inline i16 operator>>(i16 l, U r) noexcept = delete;
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
         __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value);
-    ::sus::check(!out.overflow);
+    ::sus::check_with_message(!out.overflow,
+                              "attempt to shift left with overflow");
     return out.value;
   } else {
     return l.wrapping_shl(u64(r).primitive_value);
@@ -323,7 +328,8 @@ constexpr inline i32 operator<<(i32 l, U r) noexcept = delete;
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
         __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value);
-    ::sus::check(!out.overflow);
+    ::sus::check_with_message(!out.overflow,
+                              "attempt to shift right with overflow");
     return out.value;
   } else {
     return l.wrapping_shr(u64(r).primitive_value);
@@ -339,7 +345,8 @@ constexpr inline i32 operator>>(i32 l, U r) noexcept = delete;
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
         __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value);
-    ::sus::check(!out.overflow);
+    ::sus::check_with_message(!out.overflow,
+                              "attempt to shift left with overflow");
     return out.value;
   } else {
     return l.wrapping_shl(u64(r).primitive_value);
@@ -355,7 +362,8 @@ constexpr inline i64 operator<<(i64 l, U r) noexcept = delete;
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
         __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value);
-    ::sus::check(!out.overflow);
+    ::sus::check_with_message(!out.overflow,
+                              "attempt to shift right with overflow");
     return out.value;
   } else {
     return l.wrapping_shr(u64(r).primitive_value);
@@ -371,7 +379,8 @@ constexpr inline i64 operator>>(i64 l, U r) noexcept = delete;
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
         __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value);
-    ::sus::check(!out.overflow);
+    ::sus::check_with_message(!out.overflow,
+                              "attempt to shift left with overflow");
     return out.value;
   } else {
     return l.wrapping_shl(u64(r).primitive_value);
@@ -387,7 +396,8 @@ constexpr inline isize operator<<(isize l, U r) noexcept = delete;
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
         __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value);
-    ::sus::check(!out.overflow);
+    ::sus::check_with_message(!out.overflow,
+                              "attempt to shift right with overflow");
     return out.value;
   } else {
     return l.wrapping_shr(u64(r).primitive_value);

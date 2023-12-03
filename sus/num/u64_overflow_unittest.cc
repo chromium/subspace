@@ -39,10 +39,10 @@ TEST(u64OverflowDeathTest, DivOverflow) {
         auto x = u64::MAX / 0_u64;
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
 
   auto x = u64::MIN;
-  EXPECT_DEATH(x /= 0_u64, "");
+  EXPECT_DEATH(x /= 0_u64, "attempt to divide by zero");
 #endif
 }
 
@@ -53,7 +53,7 @@ TEST(u64OverflowDeathTest, OverflowingDivByZero) {
         auto x = u64::MAX.overflowing_div(0_u64);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
 
 #endif
 }
@@ -65,7 +65,7 @@ TEST(u64OverflowDeathTest, SaturatingDivByZero) {
         auto x = u64::MAX.saturating_div(0_u64);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
 
 #endif
 }
@@ -77,7 +77,7 @@ TEST(u64OverflowDeathTest, WrappingDivByZero) {
         auto x = u64::MAX.wrapping_div(0_u64);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
 #endif
 }
 
@@ -96,10 +96,11 @@ TEST(u64OverflowDeathTest, RemOverflow) {
         auto x = u64::MAX % 0_u64;
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
 
   auto x = u64::MIN;
-  EXPECT_DEATH(x %= 0_u64, "");
+  EXPECT_DEATH(x %= 0_u64,
+               "attempt to calculate the remainder with a divisor of zero");
 #endif
 }
 
@@ -110,7 +111,7 @@ TEST(u64OverflowDeathTest, OverflowingRemByZero) {
         auto x = u64::MAX.overflowing_rem(0_u64);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
 #endif
 }
 
@@ -121,7 +122,7 @@ TEST(u64OverflowDeathTest, WrappingRemByZero) {
         auto x = u64::MAX.wrapping_rem(0_u64);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
 #endif
 }
 
@@ -153,7 +154,7 @@ TEST(u64OverflowDeathTest, Log2NonPositive) {
         auto x = (0_u64).log2();
         ensure_use(&x);
       },
-      "");
+      "argument of integer logarithm must be positive");
 #endif
 }
 
@@ -164,7 +165,7 @@ TEST(u64OverflowDeathTest, Log10NonPositive) {
         auto x = (0_u64).log10();
         ensure_use(&x);
       },
-      "");
+      "argument of integer logarithm must be positive");
 #endif
 }
 
@@ -175,13 +176,13 @@ TEST(u64OverflowDeathTest, LogNonPositive) {
         auto x = (0_u64).log(10_u64);
         ensure_use(&x);
       },
-      "");
+      "argument of integer logarithm must be positive");
   EXPECT_DEATH(
       {
         auto x = (2_u64).log(0_u64);
         ensure_use(&x);
       },
-      "");
+      "argument of integer logarithm must be positive");
 #endif
 }
 TEST(u64OverflowDeathTest, DivEuclidOverflow) {
@@ -191,7 +192,7 @@ TEST(u64OverflowDeathTest, DivEuclidOverflow) {
         auto x = (7_u64).div_euclid(0_u64);
         EXPECT_EQ(x, u64::MIN);
       },
-      "");
+      "attempt to divide by zero");
 #endif
 }
 
@@ -202,7 +203,7 @@ TEST(u64OverflowDeathTest, OverflowingDivEuclidDivByZero) {
         auto x = (7_u64).overflowing_div_euclid(0_u64);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
 #endif
 }
 
@@ -213,7 +214,7 @@ TEST(u64OverflowDeathTest, WrappingDivEuclidOverflow) {
         auto x = (7_u64).wrapping_div_euclid(0_u64);
         EXPECT_EQ(x, u64::MIN);
       },
-      "");
+      "attempt to divide by zero");
 #endif
 }
 
@@ -224,7 +225,7 @@ TEST(u64OverflowDeathTest, RemEuclidOverflow) {
         auto x = (7_u64).rem_euclid(0_u64);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
 #endif
 }
 
@@ -235,7 +236,7 @@ TEST(u64OverflowDeathTest, OverflowingRemEuclidDivByZero) {
         auto x = (7_u64).overflowing_rem_euclid(0_u64);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
 #endif
 }
 
@@ -246,7 +247,7 @@ TEST(u64OverflowDeathTest, WrappingRemEuclidOverflow) {
         auto x = (7_u64).wrapping_rem_euclid(0_u64);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
 #endif
 }
 

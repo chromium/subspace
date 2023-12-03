@@ -16,6 +16,8 @@
 #include <type_traits>
 
 #include "googletest/include/gtest/gtest.h"
+#include "sus/cmp/eq.h"
+#include "sus/cmp/ord.h"
 #include "sus/collections/array.h"
 #include "sus/construct/default.h"
 #include "sus/construct/into.h"
@@ -24,8 +26,6 @@
 #include "sus/num/num_concepts.h"
 #include "sus/num/signed_integer.h"
 #include "sus/num/unsigned_integer.h"
-#include "sus/cmp/eq.h"
-#include "sus/cmp/ord.h"
 #include "sus/option/option.h"
 #include "sus/prelude.h"
 #include "sus/test/ensure_use.h"
@@ -51,30 +51,30 @@ static_assert(sus::mem::Move<u32>);
 namespace behaviour {
 using T = u32;
 using From = decltype(u32::primitive_value);
-static_assert(!std::is_trivial_v<T>, "");
-static_assert(!std::is_aggregate_v<T>, "");
-static_assert(std::is_standard_layout_v<T>, "");
-static_assert(!std::is_trivially_default_constructible_v<T>, "");
-static_assert(std::is_trivially_copy_constructible_v<T>, "");
-static_assert(std::is_trivially_copy_assignable_v<T>, "");
-static_assert(std::is_trivially_move_constructible_v<T>, "");
-static_assert(std::is_trivially_move_assignable_v<T>, "");
-static_assert(std::is_trivially_destructible_v<T>, "");
-static_assert(std::is_copy_constructible_v<T>, "");
-static_assert(std::is_copy_assignable_v<T>, "");
-static_assert(std::is_move_constructible_v<T>, "");
-static_assert(std::is_move_assignable_v<T>, "");
-static_assert(std::is_nothrow_swappable_v<T>, "");
-static_assert(std::is_constructible_v<T, From&&>, "");
-static_assert(std::is_assignable_v<T, From&&>, "");
-static_assert(std::is_constructible_v<T, const From&>, "");
-static_assert(std::is_assignable_v<T, const From&>, "");
-static_assert(std::is_constructible_v<T, From>, "");
-static_assert(!std::is_trivially_constructible_v<T, From>, "");
-static_assert(std::is_assignable_v<T, From>, "");
-static_assert(std::is_nothrow_destructible_v<T>, "");
-static_assert(sus::construct::Default<T>, "");
-static_assert(sus::mem::relocate_by_memcpy<T>, "");
+static_assert(!std::is_trivial_v<T>);
+static_assert(!std::is_aggregate_v<T>);
+static_assert(std::is_standard_layout_v<T>);
+static_assert(!std::is_trivially_default_constructible_v<T>);
+static_assert(std::is_trivially_copy_constructible_v<T>);
+static_assert(std::is_trivially_copy_assignable_v<T>);
+static_assert(std::is_trivially_move_constructible_v<T>);
+static_assert(std::is_trivially_move_assignable_v<T>);
+static_assert(std::is_trivially_destructible_v<T>);
+static_assert(std::is_copy_constructible_v<T>);
+static_assert(std::is_copy_assignable_v<T>);
+static_assert(std::is_move_constructible_v<T>);
+static_assert(std::is_move_assignable_v<T>);
+static_assert(std::is_nothrow_swappable_v<T>);
+static_assert(std::is_constructible_v<T, From&&>);
+static_assert(std::is_assignable_v<T, From&&>);
+static_assert(std::is_constructible_v<T, const From&>);
+static_assert(std::is_assignable_v<T, const From&>);
+static_assert(std::is_constructible_v<T, From>);
+static_assert(!std::is_trivially_constructible_v<T, From>);
+static_assert(std::is_assignable_v<T, From>);
+static_assert(std::is_nothrow_destructible_v<T>);
+static_assert(sus::construct::Default<T>);
+static_assert(sus::mem::relocate_by_memcpy<T>);
 }  // namespace behaviour
 
 // u32::MAX
@@ -704,13 +704,13 @@ TEST(u32DeathTest, AddOverflow) {
         auto x = u32::MAX + 1_u32;
         ensure_use(&x);
       },
-      "");
+      "attempt to add with overflow");
   EXPECT_DEATH(
       {
         auto x = u32::MAX + u32::MAX;
         ensure_use(&x);
       },
-      "");
+      "attempt to add with overflow");
 #endif
 }
 
@@ -808,34 +808,34 @@ TEST(u32DeathTest, DivOverflow) {
         auto x = u32::MAX / 0_u32;
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
   EXPECT_DEATH(
       {
         auto x = 0_u32 / 0_u32;
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
   EXPECT_DEATH(
       {
         auto x = 1_u32 / 0_u32;
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
   EXPECT_DEATH(
       {
         auto x = u32::MIN / 0_u32;
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
 
   auto x = u32::MAX;
-  EXPECT_DEATH(x /= 0_u32, "");
+  EXPECT_DEATH(x /= 0_u32, "attempt to divide by zero");
   x = 0_u32;
-  EXPECT_DEATH(x /= 0_u32, "");
+  EXPECT_DEATH(x /= 0_u32, "attempt to divide by zero");
   x = 1_u32;
-  EXPECT_DEATH(x /= 0_u32, "");
+  EXPECT_DEATH(x /= 0_u32, "attempt to divide by zero");
   x = u32::MIN;
-  EXPECT_DEATH(x /= 0_u32, "");
+  EXPECT_DEATH(x /= 0_u32, "attempt to divide by zero");
 #endif
 }
 
@@ -866,25 +866,25 @@ TEST(u32DeathTest, OverflowingDivByZero) {
         auto x = u32::MAX.overflowing_div(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
   EXPECT_DEATH(
       {
         auto x = (0_u32).overflowing_div(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
   EXPECT_DEATH(
       {
         auto x = (1_u32).overflowing_div(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
   EXPECT_DEATH(
       {
         auto x = u32::MIN.overflowing_div(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
 #endif
 }
 
@@ -903,25 +903,25 @@ TEST(u32DeathTest, SaturatingDivByZero) {
         auto x = u32::MAX.saturating_div(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
   EXPECT_DEATH(
       {
         auto x = (0_u32).saturating_div(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
   EXPECT_DEATH(
       {
         auto x = (1_u32).saturating_div(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
   EXPECT_DEATH(
       {
         auto x = u32::MIN.saturating_div(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
 #endif
 }
 
@@ -940,25 +940,25 @@ TEST(u32DeathTest, WrappingDivByZero) {
         auto x = u32::MAX.wrapping_div(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
   EXPECT_DEATH(
       {
         auto x = (0_u32).wrapping_div(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
   EXPECT_DEATH(
       {
         auto x = (1_u32).wrapping_div(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
   EXPECT_DEATH(
       {
         auto x = u32::MIN.wrapping_div(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
 #endif
 }
 
@@ -987,7 +987,7 @@ TEST(u32DeathTest, MulOverflow) {
         auto x = u32::MAX * 2_u32;
         ensure_use(&x);
       },
-      "");
+      "attempt to multiply with overflow");
 #endif
 }
 
@@ -1105,34 +1105,38 @@ TEST(u32DeathTest, RemOverflow) {
         auto x = u32::MAX % 0_u32;
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
   EXPECT_DEATH(
       {
         auto x = 0_u32 % 0_u32;
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
   EXPECT_DEATH(
       {
         auto x = 1_u32 % 0_u32;
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
   EXPECT_DEATH(
       {
         auto x = u32::MIN % 0_u32;
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
 
   auto x = u32::MAX;
-  EXPECT_DEATH(x %= 0_u32, "");
+  EXPECT_DEATH(x %= 0_u32,
+               "attempt to calculate the remainder with a divisor of zero");
   x = 0_u32;
-  EXPECT_DEATH(x %= 0_u32, "");
+  EXPECT_DEATH(x %= 0_u32,
+               "attempt to calculate the remainder with a divisor of zero");
   x = 1_u32;
-  EXPECT_DEATH(x %= 0_u32, "");
+  EXPECT_DEATH(x %= 0_u32,
+               "attempt to calculate the remainder with a divisor of zero");
   x = u32::MIN;
-  EXPECT_DEATH(x %= 0_u32, "");
+  EXPECT_DEATH(x %= 0_u32,
+               "attempt to calculate the remainder with a divisor of zero");
 #endif
 }
 
@@ -1165,19 +1169,19 @@ TEST(u32DeathTest, OverflowingRemByZero) {
         auto x = u32::MAX.overflowing_rem(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
   EXPECT_DEATH(
       {
         auto x = (0_u32).overflowing_rem(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
   EXPECT_DEATH(
       {
         auto x = (1_u32).overflowing_rem(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
 #endif
 }
 
@@ -1196,25 +1200,25 @@ TEST(u32DeathTest, WrappingRemByZero) {
         auto x = u32::MAX.wrapping_rem(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
   EXPECT_DEATH(
       {
         auto x = (0_u32).wrapping_rem(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
   EXPECT_DEATH(
       {
         auto x = (1_u32).wrapping_rem(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
   EXPECT_DEATH(
       {
         auto x = u32::MIN.wrapping_rem(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
 #endif
 }
 
@@ -1238,19 +1242,26 @@ TEST(u32DeathTest, ShlOverflow) {
         auto x = 0_u32 << 32_u32;
         ensure_use(&x);
       },
-      "");
+      "attempt to shift left with overflow");
   EXPECT_DEATH(
       {
         auto x = 1_u32 << 33_u32;
         ensure_use(&x);
       },
-      "");
+      "attempt to shift left with overflow");
   EXPECT_DEATH(
       {
-        auto x = 2_u32 << 64_u32;
+        auto x = 2_u32 << 65_u32;
         ensure_use(&x);
       },
-      "");
+      "attempt to shift left with overflow");
+  auto y = 2_u32;
+  EXPECT_DEATH(
+      {
+        y <<= 65_u32;
+        ensure_use(&y);
+      },
+      "attempt to shift left with overflow");
 #endif
 }
 
@@ -1305,13 +1316,20 @@ TEST(u32DeathTest, ShrOverflow) {
         auto x = 0_u32 >> 33_u32;
         ensure_use(&x);
       },
-      "");
+      "attempt to shift right with overflow");
   EXPECT_DEATH(
       {
-        auto x = 1_u32 >> 64_u32;
+        auto x = 1_u32 >> 65_u32;
         ensure_use(&x);
       },
-      "");
+      "attempt to shift right with overflow");
+  auto y = 2_u32;
+  EXPECT_DEATH(
+      {
+        y >>= 65_u32;
+        ensure_use(&y);
+      },
+      "attempt to shift right with overflow");
 #endif
 }
 
@@ -1372,13 +1390,13 @@ TEST(u32DeathTest, SubOverflow) {
         auto x = u32::MIN - 1_u32;
         ensure_use(&x);
       },
-      "");
+      "attempt to subtract with overflow");
   EXPECT_DEATH(
       {
         auto x = u32::MIN - u32::MAX;
         ensure_use(&x);
       },
-      "");
+      "attempt to subtract with overflow");
 #endif
 }
 
@@ -1556,21 +1574,21 @@ TEST(u32DeathTest, PowOverflow) {
         auto x = (3_u32).pow(31_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to multiply with overflow");
   // Crashes on base * base.
   EXPECT_DEATH(
       {
         auto x = (u32::MAX / 2_u32).pow(31_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to multiply with overflow");
   // Crashes on acc * base inside the exponent loop.
   EXPECT_DEATH(
       {
         auto x = (4_u32).pow((1_u32 << 30_u32) - 1_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to multiply with overflow");
 #endif
 }
 
@@ -1683,7 +1701,7 @@ TEST(u32DeathTest, Log2NonPositive) {
         auto x = (0_u32).log2();
         ensure_use(&x);
       },
-      "");
+      "argument of integer logarithm must be positive");
 #endif
 }
 
@@ -1715,7 +1733,7 @@ TEST(u32DeathTest, Log10NonPositive) {
         auto x = (0_u32).log10();
         ensure_use(&x);
       },
-      "");
+      "argument of integer logarithm must be positive");
 #endif
 }
 
@@ -1745,19 +1763,19 @@ TEST(u32DeathTest, LogNonPositive) {
         auto x = (0_u32).log(10_u32);
         ensure_use(&x);
       },
-      "");
+      "argument of integer logarithm must be positive");
   EXPECT_DEATH(
       {
         auto x = (2_u32).log(0_u32);
         ensure_use(&x);
       },
-      "");
+      "argument of integer logarithm must be positive");
   EXPECT_DEATH(
       {
         auto x = (2_u32).log(1_u32);
         ensure_use(&x);
       },
-      "");
+      "argument of integer logarithm must be positive");
 #endif
 }
 
@@ -1967,7 +1985,7 @@ TEST(u32DeathTest, NextPowerOfTwoOutOfBounds) {
         auto x = u32::MAX.next_power_of_two();
         ensure_use(&x);
       },
-      "");
+      "attempt to add with overflow");
 #endif
 }
 
@@ -2011,7 +2029,7 @@ TEST(u32DeathTest, DivEuclidOverflow) {
         auto x = (7_u32).div_euclid(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
 #endif
 }
 
@@ -2038,7 +2056,7 @@ TEST(u32DeathTest, OverflowingDivEuclidDivByZero) {
         auto x = (7_u32).overflowing_div_euclid(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
 #endif
 }
 
@@ -2056,7 +2074,7 @@ TEST(u32DeathTest, WrappingDivEuclidOverflow) {
         auto x = (7_u32).wrapping_div_euclid(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
 #endif
 }
 
@@ -2074,7 +2092,7 @@ TEST(u32DeathTest, RemEuclidOverflow) {
         auto x = (7_u32).rem_euclid(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
 #endif
 }
 
@@ -2101,7 +2119,7 @@ TEST(u32DeathTest, OverflowingRemEuclidDivByZero) {
         auto x = (7_u32).overflowing_rem_euclid(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
 #endif
 }
 
@@ -2119,7 +2137,7 @@ TEST(u32DeathTest, WrappingRemEuclidOverflow) {
         auto x = (7_u32).wrapping_rem_euclid(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
 #endif
 }
 

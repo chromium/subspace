@@ -30,10 +30,10 @@ TEST(u8OverflowDeathTest, DivOverflow) {
         auto x = u8::MAX / 0_u8;
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
 
   auto x = u8::MIN;
-  EXPECT_DEATH(x /= 0_u8, "");
+  EXPECT_DEATH(x /= 0_u8, "attempt to divide by zero");
 #endif
 }
 
@@ -44,7 +44,7 @@ TEST(u8OverflowDeathTest, OverflowingDivByZero) {
         auto x = u8::MAX.overflowing_div(0_u8);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
 
 #endif
 }
@@ -56,7 +56,7 @@ TEST(u8OverflowDeathTest, SaturatingDivByZero) {
         auto x = u8::MAX.saturating_div(0_u8);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
 
 #endif
 }
@@ -68,7 +68,7 @@ TEST(u8OverflowDeathTest, WrappingDivByZero) {
         auto x = u8::MAX.wrapping_div(0_u8);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
 #endif
 }
 
@@ -81,10 +81,11 @@ TEST(u8OverflowDeathTest, RemOverflow) {
         auto x = u8::MAX % 0_u8;
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
 
   auto x = u8::MIN;
-  EXPECT_DEATH(x %= 0_u8, "");
+  EXPECT_DEATH(x %= 0_u8,
+               "attempt to calculate the remainder with a divisor of zero");
 #endif
 }
 
@@ -95,7 +96,7 @@ TEST(u8OverflowDeathTest, OverflowingRemByZero) {
         auto x = u8::MAX.overflowing_rem(0_u8);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
 #endif
 }
 
@@ -106,7 +107,7 @@ TEST(u8OverflowDeathTest, WrappingRemByZero) {
         auto x = u8::MAX.wrapping_rem(0_u8);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
 #endif
 }
 
@@ -129,7 +130,7 @@ TEST(u8OverflowDeathTest, Log2NonPositive) {
         auto x = (0_u8).log2();
         ensure_use(&x);
       },
-      "");
+      "argument of integer logarithm must be positive");
 #endif
 }
 
@@ -140,7 +141,7 @@ TEST(u8OverflowDeathTest, Log10NonPositive) {
         auto x = (0_u8).log10();
         ensure_use(&x);
       },
-      "");
+      "argument of integer logarithm must be positive");
 #endif
 }
 
@@ -151,13 +152,13 @@ TEST(u8OverflowDeathTest, LogNonPositive) {
         auto x = (0_u8).log(10_u8);
         ensure_use(&x);
       },
-      "");
+      "argument of integer logarithm must be positive");
   EXPECT_DEATH(
       {
         auto x = (2_u8).log(0_u8);
         ensure_use(&x);
       },
-      "");
+      "argument of integer logarithm must be positive");
 #endif
 }
 TEST(u8OverflowDeathTest, DivEuclidOverflow) {
@@ -167,7 +168,7 @@ TEST(u8OverflowDeathTest, DivEuclidOverflow) {
         auto x = (7_u8).div_euclid(0_u8);
         EXPECT_EQ(x, u8::MIN);
       },
-      "");
+      "attempt to divide by zero");
 #endif
 }
 
@@ -178,7 +179,7 @@ TEST(u8OverflowDeathTest, OverflowingDivEuclidDivByZero) {
         auto x = (7_u8).overflowing_div_euclid(0_u8);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
 #endif
 }
 
@@ -189,7 +190,7 @@ TEST(u8OverflowDeathTest, WrappingDivEuclidOverflow) {
         auto x = (7_u8).wrapping_div_euclid(0_u8);
         EXPECT_EQ(x, u8::MIN);
       },
-      "");
+      "attempt to divide by zero");
 #endif
 }
 
@@ -200,7 +201,7 @@ TEST(u8OverflowDeathTest, RemEuclidOverflow) {
         auto x = (7_u8).rem_euclid(0_u8);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
 #endif
 }
 
@@ -211,7 +212,7 @@ TEST(u8OverflowDeathTest, OverflowingRemEuclidDivByZero) {
         auto x = (7_u8).overflowing_rem_euclid(0_u8);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
 #endif
 }
 
@@ -222,7 +223,7 @@ TEST(u8OverflowDeathTest, WrappingRemEuclidOverflow) {
         auto x = (7_u8).wrapping_rem_euclid(0_u8);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
 #endif
 }
 
