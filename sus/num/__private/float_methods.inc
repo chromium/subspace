@@ -936,12 +936,20 @@ sus_pure inline _self to_degrees() const& noexcept {
 sus_pure inline _self to_radians() const& noexcept {
   return primitive_value * (consts::PI.primitive_value / _primitive{180});
 }
-/// Rounds toward zero and converts to any primitive integer type, assuming
-/// that the value is finite and fits in that type.
-template <Integer I>
-sus_pure constexpr inline I to_int_unchecked(
+
+/// Rounds toward zero and converts to any [safe integer type]($sus::num)
+/// assuming that the value is finite and fits in that type.
+///
+/// # Safety
+/// To avoid Undefined Behaviour, the value must:
+/// * Not be `NaN`.
+/// * Not be infinite.
+/// * Be representable in the return type `Int`, after truncating off its
+///   fractional part.
+template <Integer Int>
+sus_pure constexpr inline Int to_int_unchecked(
     ::sus::marker::UnsafeFnMarker) const& noexcept {
-  return static_cast<decltype(I::primitive_value)>(primitive_value);
+  return static_cast<decltype(Int::primitive_value)>(primitive_value);
 }
 
 /// Raw transmutation from `##_unsigned##`.
