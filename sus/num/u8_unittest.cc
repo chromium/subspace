@@ -652,6 +652,8 @@ TEST(u8, InvokeEverything) {
   (void)i.overflowing_rem_euclid(j);
   (void)i.wrapping_rem_euclid(j);
 
+  (void)i.div_ceil(j);
+
   (void)i.checked_shl(1_u32);
   (void)i.overflowing_shl(1_u32);
   (void)i.wrapping_shl(1_u32);

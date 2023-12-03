@@ -251,4 +251,21 @@ TEST(u16OverflowDeathTest, WrappingRemEuclidOverflow) {
 #endif
 }
 
+TEST(u16OverflowDeathTest, DivCeilDivByZero) {
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(
+      {
+        auto x = (0_u16).div_ceil(0_u16);
+        ensure_use(&x);
+      },
+      "attempt to divide by zero");
+  EXPECT_DEATH(
+      {
+        auto x = u16::MAX.div_ceil(0_u16);
+        ensure_use(&x);
+      },
+      "attempt to divide by zero");
+#endif
+}
+
 }  // namespace

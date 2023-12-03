@@ -653,6 +653,8 @@ TEST(uptr, InvokeEverything) {
   (void)i.overflowing_rem_euclid(j);
   (void)i.wrapping_rem_euclid(j);
 
+  (void)i.div_ceil(j);
+
   (void)i.checked_shl(1_u32);
   (void)i.overflowing_shl(1_u32);
   (void)i.wrapping_shl(1_u32);
@@ -1060,6 +1062,14 @@ TEST(uptr, ArithemticWithSmallerIntegers) {
   static_assert(std::same_as<uptr, decltype(i.wrapping_rem_euclid(u))>);
   EXPECT_EQ(i.wrapping_rem_euclid(p), i.wrapping_rem_euclid(i));
   EXPECT_EQ(i.wrapping_rem_euclid(u), i.wrapping_rem_euclid(i));
+
+  // Ceil math.
+
+  static_assert(std::same_as<uptr, decltype(i.div_ceil(i))>);
+  static_assert(std::same_as<uptr, decltype(i.div_ceil(p))>);
+  static_assert(std::same_as<uptr, decltype(i.div_ceil(u))>);
+  EXPECT_EQ(i.div_ceil(p), i.div_ceil(i));
+  EXPECT_EQ(i.div_ceil(u), i.div_ceil(i));
 
   // Log math.
   static_assert(std::same_as<u32, decltype(i.log(i))>);

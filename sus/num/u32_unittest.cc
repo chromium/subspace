@@ -2168,4 +2168,40 @@ static_assert([] {
   return v.as_mut_ptr() == &v.primitive_value;
 }());
 
+TEST(u32, DivCeil) {
+  EXPECT_EQ((7_u32).div_ceil(1u), 7u);
+  EXPECT_EQ((7_u32).div_ceil(2u), 4u);
+  EXPECT_EQ((7_u32).div_ceil(3u), 3u);
+  EXPECT_EQ((7_u32).div_ceil(4u), 2u);
+  EXPECT_EQ((7_u32).div_ceil(5u), 2u);
+  EXPECT_EQ((7_u32).div_ceil(6u), 2u);
+  EXPECT_EQ((7_u32).div_ceil(7u), 1u);
+  EXPECT_EQ((7_u32).div_ceil(8u), 1u);
+
+  EXPECT_EQ((6_u32).div_ceil(1u), 6u);
+  EXPECT_EQ((6_u32).div_ceil(2u), 3u);
+  EXPECT_EQ((6_u32).div_ceil(3u), 2u);
+  EXPECT_EQ((6_u32).div_ceil(4u), 2u);
+  EXPECT_EQ((6_u32).div_ceil(5u), 2u);
+  EXPECT_EQ((6_u32).div_ceil(6u), 1u);
+  EXPECT_EQ((6_u32).div_ceil(7u), 1u);
+}
+
+TEST(u32DeathTest, DivCeilDivByZero) {
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(
+      {
+        auto x = (0_u32).div_ceil(0_u32);
+        ensure_use(&x);
+      },
+      "attempt to divide by zero");
+  EXPECT_DEATH(
+      {
+        auto x = u32::MAX.div_ceil(0_u32);
+        ensure_use(&x);
+      },
+      "attempt to divide by zero");
+#endif
+}
+
 }  // namespace
