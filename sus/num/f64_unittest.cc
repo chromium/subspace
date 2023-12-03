@@ -228,6 +228,59 @@ TEST(f64, ToPrimitive) {
   static_assert(NotConvertible<f64, size_t>);
 }
 
+TEST(f64, From) {
+  static_assert(sus::construct::From<f64, bool>);
+  static_assert(sus::construct::From<f64, char>);
+  static_assert(sus::construct::From<f64, unsigned char>);
+  static_assert(sus::construct::From<f64, signed char>);
+  static_assert(sus::construct::From<f64, int8_t>);
+  static_assert(sus::construct::From<f64, int16_t>);
+  static_assert(sus::construct::From<f64, int32_t>);
+  static_assert(!sus::construct::From<f64, int64_t>);
+  static_assert(sus::construct::From<f64, uint8_t>);
+  static_assert(sus::construct::From<f64, uint16_t>);
+  static_assert(sus::construct::From<f64, uint32_t>);
+  static_assert(!sus::construct::From<f64, uint64_t>);
+  static_assert((sizeof(size_t) <= sizeof(u32)) ==
+                sus::construct::From<f64, size_t>);
+  static_assert((sizeof(uintptr_t) <= sizeof(u32)) ==
+                sus::construct::From<f64, uintptr_t>);
+
+  static_assert(sus::construct::From<f64, i8>);
+  static_assert(sus::construct::From<f64, i16>);
+  static_assert(sus::construct::From<f64, i32>);
+  static_assert(!sus::construct::From<f64, i64>);
+  static_assert(!sus::construct::From<f64, isize>);
+  static_assert(sus::construct::From<f64, u8>);
+  static_assert(sus::construct::From<f64, u16>);
+  static_assert(sus::construct::From<f64, u32>);
+  static_assert(!sus::construct::From<f64, u64>);
+  static_assert((sizeof(usize) <= sizeof(u32)) ==
+                sus::construct::From<f64, usize>);
+  static_assert((sizeof(uptr) <= sizeof(u32)) ==
+                sus::construct::From<f64, uptr>);
+
+  static_assert(f64::from(true) == 1_f64);
+  static_assert(f64::from(int16_t{-33}) == -33_f64);
+  static_assert(f64::from(-33_i16) == -33_f64);
+  static_assert(f64::from(int16_t{33}) == 33_f64);
+  static_assert(f64::from(33_u16) == 33_f64);
+  static_assert(f64::from(int32_t{-33}) == -33_f64);
+  static_assert(f64::from(-33_i32) == -33_f64);
+  static_assert(f64::from(int32_t{33}) == 33_f64);
+  static_assert(f64::from(33_u32) == 33_f64);
+
+  EXPECT_EQ(f64::from(true), 1_f64);
+  EXPECT_EQ(f64::from(int16_t{-33}), -33_f64);
+  EXPECT_EQ(f64::from(-33_i16), -33_f64);
+  EXPECT_EQ(f64::from(int16_t{33}), 33_f64);
+  EXPECT_EQ(f64::from(33_u16), 33_f64);
+  EXPECT_EQ(f64::from(int32_t{-33}), -33_f64);
+  EXPECT_EQ(f64::from(-33_i32), -33_f64);
+  EXPECT_EQ(f64::from(int32_t{33}), 33_f64);
+  EXPECT_EQ(f64::from(33_u32), 33_f64);
+}
+
 TEST(f64, Negate) {
   constexpr auto a = -(0.345_f64);
   EXPECT_EQ(a, f64(-0.345));

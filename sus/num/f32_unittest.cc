@@ -228,6 +228,47 @@ TEST(f32, ToPrimitive) {
   static_assert(NotConvertible<f32, size_t>);
 }
 
+TEST(f32, From) {
+  static_assert(sus::construct::From<f32, bool>);
+  static_assert(sus::construct::From<f32, char>);
+  static_assert(sus::construct::From<f32, unsigned char>);
+  static_assert(sus::construct::From<f32, signed char>);
+  static_assert(sus::construct::From<f32, int8_t>);
+  static_assert(sus::construct::From<f32, int16_t>);
+  static_assert(!sus::construct::From<f32, int32_t>);
+  static_assert(!sus::construct::From<f32, int64_t>);
+  static_assert(sus::construct::From<f32, uint8_t>);
+  static_assert(sus::construct::From<f32, uint16_t>);
+  static_assert(!sus::construct::From<f32, uint32_t>);
+  static_assert(!sus::construct::From<f32, uint64_t>);
+  static_assert(!sus::construct::From<f32, size_t>);
+  static_assert(!sus::construct::From<f32, uintptr_t>);
+
+  static_assert(sus::construct::From<f32, i8>);
+  static_assert(sus::construct::From<f32, i16>);
+  static_assert(!sus::construct::From<f32, i32>);
+  static_assert(!sus::construct::From<f32, i64>);
+  static_assert(!sus::construct::From<f32, isize>);
+  static_assert(sus::construct::From<f32, u8>);
+  static_assert(sus::construct::From<f32, u16>);
+  static_assert(!sus::construct::From<f32, u32>);
+  static_assert(!sus::construct::From<f32, u64>);
+  static_assert(!sus::construct::From<f32, usize>);
+  static_assert(!sus::construct::From<f32, uptr>);
+
+  static_assert(f32::from(true) == 1_f32);
+  static_assert(f32::from(int16_t{-33}) == -33_f32);
+  static_assert(f32::from(-33_i16) == -33_f32);
+  static_assert(f32::from(int16_t{33}) == 33_f32);
+  static_assert(f32::from(33_u16) == 33_f32);
+
+  EXPECT_EQ(f32::from(true), 1_f32);
+  EXPECT_EQ(f32::from(int16_t{-33}), -33_f32);
+  EXPECT_EQ(f32::from(-33_i16), -33_f32);
+  EXPECT_EQ(f32::from(int16_t{33}), 33_f32);
+  EXPECT_EQ(f32::from(33_u16), 33_f32);
+}
+
 TEST(f32, Negate) {
   constexpr auto a = -(0.345_f32);
   EXPECT_EQ(a, f32(-0.345f));

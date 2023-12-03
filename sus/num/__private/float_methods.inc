@@ -147,17 +147,17 @@ constexpr inline _self(P v) noexcept : primitive_value(v) {}
 /// #[doc.overloads=from.float]
 template <Float F>
   requires(::sus::mem::size_of<F>() <= ::sus::mem::size_of<_primitive>())
-sus_pure static constexpr _self from(F f) noexcept {
-  return _self(f);
+sus_pure static constexpr _self from(F v) noexcept {
+  return _self(v);
 }
 
 /// Construction from primitive floating point types where no bits are lost.
 ///
-/// #[doc.overloads=from.primitivefloat]
-template <PrimitiveFloat F>
-  requires(::sus::mem::size_of<F>() <= ::sus::mem::size_of<_primitive>())
-sus_pure static constexpr _self from(F f) noexcept {
-  return _self(f);
+/// #[doc.overloads=from.primitive_float]
+template <PrimitiveFloat P>
+  requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<_primitive>())
+sus_pure static constexpr _self from(P v) noexcept {
+  return _self(v);
 }
 
 /// Assignment from floating point types where no bits are lost.
@@ -178,6 +178,32 @@ template <PrimitiveFloat P>
 constexpr inline _self& operator=(P v) noexcept {
   primitive_value = v;
   return *this;
+}
+
+/// Construction from integer types where no bits are lost.
+///
+/// For [`f32`]($sus::num::f32) this includes integer types up to 16 bits.
+/// For [`f64`]($sus::num::f64) this includes integer types up to 32 bits.
+///
+/// #[doc.overloads=from.int]
+template <Integer I>
+  requires(::sus::mem::size_of<I>() * 8 <=
+           __private::num_mantissa_digits<_primitive>())
+sus_pure static constexpr _self from(I v) noexcept {
+  return _self(static_cast<_primitive>(v.primitive_value));
+}
+
+/// Construction from integer types where no bits are lost.
+///
+/// For [`f32`]($sus::num::f32) this includes integer types up to 16 bits.
+/// For [`f64`]($sus::num::f64) this includes integer types up to 32 bits.
+///
+/// #[doc.overloads=from.primitive_int]
+template <PrimitiveInteger P>
+  requires(::sus::mem::size_of<P>() * 8 <=
+           __private::num_mantissa_digits<_primitive>())
+sus_pure static constexpr _self from(P v) noexcept {
+  return _self(static_cast<_primitive>(v));
 }
 
 /// Constructs a [`@doc.self `]($sus::num::@doc.self) from an
