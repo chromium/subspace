@@ -130,10 +130,24 @@ void apply_syntax_highlighting(std::string& str) noexcept {
   usize pos;
   auto view = std::string_view(str);
   while (true) {
+    // Find the <pre> tags.
     pos = view.find("<pre>", pos);
     if (pos == std::string::npos) break;
-    usize end_pos = view.find("</pre>", pos + 5u);
+    pos += 5u;
+    usize end_pos = view.find("</pre>", pos);
     if (end_pos == std::string::npos) break;
+
+    // Inside <pre>, find the <code> tags and move inside them.
+    pos = [&](usize pos) {
+      usize plain = view.find("<code>", pos);
+      if (plain != std::string::npos) plain += strlen("<code>");
+      usize with_lang = view.find("<code class=\"language-cpp\">", pos);
+      if (with_lang != std::string::npos)
+        with_lang += strlen("<code class=\"language-cpp\">");
+      return sus::cmp::min(plain, with_lang);
+    }(pos);
+    if (pos == std::string::npos) break;
+    end_pos = sus::cmp::min(end_pos, usize::from(view.find("</code>", pos)));
 
     bool in_comment = false;
     bool in_string = false;
@@ -205,7 +219,7 @@ void apply_syntax_highlighting(std::string& str) noexcept {
         continue;
       }
 
-      // There's a <pre> tag at the start so we can always look backward one
+      // There's a <code> tag at the start so we can always look backward one
       // char.
       sus::check(pos > 0u);
       char before = view[pos - 1u];
