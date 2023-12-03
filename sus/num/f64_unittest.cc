@@ -1015,10 +1015,13 @@ TEST(f64, ToRadians) {
 
 TEST(f64, ToIntUnchecked) {
   auto a = (198.054321_f64).to_int_unchecked<u8>(unsafe_fn);
+  static_assert(std::same_as<decltype(a), u8>);
   EXPECT_EQ(a, 198_u8);
   auto b = (198.054321_f64).to_int_unchecked<u32>(unsafe_fn);
+  static_assert(std::same_as<decltype(b), u32>);
   EXPECT_EQ(b, 198_u32);
   auto c = (-108.054321_f64).to_int_unchecked<i8>(unsafe_fn);
+  static_assert(std::same_as<decltype(c), i8>);
   EXPECT_EQ(c, -108_i8);
 }
 
