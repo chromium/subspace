@@ -265,7 +265,8 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_div(
 
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_div(
     _self rhs) const& noexcept {
-  ::sus::check(rhs.primitive_value != 0u);
+  ::sus::check_with_message(rhs.primitive_value != _primitive{0},
+                            "attempt to divide by zero");
   return ::sus::tuple_type::Tuple<_self, bool>(
       _self(__private::unchecked_div(primitive_value, rhs.primitive_value)),
       false);
@@ -353,7 +354,9 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_rem(
 
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_rem(
     _self rhs) const& noexcept {
-  ::sus::check(rhs.primitive_value != 0u);
+  ::sus::check_with_message(
+      rhs.primitive_value != _primitive{0},
+      "attempt to calculate the remainder with a divisor of zero");
   return ::sus::tuple_type::Tuple<_self, bool>(
       _self(__private::unchecked_rem(primitive_value, rhs.primitive_value)),
       false);
@@ -391,7 +394,8 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_div_euclid(
 
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
 _self::overflowing_div_euclid(_self rhs) const& noexcept {
-  ::sus::check(rhs.primitive_value != 0u);
+  ::sus::check_with_message(rhs.primitive_value != _primitive{0},
+                            "attempt to divide by zero");
   return ::sus::tuple_type::Tuple<_self, bool>(
       _self(__private::unchecked_div(primitive_value, rhs.primitive_value)),
       false);
@@ -429,7 +433,9 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_rem_euclid(
 
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
 _self::overflowing_rem_euclid(_self rhs) const& noexcept {
-  ::sus::check(rhs.primitive_value != 0u);
+  ::sus::check_with_message(
+      rhs.primitive_value != _primitive{0},
+      "attempt to calculate the remainder with a divisor of zero");
   return ::sus::tuple_type::Tuple<_self, bool>(
       _self(__private::unchecked_rem(primitive_value, rhs.primitive_value)),
       false);
@@ -447,7 +453,8 @@ _self::overflowing_rem_euclid(U rhs) const& noexcept {
 
 constexpr inline void _self::operator<<=(u64 r) & noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    ::sus::check(r < u64(__private::num_bits<_primitive>()));
+    ::sus::check_with_message(r < u64(__private::num_bits<_primitive>()),
+                              "attempt to shift left with overflow");
     primitive_value <<= r.primitive_value;
   } else {
     primitive_value = wrapping_shl(r).primitive_value;
@@ -478,7 +485,8 @@ sus_pure constexpr _self _self::wrapping_shl(u64 rhs) const& noexcept {
 
 constexpr inline void _self::operator>>=(u64 r) & noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    ::sus::check(r < u64(__private::num_bits<_primitive>()));
+    ::sus::check_with_message(r < u64(__private::num_bits<_primitive>()),
+                              "attempt to shift right with overflow");
     primitive_value >>= r.primitive_value;
   } else {
     primitive_value = wrapping_shr(r).primitive_value;

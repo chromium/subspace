@@ -39,10 +39,10 @@ TEST(uptrOverflowDeathTest, DivOverflow) {
         auto x = uptr::MAX_BIT_PATTERN / 0_u32;
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
 
   auto x = uptr::MIN;
-  EXPECT_DEATH(x /= 0_u32, "");
+  EXPECT_DEATH(x /= 0_u32, "attempt to divide by zero");
 #endif
 }
 
@@ -53,7 +53,7 @@ TEST(uptrOverflowDeathTest, OverflowingDivByZero) {
         auto x = uptr::MAX_BIT_PATTERN.overflowing_div(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
 
 #endif
 }
@@ -65,7 +65,7 @@ TEST(uptrOverflowDeathTest, SaturatingDivByZero) {
         auto x = uptr::MAX_BIT_PATTERN.saturating_div(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
 
 #endif
 }
@@ -77,7 +77,7 @@ TEST(uptrOverflowDeathTest, WrappingDivByZero) {
         auto x = uptr::MAX_BIT_PATTERN.wrapping_div(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
 #endif
 }
 
@@ -96,10 +96,11 @@ TEST(uptrOverflowDeathTest, RemOverflow) {
         auto x = uptr::MAX_BIT_PATTERN % 0_u32;
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
 
   auto x = uptr::MIN;
-  EXPECT_DEATH(x %= 0_u32, "");
+  EXPECT_DEATH(x %= 0_u32,
+               "attempt to calculate the remainder with a divisor of zero");
 #endif
 }
 
@@ -110,7 +111,7 @@ TEST(uptrOverflowDeathTest, OverflowingRemByZero) {
         auto x = uptr::MAX_BIT_PATTERN.overflowing_rem(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
 #endif
 }
 
@@ -121,7 +122,7 @@ TEST(uptrOverflowDeathTest, WrappingRemByZero) {
         auto x = uptr::MAX_BIT_PATTERN.wrapping_rem(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
 #endif
 }
 
@@ -155,7 +156,7 @@ TEST(uptrOverflowDeathTest, Log2NonPositive) {
         auto x = (uptr()).log2();
         ensure_use(&x);
       },
-      "");
+      "argument of integer logarithm must be positive");
 #endif
 }
 
@@ -166,7 +167,7 @@ TEST(uptrOverflowDeathTest, Log10NonPositive) {
         auto x = (uptr()).log10();
         ensure_use(&x);
       },
-      "");
+      "argument of integer logarithm must be positive");
 #endif
 }
 
@@ -177,13 +178,13 @@ TEST(uptrOverflowDeathTest, LogNonPositive) {
         auto x = (uptr()).log(10_u32);
         ensure_use(&x);
       },
-      "");
+      "argument of integer logarithm must be positive");
   EXPECT_DEATH(
       {
         auto x = (uptr().with_addr(2_usize)).log(0_u32);
         ensure_use(&x);
       },
-      "");
+      "argument of integer logarithm must be positive");
 #endif
 }
 TEST(uptrOverflowDeathTest, DivEuclidOverflow) {
@@ -193,7 +194,7 @@ TEST(uptrOverflowDeathTest, DivEuclidOverflow) {
         auto x = (uptr().with_addr(7_usize)).div_euclid(0_u32);
         EXPECT_EQ(x, uptr::MIN);
       },
-      "");
+      "attempt to divide by zero");
 #endif
 }
 
@@ -204,7 +205,7 @@ TEST(uptrOverflowDeathTest, OverflowingDivEuclidDivByZero) {
         auto x = (uptr().with_addr(7_usize)).overflowing_div_euclid(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
 #endif
 }
 
@@ -215,7 +216,7 @@ TEST(uptrOverflowDeathTest, WrappingDivEuclidOverflow) {
         auto x = (uptr().with_addr(7_usize)).wrapping_div_euclid(0_u32);
         EXPECT_EQ(x, uptr::MIN);
       },
-      "");
+      "attempt to divide by zero");
 #endif
 }
 
@@ -226,7 +227,7 @@ TEST(uptrOverflowDeathTest, RemEuclidOverflow) {
         auto x = (uptr().with_addr(7_usize)).rem_euclid(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
 #endif
 }
 
@@ -237,7 +238,7 @@ TEST(uptrOverflowDeathTest, OverflowingRemEuclidDivByZero) {
         auto x = (uptr().with_addr(7_usize)).overflowing_rem_euclid(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
 #endif
 }
 
@@ -248,7 +249,7 @@ TEST(uptrOverflowDeathTest, WrappingRemEuclidOverflow) {
         auto x = (uptr().with_addr(7_usize)).wrapping_rem_euclid(0_u32);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
 #endif
 }
 

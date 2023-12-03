@@ -42,17 +42,17 @@ TEST(i32OverflowDeathTest, DivOverflow) {
         auto x = i32::MAX / 0_i32;
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
   EXPECT_DEATH(
       {
         auto x = i32::MIN / -1_i32;
         ensure_use(&x);
       },
-      "");
+      "attempt to divide with overflow");
 
   auto x = i32::MIN;
-  EXPECT_DEATH(x /= 0_i32, "");
-  EXPECT_DEATH(x /= -1_i32, "");
+  EXPECT_DEATH(x /= 0_i32, "attempt to divide by zero");
+  EXPECT_DEATH(x /= -1_i32, "attempt to divide with overflow");
 #endif
 }
 
@@ -63,7 +63,7 @@ TEST(i32OverflowDeathTest, OverflowingDivByZero) {
         auto x = i32::MAX.overflowing_div(0_i32);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
 
 #endif
 }
@@ -75,7 +75,7 @@ TEST(i32OverflowDeathTest, SaturatingDivByZero) {
         auto x = i32::MAX.saturating_div(0_i32);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
 
 #endif
 }
@@ -87,7 +87,7 @@ TEST(i32OverflowDeathTest, WrappingDivByZero) {
         auto x = i32::MAX.wrapping_div(0_i32);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
 #endif
 }
 
@@ -111,17 +111,18 @@ TEST(i32OverflowDeathTest, RemOverflow) {
         auto x = i32::MAX % 0_i32;
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
   EXPECT_DEATH(
       {
         auto x = i32::MIN % -1_i32;
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with overflow");
 
   auto x = i32::MIN;
-  EXPECT_DEATH(x %= 0_i32, "");
-  EXPECT_DEATH(x %= -1_i32, "");
+  EXPECT_DEATH(x %= 0_i32,
+               "attempt to calculate the remainder with a divisor of zero");
+  EXPECT_DEATH(x %= -1_i32, "attempt to calculate the remainder with overflow");
 #endif
 }
 
@@ -132,7 +133,7 @@ TEST(i32OverflowDeathTest, OverflowingRemByZero) {
         auto x = i32::MAX.overflowing_rem(0_i32);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
 #endif
 }
 
@@ -143,7 +144,7 @@ TEST(i32OverflowDeathTest, WrappingRemByZero) {
         auto x = i32::MAX.wrapping_rem(0_i32);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
 #endif
 }
 
@@ -174,13 +175,13 @@ TEST(i32OverflowDeathTest, Log2NonPositive) {
         auto x = (0_i32).log2();
         ensure_use(&x);
       },
-      "");
+      "argument of integer logarithm must be positive");
   EXPECT_DEATH(
       {
         auto x = (-1_i32).log2();
         ensure_use(&x);
       },
-      "");
+      "argument of integer logarithm must be positive");
 #endif
 }
 
@@ -191,13 +192,13 @@ TEST(i32OverflowDeathTest, Log10NonPositive) {
         auto x = (0_i32).log10();
         ensure_use(&x);
       },
-      "");
+      "argument of integer logarithm must be positive");
   EXPECT_DEATH(
       {
         auto x = (-1_i32).log10();
         ensure_use(&x);
       },
-      "");
+      "argument of integer logarithm must be positive");
 #endif
 }
 
@@ -208,25 +209,25 @@ TEST(i32OverflowDeathTest, LogNonPositive) {
         auto x = (0_i32).log(10_i32);
         ensure_use(&x);
       },
-      "");
+      "argument of integer logarithm must be positive");
   EXPECT_DEATH(
       {
         auto x = (2_i32).log(0_i32);
         ensure_use(&x);
       },
-      "");
+      "argument of integer logarithm must be positive");
   EXPECT_DEATH(
       {
         auto x = (-1_i32).log(10_i32);
         ensure_use(&x);
       },
-      "");
+      "argument of integer logarithm must be positive");
   EXPECT_DEATH(
       {
         auto x = (2_i32).log(-2_i32);
         ensure_use(&x);
       },
-      "");
+      "argument of integer logarithm must be positive");
 #endif
 }
 TEST(i32OverflowDeathTest, DivEuclidOverflow) {
@@ -236,13 +237,13 @@ TEST(i32OverflowDeathTest, DivEuclidOverflow) {
         auto x = (7_i32).div_euclid(0_i32);
         EXPECT_EQ(x, i32::MIN);
       },
-      "");
+      "attempt to divide by zero");
   EXPECT_DEATH(
       {
         auto x = (i32::MIN).div_euclid(-1_i32);
         EXPECT_EQ(x, i32::MIN);
       },
-      "");
+      "attempt to divide with overflow");
 #endif
 }
 
@@ -253,7 +254,7 @@ TEST(i32OverflowDeathTest, OverflowingDivEuclidDivByZero) {
         auto x = (7_i32).overflowing_div_euclid(0_i32);
         ensure_use(&x);
       },
-      "");
+      "attempt to divide by zero");
 #endif
 }
 
@@ -264,7 +265,7 @@ TEST(i32OverflowDeathTest, WrappingDivEuclidOverflow) {
         auto x = (7_i32).wrapping_div_euclid(0_i32);
         EXPECT_EQ(x, i32::MIN);
       },
-      "");
+      "attempt to divide by zero");
 #endif
 }
 
@@ -275,13 +276,13 @@ TEST(i32OverflowDeathTest, RemEuclidOverflow) {
         auto x = (7_i32).rem_euclid(0_i32);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
   EXPECT_DEATH(
       {
         auto x = (i32::MIN).rem_euclid(-1_i32);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with overflow");
 #endif
 }
 
@@ -292,7 +293,7 @@ TEST(i32OverflowDeathTest, OverflowingRemEuclidDivByZero) {
         auto x = (7_i32).overflowing_rem_euclid(0_i32);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
 #endif
 }
 
@@ -303,7 +304,7 @@ TEST(i32OverflowDeathTest, WrappingRemEuclidOverflow) {
         auto x = (7_i32).wrapping_rem_euclid(0_i32);
         ensure_use(&x);
       },
-      "");
+      "attempt to calculate the remainder with a divisor of zero");
 #endif
 }
 

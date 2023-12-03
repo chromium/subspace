@@ -1324,11 +1324,11 @@ sus_pure_const inline constexpr bool div_overflows(T x, T y) noexcept {
   return y == T{0} || ((x == min_value<T>()) & (y == T{-1}));
 }
 
+// SAFETY: Requires that `y` is non-zero, or the answer is invalid.
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const inline constexpr bool div_overflows_nonzero(
-    ::sus::marker::UnsafeFnMarker, T x, T y) noexcept {
+sus_pure_const inline constexpr bool div_overflows_nonzero(T x, T y) noexcept {
   // Using `&` helps LLVM see that it is the same check made in division.
   return ((x == min_value<T>()) & (y == T{-1}));
 }
