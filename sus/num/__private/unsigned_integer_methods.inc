@@ -1629,6 +1629,36 @@ sus_pure constexpr _self wrapping_rem(U rhs) const& noexcept {
 }
 #endif
 
+/// Calculates the quotient of itself and `rhs`, rounding the result towards
+/// positive infinity.
+///
+/// # Panics
+/// This function will panic if `rhs` is zero.
+///
+/// # Examples
+/// Basic usage:
+/// ```
+/// assert_eq!((7_u8).div_ceil(4u), 2u);
+/// ```
+sus_pure constexpr _self div_ceil(_self rhs) const& noexcept {
+  ::sus::check_with_message(rhs.primitive_value != _primitive{0},
+                            "attempt to divide by zero");
+  _self d =
+      _self(__private::unchecked_div(primitive_value, rhs.primitive_value));
+  _self r =
+      _self(__private::unchecked_rem(primitive_value, rhs.primitive_value));
+  return (r > _primitive{0}) ? d + _primitive{1} : d;
+}
+
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr _self div_ceil(U rhs) const& noexcept {
+  return div_ceil(_self(_primitive{rhs}));
+}
+#endif
+
 /// Performs Euclidean division.
 ///
 /// Since, for the positive integers, all common definitions of division are

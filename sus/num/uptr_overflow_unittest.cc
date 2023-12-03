@@ -253,4 +253,21 @@ TEST(uptrOverflowDeathTest, WrappingRemEuclidOverflow) {
 #endif
 }
 
+TEST(uptrOverflowDeathTest, DivCeilDivByZero) {
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(
+      {
+        auto x = uptr().with_addr(0_usize).div_ceil(0_u32);
+        ensure_use(&x);
+      },
+      "attempt to divide by zero");
+  EXPECT_DEATH(
+      {
+        auto x = uptr::MAX_BIT_PATTERN.div_ceil(0_u64);
+        ensure_use(&x);
+      },
+      "attempt to divide by zero");
+#endif
+}
+
 }  // namespace

@@ -256,4 +256,21 @@ TEST(u32Overlow, NextPowerOfTwoOutOfBounds) {
   EXPECT_EQ(u32::MAX.next_power_of_two(), 0_u32);
 }
 
+TEST(u32OverflowDeathTest, DivCeilDivByZero) {
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(
+      {
+        auto x = (0_u32).div_ceil(0_u32);
+        ensure_use(&x);
+      },
+      "attempt to divide by zero");
+  EXPECT_DEATH(
+      {
+        auto x = u32::MAX.div_ceil(0_u32);
+        ensure_use(&x);
+      },
+      "attempt to divide by zero");
+#endif
+}
+
 }  // namespace
