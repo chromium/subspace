@@ -374,7 +374,7 @@ TEST(Iterator, FilterMap) {
                     .into_iter()
                     .filter_map([](i32 i) -> Option<u32> {
                       if (i >= 3 && i <= 5)
-                        return sus::some(sus::mog<u32>(i));
+                        return sus::some(sus::cast<u32>(i));
                       else
                         return sus::none();
                     })

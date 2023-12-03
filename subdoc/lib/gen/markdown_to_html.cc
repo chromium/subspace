@@ -344,7 +344,7 @@ sus::Result<MarkdownToHtml, MarkdownToHtmlError> markdown_to_html(
       } else {
         // SAFETY: The input is a char, so tolower will give a value in the
         // range of char.
-        c = sus::mog<char>(std::tolower(c));
+        c = sus::cast<char>(std::tolower(c));
       }
     }
 

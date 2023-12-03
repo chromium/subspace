@@ -339,7 +339,7 @@ TEST(Dyn, Example_Macro) {
 }  // namespace example_macro
 
 TEST(Dyn, Example_Stack) {
-  std::srand(sus::mog<unsigned>(std::time(nullptr)));
+  std::srand(sus::cast<unsigned>(std::time(nullptr)));
 
   auto x = [](sus::Option<sus::fn::DynFn<std::string()>&> fn) {
     if (fn.is_some())

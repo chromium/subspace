@@ -59,8 +59,8 @@ constexpr inline _self() noexcept = default;
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`]($sus::num::@doc.self::try_from!signed). For lossy conversions use the
-/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
-/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
+/// [`Cast`]($sus::construct::Cast) concept with
+/// [`sus::cast<@doc.self>(x)`]($sus::construct::cast).
 ///
 /// #[doc.overloads=signedint.ctor.signedint.typed]
 template <Signed S>
@@ -71,8 +71,8 @@ constexpr inline _self(S v) noexcept : primitive_value(v.primitive_value) {}
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`]($sus::num::@doc.self::try_from!signed.primitive). For lossy conversions use
-/// the [`Transmogrify`]($sus::construct::Transmogrify) concept with
-/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
+/// the [`Cast`]($sus::construct::Cast) concept with
+/// [`sus::cast<@doc.self>(x)`]($sus::construct::cast).
 ///
 /// #[doc.overloads=signedint.ctor.signedint.primitive]
 template <SignedPrimitiveInteger P>
@@ -83,8 +83,8 @@ constexpr inline _self(P v) noexcept : primitive_value(v) {}
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`]($sus::num::@doc.self::try_from!signed.enum). For lossy conversions use the
-/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
-/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
+/// [`Cast`]($sus::construct::Cast) concept with
+/// [`sus::cast<@doc.self>(x)`]($sus::construct::cast).
 ///
 /// #[doc.overloads=signedint.ctor.signedenum]
 template <SignedPrimitiveEnum P>
@@ -95,8 +95,8 @@ constexpr inline _self(P v) noexcept : primitive_value(v) {}
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`]($sus::num::@doc.self::try_from!signed.enum). For lossy conversions use
-/// the [`Transmogrify`]($sus::construct::Transmogrify) concept with
-/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
+/// the [`Cast`]($sus::construct::Cast) concept with
+/// [`sus::cast<@doc.self>(x)`]($sus::construct::cast).
 ///
 /// #[doc.overloads=signedint.ctor.signedenumclass]
 template <SignedPrimitiveEnumClass P>
@@ -108,8 +108,8 @@ explicit constexpr inline _self(P v) noexcept
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`]($sus::num::@doc.self::try_from!unsigned). For lossy conversions use the
-/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
-/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
+/// [`Cast`]($sus::construct::Cast) concept with
+/// [`sus::cast<@doc.self>(x)`]($sus::construct::cast).
 ///
 /// #[doc.overloads=signedint.ctor.unsignedint.typed]
 template <Unsigned U>
@@ -120,8 +120,8 @@ constexpr inline _self(U v) noexcept : primitive_value(v.primitive_value) {}
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`]($sus::num::@doc.self::try_from!unsigned.primitive). For lossy conversions use
-/// the [`Transmogrify`]($sus::construct::Transmogrify) concept with
-/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
+/// the [`Cast`]($sus::construct::Cast) concept with
+/// [`sus::cast<@doc.self>(x)`]($sus::construct::cast).
 ///
 /// #[doc.overloads=signedint.ctor.unsignedint.primitive]
 template <UnsignedPrimitiveInteger P>
@@ -132,8 +132,8 @@ constexpr inline _self(P v) noexcept : primitive_value(v) {}
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`]($sus::num::@doc.self::try_from!unsigned.enum). For lossy conversions use the
-/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
-/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
+/// [`Cast`]($sus::construct::Cast) concept with
+/// [`sus::cast<@doc.self>(x)`]($sus::construct::cast).
 ///
 /// #[doc.overloads=signedint.ctor.unsignedenum]
 template <UnsignedPrimitiveEnum P>
@@ -144,8 +144,8 @@ constexpr inline _self(P v) noexcept : primitive_value(v) {}
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`]($sus::num::@doc.self::try_from!unsigned.enum). For lossy conversions
-/// use the [`Transmogrify`]($sus::construct::Transmogrify) concept with
-/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
+/// use the [`Cast`]($sus::construct::Cast) concept with
+/// [`sus::cast<@doc.self>(x)`]($sus::construct::cast).
 ///
 /// #[doc.overloads=signedint.ctor.unsignedenumclass]
 template <UnsignedPrimitiveEnumClass P>
@@ -157,8 +157,8 @@ explicit constexpr inline _self(P v) noexcept
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`]($sus::num::@doc.self::try_from!signed). For lossy conversions use the
-/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
-/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
+/// [`Cast`]($sus::construct::Cast) concept with
+/// [`sus::cast<@doc.self>(x)`]($sus::construct::cast).
 ///
 /// #[doc.overloads=signedint.assign.signedint.typed]
 template <Signed S>
@@ -172,8 +172,8 @@ constexpr inline _self& operator=(S v) noexcept {
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`]($sus::num::@doc.self::try_from!signed.primitive). For lossy conversions use
-/// the [`Transmogrify`]($sus::construct::Transmogrify) concept with
-/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
+/// the [`Cast`]($sus::construct::Cast) concept with
+/// [`sus::cast<@doc.self>(x)`]($sus::construct::cast).
 ///
 /// #[doc.overloads=signedint.assign.signedint.primitive]
 template <SignedPrimitiveInteger P>
@@ -187,8 +187,8 @@ constexpr inline _self& operator=(P v) noexcept {
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`]($sus::num::@doc.self::try_from!signed.enum). For lossy conversions use the
-/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
-/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
+/// [`Cast`]($sus::construct::Cast) concept with
+/// [`sus::cast<@doc.self>(x)`]($sus::construct::cast).
 ///
 /// #[doc.overloads=signedint.assign.signedenum]
 template <SignedPrimitiveEnum P>
@@ -203,8 +203,8 @@ constexpr inline _self& operator=(P v) noexcept {
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`]($sus::num::@doc.self::try_from!signed). For lossy conversions use the
-/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
-/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
+/// [`Cast`]($sus::construct::Cast) concept with
+/// [`sus::cast<@doc.self>(x)`]($sus::construct::cast).
 ///
 /// #[doc.overloads=from.signed]
 template <Signed S>
@@ -241,8 +241,8 @@ try_from(S s) noexcept {
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`]($sus::num::@doc.self::try_from!unsigned). For lossy conversions use the
-/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
-/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
+/// [`Cast`]($sus::construct::Cast) concept with
+/// [`sus::cast<@doc.self>(x)`]($sus::construct::cast).
 ///
 /// #[doc.overloads=from.unsigned]
 template <Unsigned S>
@@ -277,8 +277,8 @@ try_from(U u) noexcept {
 /// For conversions from types with a larger range use
 /// [`try_from`]($sus::num::@doc.self::try_from!signed.primitive). For lossy
 /// conversions use
-/// the [`Transmogrify`]($sus::construct::Transmogrify) concept with
-/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
+/// the [`Cast`]($sus::construct::Cast) concept with
+/// [`sus::cast<@doc.self>(x)`]($sus::construct::cast).
 ///
 /// #[doc.overloads=from.signed.prim]
 template <SignedPrimitiveInteger S>
@@ -316,8 +316,8 @@ try_from(S s) noexcept {
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`]($sus::num::@doc.self::try_from!signed.enum). For lossy conversions use
-/// the [`Transmogrify`]($sus::construct::Transmogrify) concept with
-/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
+/// the [`Cast`]($sus::construct::Cast) concept with
+/// [`sus::cast<@doc.self>(x)`]($sus::construct::cast).
 ///
 /// #[doc.overloads=signedint.from.signedenum]
 template <class S>
@@ -358,8 +358,8 @@ try_from(S s) noexcept {
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`]($sus::num::@doc.self::try_from!unsigned.primitive). For lossy conversions use
-/// the [`Transmogrify`]($sus::construct::Transmogrify) concept with
-/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
+/// the [`Cast`]($sus::construct::Cast) concept with
+/// [`sus::cast<@doc.self>(x)`]($sus::construct::cast).
 ///
 /// #[doc.overloads=from.unsigned.prim]
 template <UnsignedPrimitiveInteger S>
@@ -393,8 +393,8 @@ try_from(U u) noexcept {
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`]($sus::num::@doc.self::try_from!unsigned.enum). For lossy conversions use the
-/// [`Transmogrify`]($sus::construct::Transmogrify) concept with
-/// [`sus::mog<@doc.self>(x)`]($sus::construct::mog).
+/// [`Cast`]($sus::construct::Cast) concept with
+/// [`sus::cast<@doc.self>(x)`]($sus::construct::cast).
 ///
 /// #[doc.overloads=signedint.from.unsignedenum]
 template <class S>
@@ -485,9 +485,9 @@ static constexpr _self from_sum(::sus::iter::Iterator<_self> auto&& it) noexcept
 /// ```
 ///
 /// Potentially-lossy type conversions can be forced through the
-/// [`Transmogrify`]($sus::construct::Transmogrify) concept, such as
-/// `sus::mog<uint32_t>(3_i32)` or `sus::mog<int16_t>(3_i32)`, or even
-/// `sus::mog<u32>(3_i32)`.
+/// [`Cast`]($sus::construct::Cast) concept, such as
+/// `sus::cast<uint32_t>(3_i32)` or `sus::cast<int16_t>(3_i32)`, or even
+/// `sus::cast<u32>(3_i32)`.
 template <SignedPrimitiveInteger U>
   requires(::sus::mem::size_of<U>() >= ::sus::mem::size_of<_primitive>())
 sus_pure constexpr inline operator U() const noexcept {

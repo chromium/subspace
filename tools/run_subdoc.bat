@@ -11,4 +11,4 @@ out\subdoc\subdoc -p out --out docs ^
     --project-logo logo.png ^
     --project-name Subspace ^
     --ignore-bad-code-links ^
-    subspace/sus/num/uptr reverse_uni
+    subspace/sus/num/uptr_uni reverse_uni

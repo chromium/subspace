@@ -53,7 +53,7 @@ namespace sus {
 ///   compile. To convert fallibly and observe data loss, use the
 ///   [`TryFrom`]($sus::construct::TryFrom) concept methods, such as
 ///   `u32::try_from(3_i32)`. To do casting conversions with truncation, use
-///   [`Transmogrify`]($sus::construct::Transmogrify).
+///   [`Cast`]($sus::construct::Cast).
 /// * No integer promotion. Math on 8-bit and 16-bit integers will not change
 ///   their type, unlike primitive types which convert to (signed) int on any
 ///   math operation.
@@ -97,21 +97,21 @@ namespace sus {
 /// to zero.
 ///
 /// To convert with truncation/loss of data, like `static_cast`, use
-/// [`sus::mog<T>()`]($sus::construct::mog). It can convert between
+/// [`sus::cast<T>()`]($sus::construct::cast). It can convert between
 /// integers, floats, and enums, for both safe numerics and primitives. See
 /// [Casting numeric types](
-/// $sus::construct::Transmogrify#casting-numeric-types) for the rules of
-/// conversion through [`mog`]($sus::construct::mog).
+/// $sus::construct::Cast#casting-numeric-types) for the rules of
+/// conversion through [`cast`]($sus::construct::cast).
 namespace num {}
 
 }  // namespace sus
 
 // IWYU pragma: begin_exports
+#include "sus/num/cast.h"
 #include "sus/num/float.h"
 #include "sus/num/float_impl.h"
 #include "sus/num/signed_integer.h"
 #include "sus/num/signed_integer_impl.h"
-#include "sus/num/transmogrify.h"
 #include "sus/num/try_from_int_error_impl.h"
 #include "sus/num/unsigned_integer.h"
 #include "sus/num/unsigned_integer_impl.h"

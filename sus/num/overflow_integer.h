@@ -19,7 +19,7 @@
 #include "sus/iter/iterator_concept.h"
 #include "sus/macros/pure.h"
 #include "sus/marker/unsafe.h"
-#include "sus/num/transmogrify.h"
+#include "sus/num/cast.h"
 #include "sus/option/option.h"
 #include "sus/result/result.h"
 
@@ -111,7 +111,7 @@ class OverflowInteger {
     requires(::sus::mem::IsMoveRef<decltype(it)>)
   {
     // SAFETY: This is not lossy, as all integers can hold positive 1.
-    auto p = OverflowInteger(::sus::mog<I>(1));
+    auto p = OverflowInteger(::sus::cast<I>(1));
     for (I i : ::sus::move(it)) p *= i;
     return p;
   }
@@ -121,7 +121,7 @@ class OverflowInteger {
     requires(::sus::mem::IsMoveRef<decltype(it)>)
   {
     // SAFETY: This is not lossy, as all integers can hold positive 1.
-    auto p = OverflowInteger(::sus::mog<I>(1));
+    auto p = OverflowInteger(::sus::cast<I>(1));
     for (OverflowInteger i : ::sus::move(it)) p *= i;
     return p;
   }

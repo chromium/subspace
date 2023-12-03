@@ -42,8 +42,8 @@
 #include "sus/mem/clone.h"
 #include "sus/mem/move.h"
 #include "sus/mem/swap.h"
+#include "sus/num/cast.h"
 #include "sus/num/signed_integer.h"
-#include "sus/num/transmogrify.h"
 #include "sus/num/unsigned_integer.h"
 #include "sus/ops/range.h"
 #include "sus/option/option.h"
@@ -115,7 +115,7 @@ class [[sus_trivial_abi]] Slice final {
   sus_pure static constexpr Slice from_raw_parts(
       ::sus::marker::UnsafeFnMarker, const T* data sus_lifetimebound,
       usize len) noexcept {
-    ::sus::check(len <= ::sus::mog<usize>(isize::MAX));
+    ::sus::check(len <= ::sus::cast<usize>(isize::MAX));
     // We strip the `const` off `data`, however only const access is provided
     // through this class. This is done so that mutable types can compose Slice
     // and store a mutable pointer.
@@ -150,7 +150,7 @@ class [[sus_trivial_abi]] Slice final {
   sus_pure static constexpr Slice from_raw_collection(
       ::sus::marker::UnsafeFnMarker, ::sus::iter::IterRefCounter refs,
       const T* data sus_lifetimebound, usize len) noexcept {
-    ::sus::check(len <= ::sus::mog<usize>(isize::MAX));
+    ::sus::check(len <= ::sus::cast<usize>(isize::MAX));
     // We strip the `const` off `data`, however only const access is provided
     // through this class. This is done so that mutable types can compose Slice
     // and store a mutable pointer.
@@ -163,7 +163,7 @@ class [[sus_trivial_abi]] Slice final {
   ///
   /// #[doc.overloads=from.array]
   template <size_t N>
-    requires(N <= ::sus::mog<usize>(isize::MAX))
+    requires(N <= ::sus::cast<usize>(isize::MAX))
   sus_pure static constexpr Slice from(const T (&data)[N] sus_lifetimebound) {
     // We strip the `const` off `data`, however only const access is provided
     // through this class. This is done so that mutable types can compose Slice
@@ -342,7 +342,7 @@ class [[sus_trivial_abi]] SliceMut final {
   sus_pure static constexpr SliceMut from_raw_parts_mut(
       ::sus::marker::UnsafeFnMarker, T* data sus_lifetimebound,
       usize len) noexcept {
-    ::sus::check(len <= ::sus::mog<usize>(isize::MAX));
+    ::sus::check(len <= ::sus::cast<usize>(isize::MAX));
     return SliceMut(::sus::iter::IterRefCounter::empty_for_view(), data, len);
   }
 
@@ -372,7 +372,7 @@ class [[sus_trivial_abi]] SliceMut final {
   sus_pure static constexpr SliceMut from_raw_collection_mut(
       ::sus::marker::UnsafeFnMarker, ::sus::iter::IterRefCounter refs,
       T* data sus_lifetimebound, usize len) noexcept {
-    ::sus::check(len <= ::sus::mog<usize>(isize::MAX));
+    ::sus::check(len <= ::sus::cast<usize>(isize::MAX));
     return SliceMut(::sus::move(refs), data, len);
   }
 
@@ -382,7 +382,7 @@ class [[sus_trivial_abi]] SliceMut final {
   ///
   /// #[doc.overloads=from.array]
   template <size_t N>
-    requires(N <= ::sus::mog<usize>(isize::MAX_PRIMITIVE))
+    requires(N <= ::sus::cast<usize>(isize::MAX_PRIMITIVE))
   sus_pure static constexpr SliceMut from(T (&data)[N] sus_lifetimebound) {
     return SliceMut(::sus::iter::IterRefCounter::empty_for_view(), data, N);
   }

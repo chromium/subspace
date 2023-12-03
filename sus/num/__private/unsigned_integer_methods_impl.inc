@@ -705,8 +705,8 @@ sus_pure constexpr _self _self::from_ne_bytes(
   if (std::is_constant_evaluated()) {
     val = _primitive{0};
     for (usize i; i < ::sus::mem::size_of<_primitive>(); i += 1u) {
-      // size_of<_primitive>() is < u32::MAX so the mog<u32>() is not lossy.
-      val |= bytes[i] << ::sus::mog<u32>(::sus::mem::size_of<_primitive>() -
+      // size_of<_primitive>() is < u32::MAX so the cast<u32>() is not lossy.
+      val |= bytes[i] << ::sus::cast<u32>(::sus::mem::size_of<_primitive>() -
                                          1u - i);
     }
   } else {

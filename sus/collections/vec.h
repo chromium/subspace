@@ -50,9 +50,9 @@
 #include "sus/mem/relocate.h"
 #include "sus/mem/replace.h"
 #include "sus/mem/size_of.h"
+#include "sus/num/cast.h"
 #include "sus/num/integer_concepts.h"
 #include "sus/num/signed_integer.h"
-#include "sus/num/transmogrify.h"
 #include "sus/num/unsigned_integer.h"
 #include "sus/ops/range.h"
 #include "sus/option/option.h"
@@ -147,7 +147,8 @@ class Vec final {
   /// # Panics
   /// Panics if the capacity exceeds `isize::MAX` bytes.
   sus_pure static constexpr Vec with_capacity(usize capacity) noexcept {
-    check(::sus::mem::size_of<T>() * capacity <= ::sus::mog<usize>(isize::MAX));
+    check(::sus::mem::size_of<T>() * capacity <=
+          ::sus::cast<usize>(isize::MAX));
     return Vec(WITH_CAPACITY, std::allocator<T>(), capacity);
   }
 
@@ -210,12 +211,12 @@ class Vec final {
     requires(std::same_as<T, u8> &&  //
              (std::same_as<C, char> || std::same_as<C, signed char> ||
               std::same_as<C, unsigned char>) &&
-             N <= ::sus::mog<usize>(isize::MAX))
+             N <= ::sus::cast<usize>(isize::MAX))
   static constexpr Vec from(const C (&arr)[N]) {
     auto s = sus::Slice<C>::from(arr);
     auto v = Vec::with_capacity(N - 1);
     for (auto c : s[sus::ops::RangeTo<usize>(N - 1)])
-      v.push_with_capacity_internal(sus::mog<uint8_t>(c));
+      v.push_with_capacity_internal(sus::cast<uint8_t>(c));
     ::sus::check(s[N - 1] == 0);  // Null terminated.
     return v;
   }
@@ -1011,7 +1012,7 @@ Vec(T&&, Ts&&...) -> Vec<std::remove_cvref_t<T>>;
 template <class T>
 constexpr T* Vec<T>::alloc_internal_check_cap(usize cap) noexcept {
   sus_debug_check(!is_alloced());
-  ::sus::check(cap <= ::sus::mog<usize>(isize::MAX));
+  ::sus::check(cap <= ::sus::cast<usize>(isize::MAX));
   T* const new_data = std::allocator_traits<A>::allocate(allocator_, cap);
   data_ = new_data;
   capacity_ = cap;
@@ -1022,7 +1023,7 @@ template <class T>
 constexpr T* Vec<T>::grow_to_internal_check_cap(usize cap) noexcept {
   sus_debug_check(is_alloced());
   sus_debug_check(cap > capacity_);
-  ::sus::check(cap <= ::sus::mog<usize>(isize::MAX));
+  ::sus::check(cap <= ::sus::cast<usize>(isize::MAX));
   T* const new_data =
       std::allocator_traits<std::allocator<T>>::allocate(allocator_, cap);
   if constexpr (::sus::mem::relocate_by_memcpy<T>) {
