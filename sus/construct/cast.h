@@ -41,7 +41,7 @@ namespace sus::construct {
 /// {
 ///   return a.wrapping_add(sus::cast<u32>(b));
 /// };
-/// sus::check(add(3_u32, -'1_i32) == u32::MIN + 2);
+/// sus_check(add(3_u32, -'1_i32) == u32::MIN + 2);
 /// ```
 template <class To, class From>
 struct CastImpl;
@@ -164,7 +164,7 @@ concept Cast = requires(const From& from) {
 /// ```cpp
 /// // SAFETY: We're intending to convert negative numbers into large positive
 /// // values for this example.
-/// sus::check(u32::MAX == sus::cast<u32>(-1_i64));
+/// sus_check(u32::MAX == sus::cast<u32>(-1_i64));
 /// ```
 template <class To, class From>
   requires(Cast<To, From>)

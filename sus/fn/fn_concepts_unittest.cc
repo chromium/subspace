@@ -168,7 +168,7 @@ TEST(FnConcepts, FnOnceExample) {
   i32 x = do_stuff_once([](sus::Option<i32> o) -> i32 {
     return sus::move(o).unwrap_or_default() + 4;
   });
-  sus::check(x == 400 + 4);
+  sus_check(x == 400 + 4);
 }
 
 // Accepts any type that can be called once with (Option<i32>) and returns
@@ -183,7 +183,7 @@ TEST(FnConcepts, FnMutExample) {
     i += 1;
     return sus::move(o).unwrap_or_default() + i;
   });
-  sus::check(x == 401 + 102);
+  sus_check(x == 401 + 102);
 }
 
 // Accepts any type that can be called once with (Option<i32>) and returns
@@ -196,7 +196,7 @@ TEST(FnConcepts, FnExample) {
   i32 x = do_stuff([i = 1_i32](sus::Option<i32> o) -> i32 {
     return sus::move(o).unwrap_or_default() + i;
   });
-  sus::check(x == 401 + 101);
+  sus_check(x == 401 + 101);
 }
 
 struct S {
@@ -452,23 +452,23 @@ i32 map_fn(const Class& c) { return c.value(); }
 TEST(FnConcepts, ExampleFunction) {
   // Map the class C to its value().
   auto c = Class(42);
-  sus::check(map_class_once(c, &map_fn) == 42);
-  sus::check(map_class_mut(c, &map_fn) == 42);
-  sus::check(map_class(c, &map_fn) == 42);
+  sus_check(map_class_once(c, &map_fn) == 42);
+  sus_check(map_class_mut(c, &map_fn) == 42);
+  sus_check(map_class(c, &map_fn) == 42);
 
   auto o = sus::Option<Class>(Class(42));
-  sus::check(o.map(&map_fn) == sus::some(42));
+  sus_check(o.map(&map_fn) == sus::some(42));
 }
 
 TEST(FnConcepts, Example_Method) {
   // Map the class C to its value().
   auto c = Class(42);
-  sus::check(map_class_once(c, &Class::value) == 42);
-  sus::check(map_class_mut(c, &Class::value) == 42);
-  sus::check(map_class(c, &Class::value) == 42);
+  sus_check(map_class_once(c, &Class::value) == 42);
+  sus_check(map_class_mut(c, &Class::value) == 42);
+  sus_check(map_class(c, &Class::value) == 42);
 
   auto o = sus::Option<Class>(Class(42));
-  sus::check(o.map(&Class::value) == sus::some(42));
+  sus_check(o.map(&Class::value) == sus::some(42));
 }
 
 TEST(Fn, Example_NonVoid) {

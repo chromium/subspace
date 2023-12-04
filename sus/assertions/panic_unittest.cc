@@ -19,9 +19,9 @@
 // Incredibly, on Posix we can use [0-9] but on Windows we can't. Yet on Windows
 // we can use `\d` and on Posix we can't (or it doesn't match).
 #if GTEST_USES_SIMPLE_RE
-#define DIGIT "\\d"
+#  define DIGIT "\\d"
 #else
-#define DIGIT "[0-9]"
+#  define DIGIT "[0-9]"
 #endif
 
 namespace sus {
@@ -29,24 +29,25 @@ namespace {
 
 TEST(PanicDeathTest, Panic) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(panic(),
+  EXPECT_DEATH(sus_panic(),
                "^PANIC! at .*panic_unittest.cc:" DIGIT "+:" DIGIT "+\n$");
 #endif
 }
 
 TEST(PanicDeathTest, WithMessage) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(panic_with_message("hello world"),
+  EXPECT_DEATH(sus_panic_with_message("hello world"),
                "^PANIC! at 'hello world', .*panic_unittest.cc:" DIGIT "+:" DIGIT
                "+\n$");
 #endif
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(
-      panic_with_message(std::string_view("hello world123").substr(0u, 11u)),
-      "^PANIC! at 'hello world', .*panic_unittest.cc:" DIGIT "+:" DIGIT "+\n$");
+  EXPECT_DEATH(sus_panic_with_message(
+                   std::string_view("hello world123").substr(0u, 11u)),
+               "^PANIC! at 'hello world', .*panic_unittest.cc:" DIGIT "+:" DIGIT
+               "+\n$");
 #endif
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(panic_with_message(std::string("hello world")),
+  EXPECT_DEATH(sus_panic_with_message(std::string("hello world")),
                "^PANIC! at 'hello world', .*panic_unittest.cc:" DIGIT "+:" DIGIT
                "+\n$");
 #endif

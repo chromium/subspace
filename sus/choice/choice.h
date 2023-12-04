@@ -368,7 +368,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
                                    // Attempt to catch use-after-move by setting
                                    // the tag to an unused value.
                                    kUseAfterMove)) {
-    check(index_ != kUseAfterMove);
+    sus_check(index_ != kUseAfterMove);
     storage_.move_construct(index_, ::sus::move(o.storage_));
   }
   /// #[doc.overloads=move]
@@ -392,7 +392,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
              !(std::is_trivially_move_assignable_v<TagsType> && ... &&
                std::is_trivially_move_assignable_v<Ts>))
   {
-    check(o.index_ != kUseAfterMove);
+    sus_check(o.index_ != kUseAfterMove);
     if (index_ == o.index_) {
       storage_.move_assign(index_, ::sus::move(o.storage_));
     } else {
@@ -424,7 +424,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
              !(std::is_trivially_copy_constructible_v<TagsType> && ... &&
                std::is_trivially_copy_constructible_v<Ts>))
       : index_(o.index_) {
-    check(o.index_ != kUseAfterMove);
+    sus_check(o.index_ != kUseAfterMove);
     storage_.copy_construct(index_, o.storage_);
   }
   /// #[doc.overloads=copy]
@@ -448,7 +448,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
              !(std::is_trivially_copy_assignable_v<TagsType> && ... &&
                std::is_trivially_copy_assignable_v<Ts>))
   {
-    check(o.index_ != kUseAfterMove);
+    sus_check(o.index_ != kUseAfterMove);
     if (index_ == o.index_) {
       storage_.copy_assign(index_, o.storage_);
     } else {
@@ -469,7 +469,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   constexpr Choice clone() const& noexcept
     requires((... && ::sus::mem::Clone<Ts>) && !(... && ::sus::mem::Copy<Ts>))
   {
-    check(index_ != kUseAfterMove);
+    sus_check(index_ != kUseAfterMove);
     auto u = Choice(::sus::clone(index_));
     u.storage_.clone_construct(index_, storage_);
     return u;
@@ -531,7 +531,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   ///                             ████
   /// ```
   constexpr inline TagsType which() const& noexcept {
-    check(index_ != kUseAfterMove);
+    sus_check(index_ != kUseAfterMove);
     constexpr TagsType tags[] = {Tags...};
     return tags[size_t{index_}];
   }
@@ -553,7 +553,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   template <TagsType V>
     requires(__private::StorageCount<StorageTypeOfTag<V>> > 0u)
   constexpr inline decltype(auto) as() const& noexcept {
-    ::sus::check(index_ == index<V>);
+    sus_check(index_ == index<V>);
     return __private::find_choice_storage<index<V>>(storage_).as();
   }
   // If the storage is a value type, it can't be accessed by reference in an
@@ -579,7 +579,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   template <TagsType V>
     requires(__private::StorageCount<StorageTypeOfTag<V>> > 0u)
   constexpr inline decltype(auto) as_mut() & noexcept {
-    ::sus::check(index_ == index<V>);
+    sus_check(index_ == index<V>);
     return __private::find_choice_storage_mut<index<V>>(storage_).as_mut();
   }
 
@@ -600,7 +600,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   template <TagsType V>
     requires(__private::StorageCount<StorageTypeOfTag<V>> > 0u)
   constexpr inline decltype(auto) into_inner() && noexcept {
-    ::sus::check(index_ == index<V>);
+    sus_check(index_ == index<V>);
     auto& s = __private::find_choice_storage_mut<index<V>>(storage_);
     return ::sus::move(s).into_inner();
   }
@@ -774,7 +774,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     requires(__private::ChoiceIsEq<TagsType, __private::TypeList<Ts...>,
                                    TagsType, __private::TypeList<Ts...>>)
   {
-    check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
+    sus_check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
     return l.index_ == r.index_ && l.storage_.eq(l.index_, r.storage_);
   }
 
@@ -784,7 +784,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   friend constexpr bool operator==(
       const Choice& l,
       const Choice<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
-    check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
+    sus_check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
     return l.index_ == r.index_ && l.storage_.eq(l.index_, r.storage_);
   }
 
@@ -806,7 +806,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     requires(__private::ChoiceIsStrongOrd<TagsType, __private::TypeList<Ts...>,
                                           TagsType, __private::TypeList<Ts...>>)
   {
-    check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
+    sus_check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
     const auto value_order = std::strong_order(l.which(), r.which());
     if (value_order != std::strong_ordering::equivalent) {
       return value_order;
@@ -822,7 +822,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   friend constexpr std::strong_ordering operator<=>(
       const Choice& l,
       const Choice<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
-    check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
+    sus_check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
     const auto value_order = std::strong_order(l.which(), r.which());
     if (value_order != std::strong_ordering::equivalent) {
       return value_order;
@@ -836,7 +836,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     requires(__private::ChoiceIsOrd<TagsType, __private::TypeList<Ts...>,
                                     TagsType, __private::TypeList<Ts...>>)
   {
-    check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
+    sus_check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
     const auto value_order = std::weak_order(l.which(), r.which());
     if (value_order != std::weak_ordering::equivalent) {
       return value_order;
@@ -851,7 +851,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   friend constexpr std::weak_ordering operator<=>(
       const Choice& l,
       const Choice<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
-    check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
+    sus_check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
     const auto value_order = std::weak_order(l.which(), r.which());
     if (value_order != std::weak_ordering::equivalent) {
       return value_order;
@@ -866,7 +866,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
         __private::ChoiceIsPartialOrd<TagsType, __private::TypeList<Ts...>,
                                       TagsType, __private::TypeList<Ts...>>)
   {
-    check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
+    sus_check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
     const auto value_order = std::partial_order(l.which(), r.which());
     if (value_order != std::partial_ordering::equivalent) {
       return value_order;
@@ -882,7 +882,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   friend constexpr std::partial_ordering operator<=>(
       const Choice& l,
       const Choice<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
-    check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
+    sus_check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
     const auto value_order = std::partial_order(l.which(), r.which());
     if (value_order != std::partial_ordering::equivalent) {
       return value_order;

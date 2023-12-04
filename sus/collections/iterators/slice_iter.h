@@ -55,7 +55,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
       : ref_(::sus::move(ref)), ptr_(start), end_(start + len) {
     // Wrap-around would be an invalid allocation and would break our distance
     // functions.
-    ::sus::check(end_ >= ptr_);
+    sus_check(end_ >= ptr_);
   }
 
   /// Returns a slice of the items left to be iterated.
@@ -140,7 +140,7 @@ struct [[sus_trivial_abi]] SliceIterMut final
       : ref_(::sus::move(ref)), ptr_(start), end_(start + len) {
     // Wrap-around would be an invalid allocation and would break our distance
     // functions.
-    ::sus::check(end_ >= ptr_);
+    sus_check(end_ >= ptr_);
   }
 
   /// Returns a mutable slice of the items left to be iterated, consuming the

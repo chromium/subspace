@@ -7,7 +7,7 @@ footguns, crashes, bugs, and UB.
 1. All methods are `constexpr` unless they must call a non-`constexpr` function,
    or they expose floating point NaNs (since constexpr NaNs change their bit
    values).
-    * Consider `panic()`/`check()` as constexpr for these purposes, they will
+    * Consider `sus_panic()`/`sus_check()` as constexpr for these purposes, they will
       correctly prevent compiling if the condition fails.
 1. If you override on `const&`, then explicitly provide or delete the `&&`
    override.

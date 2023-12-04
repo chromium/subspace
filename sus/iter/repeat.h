@@ -41,9 +41,9 @@ class Repeat;
 /// # Example
 /// ```
 /// auto r = sus::iter::repeat<u16>(3u);
-/// sus::check(r.next().unwrap() == 3_u16);
-/// sus::check(r.next().unwrap() == 3_u16);
-/// sus::check(r.next().unwrap() == 3_u16);
+/// sus_check(r.next().unwrap() == 3_u16);
+/// sus_check(r.next().unwrap() == 3_u16);
+/// sus_check(r.next().unwrap() == 3_u16);
 /// ```
 template <class Item>
   requires ::sus::mem::Clone<Item>

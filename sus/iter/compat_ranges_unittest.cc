@@ -236,12 +236,12 @@ TEST(CompatRanges, FromRange_Example) {
   {
     // An input_iterator by reference.
     const auto v = std::vector<i32>({1, 2, 3});
-    sus::check(sus::iter::from_range(v).copied().sum() == 1 + 2 + 3);
+    sus_check(sus::iter::from_range(v).copied().sum() == 1 + 2 + 3);
   }
   {
     // An input_iterator by value.
     auto v = std::vector<i32>({1, 2, 3});
-    sus::check(sus::iter::from_range(v).moved(unsafe_fn).sum() == 1 + 2 + 3);
+    sus_check(sus::iter::from_range(v).moved(unsafe_fn).sum() == 1 + 2 + 3);
     v.clear();
   }
 }

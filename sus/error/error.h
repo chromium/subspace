@@ -42,11 +42,9 @@ namespace sus {
 /// The following are the primary interfaces of the panic system and the
 /// responsibilities they cover:
 ///
-/// * [`panic`]($sus::assertions::panic) (Constructing, Propagating)
-/// * [`SUS_PROVIDE_PRINT_PANIC_LOCATION_HANDLER`]($sus::assertions::panic)
-///   (Reporting)
-/// * [`SUS_PROVIDE_PANIC_HANDLER`]($sus::assertions::panic)
-///   (Reacting)
+/// * [`sus_panic`]($sus_panic) (Constructing, Propagating)
+/// * [`SUS_PROVIDE_PRINT_PANIC_LOCATION_HANDLER`]($sus_panic) (Reporting)
+/// * [`SUS_PROVIDE_PANIC_HANDLER`]($sus_panic) (Reacting)
 ///
 /// The following are the primary interfaces of the error system and the
 /// responsibilities they cover:
@@ -172,7 +170,7 @@ concept HasErrorSource = requires(const T& t) {
 ///
 /// ```
 /// auto err = u32::try_from(-1).unwrap_err();
-/// sus::check(fmt::to_string(err) == "out of bounds");
+/// sus_check(fmt::to_string(err) == "out of bounds");
 /// ```
 ///
 /// # Implementing Error
@@ -185,7 +183,7 @@ concept HasErrorSource = requires(const T& t) {
 ///   typically concise lowercase sentences without trailing punctuation:
 ///   ```
 ///   auto err = u32::try_from(-1).unwrap_err();
-///   sus::check(fmt::to_string(err) == "out of bounds");
+///   sus_check(fmt::to_string(err) == "out of bounds");
 ///   ```
 ///
 /// The following method may optionally also be provided:
@@ -295,7 +293,7 @@ concept HasErrorSource = requires(const T& t) {
 ///     switch (self) {
 ///       case ErrorReason::SomeReason: return "we saw SomeReason happen";
 ///     }
-///     sus::unreachable();
+///     sus_unreachable();
 ///   }
 /// };
 ///
@@ -329,9 +327,9 @@ concept HasErrorSource = requires(const T& t) {
 ///   return sus::ok();
 /// };
 ///
-/// sus::check(fmt::format("{}", f(20)) == "Err(we saw SomeReason happen)");
-/// sus::check(fmt::format("{}", f(-20)) == "Err(too low)");
-/// sus::check(fmt::format("{}", f(0)) == "Ok(<void>)");
+/// sus_check(fmt::format("{}", f(20)) == "Err(we saw SomeReason happen)");
+/// sus_check(fmt::format("{}", f(-20)) == "Err(too low)");
+/// sus_check(fmt::format("{}", f(0)) == "Ok(<void>)");
 /// ```
 ///
 /// An example error that reports a `source`:
@@ -369,8 +367,8 @@ concept HasErrorSource = requires(const T& t) {
 ///
 /// if (auto r = get_super_error(); r.is_err()) {
 ///   auto& e = r.as_err();
-///   sus::check(fmt::format("Error: {}", e) == "Error: SuperError is here!");
-///   sus::check(
+///   sus_check(fmt::format("Error: {}", e) == "Error: SuperError is here!");
+///   sus_check(
 ///       fmt::format("Caused by: {}", sus::error::error_source(e).unwrap())
 ///       == "Caused by: SuperErrorSideKick is here!");
 /// }

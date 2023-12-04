@@ -36,7 +36,7 @@
    * https://developercommunity.visualstudio.com/t/MSVC-Compiler-bug-with:-numeric-literal/10108160  \
    */                                                                                                \
   T inline constexpr operator""_##Name(unsigned long long val) noexcept {                            \
-    ::sus::check(val <= static_cast<unsigned long long>(T::MAX_PRIMITIVE));                          \
+    sus_check(val <= static_cast<unsigned long long>(T::MAX_PRIMITIVE));                          \
     return T(static_cast<decltype(T::primitive_value)>(val));                                        \
   }
 #else
@@ -65,7 +65,7 @@
    * https://developercommunity.visualstudio.com/t/MSVC-Compiler-bug-with:-numeric-literal/10108160  \
    */                                                                                                \
   T inline constexpr operator""_##Name(long double val) noexcept {                                   \
-    ::sus::check(val <= static_cast<long double>(T::MAX_PRIMITIVE));                                 \
+    sus_check(val <= static_cast<long double>(T::MAX_PRIMITIVE));                                 \
     return T(static_cast<decltype(T::primitive_value)>(val));                                        \
   }                                                                                                  \
   T inline constexpr operator""_##Name(unsigned long long val) noexcept {                            \

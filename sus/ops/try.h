@@ -141,7 +141,7 @@ constexpr inline TryImpl<std::remove_cvref_t<T>>::Output try_into_output(
     T&& t) noexcept
   requires(::sus::mem::IsMoveRef<decltype(t)>)
 {
-  ::sus::check(TryImpl<std::remove_cvref_t<T>>::is_success(t));
+  sus_check(TryImpl<std::remove_cvref_t<T>>::is_success(t));
   return TryImpl<std::remove_cvref_t<T>>::into_output(::sus::move(t));
 }
 
@@ -198,7 +198,7 @@ template <class U, TryErrorConvertibleTo<U> T>
 constexpr inline U try_preserve_error(T&& t) noexcept
   requires(::sus::mem::IsMoveRef<decltype(t)>)
 {
-  ::sus::check(!TryImpl<std::remove_cvref_t<T>>::is_success(t));
+  sus_check(!TryImpl<std::remove_cvref_t<T>>::is_success(t));
   return TryImpl<U>::preserve_error(::sus::move(t));
 }
 

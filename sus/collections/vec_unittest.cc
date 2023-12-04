@@ -470,7 +470,7 @@ struct TrivialLies {
       : moves(o.moves), destructs(o.destructs), i(o.i + 1_i32) {
     moves += 1_usize;
   }
-  void operator=(TrivialLies&&) { sus::check(false); }
+  void operator=(TrivialLies&&) { sus_check(false); }
   ~TrivialLies() { destructs += 1_usize; }
 
   usize& moves;

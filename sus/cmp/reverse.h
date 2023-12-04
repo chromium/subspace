@@ -36,7 +36,7 @@ namespace sus::cmp {
 ///
 /// auto v = sus::Vec<i32>(1, 2, 3, 4, 5, 6);
 /// v.sort_by_key([](i32 num) { return sus::Tuple(num > 3, Reverse(num)); });
-/// sus::check(v == sus::Vec<i32>(3, 2, 1, 6, 5, 4));
+/// sus_check(v == sus::Vec<i32>(3, 2, 1, 6, 5, 4));
 /// ```
 template <class T>
 struct Reverse {

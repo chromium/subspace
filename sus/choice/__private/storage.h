@@ -540,53 +540,53 @@ union Storage<I, ::sus::Tuple<Ts...>> {
   using Type = ::sus::Tuple<Ts...>;
 
   inline constexpr void activate_for_construct(size_t index) {
-    ::sus::check(index == I);
+    sus_check(index == I);
   }
   inline constexpr void construct(Type&& tuple) {
     std::construct_at(&tuple_, ::sus::move(tuple));
   }
   inline constexpr void assign(Type&& tuple) { tuple_ = ::sus::move(tuple); }
   inline constexpr void move_construct(size_t index, Storage&& from) {
-    ::sus::check(index == I);
+    sus_check(index == I);
     std::construct_at(&tuple_, ::sus::move(from.tuple_));
   }
   inline constexpr void move_assign(size_t index, Storage&& from) {
-    ::sus::check(index == I);
+    sus_check(index == I);
     tuple_ = ::sus::move(from.tuple_);
   }
   inline constexpr void copy_construct(size_t index, const Storage& from) {
-    ::sus::check(index == I);
+    sus_check(index == I);
     std::construct_at(&tuple_, from.tuple_);
   }
   inline constexpr void copy_assign(size_t index, const Storage& from) {
-    ::sus::check(index == I);
+    sus_check(index == I);
     tuple_ = from.tuple_;
   }
   inline constexpr void clone_construct(size_t index, const Storage& from) {
-    ::sus::check(index == I);
+    sus_check(index == I);
     std::construct_at(&tuple_, ::sus::clone(from.tuple_));
   }
   inline constexpr void destroy(size_t index) {
-    ::sus::check(index == I);
+    sus_check(index == I);
     tuple_.~Type();
   }
   inline constexpr bool eq(size_t index, const Storage& other) const& noexcept {
-    ::sus::check(index == I);
+    sus_check(index == I);
     return tuple_ == other.tuple_;
   }
   inline constexpr auto strong_ord(size_t index,
                                    const Storage& other) const& noexcept {
-    ::sus::check(index == I);
+    sus_check(index == I);
     return std::strong_order(tuple_, other.tuple_);
   }
   inline constexpr auto weak_ord(size_t index,
                                  const Storage& other) const& noexcept {
-    ::sus::check(index == I);
+    sus_check(index == I);
     return std::weak_order(tuple_, other.tuple_);
   }
   inline constexpr auto partial_ord(size_t index,
                                     const Storage& other) const& noexcept {
-    ::sus::check(index == I);
+    sus_check(index == I);
     return std::partial_order(tuple_, other.tuple_);
   }
 
@@ -611,38 +611,38 @@ union Storage<I, Nothing> {
   constexpr Storage() {}
 
   inline constexpr void activate_for_construct(size_t index) {
-    ::sus::check(index == I);
+    sus_check(index == I);
   }
   inline constexpr void move_construct(size_t index, Storage&&) {
-    ::sus::check(index == I);
+    sus_check(index == I);
   }
   inline constexpr void move_assign(size_t index, Storage&&) {
-    ::sus::check(index == I);
+    sus_check(index == I);
   }
   inline constexpr void copy_construct(size_t index, const Storage&) {
-    ::sus::check(index == I);
+    sus_check(index == I);
   }
   inline constexpr void copy_assign(size_t index, const Storage&) {
-    ::sus::check(index == I);
+    sus_check(index == I);
   }
   inline constexpr void clone_construct(size_t index, const Storage&) {
-    ::sus::check(index == I);
+    sus_check(index == I);
   }
-  inline constexpr void destroy(size_t index) { ::sus::check(index == I); }
+  inline constexpr void destroy(size_t index) { sus_check(index == I); }
   inline constexpr bool eq(size_t index, const Storage&) const& {
-    ::sus::check(index == I);
+    sus_check(index == I);
     return true;
   }
   inline constexpr auto strong_ord(size_t index, const Storage&) const& {
-    ::sus::check(index == I);
+    sus_check(index == I);
     return std::strong_ordering::equivalent;
   }
   inline constexpr auto weak_ord(size_t index, const Storage&) const& {
-    ::sus::check(index == I);
+    sus_check(index == I);
     return std::weak_ordering::equivalent;
   }
   inline constexpr auto partial_ord(size_t index, const Storage&) const& {
-    ::sus::check(index == I);
+    sus_check(index == I);
     return std::partial_ordering::equivalent;
   }
 };
@@ -673,7 +673,7 @@ union Storage<I, ::sus::Tuple<T>> {
   using Type = ::sus::Tuple<T>;
 
   inline constexpr void activate_for_construct(size_t index) {
-    ::sus::check(index == I);
+    sus_check(index == I);
   }
   template <class U>
   inline constexpr void construct(U&& value) {
@@ -683,43 +683,43 @@ union Storage<I, ::sus::Tuple<T>> {
     tuple_ = Type(::sus::forward<T>(value));
   }
   inline constexpr void move_construct(size_t index, Storage&& from) {
-    ::sus::check(index == I);
+    sus_check(index == I);
     std::construct_at(&tuple_, ::sus::move(from.tuple_));
   }
   inline constexpr void move_assign(size_t index, Storage&& from) {
-    ::sus::check(index == I);
+    sus_check(index == I);
     tuple_ = ::sus::move(from.tuple_);
   }
   inline constexpr void copy_construct(size_t index, const Storage& from) {
-    ::sus::check(index == I);
+    sus_check(index == I);
     std::construct_at(&tuple_, from.tuple_);
   }
   inline constexpr void copy_assign(size_t index, const Storage& from) {
-    ::sus::check(index == I);
+    sus_check(index == I);
     tuple_ = from.tuple_;
   }
   inline constexpr void clone_construct(size_t index, const Storage& from) {
-    ::sus::check(index == I);
+    sus_check(index == I);
     std::construct_at(&tuple_, ::sus::clone(from.tuple_));
   }
   inline constexpr void destroy(size_t index) {
-    ::sus::check(index == I);
+    sus_check(index == I);
     tuple_.~Type();
   }
   inline constexpr bool eq(size_t index, const Storage& other) const& {
-    ::sus::check(index == I);
+    sus_check(index == I);
     return tuple_ == other.tuple_;
   }
   inline constexpr auto strong_ord(size_t index, const Storage& other) const& {
-    ::sus::check(index == I);
+    sus_check(index == I);
     return std::strong_order(tuple_, other.tuple_);
   }
   inline constexpr auto weak_ord(size_t index, const Storage& other) const& {
-    ::sus::check(index == I);
+    sus_check(index == I);
     return std::weak_order(tuple_, other.tuple_);
   }
   inline constexpr auto partial_ord(size_t index, const Storage& other) const& {
-    ::sus::check(index == I);
+    sus_check(index == I);
     return std::partial_order(tuple_, other.tuple_);
   }
 

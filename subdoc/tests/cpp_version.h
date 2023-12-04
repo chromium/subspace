@@ -28,7 +28,7 @@ inline std::string_view cpp_version_flag(SubDocCppVersion v) noexcept {
   switch (v) {
     case SubDocCppVersion::Cpp20: return "-std=c++20";
   }
-  sus::unreachable();
+  sus_unreachable();
 }
 
 }  // namespace subdoc::tests

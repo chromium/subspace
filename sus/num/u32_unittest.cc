@@ -2205,8 +2205,8 @@ TEST(u32DeathTest, DivCeilDivByZero) {
 }
 
 TEST(u32, NextMultipleOf_Example) {
-  sus::check((16_u32).next_multiple_of(8u) == 16u);
-  sus::check((23_u32).next_multiple_of(8u) == 24u);
+  sus_check((16_u32).next_multiple_of(8u) == 16u);
+  sus_check((23_u32).next_multiple_of(8u) == 24u);
 }
 
 TEST(u32, NextMultipleOf) {
@@ -2242,10 +2242,10 @@ TEST(u32DeathTest, NextMultipleOfDivByZero) {
 }
 
 TEST(u32, CheckedNextMultipleOf_Example) {
-  sus::check((16_u32).checked_next_multiple_of(8u) == sus::some(16u));
-  sus::check((23_u32).checked_next_multiple_of(8u) == sus::some(24u));
-  sus::check((1_u32).checked_next_multiple_of(0u) == sus::none());
-  sus::check(u32::MAX.checked_next_multiple_of(2u) == sus::none());
+  sus_check((16_u32).checked_next_multiple_of(8u) == sus::some(16u));
+  sus_check((23_u32).checked_next_multiple_of(8u) == sus::some(24u));
+  sus_check((1_u32).checked_next_multiple_of(0u) == sus::none());
+  sus_check(u32::MAX.checked_next_multiple_of(2u) == sus::none());
 }
 
 TEST(u32, CheckedNextMultipleOf) {

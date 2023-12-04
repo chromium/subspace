@@ -32,9 +32,9 @@ namespace sus::iter {
 /// auto a = sus::Array<i32, 2>(2, 3);
 /// auto b = sus::Array<f32, 5>(3.f, 4.f, 5.f, 6.f, 7.f);
 /// auto it = sus::iter::zip(::sus::move(a), ::sus::move(b));
-/// sus::check(it.next() == sus::some(sus::tuple(2, 3.f)));
-/// sus::check(it.next() == sus::some(sus::tuple(3, 4.f)));
-/// sus::check(it.next() == sus::none());
+/// sus_check(it.next() == sus::some(sus::tuple(2, 3.f)));
+/// sus_check(it.next() == sus::some(sus::tuple(3, 4.f)));
+/// sus_check(it.next() == sus::none());
 /// ```
 inline constexpr auto zip(IntoIteratorAny auto&& iia,
                           IntoIteratorAny auto&& iib) noexcept

@@ -45,7 +45,7 @@ namespace sus::num {
 /// auto a = sus::Array<i32, 2>(2, i32::MAX);
 /// auto maybe_answer =
 ///     a.iter().copied().product<sus::num::OverflowInteger<i32>>();
-/// sus::check(maybe_answer.is_overflow());
+/// sus_check(maybe_answer.is_overflow());
 /// ```
 template <::sus::num::Integer I>
 class OverflowInteger {

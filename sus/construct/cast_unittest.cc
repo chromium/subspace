@@ -23,11 +23,11 @@ TEST(Cast, Example_Concept) {
   auto add = [](u32 a, const sus::construct::Cast<u32> auto& b) -> u32 {
     return a.wrapping_add(sus::cast<u32>(b));
   };
-  sus::check(add(3_u32, -1_i32) == u32::MIN + 2u);
+  sus_check(add(3_u32, -1_i32) == u32::MIN + 2u);
 }
 
 TEST(Cast, Example_Function) {
-  sus::check(u32::MAX == sus::cast<u32>(-1_i64));
+  sus_check(u32::MAX == sus::cast<u32>(-1_i64));
 }
 
 }  // namespace

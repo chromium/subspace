@@ -38,7 +38,7 @@ TEST(CompatMap, FromIterator) {
                    return get<0>(i) % 2 == 0;
                  })
                  .collect<std::map<i32, u32>>();
-  sus::check(out == std::map<i32, u32>{{4, 5u}, {6, 7u}});
+  sus_check(out == std::map<i32, u32>{{4, 5u}, {6, 7u}});
 }
 
 TEST(CompatMap, FromIteratorSusTuple) {
@@ -50,7 +50,7 @@ TEST(CompatMap, FromIteratorSusTuple) {
                    return i.at<0>() % 2 == 0;
                  })
                  .collect<std::map<i32, u32>>();
-  sus::check(out == std::map<i32, u32>{{4, 5u}, {6, 7u}});
+  sus_check(out == std::map<i32, u32>{{4, 5u}, {6, 7u}});
 }
 
 TEST(CompatMultiMap, FromIterator) {
@@ -61,7 +61,7 @@ TEST(CompatMultiMap, FromIterator) {
                    return get<0>(i) % 2 == 0;
                  })
                  .collect<std::multimap<i32, u32>>();
-  sus::check(out ==
+  sus_check(out ==
              std::multimap<i32, u32>{{4, 5u}, {4, 4u}, {6, 7u}, {4, 6u}});
 }
 

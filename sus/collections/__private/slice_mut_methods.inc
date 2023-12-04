@@ -128,11 +128,11 @@ constexpr void copy_from_slice(const Slice<T>& src) NO_RETURN_REF noexcept
 {
   const ::sus::num::usize src_len = src.len();
   const ::sus::num::usize dst_len = len();
-  ::sus::check(dst_len == src_len);
+  sus_check(dst_len == src_len);
 
   const T* const src_ptr = src.as_ptr();
   T* const dst_ptr = as_mut_ptr();
-  ::sus::check((src_ptr < dst_ptr && src_ptr <= dst_ptr - src_len) ||
+  sus_check((src_ptr < dst_ptr && src_ptr <= dst_ptr - src_len) ||
                (dst_ptr < src_ptr && dst_ptr <= src_ptr - dst_len));
 
   if (std::is_constant_evaluated()) {
@@ -205,7 +205,7 @@ constexpr void clone_from_slice(const Slice<T>& src) NO_RETURN_REF noexcept
 {
   const ::sus::num::usize src_len = src.len();
   const ::sus::num::usize dst_len = len();
-  ::sus::check(dst_len == src_len);
+  sus_check(dst_len == src_len);
   const T* const src_ptr = src.as_ptr();
   T* dst_ptr = as_mut_ptr();
   for (::sus::num::usize i; i < dst_len; i += 1u) {
@@ -399,7 +399,7 @@ constexpr RChunksMut<T> rchunks_mut(::sus::num::usize chunk_size)
 /// auto backward = sus::Vec<i32>(3, 2, 1);
 /// auto sb = backward[".."_r];
 /// sf.reverse();
-/// sus::check(sf == sb);
+/// sus_check(sf == sb);
 /// ```
 constexpr void reverse() NO_RETURN_REF noexcept
   requires(::sus::mem::Move<T>)
@@ -448,7 +448,7 @@ void rotate_left(::sus::num::usize mid) NO_RETURN_REF noexcept
   requires(::sus::mem::Move<T>)
 {
   const ::sus::num::usize length = len();
-  ::sus::check(mid <= length);
+  sus_check(mid <= length);
   const ::sus::num::usize k = length - mid;
   T* const p = as_mut_ptr();
 
@@ -593,11 +593,11 @@ constexpr RSplitNMut<T, Pred> rsplitn_mut(usize n,
     usize index,
     ::sus::fn::FnMut<std::weak_ordering(const T&, const T&)> auto compare)
     RETURN_REF noexcept {
-  ::sus::check_with_message(
+  sus_check_with_message(
       index < len(), "partition_at_index index greater than length of slice");
 
   // TODO: Requires Iterator::enumerate(), max_by(), min_by()
-  ::sus::unreachable();
+  sus_unreachable();
 }
 
 /// Reorder the slice with a key extraction function such that the element at
@@ -813,7 +813,7 @@ constexpr SplitMut<T, Pred> split_mut(Pred pred) RETURN_REF noexcept {
 /// Panics if `mid > len()`.
 sus_pure constexpr ::sus::Tuple<SliceMut<T>, SliceMut<T>> split_at_mut(
     ::sus::num::usize mid) RETURN_REF noexcept {
-  ::sus::check(mid <= len());
+  sus_check(mid <= len());
   return split_at_mut_unchecked(::sus::marker::unsafe_fn, mid);
 }
 
@@ -963,7 +963,7 @@ constexpr ::sus::Option<SliceMut<T>> strip_suffix_mut(const Slice<T>& suffix)
 /// the function will panic.
 sus_pure constexpr SliceMut<T> subrange_mut(usize start) RETURN_REF noexcept {
   const usize length = len();
-  ::sus::check(start <= length);
+  sus_check(start <= length);
   return SliceMut<T>::from_raw_collection_mut(
       ::sus::marker::unsafe_fn, _iter_refs_view_expr, as_mut_ptr() + start,
       length - start);
@@ -972,10 +972,10 @@ sus_pure constexpr SliceMut<T> subrange_mut(usize start,
                                             usize end) RETURN_REF noexcept {
   const usize rlen = end >= start ? end - start : 0u;
   const usize length = len();
-  ::sus::check(rlen <= length);  // Avoid underflow below.
+  sus_check(rlen <= length);  // Avoid underflow below.
   // We allow rstart == len() && rend == len(), which returns an empty
   // slice.
-  ::sus::check(start <= length && start <= length - rlen);
+  sus_check(start <= length && start <= length - rlen);
   return SliceMut<T>::from_raw_collection_mut(::sus::marker::unsafe_fn,
                                               _iter_refs_view_expr,
                                               as_mut_ptr() + start, rlen);
@@ -990,7 +990,7 @@ sus_pure constexpr SliceMut<T> subrange_mut(usize start,
 /// # Panics
 /// Panics if a or b are out of bounds.
 constexpr void swap(usize a, usize b) NO_RETURN_REF noexcept {
-  ::sus::check(a < len() && b < len());
+  sus_check(a < len() && b < len());
   // SAFETY: The check above ensures `a` and `b` are in range.
   ::sus::mem::swap(*(as_mut_ptr() + a), *(as_mut_ptr() + b));
 }
@@ -1051,11 +1051,11 @@ constexpr void swap_with_slice(const SliceMut<T>& other)
   T* const self_ptr = as_mut_ptr();
   T* const other_ptr = other.as_mut_ptr();
 
-  ::sus::check(self_len == other_len);
+  sus_check(self_len == other_len);
   if (other_ptr <= self_ptr) {
-    ::sus::check(other_ptr + other_len <= self_ptr);
+    sus_check(other_ptr + other_len <= self_ptr);
   } else {
-    ::sus::check(self_ptr + self_len <= other_ptr);
+    sus_check(self_ptr + self_len <= other_ptr);
   }
   // SAFETY: Slice pointers are aligned, and the length has already been
   // verified to be the same for both slices, so it is valid for both pointers.
@@ -1071,7 +1071,7 @@ constexpr void swap_with_slice(const SliceMut<T>& other)
 /// # Panics
 /// Panics if `size` is 0.
 sus_pure constexpr WindowsMut<T> windows_mut(usize size) RETURN_REF noexcept {
-  ::sus::check(size > 0u);
+  sus_check(size > 0u);
   return WindowsMut<T>(_iter_refs_expr, *this, size);
 }
 

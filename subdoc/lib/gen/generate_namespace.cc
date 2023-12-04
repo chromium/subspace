@@ -174,7 +174,7 @@ void generate_namespace_overview(HtmlWriter::OpenDiv& namespace_div,
             case CppPathConcept:
               break;  // Concept can't be an ancestor of a namespace.
           }
-          sus::unreachable();
+          sus_unreachable();
         }());
         ancestor_anchor.add_href(e.link_href);
         ancestor_anchor.write_text(e.name);

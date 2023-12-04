@@ -595,7 +595,7 @@ operator<=>(_self l, SignedPrimitiveInteger auto r) noexcept {
 /// behaviour.
 sus_pure constexpr inline _self operator-() const& noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    ::sus::check_with_message(primitive_value != MIN_PRIMITIVE,
+    sus_check_with_message(primitive_value != MIN_PRIMITIVE,
                               "attempt to negate with overflow");
     return __private::unchecked_neg(primitive_value);
   } else {
@@ -633,7 +633,7 @@ sus_pure constexpr inline _self operator~() const& noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
         __private::add_with_overflow(l.primitive_value, r.primitive_value);
-    ::sus::check_with_message(!out.overflow, "attempt to add with overflow");
+    sus_check_with_message(!out.overflow, "attempt to add with overflow");
     return out.value;
   } else {
     return l.wrapping_add(r);
@@ -686,7 +686,7 @@ friend constexpr inline _self operator+(U l, _self r) noexcept = delete;
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
         __private::sub_with_overflow(l.primitive_value, r.primitive_value);
-    ::sus::check_with_message(!out.overflow,
+    sus_check_with_message(!out.overflow,
                               "attempt to subtract with overflow");
     return out.value;
   } else {
@@ -740,7 +740,7 @@ friend constexpr inline _self operator-(U l, _self r) noexcept = delete;
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
         __private::mul_with_overflow(l.primitive_value, r.primitive_value);
-    ::sus::check_with_message(!out.overflow,
+    sus_check_with_message(!out.overflow,
                               "attempt to multiply with overflow");
     return out.value;
   } else {
@@ -787,9 +787,9 @@ friend constexpr inline _self operator*(U l, _self r) noexcept = delete;
 /// #[doc.overloads=signedint./]
 [[nodiscard]] sus_pure_const friend constexpr inline _self operator/(
     _self l, _self r) noexcept {
-  ::sus::check_with_message(r.primitive_value != _primitive{0},
+  sus_check_with_message(r.primitive_value != _primitive{0},
                             "attempt to divide by zero");
-  ::sus::check_with_message(
+  sus_check_with_message(
       !__private::div_overflows_nonzero(l.primitive_value, r.primitive_value),
       "attempt to divide with overflow");
   return static_cast<_primitive>(l.primitive_value / r.primitive_value);
@@ -835,10 +835,10 @@ friend constexpr inline _self operator/(U l, _self r) noexcept = delete;
 /// #[doc.overloads=signedint.%]
 [[nodiscard]] sus_pure_const friend constexpr inline _self operator%(
     _self l, _self r) noexcept {
-  ::sus::check_with_message(
+  sus_check_with_message(
       r.primitive_value != _primitive{0},
       "attempt to calculate the remainder with a divisor of zero");
-  ::sus::check_with_message(
+  sus_check_with_message(
       !__private::div_overflows_nonzero(l.primitive_value, r.primitive_value),
       "attempt to calculate the remainder with overflow");
   return static_cast<_primitive>(l.primitive_value % r.primitive_value);
@@ -998,7 +998,7 @@ constexpr inline void operator+=(_self r) & noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
         __private::add_with_overflow(primitive_value, r.primitive_value);
-    ::sus::check_with_message(!out.overflow, "attempt to add with overflow");
+    sus_check_with_message(!out.overflow, "attempt to add with overflow");
     primitive_value = out.value;
   } else {
     primitive_value = wrapping_add(r).primitive_value;
@@ -1019,7 +1019,7 @@ constexpr inline void operator-=(_self r) & noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
         __private::sub_with_overflow(primitive_value, r.primitive_value);
-    ::sus::check_with_message(!out.overflow,
+    sus_check_with_message(!out.overflow,
                               "attempt to subtract with overflow");
     primitive_value = out.value;
   } else {
@@ -1041,7 +1041,7 @@ constexpr inline void operator*=(_self r) & noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
         __private::mul_with_overflow(primitive_value, r.primitive_value);
-    ::sus::check_with_message(!out.overflow,
+    sus_check_with_message(!out.overflow,
                               "attempt to multiply with overflow");
     primitive_value = out.value;
   } else {
@@ -1056,9 +1056,9 @@ constexpr inline void operator*=(_self r) & noexcept {
 /// This operator will panic when dividing by zero or when division will
 /// overflow.
 constexpr inline void operator/=(_self r) & noexcept {
-  ::sus::check_with_message(r.primitive_value != _primitive{0},
+  sus_check_with_message(r.primitive_value != _primitive{0},
                             "attempt to divide by zero");
-  ::sus::check_with_message(
+  sus_check_with_message(
       !__private::div_overflows_nonzero(primitive_value, r.primitive_value),
       "attempt to divide with overflow");
   primitive_value /= r.primitive_value;
@@ -1071,10 +1071,10 @@ constexpr inline void operator/=(_self r) & noexcept {
 /// This operator will panic when dividing by zero or when division will
 /// overflow.
 constexpr inline void operator%=(_self r) & noexcept {
-  ::sus::check_with_message(
+  sus_check_with_message(
       r.primitive_value != _primitive{0},
       "attempt to calculate the remainder with a divisor of zero");
-  ::sus::check_with_message(
+  sus_check_with_message(
       !__private::div_overflows_nonzero(primitive_value, r.primitive_value),
       "attempt to calculate the remainder with overflow");
   primitive_value %= r.primitive_value;
@@ -1119,7 +1119,7 @@ constexpr inline void operator<<=(u64 r) & noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
         __private::shl_with_overflow(primitive_value, r.primitive_value);
-    ::sus::check_with_message(!out.overflow,
+    sus_check_with_message(!out.overflow,
                               "attempt to shift left with overflow");
     primitive_value = out.value;
   } else {
@@ -1140,7 +1140,7 @@ constexpr inline void operator>>=(u64 r) & noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
         __private::shr_with_overflow(primitive_value, r.primitive_value);
-    ::sus::check_with_message(!out.overflow,
+    sus_check_with_message(!out.overflow,
                               "attempt to shift right with overflow");
     primitive_value = out.value;
   } else {
@@ -1357,7 +1357,7 @@ sus_pure constexpr Option<_self> checked_div(_self rhs) const& noexcept {
 /// This function will panic if `rhs` is 0.
 template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
 sus_pure constexpr Tuple overflowing_div(_self rhs) const& noexcept {
-  ::sus::check_with_message(rhs.primitive_value != _primitive{0},
+  sus_check_with_message(rhs.primitive_value != _primitive{0},
                             "attempt to divide by zero");
   if (__private::div_overflows_nonzero(primitive_value, rhs.primitive_value))
       [[unlikely]] {
@@ -1374,7 +1374,7 @@ sus_pure constexpr Tuple overflowing_div(_self rhs) const& noexcept {
 /// # Panics
 /// This function will panic if `rhs` is 0.
 sus_pure constexpr _self saturating_div(_self rhs) const& noexcept {
-  ::sus::check_with_message(rhs.primitive_value != _primitive{0},
+  sus_check_with_message(rhs.primitive_value != _primitive{0},
                             "attempt to divide by zero");
   if (__private::div_overflows_nonzero(primitive_value, rhs.primitive_value))
       [[unlikely]] {
@@ -1398,7 +1398,7 @@ sus_pure constexpr _self saturating_div(_self rhs) const& noexcept {
 /// # Panics
 /// This function will panic if `rhs` is 0.
 sus_pure constexpr _self wrapping_div(_self rhs) const& noexcept {
-  ::sus::check_with_message(rhs.primitive_value != _primitive{0},
+  sus_check_with_message(rhs.primitive_value != _primitive{0},
                             "attempt to divide by zero");
   if (__private::div_overflows_nonzero(primitive_value, rhs.primitive_value))
       [[unlikely]] {
@@ -1527,7 +1527,7 @@ sus_pure constexpr Option<_self> checked_rem(_self rhs) const& noexcept {
 /// This function will panic if `rhs` is 0.
 template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
 sus_pure constexpr Tuple overflowing_rem(_self rhs) const& noexcept {
-  ::sus::check_with_message(
+  sus_check_with_message(
       rhs.primitive_value != _primitive{0},
       "attempt to calculate the remainder with a divisor of zero");
   if (__private::div_overflows_nonzero(primitive_value, rhs.primitive_value))
@@ -1546,7 +1546,7 @@ sus_pure constexpr Tuple overflowing_rem(_self rhs) const& noexcept {
 /// artifacts make `x % y` invalid for `MIN / -1` on a signed type (where `MIN`
 /// is the negative minimal value). In such a case, this function returns 0.
 sus_pure constexpr _self wrapping_rem(_self rhs) const& noexcept {
-  ::sus::check_with_message(
+  sus_check_with_message(
       rhs.primitive_value != _primitive{0},
       "attempt to calculate the remainder with a divisor of zero");
   if (__private::div_overflows_nonzero(primitive_value, rhs.primitive_value))
@@ -1569,9 +1569,9 @@ sus_pure constexpr _self wrapping_rem(_self rhs) const& noexcept {
 /// # Panics
 /// This function will panic if `rhs` is 0 or the division results in overflow.
 sus_pure constexpr _self div_euclid(_self rhs) const& noexcept {
-  ::sus::check_with_message(rhs.primitive_value != _primitive{0},
+  sus_check_with_message(rhs.primitive_value != _primitive{0},
                             "attempt to divide by zero");
-  ::sus::check_with_message(
+  sus_check_with_message(
       !__private::div_overflows_nonzero(primitive_value, rhs.primitive_value),
       "attempt to divide with overflow");
   return __private::div_euclid(::sus::marker::unsafe_fn, primitive_value,
@@ -1602,7 +1602,7 @@ sus_pure constexpr Option<_self> checked_div_euclid(_self rhs) const& noexcept {
 /// This function will panic if `rhs` is 0.
 template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
 sus_pure constexpr Tuple overflowing_div_euclid(_self rhs) const& noexcept {
-  ::sus::check_with_message(rhs.primitive_value != _primitive{0},
+  sus_check_with_message(rhs.primitive_value != _primitive{0},
                             "attempt to divide by zero");
   if (__private::div_overflows_nonzero(primitive_value, rhs.primitive_value))
       [[unlikely]] {
@@ -1626,7 +1626,7 @@ sus_pure constexpr Tuple overflowing_div_euclid(_self rhs) const& noexcept {
 /// # Panics
 /// This function will panic if `rhs` is 0.
 sus_pure constexpr _self wrapping_div_euclid(_self rhs) const& noexcept {
-  ::sus::check_with_message(rhs.primitive_value != _primitive{0},
+  sus_check_with_message(rhs.primitive_value != _primitive{0},
                             "attempt to divide by zero");
   if (__private::div_overflows_nonzero(primitive_value, rhs.primitive_value))
       [[unlikely]] {
@@ -1646,10 +1646,10 @@ sus_pure constexpr _self wrapping_div_euclid(_self rhs) const& noexcept {
 /// # Panics
 /// This function will panic if `rhs` is 0 or the division results in overflow.
 sus_pure constexpr _self rem_euclid(_self rhs) const& noexcept {
-  ::sus::check_with_message(
+  sus_check_with_message(
       rhs.primitive_value != _primitive{0},
       "attempt to calculate the remainder with a divisor of zero");
-  ::sus::check_with_message(
+  sus_check_with_message(
       !__private::div_overflows_nonzero(primitive_value, rhs.primitive_value),
       "attempt to calculate the remainder with overflow");
   return __private::rem_euclid(::sus::marker::unsafe_fn, primitive_value,
@@ -1680,7 +1680,7 @@ sus_pure constexpr Option<_self> checked_rem_euclid(_self rhs) const& noexcept {
 /// This function will panic if `rhs` is 0.
 template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
 sus_pure constexpr Tuple overflowing_rem_euclid(_self rhs) const& noexcept {
-  ::sus::check_with_message(
+  sus_check_with_message(
       rhs.primitive_value != _primitive{0},
       "attempt to calculate the remainder with a divisor of zero");
   if (__private::div_overflows_nonzero(primitive_value, rhs.primitive_value))
@@ -1704,7 +1704,7 @@ sus_pure constexpr Tuple overflowing_rem_euclid(_self rhs) const& noexcept {
 /// # Panics
 /// This function will panic if `rhs` is 0.
 sus_pure constexpr _self wrapping_rem_euclid(_self rhs) const& noexcept {
-  ::sus::check_with_message(
+  sus_check_with_message(
       rhs.primitive_value != _primitive{0},
       "attempt to calculate the remainder with a divisor of zero");
   if (__private::div_overflows_nonzero(primitive_value, rhs.primitive_value))
@@ -1969,7 +1969,7 @@ sus_pure constexpr inline _self pow(u32 rhs) const& noexcept {
   const auto out =
       __private::pow_with_overflow(primitive_value, rhs.primitive_value);
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    ::sus::check_with_message(!out.overflow,
+    sus_check_with_message(!out.overflow,
                               "attempt to multiply with overflow");
   }
   return out.value;

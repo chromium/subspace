@@ -124,9 +124,9 @@ TEST(Into, Concept) {
 
 TEST(TryInto, Example) {
   auto valid = sus::try_into<u8>(123_i32).unwrap_or_default();
-  sus::check(valid == 123u);
+  sus_check(valid == 123u);
   auto invalid = sus::try_into<u8>(-1_i32).unwrap_or_default();
-  sus::check(invalid == 0u);
+  sus_check(invalid == 0u);
 }
 
 TEST(Into, Ref) {

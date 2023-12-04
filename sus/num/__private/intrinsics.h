@@ -1752,7 +1752,7 @@ sus_pure_const constexpr inline ::sus::num::FpCategory float_category(
     case norm: return ::sus::num::FpCategory::Normal;
     case subnorm: return ::sus::num::FpCategory::Subnormal;
     case zero: return ::sus::num::FpCategory::Zero;
-    default: ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    default: sus_unreachable_unchecked(::sus::marker::unsafe_fn);
   }
 }
 #else
@@ -1774,7 +1774,7 @@ sus_pure_const constexpr inline ::sus::num::FpCategory float_category(
       case FP_NORMAL: return ::sus::num::FpCategory::Normal;
       case FP_SUBNORMAL: return ::sus::num::FpCategory::Subnormal;
       case FP_ZERO: return ::sus::num::FpCategory::Zero;
-      default: ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+      default: sus_unreachable_unchecked(::sus::marker::unsafe_fn);
     }
   }
 }

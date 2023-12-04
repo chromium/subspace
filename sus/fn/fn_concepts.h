@@ -81,12 +81,11 @@ struct Anything {
 /// called correctly. It is moved-from after calling, and it should only be
 /// called once.
 ///
-/// Calling a `FnOnce` multiple times may [`panic`]($sus::assertions::panic)
+/// Calling a `FnOnce` multiple times may [`panic`]($sus_panic)
 /// or cause Undefined Behaviour.
 /// Not moving the `FnOnce` when calling it may fail to compile,
-/// [`panic`]($sus::assertions::panic), or cause
-/// Undefined Behaviour depending on the type that is being used to satisfy
-/// `FnOnce`.
+/// [`panic`]($sus_panic), or cause Undefined Behaviour depending on the type
+/// that is being used to satisfy `FnOnce`.
 ///
 /// # Type erasure
 ///
@@ -125,7 +124,7 @@ struct Anything {
 /// i32 x = do_stuff_once([](sus::Option<i32> o) -> i32 {
 ///   return sus::move(o).unwrap_or_default() + 4;
 /// });
-///  sus::check(x == 400 + 4);
+///  sus_check(x == 400 + 4);
 /// ```
 ///
 /// A `FnOnce` whose first parameter is a class can be matched with a method
@@ -147,7 +146,7 @@ struct Anything {
 ///
 /// // Map the class C to its value().
 /// auto c = Class(42);
-/// sus::check(map_class_once(c, &Class::value) == 42);
+/// sus_check(map_class_once(c, &Class::value) == 42);
 /// ```
 ///
 /// Using a method pointer as the parameter for `Option::map()` will call that
@@ -162,7 +161,7 @@ struct Anything {
 /// };
 ///
 /// auto o = sus::Option<Class>(Class(42));
-/// sus::check(o.map(&Class::value) == sus::some(42));
+/// sus_check(o.map(&Class::value) == sus::some(42));
 /// ```
 template <class F, class... S>
 concept FnOnce = requires {
@@ -246,7 +245,7 @@ concept FnOnce = requires {
 ///   i += 1;
 ///   return sus::move(o).unwrap_or_default() + i;
 /// });
-/// sus::check(x == 401 + 102);
+/// sus_check(x == 401 + 102);
 /// ```
 ///
 /// A `FnMut` whose first parameter is a class can be matched with a method from
@@ -267,7 +266,7 @@ concept FnOnce = requires {
 ///
 /// // Map the class C to its value().
 /// auto c = Class(42);
-/// sus::check(map_class_mut(c, &Class::value) == 42);
+/// sus_check(map_class_mut(c, &Class::value) == 42);
 /// ```
 ///
 /// Using a method pointer as the parameter for `Option::map()` will call that
@@ -282,7 +281,7 @@ concept FnOnce = requires {
 /// };
 ///
 /// auto o = sus::Option<Class>(Class(42));
-/// sus::check(o.map(&Class::value) == sus::some(42));
+/// sus_check(o.map(&Class::value) == sus::some(42));
 /// ```
 template <class F, class... S>
 concept FnMut = requires {
@@ -369,7 +368,7 @@ concept FnMut = requires {
 /// i32 x = do_stuff([i = 1_i32](sus::Option<i32> o) -> i32 {
 ///   return sus::move(o).unwrap_or_default() + i;
 /// });
-/// sus::check(x == 401 + 101);
+/// sus_check(x == 401 + 101);
 /// ```
 ///
 /// A `Fn` whose first parameter is a class can be matched with a method from
@@ -390,7 +389,7 @@ concept FnMut = requires {
 ///
 /// // Map the class C to its value().
 /// auto c = Class(42);
-/// sus::check(map_class(c, &Class::value) == 42);
+/// sus_check(map_class(c, &Class::value) == 42);
 /// ```
 ///
 /// Using a method pointer as the parameter for `Option::map()` will call that
@@ -405,7 +404,7 @@ concept FnMut = requires {
 /// };
 ///
 /// auto o = sus::Option<Class>(Class(42));
-/// sus::check(o.map(&Class::value) == sus::some(42));
+/// sus_check(o.map(&Class::value) == sus::some(42));
 /// ```
 template <class F, class... S>
 concept Fn = requires {

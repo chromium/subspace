@@ -31,7 +31,7 @@ TEST(CompatUnorderedSet, FromIterator) {
                  .filter([](const i32& i) { return i % 2 == 0; })
                  .collect<std::unordered_set<i32>>();
   static_assert(std::same_as<decltype(out), std::unordered_set<i32>>);
-  sus::check(out == std::unordered_set<i32>{2, 4, 6});
+  sus_check(out == std::unordered_set<i32>{2, 4, 6});
 }
 
 TEST(CompatUnorderedSet, Options) {
@@ -44,7 +44,7 @@ TEST(CompatUnorderedSet, Options) {
                            .collect<sus::Option<std::unordered_set<i32>>>();
   static_assert(std::same_as<decltype(out_with_none),
                              sus::Option<std::unordered_set<i32>>>);
-  sus::check(out_with_none.is_none());
+  sus_check(out_with_none.is_none());
 
   auto all_some = std::vector<sus::Option<i32>>{
       sus::some(3), sus::some(4), sus::some(2), sus::some(7),
@@ -54,7 +54,7 @@ TEST(CompatUnorderedSet, Options) {
                           .collect<sus::Option<std::unordered_set<i32>>>();
   static_assert(std::same_as<decltype(out_all_some),
                              sus::Option<std::unordered_set<i32>>>);
-  sus::check(out_all_some ==
+  sus_check(out_all_some ==
              sus::some(std::unordered_set<i32>{3, 4, 2, 7, 6, 1, 5}));
 }
 
@@ -65,7 +65,7 @@ TEST(CompatUnorderedMultiSet, FromIterator) {
                  .filter([](const i32& i) { return i % 2 == 0; })
                  .collect<std::unordered_multiset<i32>>();
   static_assert(std::same_as<decltype(out), std::unordered_multiset<i32>>);
-  sus::check(out == std::unordered_multiset<i32>{2, 2, 2, 4, 6});
+  sus_check(out == std::unordered_multiset<i32>{2, 2, 2, 4, 6});
 }
 
 }  // namespace

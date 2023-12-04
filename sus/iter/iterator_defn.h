@@ -347,7 +347,7 @@ class IteratorBase {
   /// i32 init;
   /// i32& out = v.iter_mut().fold<i32&>(
   ///     init, [](i32&, i32& v) -> i32& { return v; });
-  /// ::sus::check(&out == &v.last().unwrap());
+  /// sus_check(&out == &v.last().unwrap());
   /// ```
   template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, ItemT)> F>
     requires(std::convertible_to<std::invoke_result_t<F&, B &&, ItemT &&>, B> &&
@@ -492,7 +492,7 @@ class IteratorBase {
   /// sus::iter::IteratorBase::reduce):
   ///
   /// ```cpp
-  /// sus::check(
+  /// sus_check(
   ///     sus::Array<f32, 3>(2.4, f32::NAN, 1.3)
   ///         .into_iter()
   ///         .reduce(&f32::max)
@@ -538,7 +538,7 @@ class IteratorBase {
   /// sus::iter::IteratorBase::reduce):
   ///
   /// ```cpp
-  /// sus::check(
+  /// sus_check(
   ///     sus::Array<f32, 3>(2.4, f32::NAN, 1.3)
   ///         .into_iter()
   ///         .reduce(&f32::min)
@@ -741,7 +741,7 @@ class IteratorBase {
   /// auto a = sus::Array<i32, 3>(2, 3, 4);
   /// auto out = a.iter().copied().reduce(
   ///     [](i32 acc, i32 v) { return acc + v; });
-  /// sus::check(out.as_value() == 2 + 3 + 4);
+  /// sus_check(out.as_value() == 2 + 3 + 4);
   /// ```
   template <::sus::fn::FnMut<ItemT(ItemT, ItemT)> F, int&...,
             class R = std::invoke_result_t<F&, ItemT&&, ItemT&&>>
@@ -983,23 +983,23 @@ class IteratorBase {
   /// ```
   /// auto u = Vec<Option<i32>>(some(1), some(2), some(3));
   /// auto v = sus::move(u).into_iter().try_collect<Vec<i32>>();
-  /// sus::check(v == some(Vec<i32>(1, 2, 3 )));
+  /// sus_check(v == some(Vec<i32>(1, 2, 3 )));
   /// ```
   /// Failing to collect in the same way:
   /// ```
   /// auto u = Vec<Option<i32>>(some(1), some(2), none(), some(3));
   /// auto v = sus::move(u).into_iter().try_collect<Vec<i32>>();
-  /// sus::check(v == none());
+  /// sus_check(v == none());
   /// ```
   /// A similar example, but with [`Result`]($sus::result::Result):
   /// ```
   /// enum Error { ERROR };
   /// auto u = Vec<Result<i32, Error>>(ok(1), ok(2), ok(3));
   /// auto v = sus::move(u).into_iter().try_collect<Vec<i32>>();
-  /// sus::check(v == ok(Vec<i32>(1, 2, 3)));
+  /// sus_check(v == ok(Vec<i32>(1, 2, 3)));
   /// auto w = Vec<Result<i32, Error>>(ok(1), ok(2), err(ERROR), ok(3));
   /// auto x = sus::move(w).into_iter().try_collect<Vec<i32>>();
-  /// sus::check(x == err(ERROR));
+  /// sus_check(x == err(ERROR));
   /// ```
   template <class C>
     requires(::sus::ops::Try<ItemT> &&  //

@@ -75,7 +75,7 @@ struct [[sus_trivial_abi]] BoxBase<Box, T, true>
 ///   https://en.cppreference.com/w/cpp/memory/unique_ptr/make_unique)
 ///   but built into the type.
 ///   A moved-from `Box` may not be used except to be assigned to or destroyed.
-///   Using a moved-from `Box` will [`panic`]($sus::assertions::panic) and
+///   Using a moved-from `Box` will [`panic`]($sus_panic) and
 ///   terminate the program rather than operate on a null. This prevents
 ///   Undefined Behaviour and memory bugs caused by dereferencing null or using
 ///   null in unintended ways.
@@ -222,7 +222,7 @@ class [[sus_trivial_abi]] Box final : public __private::BoxBase<Box<T>, T> {
   constexpr Box clone() const noexcept
     requires(::sus::mem::Clone<T>)
   {
-    ::sus::check_with_message(t_, "Box used after move");
+    sus_check_with_message(t_, "Box used after move");
     return Box(::sus::clone(*t_));
   }
 
@@ -234,7 +234,7 @@ class [[sus_trivial_abi]] Box final : public __private::BoxBase<Box<T>, T> {
   constexpr void clone_from(const Box& rhs) noexcept
     requires(::sus::mem::Clone<T>)
   {
-    ::sus::check_with_message(t_, "Box used after move");
+    sus_check_with_message(t_, "Box used after move");
     ::sus::clone_into(*t_, *rhs);
   }
 
@@ -244,13 +244,13 @@ class [[sus_trivial_abi]] Box final : public __private::BoxBase<Box<T>, T> {
   /// #[doc.overloads=move]
   constexpr Box(Box&& rhs) noexcept
       : Box(FROM_POINTER, ::sus::move(rhs).into_raw()) {
-    ::sus::check_with_message(t_, "Box used after move");
+    sus_check_with_message(t_, "Box used after move");
   }
   template <class U>
     requires(::sus::ptr::SameOrSubclassOf<U*, T*>)
   constexpr Box(Box<U>&& rhs) noexcept
       : Box(FROM_POINTER, ::sus::move(rhs).into_raw()) {
-    ::sus::check_with_message(t_, "Box used after move");
+    sus_check_with_message(t_, "Box used after move");
   }
   /// Satisifes the [`Move`]($sus::mem::Move) concept for
   /// [`Box`]($sus::boxed::Box).
@@ -270,24 +270,24 @@ class [[sus_trivial_abi]] Box final : public __private::BoxBase<Box<T>, T> {
   }
 
   sus_pure constexpr const T& operator*() const {
-    ::sus::check_with_message(t_, "Box used after move");
+    sus_check_with_message(t_, "Box used after move");
     return *t_;
   }
   sus_pure constexpr T& operator*()
     requires(!std::is_const_v<T>)
   {
-    ::sus::check_with_message(t_, "Box used after move");
+    sus_check_with_message(t_, "Box used after move");
     return *t_;
   }
 
   sus_pure constexpr const T* operator->() const {
-    ::sus::check_with_message(t_, "Box used after move");
+    sus_check_with_message(t_, "Box used after move");
     return t_;
   }
   sus_pure constexpr T* operator->()
     requires(!std::is_const_v<T>)
   {
-    ::sus::check_with_message(t_, "Box used after move");
+    sus_check_with_message(t_, "Box used after move");
     return t_;
   }
 
@@ -348,13 +348,13 @@ class [[sus_trivial_abi]] Box final : public __private::BoxBase<Box<T>, T> {
 
   /// Converts `Box` into a mutable reference of the inner type.
   constexpr T& as_mut() & noexcept {
-    ::sus::check_with_message(t_, "Box used after move");
+    sus_check_with_message(t_, "Box used after move");
     return *t_;
   }
 
   /// Converts `Box` into a const reference of the inner type.
   constexpr const T& as_ref() const& noexcept {
-    ::sus::check_with_message(t_, "Box used after move");
+    sus_check_with_message(t_, "Box used after move");
     return *t_;
   }
   constexpr const T& as_ref() && noexcept = delete;
@@ -366,7 +366,7 @@ class [[sus_trivial_abi]] Box final : public __private::BoxBase<Box<T>, T> {
   constexpr T into_inner() && noexcept
     requires(::sus::mem::Move<T>)
   {
-    ::sus::check_with_message(t_, "Box used after move");
+    sus_check_with_message(t_, "Box used after move");
     T ret = ::sus::move(*t_);
     delete ::sus::mem::replace(t_, nullptr);
     return ret;
@@ -409,7 +409,7 @@ class [[sus_trivial_abi]] Box final : public __private::BoxBase<Box<T>, T> {
   /// delete p;
   /// ```
   constexpr T* into_raw() && noexcept {
-    ::sus::check_with_message(t_, "Box used after move");
+    sus_check_with_message(t_, "Box used after move");
     return ::sus::mem::replace(t_, nullptr);
   }
 
@@ -538,13 +538,13 @@ class [[sus_trivial_abi]] Box final : public __private::BoxBase<Box<T>, T> {
   /// ```
   /// const auto b = Box<sus::fn::DynFn<usize(std::string_view)>>::from(
   ///     &std::string_view::size);
-  /// sus::check(b("hello world") == 11u);
+  /// sus_check(b("hello world") == 11u);
   ///
   /// auto mut_b = Box<sus::fn::DynFn<usize(std::string_view)>>::from(
   ///     &std::string_view::size);
-  /// sus::check(mut_b("hello world") == 11u);
+  /// sus_check(mut_b("hello world") == 11u);
   ///
-  /// sus::check(sus::move(mut_b)("hello world") == 11u);
+  /// sus_check(sus::move(mut_b)("hello world") == 11u);
   /// // The object inside `mut_b` is now destroyed.
   /// ```
   ///
@@ -554,9 +554,9 @@ class [[sus_trivial_abi]] Box final : public __private::BoxBase<Box<T>, T> {
   /// ```
   /// auto mut_b = Box<sus::fn::DynFnMut<usize(std::string_view)>>::from(
   ///     &std::string_view::size);
-  /// sus::check(mut_b("hello world") == 11u);
+  /// sus_check(mut_b("hello world") == 11u);
   ///
-  /// sus::check(sus::move(mut_b)("hello world") == 11u);
+  /// sus_check(sus::move(mut_b)("hello world") == 11u);
   /// // The object inside `mut_b` is now destroyed.
   /// ```
   ///
@@ -566,13 +566,13 @@ class [[sus_trivial_abi]] Box final : public __private::BoxBase<Box<T>, T> {
   /// ```
   /// auto b = Box<sus::fn::DynFnOnce<usize(std::string_view)>>::from(
   ///     &std::string_view::size);
-  /// sus::check(sus::move(b)("hello world") == 11u);
+  /// sus_check(sus::move(b)("hello world") == 11u);
   ///
   /// auto x = [] {
   ///   return Box<sus::fn::DynFnOnce<usize(std::string_view)>>::from(
   ///       &std::string_view::size);
   /// };
-  /// sus::check(x()("hello world") == 11u);
+  /// sus_check(x()("hello world") == 11u);
   /// ```
   // TODO: https://github.com/llvm/llvm-project/issues/65904
   // clang-format off
@@ -581,7 +581,7 @@ class [[sus_trivial_abi]] Box final : public __private::BoxBase<Box<T>, T> {
     requires(T::IsDynFn &&
              ::sus::fn::Fn<T, sus::fn::Return<T, Args...>(Args...)>)
   {
-    ::sus::check_with_message(t_, "Box used after move");
+    sus_check_with_message(t_, "Box used after move");
     return ::sus::fn::call(*t_, ::sus::forward<Args>(args)...);
   }
 
@@ -590,7 +590,7 @@ class [[sus_trivial_abi]] Box final : public __private::BoxBase<Box<T>, T> {
     requires(T::IsDynFn &&
              ::sus::fn::FnMut<T, sus::fn::ReturnMut<T, Args...>(Args...)>)
   {
-    ::sus::check_with_message(t_, "Box used after move");
+    sus_check_with_message(t_, "Box used after move");
     return ::sus::fn::call_mut(*t_, ::sus::forward<Args>(args)...);
   }
 
@@ -599,7 +599,7 @@ class [[sus_trivial_abi]] Box final : public __private::BoxBase<Box<T>, T> {
     requires(T::IsDynFn &&  //
              ::sus::fn::FnOnce<T, sus::fn::ReturnOnce<T, Args...>(Args...)>)
   {
-    ::sus::check_with_message(t_, "Box used after move");
+    sus_check_with_message(t_, "Box used after move");
     struct Cleanup {
       constexpr ~Cleanup() noexcept { delete t; }
       T* t;

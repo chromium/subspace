@@ -18,7 +18,7 @@
 #include "sus/macros/assume.h"
 #include "sus/macros/compiler.h"
 
-/// Check a condition in debug builds, causing a `panic()` if the condition
+/// Check a condition in debug builds, causing a `sus_panic()` if the condition
 /// fails. Nothing is checked in release builds.
 ///
 /// The condition must not have side effects, and should not call any functions
@@ -27,7 +27,7 @@
 #define sus_debug_check(...) _sus__debug_check_impl(__VA_ARGS__)
 
 #if !defined(NDEBUG)
-#define _sus__debug_check_impl(...) ::sus::check(__VA_ARGS__)
+#define _sus__debug_check_impl(...) sus_check(__VA_ARGS__)
 #else
 #define _sus__debug_check_impl(...)
 #endif

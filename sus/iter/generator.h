@@ -53,11 +53,11 @@ namespace sus::iter {
 /// for (i32 i : generate_fibonacci().take(7u)) {
 ///   v.push(i);
 /// }
-/// sus::check(v == sus::Vec<i32>(0, 1, 1, 2, 3, 5, 8));
+/// sus_check(v == sus::Vec<i32>(0, 1, 1, 2, 3, 5, 8));
 ///
 /// // Using `from_generator`, with collect.
 /// sus::Vec<i32> v2 = generate_fibonacci().take(7u).collect_vec();
-/// sus::check(v2 == sus::Vec<i32>(0, 1, 1, 2, 3, 5, 8));
+/// sus_check(v2 == sus::Vec<i32>(0, 1, 1, 2, 3, 5, 8));
 /// ```
 template <::sus::fn::FnOnce<::sus::fn::NonVoid()> F, int&...,
           class R = std::invoke_result_t<F&&>>
@@ -105,7 +105,7 @@ class IterPromise {
 
   constexpr auto initial_suspend() noexcept { return std::suspend_always(); }
   constexpr auto final_suspend() noexcept { return std::suspend_always(); }
-  constexpr void unhandled_exception() noexcept { ::sus::unreachable(); }
+  constexpr void unhandled_exception() noexcept { sus_unreachable(); }
 
   constexpr Option<T> take() & noexcept { return yielded_.take(); }
 
@@ -179,11 +179,11 @@ class [[nodiscard]] [[sus_trivial_abi]] GeneratorLoop {
 /// for (i32 i : generate_fibonacci().take(7u)) {
 ///   v.push(i);
 /// }
-/// sus::check(v == sus::Vec<i32>(0, 1, 1, 2, 3, 5, 8));
+/// sus_check(v == sus::Vec<i32>(0, 1, 1, 2, 3, 5, 8));
 ///
 /// // Using `from_generator`, with collect.
 /// sus::Vec<i32> v2 = generate_fibonacci().take(7u).collect_vec();
-/// sus::check(v2 == sus::Vec<i32>(0, 1, 1, 2, 3, 5, 8));
+/// sus_check(v2 == sus::Vec<i32>(0, 1, 1, 2, 3, 5, 8));
 /// ```
 template <class T>
 class [[nodiscard]] [[sus_trivial_abi]] Generator final
@@ -202,12 +202,12 @@ class [[nodiscard]] [[sus_trivial_abi]] Generator final
   /// sus::mem::Move trait.
   constexpr Generator(Generator&& o) noexcept
       : co_handle_(::sus::mem::replace(o.co_handle_, nullptr)) {
-    ::sus::check(co_handle_ != nullptr);
+    sus_check(co_handle_ != nullptr);
   }
   /// sus::mem::Move trait.
   constexpr Generator& operator=(Generator&& o) noexcept {
     co_handle_ = ::sus::mem::replace(o.co_handle_, nullptr);
-    ::sus::check(co_handle_ != nullptr);
+    sus_check(co_handle_ != nullptr);
   }
 
   /// sus::iter::Iterator trait.

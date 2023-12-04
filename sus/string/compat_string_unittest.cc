@@ -41,7 +41,7 @@ TEST(CompatString, Char) {
                  .moved(unsafe_fn)
                  .filter([](char i) { return i != 'c'; })
                  .collect<std::string>();
-  sus::check(out == construct<std::string>("abd"));
+  sus_check(out == construct<std::string>("abd"));
 }
 
 TEST(CompatString, Char8) {
@@ -50,7 +50,7 @@ TEST(CompatString, Char8) {
                  .moved(unsafe_fn)
                  .filter([](char8_t i) { return i != 'c'; })
                  .collect<std::u8string>();
-  sus::check(out == construct<std::u8string>("abd"));
+  sus_check(out == construct<std::u8string>("abd"));
 }
 
 TEST(CompatString, Char16) {
@@ -59,7 +59,7 @@ TEST(CompatString, Char16) {
                  .moved(unsafe_fn)
                  .filter([](char16_t i) { return i != 'c'; })
                  .collect<std::u16string>();
-  sus::check(out == construct<std::u16string>("abd"));
+  sus_check(out == construct<std::u16string>("abd"));
 }
 
 TEST(CompatString, Char32) {
@@ -68,7 +68,7 @@ TEST(CompatString, Char32) {
                  .moved(unsafe_fn)
                  .filter([](char32_t i) { return i != 'c'; })
                  .collect<std::u32string>();
-  sus::check(out == construct<std::u32string>("abd"));
+  sus_check(out == construct<std::u32string>("abd"));
 }
 
 }  // namespace

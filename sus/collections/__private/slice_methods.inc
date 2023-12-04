@@ -242,7 +242,7 @@ using ConcatOutputType = ::sus::collections::Vec<T>;
 /// i32 a1[] = {1, 2}, a2[] = {3, 4};
 /// Slice<i32> as[] = {Slice<i32>::from(a1), Slice<i32>::from(a2)};
 /// Vec<i32> v = Slice<Slice<i32>>::from(as).concat();
-/// sus::check(v == Slice<i32>::from({1, 2, 3, 4}));
+/// sus_check(v == Slice<i32>::from({1, 2, 3, 4}));
 /// ```
 constexpr auto concat() const& noexcept
   requires(::sus::collections::Concat<T>)
@@ -426,11 +426,11 @@ using JoinOutputType = ::sus::collections::Vec<T>;
 ///
 /// // Join slices with a slice between.
 /// Vec<i32> v = Slice<Slice<i32>>::from(as).join(Slice<i32>::from(asep));
-/// sus::check(v == sus::Vec<i32>(1, 2, 10, 11, 12, 3, 4));
+/// sus_check(v == sus::Vec<i32>(1, 2, 10, 11, 12, 3, 4));
 ///
 /// // Join slices with a single item between.
 /// Vec<i32> v2 = Slice<Slice<i32>>::from(as).join(99);
-/// sus::check(v2 == sus::Vec<i32>(1, 2, 99, 3, 4));
+/// sus_check(v2 == sus::Vec<i32>(1, 2, 99, 3, 4));
 /// ```
 template <class Sep>
 constexpr auto join(const Sep& separator) const& noexcept
@@ -588,7 +588,7 @@ constexpr RChunksExact<T> rchunks_exact(::sus::num::usize chunk_size) && =
 ///
 /// ```
 /// auto v = sus::Vec<i32>(1, 2);
-/// check(v[".."_r].repeat(3) == sus::vec(1, 2, 1, 2, 1, 2).construct<i32>());
+/// sus_check(v[".."_r].repeat(3) == sus::vec(1, 2, 1, 2, 1, 2).construct<i32>());
 /// ```
 constexpr ::sus::collections::Vec<T> repeat(usize n) const& noexcept
   requires(::sus::mem::TrivialCopy<T>)
@@ -697,7 +697,7 @@ constexpr Split<T, Pred> split(Pred) && = delete;
 /// Panics if `mid > len()`.
 sus_pure constexpr ::sus::Tuple<Slice<T>, Slice<T>> split_at(
     ::sus::num::usize mid) const& noexcept {
-  ::sus::check(mid <= len());
+  sus_check(mid <= len());
   return split_at_unchecked(::sus::marker::unsafe_fn, mid);
 }
 
@@ -882,7 +882,7 @@ constexpr ::sus::Option<Slice<T>> strip_suffix(const Slice<T>& suffix) const& =
 /// the function will panic.
 sus_pure constexpr Slice<T> subrange(usize start) const& noexcept {
   const usize length = len();
-  ::sus::check(start <= length);
+  sus_check(start <= length);
   return Slice<T>::from_raw_collection(::sus::marker::unsafe_fn,
                                        _iter_refs_view_expr, as_ptr() + start,
                                        length - start);
@@ -890,10 +890,10 @@ sus_pure constexpr Slice<T> subrange(usize start) const& noexcept {
 sus_pure constexpr Slice<T> subrange(usize start, usize end) const& noexcept {
   const usize rlen = end >= start ? end - start : 0u;
   const usize length = len();
-  ::sus::check(rlen <= length);  // Avoid underflow below.
+  sus_check(rlen <= length);  // Avoid underflow below.
   // We allow start == len() && end == len(), which returns an empty
   // slice.
-  ::sus::check(start <= length && start <= length - rlen);
+  sus_check(start <= length && start <= length - rlen);
   return Slice<T>::from_raw_collection(
       ::sus::marker::unsafe_fn, _iter_refs_view_expr, as_ptr() + start, rlen);
 }
@@ -915,7 +915,7 @@ Vec<T> to_vec() const& noexcept
 /// # Panics
 /// Panics if `size` is 0.
 sus_pure constexpr Windows<T> windows(usize size) const& noexcept {
-  ::sus::check(size > 0u);
+  sus_check(size > 0u);
   return Windows<T>(_iter_refs_expr, *this, size);
 }
 

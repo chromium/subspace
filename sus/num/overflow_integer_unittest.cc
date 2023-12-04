@@ -106,7 +106,7 @@ TEST(OverflowInteger, Example_Iterator) {
   auto a = sus::Array<i32, 2>(2, i32::MAX);
   auto maybe_answer =
       a.iter().copied().product<sus::num::OverflowInteger<i32>>();
-  sus::check(maybe_answer.is_overflow());  // Overflow happened.
+  sus_check(maybe_answer.is_overflow());  // Overflow happened.
 }
 
 TEST(OverflowInteger, FromProduct) {

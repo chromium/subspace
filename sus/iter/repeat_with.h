@@ -42,9 +42,9 @@ class RepeatWith;
 /// # Exampler
 /// ```
 /// auto r = sus::iter::repeat_with<u16>([] { return 3_u16; });
-/// sus::check(r.next().unwrap() == 3_u16);
-/// sus::check(r.next().unwrap() == 3_u16);
-/// sus::check(r.next().unwrap() == 3_u16);
+/// sus_check(r.next().unwrap() == 3_u16);
+/// sus_check(r.next().unwrap() == 3_u16);
+/// sus_check(r.next().unwrap() == 3_u16);
 /// ```
 template <class Item, ::sus::fn::FnMut<Item()> GenFn>
 constexpr inline RepeatWith<Item, GenFn> repeat_with(GenFn gen) noexcept {

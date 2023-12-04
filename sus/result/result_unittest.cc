@@ -1951,9 +1951,9 @@ TEST(Result, UnwrapOrElse_BasicUsageExample) {
   enum class ECode { ItsHappening = -1 };
   auto conv = [](ECode e) { return static_cast<i32>(e); };
   auto ok = sus::Result<i32, ECode>(2);
-  sus::check(sus::move(ok).unwrap_or_else(conv) == 2);
+  sus_check(sus::move(ok).unwrap_or_else(conv) == 2);
   auto err = sus::Result<i32, ECode>::with_err(ECode::ItsHappening);
-  sus::check(sus::move(err).unwrap_or_else(conv) == -1);
+  sus_check(sus::move(err).unwrap_or_else(conv) == -1);
 }
 
 TEST(Result, fmt) {

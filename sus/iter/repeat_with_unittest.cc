@@ -21,9 +21,9 @@ namespace {
 
 TEST(RepeatWith, Example) {
   auto r = sus::iter::repeat_with<u16>([] { return 3_u16; });
-  sus::check(r.next().unwrap() == 3_u16);
-  sus::check(r.next().unwrap() == 3_u16);
-  sus::check(r.next().unwrap() == 3_u16);
+  sus_check(r.next().unwrap() == 3_u16);
+  sus_check(r.next().unwrap() == 3_u16);
+  sus_check(r.next().unwrap() == 3_u16);
 }
 
 TEST(RepeatWith, Next) {

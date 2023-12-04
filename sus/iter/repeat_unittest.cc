@@ -21,9 +21,9 @@ namespace {
 
 TEST(Repeat, Example) {
   auto r = sus::iter::repeat<u16>(3_u16);
-  sus::check(r.next().unwrap() == 3_u16);
-  sus::check(r.next().unwrap() == 3_u16);
-  sus::check(r.next().unwrap() == 3_u16);
+  sus_check(r.next().unwrap() == 3_u16);
+  sus_check(r.next().unwrap() == 3_u16);
+  sus_check(r.next().unwrap() == 3_u16);
 }
 
 TEST(Repeat, Next) {

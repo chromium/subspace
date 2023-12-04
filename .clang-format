@@ -4,13 +4,14 @@ AllowShortCaseLabelsOnASingleLine: true
 DerivePointerAlignment: false
 PointerAlignment: Left
 ReflowComments: false
+IndentPPDirectives: AfterHash
 
 # This would be nice but it also changes requires() and not wrapping requires clauses with () introduces clang-tidy bugs like:
 #```
 #  template <size_t I>
 #    requires I <= sizeof
 #  ...(Ts) constexpr inline const auto& at() const& noexcept {
-#    ::sus::check(!moved_from(I));
+#    sus_check(!moved_from(I));
 #    return __private::find_storage<I>(storage_).value;
 #  }
 #```
