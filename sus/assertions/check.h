@@ -23,6 +23,14 @@
 
 namespace sus::assertions {
 
+/// Verifies that `cond` is true, and will [`panic`]($sus::assertions::panic)
+/// otherwise, terminating the program.
+///
+/// See [`check_with_message`]($sus::assertions::check_with_message) to add a
+/// message to the display of the panic.
+///
+/// The displayed output can be controlled by overriding the behaviour of
+/// [`panic`]($sus::assertions::panic) as described there.
 constexpr sus_always_inline void check(
     bool cond,
     const std::source_location location = std::source_location::current()) {
@@ -30,6 +38,15 @@ constexpr sus_always_inline void check(
     ::sus::panic(location);
 }
 
+/// Verifies that `cond` is true, and will
+/// [`panic_with_message`]($sus::assertions::panic_with_message)
+/// otherwise, terminating the program.
+///
+/// Use [`check`]($sus::assertions::check) when there's nothing useful to add
+/// in the message.
+///
+/// The displayed output can be controlled by overriding the behaviour of
+/// [`panic`]($sus::assertions::panic) as described there.
 constexpr sus_always_inline void check_with_message(
     bool cond, const char* msg,
     const std::source_location location = std::source_location::current()) {
