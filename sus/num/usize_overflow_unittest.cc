@@ -270,4 +270,27 @@ TEST(usizeOverflowDeathTest, DivCeilDivByZero) {
 #endif
 }
 
+TEST(usizeOverflowDeathTest, NextMultipleOfDivByZero) {
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(
+      {
+        auto x = (0_usize).next_multiple_of(0_usize);
+        ensure_use(&x);
+      },
+      "attempt to calculate the remainder with a divisor of zero");
+  EXPECT_DEATH(
+      {
+        auto x = usize::MAX.next_multiple_of(0_usize);
+        ensure_use(&x);
+      },
+      "attempt to calculate the remainder with a divisor of zero");
+#endif
+
+  // Overflow occurs but is not checked.
+  EXPECT_EQ(usize::MAX.next_multiple_of(2_usize), 0u);
+  EXPECT_EQ(usize::MAX.next_multiple_of(3_usize), usize::MAX);
+  EXPECT_EQ(usize::MAX.next_multiple_of(4_usize), 0u);
+  EXPECT_EQ(usize::MAX.next_multiple_of(5_usize), usize::MAX);
+}
+
 }  // namespace

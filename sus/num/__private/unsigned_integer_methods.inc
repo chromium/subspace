@@ -1638,7 +1638,7 @@ sus_pure constexpr _self wrapping_rem(U rhs) const& noexcept {
 /// # Examples
 /// Basic usage:
 /// ```
-/// assert_eq!((7_u8).div_ceil(4u), 2u);
+/// sus::check((7_u8).div_ceil(4u) == 2u);
 /// ```
 sus_pure constexpr _self div_ceil(_self rhs) const& noexcept {
   ::sus::check_with_message(rhs.primitive_value != _primitive{0},
@@ -2138,6 +2138,59 @@ sus_pure constexpr bool is_power_of_two() const& noexcept {
   return count_ones() == _self(_primitive{1u});
 }
 
+/// Calculates the smallest value greater than or equal to itself that is a
+/// multiple of `rhs`.
+///
+/// # Panics
+/// This function will panic if `rhs` is zero.
+///
+/// ## Overflow behavior
+/// On overflow, this function will panic if overflow checks are enabled (they
+/// are by default) and wrap if overflow checks are disabled (not the default).
+///
+/// # Examples
+/// Basic usage:
+/// ```
+/// sus::check((16_u32).next_multiple_of(8u) == 16u);
+/// sus::check((23_u32).next_multiple_of(8u) == 24u);
+/// ```
+sus_pure constexpr _self next_multiple_of(_self rhs) const& noexcept {
+  const _self r = *this % rhs;
+  return r == _primitive{0} ? *this : *this + (rhs - r);
+}
+
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr _self next_multiple_of(U rhs) const& noexcept {
+  return next_multiple_of(_self(_primitive{rhs}));
+}
+#endif
+
+/// Calculates the smallest value greater than or equal to itself that is a
+/// multiple of `rhs`. Returns `None` if `rhs` is zero or the operation would
+/// result in overflow.
+///
+/// # Examples
+/// Basic usage:
+/// ```
+/// sus::check((16_u32).checked_next_multiple_of(8u) == sus::some(16u));
+/// sus::check((23_u32).checked_next_multiple_of(8u) == sus::some(24u));
+/// sus::check((1_u32).checked_next_multiple_of(0u) == sus::none());
+/// sus::check(u32::MAX.checked_next_multiple_of(2u) == sus::none());
+/// ```
+sus_pure constexpr ::sus::option::Option<_self> checked_next_multiple_of(
+    _self rhs) const& noexcept;
+
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::option::Option<_self> checked_next_multiple_of(
+    U rhs) const& noexcept;
+#endif
+
 /// Returns the smallest power of two greater than or equal to self.
 ///
 /// # Panics
@@ -2146,7 +2199,7 @@ sus_pure constexpr bool is_power_of_two() const& noexcept {
 sus_pure constexpr _self next_power_of_two() const& noexcept {
   const auto one_less =
       __private::one_less_than_next_power_of_two(primitive_value);
-  return _self(one_less) + _self(_primitive{1u});
+  return _self(one_less) + _self(_primitive{1});
 }
 
 /// Returns the smallest power of two greater than or equal to `self`.

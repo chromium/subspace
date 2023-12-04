@@ -2204,4 +2204,60 @@ TEST(u32DeathTest, DivCeilDivByZero) {
 #endif
 }
 
+TEST(u32, NextMultipleOf_Example) {
+  sus::check((16_u32).next_multiple_of(8u) == 16u);
+  sus::check((23_u32).next_multiple_of(8u) == 24u);
+}
+
+TEST(u32, NextMultipleOf) {
+  EXPECT_EQ((0_u32).next_multiple_of(1u), 0u);
+  EXPECT_EQ((1_u32).next_multiple_of(1u), 1u);
+  EXPECT_EQ((1_u32).next_multiple_of(5u), 5u);
+  EXPECT_EQ((5_u32).next_multiple_of(1u), 5u);
+  EXPECT_EQ((16_u32).next_multiple_of(8u), 16u);
+  EXPECT_EQ((23_u32).next_multiple_of(8u), 24u);
+}
+
+TEST(u32DeathTest, NextMultipleOfDivByZero) {
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(
+      {
+        auto x = (0_u32).next_multiple_of(0_u32);
+        ensure_use(&x);
+      },
+      "attempt to calculate the remainder with a divisor of zero");
+  EXPECT_DEATH(
+      {
+        auto x = u32::MAX.next_multiple_of(0_u32);
+        ensure_use(&x);
+      },
+      "attempt to calculate the remainder with a divisor of zero");
+  EXPECT_DEATH(
+      {
+        auto x = u32::MAX.next_multiple_of(2_u32);
+        ensure_use(&x);
+      },
+      "attempt to add with overflow");
+#endif
+}
+
+TEST(u32, CheckedNextMultipleOf_Example) {
+  sus::check((16_u32).checked_next_multiple_of(8u) == sus::some(16u));
+  sus::check((23_u32).checked_next_multiple_of(8u) == sus::some(24u));
+  sus::check((1_u32).checked_next_multiple_of(0u) == sus::none());
+  sus::check(u32::MAX.checked_next_multiple_of(2u) == sus::none());
+}
+
+TEST(u32, CheckedNextMultipleOf) {
+  EXPECT_EQ((0_u32).checked_next_multiple_of(1u), sus::some(0u));
+  EXPECT_EQ((1_u32).checked_next_multiple_of(1u), sus::some(1u));
+  EXPECT_EQ((1_u32).checked_next_multiple_of(5u), sus::some(5u));
+  EXPECT_EQ((5_u32).checked_next_multiple_of(1u), sus::some(5u));
+  EXPECT_EQ((16_u32).checked_next_multiple_of(8u), sus::some(16u));
+  EXPECT_EQ((23_u32).checked_next_multiple_of(8u), sus::some(24u));
+
+  EXPECT_EQ((23_u32).checked_next_multiple_of(0u), sus::none());
+  EXPECT_EQ(u32::MAX.checked_next_multiple_of(20u), sus::none());
+}
+
 }  // namespace

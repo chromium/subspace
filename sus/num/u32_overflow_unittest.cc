@@ -273,4 +273,27 @@ TEST(u32OverflowDeathTest, DivCeilDivByZero) {
 #endif
 }
 
+TEST(u32OverflowDeathTest, NextMultipleOfDivByZero) {
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(
+      {
+        auto x = (0_u32).next_multiple_of(0_u32);
+        ensure_use(&x);
+      },
+      "attempt to calculate the remainder with a divisor of zero");
+  EXPECT_DEATH(
+      {
+        auto x = u32::MAX.next_multiple_of(0_u32);
+        ensure_use(&x);
+      },
+      "attempt to calculate the remainder with a divisor of zero");
+#endif
+
+  // Overflow occurs but is not checked.
+  EXPECT_EQ(u32::MAX.next_multiple_of(2_u32), 0u);
+  EXPECT_EQ(u32::MAX.next_multiple_of(3_u32), u32::MAX);
+  EXPECT_EQ(u32::MAX.next_multiple_of(4_u32), 0u);
+  EXPECT_EQ(u32::MAX.next_multiple_of(5_u32), u32::MAX);
+}
+
 }  // namespace

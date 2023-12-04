@@ -270,4 +270,29 @@ TEST(uptrOverflowDeathTest, DivCeilDivByZero) {
 #endif
 }
 
+TEST(uptrOverflowDeathTest, NextMultipleOfDivByZero) {
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(
+      {
+        auto x = uptr().with_addr(0_usize).next_multiple_of(0_u32);
+        ensure_use(&x);
+      },
+      "attempt to calculate the remainder with a divisor of zero");
+  EXPECT_DEATH(
+      {
+        auto x = uptr::MAX_BIT_PATTERN.next_multiple_of(0_u32);
+        ensure_use(&x);
+      },
+      "attempt to calculate the remainder with a divisor of zero");
+#endif
+
+  // Overflow occurs but is not checked.
+  EXPECT_EQ(uptr::MAX_BIT_PATTERN.next_multiple_of(2_u32), 0u);
+  EXPECT_EQ(uptr::MAX_BIT_PATTERN.next_multiple_of(3_u32),
+            uptr::MAX_BIT_PATTERN);
+  EXPECT_EQ(uptr::MAX_BIT_PATTERN.next_multiple_of(4_u32), 0u);
+  EXPECT_EQ(uptr::MAX_BIT_PATTERN.next_multiple_of(5_u32),
+            uptr::MAX_BIT_PATTERN);
+}
+
 }  // namespace
