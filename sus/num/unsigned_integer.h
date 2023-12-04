@@ -270,6 +270,14 @@ constexpr inline P operator>>(P l, U r) noexcept = delete;
 
 /// Satisfies the [`Shl`]($sus::num::Shl) concept for unsigned integers.
 ///
+/// # Panics
+/// This function will panic when `r` is not less than the number of bits in `l`
+/// if overflow checks are enabled (they are by default) and will perform a
+/// wrapping shift if overflow checks are disabled (not the default).
+///
+/// See [overflow checks]($sus::num#overflow-behaviour) for controlling this
+/// behaviour.
+///
 /// #[doc.overloads=unsignedint.<<]
 [[nodiscard]] sus_pure_const constexpr inline u8 operator<<(
     u8 l, std::convertible_to<u64> auto r) noexcept {
@@ -289,6 +297,14 @@ template <class U>
   requires(!std::convertible_to<U, u64>)
 constexpr inline u8 operator<<(u8 l, U r) noexcept = delete;
 /// Satisfies the [`Shr`]($sus::num::Shr) concept for unsigned integers.
+///
+/// # Panics
+/// This function will panic when `r` is not less than the number of bits in `l`
+/// if overflow checks are enabled (they are by default) and will perform a
+/// wrapping shift if overflow checks are disabled (not the default).
+///
+/// See [overflow checks]($sus::num#overflow-behaviour) for controlling this
+/// behaviour.
 ///
 /// #[doc.overloads=unsignedint.>>]
 [[nodiscard]] sus_pure_const constexpr inline u8 operator>>(

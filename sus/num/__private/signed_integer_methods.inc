@@ -438,7 +438,12 @@ try_from(U u) noexcept {
 /// `iter.product<OverflowInteger<@doc.self>>()`.
 ///
 /// # Panics
-/// This method will panic if the product of all values overflows.
+/// This method will panic if the product of all values overflows and overflow
+/// checks are enabled (they are by default), and will wrap if overflow checks
+/// are disabled (not the default).
+///
+/// See [overflow checks]($sus::num#overflow-behaviour) for controlling this
+/// behaviour.
 static constexpr _self from_product(
     ::sus::iter::Iterator<_self> auto&& it) noexcept
   requires(::sus::mem::IsMoveRef<decltype(it)>)
@@ -460,7 +465,12 @@ static constexpr _self from_product(
 /// `iter.sum<OverflowInteger<@doc.self>>()`.
 ///
 /// # Panics
-/// This method will panic if the sum of all values overflows.
+/// This method will panic if the sum of all values overflows and overflow
+/// checks are enabled (they are by default), and will wrap if overflow checks
+/// are disabled (not the default).
+///
+/// See [overflow checks]($sus::num#overflow-behaviour) for controlling this
+/// behaviour.
 static constexpr _self from_sum(::sus::iter::Iterator<_self> auto&& it) noexcept
   requires(::sus::mem::IsMoveRef<decltype(it)>)
 {
@@ -534,7 +544,10 @@ sus_pure constexpr _self signum() const& noexcept {
     return _primitive{primitive_value != 0};
 }
 
-/// Satisfies the [`Eq`]($sus::cmp::Eq) concept for signed integers.
+/// Returns whether `l` and `r` are equal for signed integers.
+///
+/// Satisfies the [`Eq`]($sus::cmp::Eq) concept.
+///
 /// #[doc.overloads=int.eq]
 [[nodiscard]] sus_pure_const friend constexpr inline bool operator==(
     _self l, _self r) noexcept = default;
@@ -548,8 +561,11 @@ sus_pure constexpr _self signum() const& noexcept {
     _self l, SignedPrimitiveInteger auto r) noexcept {
   return l.primitive_value == r;
 }
-/// Satisfies the [`StrongOrd`]($sus::cmp::StrongOrd) concept for signed
-/// integers.
+/// Returns the ordering of `l` and `r` for signed integers.
+///
+/// Equivalent values also compare as equal and are replaceable so this
+/// satisfies the [`StrongOrd`]($sus::cmp::StrongOrd) concept.
+///
 /// #[doc.overloads=int.strongord]
 [[nodiscard]] sus_pure_const friend constexpr inline std::strong_ordering
 operator<=>(_self l, _self r) noexcept {
@@ -566,7 +582,17 @@ operator<=>(_self l, SignedPrimitiveInteger auto r) noexcept {
   return l.primitive_value <=> r;
 }
 
+/// Computes the negation of the current value.
+///
 /// Satisfies the [`Neg<@doc.self>`]($sus::num::Neg) concept.
+///
+/// # Panics
+/// This operation will panic on overflow (`self == @doc.self::MIN`) if overflow
+/// checks are enabled (they are by default) and will wrap if overflow checks
+/// are disabled (not the default).
+///
+/// See [overflow checks]($sus::num#overflow-behaviour) for controlling this
+/// behaviour.
 sus_pure constexpr inline _self operator-() const& noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     ::sus::check_with_message(primitive_value != MIN_PRIMITIVE,
@@ -576,12 +602,16 @@ sus_pure constexpr inline _self operator-() const& noexcept {
     return wrapping_neg();
   }
 }
+/// Computes the bitwise complement (bitwise inverse) of the current value.
+///
 /// Satisfies the [`BitNot<@doc.self>`]($sus::num::BitNot) concept.
 sus_pure constexpr inline _self operator~() const& noexcept {
   return __private::into_signed(
       __private::unchecked_not(__private::into_unsigned(primitive_value)));
 }
 
+/// Computes `l` summed with `r`.
+///
 /// Satisfies the [`Add`]($sus::num::Add) concept for signed integers.
 ///
 /// This operation supports shifting with primitive signed or unsigned integers
@@ -590,8 +620,12 @@ sus_pure constexpr inline _self operator~() const& noexcept {
 /// integer.
 ///
 /// # Panics
-/// This operator will panic on overflow when [overflow checks](
-/// $sus::num#overflow-behaviour) are enabled.
+/// This operation will panic on overflow if overflow checks are enabled (they
+/// are by default) and will wrap if overflow checks are disabled (not the
+/// default).
+///
+/// See [overflow checks]($sus::num#overflow-behaviour) for controlling this
+/// behaviour.
 ///
 /// #[doc.overloads=signedint.+]
 [[nodiscard]] sus_pure_const friend constexpr inline _self operator+(
@@ -629,6 +663,8 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
            !std::convertible_to<U, _self>)
 friend constexpr inline _self operator+(U l, _self r) noexcept = delete;
+/// Computes `l` subtracted by `r`.
+///
 /// Satisfies the [`Sub`]($sus::num::Sub) concept for signed integers.
 ///
 /// This operation supports shifting with primitive signed or unsigned integers
@@ -637,8 +673,12 @@ friend constexpr inline _self operator+(U l, _self r) noexcept = delete;
 /// integer.
 ///
 /// # Panics
-/// This operator will panic on overflow when [overflow checks](
-/// $sus::num#overflow-behaviour) are enabled.
+/// This operation will panic on overflow if overflow checks are enabled (they
+/// are by default) and will wrap if overflow checks are disabled (not the
+/// default).
+///
+/// See [overflow checks]($sus::num#overflow-behaviour) for controlling this
+/// behaviour.
 ///
 /// #[doc.overloads=signedint.-]
 [[nodiscard]] sus_pure_const friend constexpr inline _self operator-(
@@ -677,6 +717,8 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
            !std::convertible_to<U, _self>)
 friend constexpr inline _self operator-(U l, _self r) noexcept = delete;
+/// Computes `l` multiplied by `r`.
+///
 /// Satisfies the [`Mul`]($sus::num::Mul) concept for signed integers.
 ///
 /// This operation supports shifting with primitive signed or unsigned integers
@@ -685,8 +727,12 @@ friend constexpr inline _self operator-(U l, _self r) noexcept = delete;
 /// integer.
 ///
 /// # Panics
-/// This operator will panic on overflow when [overflow checks](
-/// $sus::num#overflow-behaviour) are enabled.
+/// This operation will panic on overflow if overflow checks are enabled (they
+/// are by default) and will wrap if overflow checks are disabled (not the
+/// default).
+///
+/// See [overflow checks]($sus::num#overflow-behaviour) for controlling this
+/// behaviour.
 ///
 /// #[doc.overloads=signedint.*]
 [[nodiscard]] sus_pure_const friend constexpr inline _self operator*(
@@ -725,6 +771,8 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
            !std::convertible_to<U, _self>)
 friend constexpr inline _self operator*(U l, _self r) noexcept = delete;
+/// Computes `l` divided by `r`.
+///
 /// Satisfies the [`Div`]($sus::num::Div) concept for signed integers.
 ///
 /// This operation supports shifting with primitive signed or unsigned integers
@@ -770,6 +818,9 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
            !std::convertible_to<U, _self>)
 friend constexpr inline _self operator/(U l, _self r) noexcept = delete;
+/// Computes the remainder of `l` divided by `r`, also known as the modulo
+/// operation.
+///
 /// Satisfies the [`Rem`]($sus::num::Rem) concept for signed integers.
 ///
 /// This operation supports shifting with primitive signed or unsigned integers
@@ -817,6 +868,8 @@ template <class U>
            !std::convertible_to<U, _self>)
 friend constexpr inline _self operator%(U l, _self r) noexcept = delete;
 
+/// Performs the bitwise operation `l` AND `r`.
+///
 /// Satisfies the [`BitAnd`]($sus::num::BitAnd) concept for signed integers.
 ///
 /// This operation supports shifting with primitive signed or unsigned integers
@@ -853,6 +906,8 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
            !std::convertible_to<U, _self>)
 friend constexpr inline _self operator&(U l, _self r) noexcept = delete;
+/// Performs the bitwise operation `l` OR `r`.
+///
 /// Satisfies the [`BitOr`]($sus::num::BitOr) concept for signed integers.
 ///
 /// This operation supports shifting with primitive signed or unsigned integers
@@ -889,6 +944,8 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
            !std::convertible_to<U, _self>)
 friend constexpr inline _self operator|(U l, _self r) noexcept = delete;
+/// Performs the bitwise operation `l` XOR `r`.
+///
 /// Satisfies the [`BitXor`]($sus::num::BitXor) concept for signed integers.
 ///
 /// This operation supports shifting with primitive signed or unsigned integers
@@ -926,11 +983,17 @@ template <class U>
            !std::convertible_to<U, _self>)
 friend constexpr inline _self operator^(U l, _self r) noexcept = delete;
 
+/// Adds `r` to itself.
+///
 /// Satisfies the [`AddAssign<@doc.self>`]($sus::num::AddAssign) concept.
 ///
 /// # Panics
-/// This operator will panic on overflow when [overflow checks](
-/// $sus::num#overflow-behaviour) are enabled.
+/// This operation will panic on overflow if overflow checks are enabled (they
+/// are by default) and will wrap if overflow checks are disabled (not the
+/// default).
+///
+/// See [overflow checks]($sus::num#overflow-behaviour) for controlling this
+/// behaviour.
 constexpr inline void operator+=(_self r) & noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
@@ -941,11 +1004,17 @@ constexpr inline void operator+=(_self r) & noexcept {
     primitive_value = wrapping_add(r).primitive_value;
   }
 }
+/// Subtracts `r` from itself.
+///
 /// Satisfies the [`SubAssign<@doc.self>`]($sus::num::SubAssign) concept.
 ///
 /// # Panics
-/// This operator will panic on overflow when [overflow checks](
-/// $sus::num#overflow-behaviour) are enabled.
+/// This operation will panic on overflow if overflow checks are enabled (they
+/// are by default) and will wrap if overflow checks are disabled (not the
+/// default).
+///
+/// See [overflow checks]($sus::num#overflow-behaviour) for controlling this
+/// behaviour.
 constexpr inline void operator-=(_self r) & noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
@@ -957,11 +1026,17 @@ constexpr inline void operator-=(_self r) & noexcept {
     primitive_value = wrapping_sub(r).primitive_value;
   }
 }
+/// Multiplies itself by `r`.
+///
 /// Satisfies the [`MulAssign<@doc.self>`]($sus::num::MulAssign) concept.
 ///
 /// # Panics
-/// This operator will panic on overflow when [overflow checks](
-/// $sus::num#overflow-behaviour) are enabled.
+/// This operation will panic on overflow if overflow checks are enabled (they
+/// are by default) and will wrap if overflow checks are disabled (not the
+/// default).
+///
+/// See [overflow checks]($sus::num#overflow-behaviour) for controlling this
+/// behaviour.
 constexpr inline void operator*=(_self r) & noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
@@ -973,6 +1048,8 @@ constexpr inline void operator*=(_self r) & noexcept {
     primitive_value = wrapping_mul(r).primitive_value;
   }
 }
+/// Divides itself by `r`.
+///
 /// Satisfies the [`DivAssign<@doc.self>`]($sus::num::DivAssign) concept.
 ///
 /// # Panics
@@ -986,7 +1063,13 @@ constexpr inline void operator/=(_self r) & noexcept {
       "attempt to divide with overflow");
   primitive_value /= r.primitive_value;
 }
+/// Assigns the remainder of dividing itself by `r`.
+///
 /// Satisfies the [`RemAssign<@doc.self>`]($sus::num::RemAssign) concept.
+///
+/// # Panics
+/// This operator will panic when dividing by zero or when division will
+/// overflow.
 constexpr inline void operator%=(_self r) & noexcept {
   ::sus::check_with_message(
       r.primitive_value != _primitive{0},
@@ -997,6 +1080,8 @@ constexpr inline void operator%=(_self r) & noexcept {
   primitive_value %= r.primitive_value;
 }
 
+/// Assigns the bitwise AND of itself and `r`.
+///
 /// Satisfies the [`BitAndAssign<@doc.self>`]($sus::num::BitAndAssign)
 /// concept.
 ///
@@ -1006,21 +1091,30 @@ constexpr inline void operator%=(_self r) & noexcept {
 constexpr inline void operator&=(_self r) & noexcept {
   primitive_value &= r.primitive_value;
 }
+/// Assigns the bitwise OR of itself and `r`.
+///
 /// Satisfies the [`BitOrAssign<@doc.self>`]($sus::num::BitOrAssign) concept.
 constexpr inline void operator|=(_self r) & noexcept {
   primitive_value |= r.primitive_value;
 }
+/// Assigns the bitwise XOR of itself and `r`.
+///
 /// Satisfies the [`BitXorAssign<@doc.self>`]($sus::num::BitXorAssign)
 /// concept.
 constexpr inline void operator^=(_self r) & noexcept {
   primitive_value ^= r.primitive_value;
 }
+/// Shifts itself left by `r` bits.
+///
 /// Satisfies the [`ShlAssign<@doc.self>`]($sus::num::ShlAssign) concept.
 ///
 /// # Panics
-/// This operator will panic if the shift amount is not less than
-/// [`@doc.self::BITS`]($sus::num::@doc.self::BITS) and [overflow checks](
-/// $sus::num#overflow-behaviour) are enabled.
+/// This function will panic when `r` is not less than the number of bits in
+/// `@doc.self` if overflow checks are enabled (they are by default) and will
+/// perform a wrapping shift if overflow checks are disabled (not the default).
+///
+/// See [overflow checks]($sus::num#overflow-behaviour) for controlling this
+/// behaviour.
 constexpr inline void operator<<=(u64 r) & noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
@@ -1032,14 +1126,16 @@ constexpr inline void operator<<=(u64 r) & noexcept {
     primitive_value = wrapping_shl(r).primitive_value;
   }
 }
-/// Satisfies the [`ShrAssign<@doc.self>`]($sus::num::ShrAssign) concept.
+/// Shifts itself right by `r` bits.
 ///
 /// Performs sign extension, copying the sign bit to the right if its set.
 ///
+/// Satisfies the [`ShrAssign<@doc.self>`]($sus::num::ShrAssign) concept.
+///
 /// # Panics
-/// This operator will panic if the shift amount is not less than
-/// [`@doc.self::BITS`]($sus::num::@doc.self::BITS) and [overflow checks](
-/// $sus::num#overflow-behaviour) are enabled.
+/// This function will panic when `r` is not less than the number of bits in
+/// `@doc.self` if overflow checks are enabled (they are by default) and will
+/// perform a wrapping shift if overflow checks are disabled (not the default).
 constexpr inline void operator>>=(u64 r) & noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
@@ -1054,9 +1150,13 @@ constexpr inline void operator>>=(u64 r) & noexcept {
 
 /// Computes the absolute value of itself.
 ///
-/// The absolute value of @doc.self::MIN cannot be represented as an @doc.self,
-/// and attempting to calculate it will panic when [overflow checks](
-/// $sus::num#overflow-behaviour) are enabled.
+/// # Panics
+/// The absolute value of `@doc.self::MIN` cannot be represented as an
+/// `@doc.self`, and attempting to calculate it will panic when overflow checks
+/// are enabled. When disabled (not the default), wrapping abs is performed.
+///
+/// See [overflow checks]($sus::num#overflow-behaviour) for controlling this
+/// behaviour.
 sus_pure constexpr inline _self abs() const& noexcept {
   if (primitive_value >= 0)
     return *this;
@@ -1857,6 +1957,14 @@ sus_pure constexpr _self swap_bytes() const& noexcept {
 }
 
 /// Raises self to the power of `exp`, using exponentiation by squaring.
+///
+/// # Panics
+/// This function will panic on overflow if overflow checks are enabled (they
+/// are by default) and will wrap if overflow checks are disabled (not the
+/// default).
+///
+/// See [overflow checks]($sus::num#overflow-behaviour) for controlling this
+/// behaviour.
 sus_pure constexpr inline _self pow(u32 rhs) const& noexcept {
   const auto out =
       __private::pow_with_overflow(primitive_value, rhs.primitive_value);
