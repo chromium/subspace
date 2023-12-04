@@ -182,6 +182,82 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         diag_ids_(sus::move(ids)) {}
   bool shouldVisitLambdaBody() const { return false; }
 
+  bool VisitMacros(clang::Decl* decl) {
+    clang::SourceManager& sm = decl->getASTContext().getSourceManager();
+    auto& ast_comments = decl->getASTContext().Comments;
+
+    // Visit macros.
+    for (auto& [identifier_info, macro_state] : preprocessor_.macros()) {
+      auto name = std::string(identifier_info->getName());
+
+      // TODO: Filter by name properly.
+      if (name.size() != 1u) continue;
+
+      // Get all comments in the file the macro definition was from.
+      clang::MacroDefinition defn =
+          preprocessor_.getMacroDefinition(identifier_info);
+      clang::MacroInfo* info = defn.getMacroInfo();
+      if (info == nullptr) continue;
+      const std::pair<clang::FileID, u32> decomposed_loc =
+          sm.getDecomposedLoc(info->getDefinitionLoc());
+      const clang::FileID file = decomposed_loc.first;
+      if (file.isInvalid()) continue;
+
+      const std::map<unsigned, clang::RawComment*>* comments_in_file =
+          ast_comments.getCommentsInFile(file);
+      if (comments_in_file == nullptr) continue;
+      if (comments_in_file->empty()) continue;
+
+      const u32 macro_start = decomposed_loc.second;
+      if (macro_start == 0u) continue;
+
+      // Find the nearest comment above the macro definition.
+      auto it = comments_in_file->lower_bound(macro_start);
+      if (it == comments_in_file->begin()) {
+        continue;
+      }
+      --it;
+      clang::RawComment* raw_comment = it->second;
+
+      // The comment should be docs and be above the macro.
+      if (!raw_comment->isDocumentation()) continue;
+      if (raw_comment->isTrailingComment()) continue;
+
+      // Now we know the offset into the file for the end of the macro and the
+      // start of the comment.
+      const u32 comment_end = ast_comments.getCommentEndOffset(raw_comment);
+
+      // Make sure the comment is actually against the macro. Read the
+      // original buffer.
+      bool invalid = false;
+      const char* buffer = sm.getBufferData(file, &invalid).data();
+      if (invalid) continue;
+      llvm::StringRef between(buffer + comment_end, macro_start - comment_end);
+
+      // Drop the #define for this macro.
+      while (between.endswith(" "))
+        between = between.substr(0u, between.size() - 1u);
+      if (between.endswith("define"))
+        between = between.substr(0u, between.size() - strlen("define"));
+      while (between.endswith(" "))
+        between = between.substr(0u, between.size() - 1u);
+      if (between.endswith("#"))
+        between = between.substr(0u, between.size() - strlen("#"));
+
+      // There should be no other declarations or macros between the comment and
+      // this macro.
+      if (between.find_last_of(";{}#@") != llvm::StringRef::npos) {
+        continue;
+      }
+
+      Comment comment = make_db_comment(decl->getASTContext(), raw_comment, "");
+      fmt::println(stderr, "macro {} has comment: {}", name, comment.text);
+      //MacroElement(sus::move(comment), sus::move(name), macro_start);
+      // TODO: Store the macro element.
+    }
+    return true;
+  }
+
   bool VisitStaticAssertDecl(clang::StaticAssertDecl*) noexcept {
     // llvm::errs() << "StaticAssertDecl\n";
     return true;
@@ -1119,9 +1195,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     }
 
     if (add_overload) {
-      sus_check_with_message(
-          db_element.overloads.len() == 1u,
-          "Expected to add FunctionElement with 1 overload");
+      sus_check_with_message(db_element.overloads.len() == 1u,
+                             "Expected to add FunctionElement with 1 overload");
 
       bool exists = db_map.at(key).overloads.iter().any(
           [&db_element](const FunctionOverload& overload) {
@@ -1303,12 +1378,17 @@ class AstConsumer : public clang::ASTConsumer {
         continue;
       }
 
-      if (!Visitor(cx_, docs_db_, preprocessor_,
-                   DiagnosticIds::with_context(decl->getASTContext()))
-               .TraverseDecl(decl)) {
-        return false;
+      {
+        auto visitor =
+            Visitor(cx_, docs_db_, preprocessor_,
+                    DiagnosticIds::with_context(decl->getASTContext()));
+        if (!visitor.TraverseDecl(decl)) {
+          return false;
+        }
+        if (!visitor.VisitMacros(decl)) {
+          return false;
+        }
       }
-
       if (decl->getASTContext().getDiagnostics().getNumErrors() > 0u)
         return false;
     }

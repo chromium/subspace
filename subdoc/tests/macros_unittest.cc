@@ -145,3 +145,18 @@ TEST_F(SubDocTest, MacroUsedInExcludedFile) {
   EXPECT_TRUE(!db.has_any_comments());
 }
 #endif
+
+TEST_F(SubDocTest, Macro) {
+  auto result = run_code(R"(
+    /// Comment headline
+    #define f() 
+    /// Comment headline 2
+    #  define g() 
+
+    void h() {}
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_macro_comment(db, "2:5", "<p>Comment headline</p>"));
+  EXPECT_TRUE(has_macro_comment(db, "4:5", "<p>Comment headline 2</p>"));
+}
