@@ -29,7 +29,7 @@ TEST(CompatDeque, FromIterator) {
                  .moved(unsafe_fn)
                  .filter([](const i32& i) { return i % 2 == 0; })
                  .collect<std::deque<i32>>();
-  sus::check(out == std::deque<i32>{2, 4, 6});
+  sus_check(out == std::deque<i32>{2, 4, 6});
 }
 
 }  // namespace

@@ -33,8 +33,8 @@ class Once;
 /// An iterator that returns a number once:
 /// ```
 /// auto o = sus::iter::once<u16>(3_u16);
-/// sus::check(o.next().unwrap() == 3_u16);
-/// sus::check(o.next().is_none());
+/// sus_check(o.next().unwrap() == 3_u16);
+/// sus_check(o.next().is_none());
 /// ```
 ///
 /// An iterator that returns a reference once:
@@ -42,9 +42,9 @@ class Once;
 /// auto u = 3_u16;
 /// auto o = sus::iter::once<u16&>(u);
 /// u16& r = o.next().unwrap();
-/// sus::check(r == 3u);
-/// sus::check(&r == &u);
-/// sus::check(o.next().is_none());
+/// sus_check(r == 3u);
+/// sus_check(&r == &u);
+/// sus_check(o.next().is_none());
 /// ```
 template <class Item>
 constexpr inline Once<Item> once(Item o sus_lifetimebound) noexcept {

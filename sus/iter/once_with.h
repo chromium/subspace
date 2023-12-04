@@ -39,7 +39,7 @@ class OnceWith;
 /// # Example
 /// ```
 /// auto ow = sus::iter::once_with<u16>([]() { return 3_u16; });
-/// sus::check(ow.next().unwrap() == 3_u16);
+/// sus_check(ow.next().unwrap() == 3_u16);
 /// ```
 template <class Item, ::sus::fn::FnMut<Item()> GenFn>
 constexpr inline OnceWith<Item, GenFn> once_with(GenFn gen) noexcept {

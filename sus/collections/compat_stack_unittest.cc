@@ -30,7 +30,7 @@ TEST(CompatStack, FromIterator) {
                  .filter([](const i32& i) { return i % 2 == 0; })
                  .collect<std::stack<i32>>();
   static_assert(std::same_as<decltype(out), std::stack<i32>>);
-  sus::check(out == std::stack<i32>(std::deque<i32>{2, 4, 6}));
+  sus_check(out == std::stack<i32>(std::deque<i32>{2, 4, 6}));
 }
 
 TEST(CompatStack, FromIteratorRef) {
@@ -41,7 +41,7 @@ TEST(CompatStack, FromIteratorRef) {
                  .rev()
                  .collect<std::stack<i32>>();
   static_assert(std::same_as<decltype(out), std::stack<i32>>);
-  sus::check(out == std::stack<i32>(std::deque<i32>{6, 4, 2}));
+  sus_check(out == std::stack<i32>(std::deque<i32>{6, 4, 2}));
 }
 
 }  // namespace

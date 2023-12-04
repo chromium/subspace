@@ -59,14 +59,14 @@ void generate_type(HtmlWriter::OpenDiv& div, const LinkedType& linked_type,
     switch (*maybe_ref) {
       case TypeRef::Tag::Concept: {
         const ConceptElement& e = maybe_ref->as<TypeRef::Tag::Concept>();
-        sus::check_with_message(
+        sus_check_with_message(
             !e.hidden(), fmt::format("reference to hidden Concept {}", e.name));
         anchor.add_href(construct_html_url_for_concept(e));
         break;
       }
       case TypeRef::Tag::Record: {
         const RecordElement& e = maybe_ref->as<TypeRef::Tag::Record>();
-        sus::check_with_message(
+        sus_check_with_message(
             !e.hidden(), fmt::format("reference to hidden Record {}", e.name));
         anchor.add_href(construct_html_url_for_type(e));
         break;

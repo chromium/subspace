@@ -72,7 +72,9 @@ struct [[nodiscard]] Drain final
   /// # Panics
   ///
   /// Calling this function will always panic.
-  constexpr Drain& operator=(Drain&&) noexcept { ::sus::panic(); }
+  constexpr Drain& operator=(Drain&&) noexcept {
+    sus_panic_with_message("attempt to assign to Drain iterator");
+  }
 
   ~Drain() noexcept {
     // The `iter_` is None if keep_rest() was run, in which cast the Vec is

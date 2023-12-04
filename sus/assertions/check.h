@@ -14,64 +14,35 @@
 
 #pragma once
 
-#include <stdlib.h>
-
-#include <source_location>
-
 #include "sus/assertions/panic.h"
-#include "sus/macros/inline.h"
 
-namespace sus::assertions {
-
-/// Verifies that `cond` is true, and will [`panic`]($sus::assertions::panic)
+/// Verifies that `cond` is true, and will [`panic`]($sus_panic)
 /// otherwise, terminating the program.
 ///
-/// See [`check_with_message`]($sus::assertions::check_with_message) to add a
+/// See [`sus_check_with_message`]($sus_check_with_message) to add a
 /// message to the display of the panic.
 ///
 /// The displayed output can be controlled by overriding the behaviour of
-/// [`panic`]($sus::assertions::panic) as described there.
-constexpr sus_always_inline void check(
-    bool cond,
-    const std::source_location location = std::source_location::current()) {
-  if (!cond) [[unlikely]]
-    ::sus::panic(location);
-}
+/// [`sus_panic`]($sus_panic) as described there.
+#define sus_check(...)               \
+  if (!(__VA_ARGS__)) [[unlikely]] { \
+    sus_panic();                     \
+  }                                  \
+  static_assert(true)
 
 /// Verifies that `cond` is true, and will
-/// [`panic_with_message`]($sus::assertions::panic_with_message)
+/// [`sus_panic_with_message`]($sus_panic_with_message)
 /// otherwise, terminating the program.
 ///
-/// Use [`check`]($sus::assertions::check) when there's nothing useful to add
+/// Use [`sus_check`]($sus_check) when there's nothing useful to add
 /// in the message.
 ///
 /// The displayed output can be controlled by overriding the behaviour of
-/// [`panic`]($sus::assertions::panic) as described there.
-constexpr sus_always_inline void check_with_message(
-    bool cond, const char* msg,
-    const std::source_location location = std::source_location::current()) {
-  if (!cond) [[unlikely]]
-    ::sus::panic_with_message(msg, location);
-}
-
-constexpr sus_always_inline void check_with_message(
-    bool cond, std::string_view msg,
-    const std::source_location location = std::source_location::current()) {
-  if (!cond) [[unlikely]]
-    ::sus::panic_with_message(msg, location);
-}
-
-constexpr sus_always_inline void check_with_message(
-    bool cond, const std::string& msg,
-    const std::source_location location = std::source_location::current()) {
-  if (!cond) [[unlikely]]
-    ::sus::panic_with_message(msg, location);
-}
-
-}  // namespace sus::assertions
-
-// Promote check() and check_with_message() into the `sus` namespace.
-namespace sus {
-using ::sus::assertions::check;
-using ::sus::assertions::check_with_message;
-}  // namespace sus
+/// [`sus_panic`]($sus_panic) as described there. If the
+/// `SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER` macro does not consume the `msg`,
+/// this macro will avoid instantiating it at all.
+#define sus_check_with_message(cond, msg) \
+  if (!(cond)) [[unlikely]] {             \
+    sus_panic_with_message(msg);          \
+  }                                       \
+  static_assert(true)

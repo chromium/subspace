@@ -150,12 +150,12 @@ namespace sus {
 /// available if preferred. However if doing this many times, consider doing
 /// [`unwrap`]($sus::option::Option::unwrap) a single time up front.
 /// ```
-/// sus::check(is_power(9001).unwrap() == "power!");
+/// sus_check(is_power(9001).unwrap() == "power!");
 ///
 /// if (Option<std::string> lvalue = is_power(9001); lvalue.is_some())
-///   sus::check(lvalue.as_value() == "power!");
+///   sus_check(lvalue.as_value() == "power!");
 ///
-/// sus::check(is_power(9000).unwrap_or("unlucky") == "unlucky");
+/// sus_check(is_power(9000).unwrap_or("unlucky") == "unlucky");
 /// ```
 ///
 /// [`Option<const T>`]($sus::option::Option) for non-reference-type `T`
@@ -428,7 +428,7 @@ namespace sus {
 ///               .unwrap();
 ///         })
 ///         .collect<Vec<std::string>>();
-/// sus::check(res == sus::vec("error!", "error!", "foo", "error!", "bar"));
+/// sus_check(res == sus::vec("error!", "error!", "foo", "error!", "bar"));
 /// ```
 ///
 /// # Restrictions on returning references
@@ -752,7 +752,7 @@ class Option final {
   constexpr sus_nonnull_fn T expect(
       /* TODO: string view type */ sus_nonnull_arg const char* sus_nonnull_var
           message) && noexcept {
-    ::sus::check_with_message(t_.state() == Some, message);
+    sus_check_with_message(t_.state() == Some, message);
     return ::sus::move(*this).unwrap_unchecked(::sus::marker::unsafe_fn);
   }
   constexpr sus_nonnull_fn T expect(
@@ -768,7 +768,7 @@ class Option final {
   /// The function will panic without a message if the option's state is
   /// currently `None`.
   constexpr T unwrap() && noexcept {
-    ::sus::check(t_.state() == Some);
+    sus_check(t_.state() == Some);
     return ::sus::move(*this).unwrap_unchecked(::sus::marker::unsafe_fn);
   }
   constexpr T unwrap() const& noexcept
@@ -853,7 +853,7 @@ class Option final {
       // Result::unwrap_unchecked benefits from telling the compiler explicitly
       // that the other states are never set. Match that here until shown it's
       // actually not useful.
-      sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+      sus_unreachable_unchecked(::sus::marker::unsafe_fn);
     }
   }
   constexpr inline T unwrap_unchecked(
@@ -882,13 +882,13 @@ class Option final {
   /// a short-lived object which leads to common C++ memory bugs.
   sus_pure constexpr const std::remove_reference_t<T>& as_value()
       const& noexcept {
-    ::sus::check(t_.state() == Some);
+    sus_check(t_.state() == Some);
     return t_.val();
   }
   sus_pure constexpr const std::remove_reference_t<T>& as_value() && noexcept
     requires(std::is_reference_v<T>)
   {
-    ::sus::check(t_.state() == Some);
+    sus_check(t_.state() == Some);
     return t_.val();
   }
   /// Returns a mutable reference to the contained value inside the option.
@@ -909,13 +909,13 @@ class Option final {
   /// contained value is a reference, otherwise we are returning a reference to
   /// a short-lived object which leads to common C++ memory bugs.
   sus_pure constexpr std::remove_reference_t<T>& as_value_mut() & noexcept {
-    ::sus::check(t_.state() == Some);
+    sus_check(t_.state() == Some);
     return t_.val_mut();
   }
   sus_pure constexpr std::remove_reference_t<T>& as_value_mut() && noexcept
     requires(std::is_reference_v<T>)
   {
-    ::sus::check(t_.state() == Some);
+    sus_check(t_.state() == Some);
     return t_.val_mut();
   }
   sus_pure constexpr std::remove_reference_t<T>& as_value_mut() const& noexcept
@@ -1019,17 +1019,17 @@ class Option final {
   ///   [`operator->`]($sus::option::Option::operator->).
   sus_pure constexpr const std::remove_reference_t<T>& operator*()
       const& noexcept {
-    ::sus::check(t_.state() == Some);
+    sus_check(t_.state() == Some);
     return t_.val();
   }
   sus_pure constexpr const std::remove_reference_t<T>& operator*() && noexcept
     requires(std::is_reference_v<T>)
   {
-    ::sus::check(t_.state() == Some);
+    sus_check(t_.state() == Some);
     return t_.val();
   }
   sus_pure constexpr std::remove_reference_t<T>& operator*() & noexcept {
-    ::sus::check(t_.state() == Some);
+    sus_check(t_.state() == Some);
     return t_.val_mut();
   }
 
@@ -1071,19 +1071,19 @@ class Option final {
   ///   [`operator->`]($sus::option::Option::operator->).
   sus_pure constexpr const std::remove_reference_t<T>* operator->()
       const& noexcept {
-    ::sus::check(t_.state() == Some);
+    sus_check(t_.state() == Some);
     return ::sus::mem::addressof(
         static_cast<const std::remove_reference_t<T>&>(t_.val()));
   }
   sus_pure constexpr const std::remove_reference_t<T>* operator->() && noexcept
     requires(std::is_reference_v<T>)
   {
-    ::sus::check(t_.state() == Some);
+    sus_check(t_.state() == Some);
     return ::sus::mem::addressof(
         static_cast<const std::remove_reference_t<T>&>(t_.val()));
   }
   sus_pure constexpr std::remove_reference_t<T>* operator->() & noexcept {
-    ::sus::check(t_.state() == Some);
+    sus_check(t_.state() == Some);
     return ::sus::mem::addressof(
         static_cast<std::remove_reference_t<T>&>(t_.val_mut()));
   }
@@ -1711,7 +1711,7 @@ class Option final {
                                r.as_value_unchecked(::sus::marker::unsafe_fn));
       case None: return r.is_none();
     }
-    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    sus_unreachable_unchecked(::sus::marker::unsafe_fn);
   }
   template <class U>
     requires(::sus::cmp::Eq<T, U>)
@@ -1723,7 +1723,7 @@ class Option final {
                                r.as_value_unchecked(::sus::marker::unsafe_fn));
       case None: return r.is_none();
     }
-    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    sus_unreachable_unchecked(::sus::marker::unsafe_fn);
   }
 
   template <class U>
@@ -1762,7 +1762,7 @@ class Option final {
         else
           return std::strong_ordering::equivalent;
     }
-    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    sus_unreachable_unchecked(::sus::marker::unsafe_fn);
   }
   template <class U>
     requires(::sus::cmp::ExclusiveStrongOrd<T, U>)
@@ -1782,7 +1782,7 @@ class Option final {
         else
           return std::strong_ordering::equivalent;
     }
-    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    sus_unreachable_unchecked(::sus::marker::unsafe_fn);
   }
 
   // sus::cmp::Ord<Option<U>> trait.
@@ -1804,7 +1804,7 @@ class Option final {
         else
           return std::weak_ordering::equivalent;
     }
-    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    sus_unreachable_unchecked(::sus::marker::unsafe_fn);
   }
   template <class U>
     requires(::sus::cmp::ExclusiveOrd<T, U>)
@@ -1824,7 +1824,7 @@ class Option final {
         else
           return std::weak_ordering::equivalent;
     }
-    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    sus_unreachable_unchecked(::sus::marker::unsafe_fn);
   }
 
   // sus::cmp::PartialOrd<Option<U>> trait.
@@ -1846,7 +1846,7 @@ class Option final {
         else
           return std::partial_ordering::equivalent;
     }
-    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    sus_unreachable_unchecked(::sus::marker::unsafe_fn);
   }
   friend constexpr inline std::partial_ordering operator<=>(
       const Option& l, const Option& r) noexcept
@@ -1866,7 +1866,7 @@ class Option final {
         else
           return std::partial_ordering::equivalent;
     }
-    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    sus_unreachable_unchecked(::sus::marker::unsafe_fn);
   }
 
   template <class U>

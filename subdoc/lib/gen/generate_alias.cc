@@ -116,7 +116,7 @@ sus::Result<void, MarkdownToHtmlError> generate_alias_reference(
         }
         case AliasTarget::Tag::AliasOfMethod: {
           // TODO: Link to method.
-          sus::unreachable();
+          sus_unreachable();
         }
         case AliasTarget::Tag::AliasOfFunction: {
           const LinkedFunction& fun =
@@ -132,7 +132,7 @@ sus::Result<void, MarkdownToHtmlError> generate_alias_reference(
         }
         case AliasTarget::Tag::AliasOfEnumConstant: {
           // TODO: Link to constant.
-          sus::unreachable();
+          sus_unreachable();
         }
         case AliasTarget::Tag::AliasOfVariable: {
           const LinkedVariable& var =

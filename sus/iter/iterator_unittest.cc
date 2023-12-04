@@ -600,21 +600,21 @@ TEST(Iterator, TryCollect_Example) {
   {
     auto u = Vec<Option<i32>>(some(1), some(2), some(3));
     auto v = sus::move(u).into_iter().try_collect<Vec<i32>>();
-    sus::check(v == some(Vec<i32>(1, 2, 3)));
+    sus_check(v == some(Vec<i32>(1, 2, 3)));
   }
   {
     auto u = Vec<Option<i32>>(some(1), some(2), none(), some(3));
     auto v = sus::move(u).into_iter().try_collect<Vec<i32>>();
-    sus::check(v == none());
+    sus_check(v == none());
   }
   {
     enum Error { ERROR };
     auto u = Vec<Result<i32, Error>>(ok(1), ok(2), ok(3));
     auto v = sus::move(u).into_iter().try_collect<Vec<i32>>();
-    sus::check(v == ok(Vec<i32>(1, 2, 3)));
+    sus_check(v == ok(Vec<i32>(1, 2, 3)));
     auto w = Vec<Result<i32, Error>>(ok(1), ok(2), err(ERROR), ok(3));
     auto x = sus::move(w).into_iter().try_collect<Vec<i32>>();
-    sus::check(x == err(ERROR));
+    sus_check(x == err(ERROR));
   }
 }
 
@@ -2022,7 +2022,7 @@ TEST(Iterator, Fold_Example_References) {
   i32 init;
   i32& out = v.iter_mut().fold<i32&>(  //
       init, [](i32&, i32& v) -> i32& { return v; });
-  ::sus::check(&out == &v.last().unwrap());
+  sus_check(&out == &v.last().unwrap());
 }
 
 TEST(Iterator, Rfold) {
@@ -3432,7 +3432,7 @@ TEST(Iterator, Reduce) {
 TEST(Iterator, Reduce_Example_References) {
   auto a = sus::Array<i32, 3>(2, 3, 4);
   auto out = a.iter().copied().reduce([](i32 acc, i32 v) { return acc + v; });
-  sus::check(out.as_value() == 2 + 3 + 4);
+  sus_check(out.as_value() == 2 + 3 + 4);
 }
 
 TEST(Iterator, Rposition) {
@@ -4211,7 +4211,7 @@ TEST(Iterator, TryForEach) {
           sum += i;
           return sus::ok();
         });
-    sus::check(r.is_ok());
+    sus_check(r.is_ok());
     return sum;
   }() == 2 + 3 + 4);
 }
@@ -4363,9 +4363,9 @@ TEST(Iterator, Zip_Example) {
   auto a = sus::Array<i32, 2>(2, 3);
   auto b = sus::Array<f32, 5>(3.f, 4.f, 5.f, 6.f, 7.f);
   auto it = sus::iter::zip(::sus::move(a), ::sus::move(b));
-  sus::check(it.next() == sus::some(sus::tuple(2, 3.f)));
-  sus::check(it.next() == sus::some(sus::tuple(3, 4.f)));
-  sus::check(it.next() == sus::none());
+  sus_check(it.next() == sus::some(sus::tuple(2, 3.f)));
+  sus_check(it.next() == sus::some(sus::tuple(3, 4.f)));
+  sus_check(it.next() == sus::none());
 }
 
 TEST(Iterator, IsSorted) {
@@ -4396,7 +4396,7 @@ TEST(Iterator, IsSorted) {
 
 TEST(Iterator, IsSortedBy) {
   auto cmp = [](f32 a, f32 b) {
-    sus::check(!a.is_nan() && !b.is_nan());
+    sus_check(!a.is_nan() && !b.is_nan());
     if (a < b) return std::strong_ordering::less;
     if (a > b) return std::strong_ordering::greater;
     return std::strong_ordering::equivalent;

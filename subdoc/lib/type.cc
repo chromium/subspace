@@ -77,22 +77,22 @@ std::string name_of_type(clang::QualType q) noexcept {
 std::string name_of_template_parm_type(
     clang::QualType q,
     llvm::ArrayRef<clang::NamedDecl*> template_params_from_context) noexcept {
-  sus::check_with_message(
+  sus_check_with_message(
       clang::isa<clang::TemplateTypeParmType>(&*q),
       "not a TemplateTypeParmType, use name_of_type() instead");
   auto* parm = clang::cast<clang::TemplateTypeParmType>(&*q);
   if (parm->getIdentifier()) {
     return name_of_type(q);
   } else {
-    sus::check(parm->getDepth() == 0u);
-    sus::check(parm->getIndex() < template_params_from_context.size());
+    sus_check(parm->getDepth() == 0u);
+    sus_check(parm->getIndex() < template_params_from_context.size());
     return template_params_from_context[parm->getIndex()]->getNameAsString();
   }
 }
 
 std::string template_to_string(clang::TemplateName template_name) noexcept {
   clang::TemplateDecl* decl = template_name.getAsTemplateDecl();
-  sus::check_with_message(decl != nullptr, "TemplateName without Decl?");
+  sus_check_with_message(decl != nullptr, "TemplateName without Decl?");
 
   sus::Vec<clang::NamedDecl*> contexts;
   clang::DeclContext* context = decl->getDeclContext();
@@ -167,7 +167,7 @@ clang::DeclContext* find_context(const clang::Type* type,
       case clang::NestedNameSpecifier::Super:
         return spec->getAsRecordDecl()->getDeclContext();
     }
-    sus::unreachable();
+    sus_unreachable();
   } else if (auto* tag_type = clang::dyn_cast<clang::TagType>(type)) {
     return tag_type->getDecl()->getDeclContext();
   } else if (auto* spec_type =
@@ -198,7 +198,7 @@ clang::DeclContext* find_context(const clang::Type* type,
   } else {
     type->dump();
     loc.dump(sm);
-    sus::unreachable();  // Find the context.
+    sus_unreachable();  // Find the context.
   }
 }
 
@@ -217,7 +217,7 @@ TypeOrValue build_template_param(
       arg.dump();
       fmt::println(stderr, "");
       loc.dump(sm);
-      sus::unreachable();
+      sus_unreachable();
     case clang::TemplateArgument::ArgKind::Type:
       return TypeOrValue(TypeOrValueChoice::with<TypeOrValueChoice::Tag::Type>(
           build_local_type_internal(arg.getAsType(), template_params, sm,
@@ -251,16 +251,16 @@ TypeOrValue build_template_param(
       arg.dump();
       fmt::println(stderr, "");
       loc.dump(sm);
-      sus::unreachable();
+      sus_unreachable();
     case clang::TemplateArgument::ArgKind::Expression:
       return TypeOrValue(TypeOrValueChoice::with<TypeOrValueChoice::Tag::Value>(
           stmt_to_string(*arg.getAsExpr(), sm, preprocessor)));
     case clang::TemplateArgument::ArgKind::Pack:
       // Packs are handled at a higher level since they produce multiple types.
       loc.dump(sm);
-      sus::unreachable();
+      sus_unreachable();
   }
-  sus::unreachable();
+  sus_unreachable();
 };
 
 clang::QualType unwrap_skipped_types(clang::QualType q) noexcept {
@@ -336,7 +336,7 @@ Type build_local_type_internal(
         qualtype->dump();
         loc.dump(sm);
         fmt::println(stderr, "\nkind: {}", (int)kind);
-        sus::unreachable();
+        sus_unreachable();
       }
       spec = spec->getPrefix();
     }
@@ -362,7 +362,7 @@ Type build_local_type_internal(
       if (is_pack) {
         qualtype->dump();
         loc.dump(sm);
-        sus::unreachable();
+        sus_unreachable();
       }
 
       // Arrays come with the var name wrapped in parens, which must be removed.
@@ -385,7 +385,7 @@ Type build_local_type_internal(
       if (auto* vararr = clang::dyn_cast<clang::VariableArrayType>(type)) {
         qualtype->dump();
         loc.dump(sm);
-        sus::unreachable();  // This is a C thing, not C++.
+        sus_unreachable();  // This is a C thing, not C++.
       }
 
       // For arrays the root qualifiers come from the element type.
@@ -484,7 +484,7 @@ Type build_local_type_internal(
       // Partial specialization in another type?
       partial->dump();
       loc.dump(sm);
-      sus::unreachable();
+      sus_unreachable();
     } else if (auto* full =
                    clang::dyn_cast<clang::ClassTemplateSpecializationDecl>(
                        rec_type->getDecl())) {
@@ -527,7 +527,7 @@ Type build_local_type_internal(
     // No template parameters.
     // qualtype->dump();
     // loc.dump(sm);
-    // sus::unreachable();
+    // sus_unreachable();
   }
 
   // Find the context from which to collect the namespace/record paths.
@@ -581,7 +581,7 @@ Type build_local_type_internal(
         if (auto_type->isConstrained()) {
           qualtype->dump();
           loc.dump(sm);
-          sus::panic_with_message("constrained auto without a concept?");
+          sus_panic_with_message("constrained auto without a concept?");
         }
         if (auto_type->isDecltypeAuto()) {
           return sus::tuple("decltype(auto)", TypeCategory::TemplateVariable);
@@ -793,7 +793,7 @@ void type_to_string_internal(
       var_name_fn.take().unwrap()();
     }
   } else {
-    sus::check(!type.is_pack);
+    sus_check(!type.is_pack);
 
     if (type.refs != Refs::None || !type.pointers_to_array.is_empty()) {
       text_fn(" (");

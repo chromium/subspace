@@ -84,6 +84,6 @@ struct sus::error::ErrorImpl<::sus::env::VarError> {
       case ::sus::env::VarError::InvalidKeyEncoding:
         return "InvalidKeyEncoding";
     }
-    ::sus::unreachable();
+    sus_unreachable();
   }
 };

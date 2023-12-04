@@ -29,7 +29,7 @@ std::string template_arg_to_string(const clang::TemplateArgumentLoc& loc,
       // How can this happen in a concept instantiation?
       arg.dump();
       fmt::println("");
-      sus::unreachable();
+      sus_unreachable();
     case clang::TemplateArgument::ArgKind::Type: {
       if (arg.getAsType()->isDependentType()) {
         // A template argument that is a template parameter (from the function,
@@ -43,7 +43,7 @@ std::string template_arg_to_string(const clang::TemplateArgumentLoc& loc,
       // How can this happen in a concept instantiation?
       arg.dump();
       fmt::println("");
-      sus::unreachable();
+      sus_unreachable();
     case clang::TemplateArgument::ArgKind::NullPtr: return "nullptr";
     case clang::TemplateArgument::ArgKind::Integral: {
       return llvm_int_to_string(arg.getAsIntegral());
@@ -52,19 +52,19 @@ std::string template_arg_to_string(const clang::TemplateArgumentLoc& loc,
       // How can this happen in a concept instantiation?
       arg.dump();
       fmt::println("");
-      sus::unreachable();
+      sus_unreachable();
     case clang::TemplateArgument::ArgKind::TemplateExpansion:
       // How can this happen in a concept instantiation?
       arg.dump();
       fmt::println("");
-      sus::unreachable();
+      sus_unreachable();
     case clang::TemplateArgument::ArgKind::Expression:
       return stmt_to_string(*arg.getAsExpr(), context.getSourceManager(),
                             preprocessor);
     case clang::TemplateArgument::ArgKind::Pack:
       return std::string("TODO: pack");
   }
-  sus::unreachable();
+  sus_unreachable();
 };
 
 void requires_constraints_add_expr(RequiresConstraints& constraints,

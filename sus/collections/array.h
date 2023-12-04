@@ -135,13 +135,13 @@ class Array final {
       : Array(WITH_MOVE_FROM_POINTER, o.storage_.data_,
               o.storage_.iter_refs_.take_for_owner(),
               std::make_index_sequence<N>()) {
-    ::sus::check(!has_iterators());
+    sus_check(!has_iterators());
   }
   constexpr Array& operator=(Array&& o) noexcept
     requires(::sus::mem::Move<T>)
   {
-    ::sus::check(!has_iterators());
-    ::sus::check(!o.has_iterators());
+    sus_check(!has_iterators());
+    sus_check(!o.has_iterators());
     for (usize i; i < N; i += 1u)
       *(storage_.data_ + i) = ::sus::mem::take(*(o.storage_.data_ + i));
     storage_.iter_refs_ = o.storage_.iter_refs_.take_for_owner();
@@ -239,13 +239,13 @@ class Array final {
 
   constexpr inline const T& operator[](usize i) const& noexcept
       sus_lifetimebound {
-    check(i < N);
+    sus_check(i < N);
     return *(storage_.data_ + i);
   }
   constexpr inline const T& operator[](usize i) && = delete;
 
   constexpr inline T& operator[](usize i) & noexcept sus_lifetimebound {
-    check(i < N);
+    sus_check(i < N);
     return *(storage_.data_ + i);
   }
 

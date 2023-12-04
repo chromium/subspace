@@ -39,7 +39,7 @@ target_link_libraries(subspace-example PRIVATE subspace::lib)
 int main() {
   i32 a = 6;
   i32 b = 9;
-  sus::check(a < b);
+  sus_check(a < b);
   return 0;
 }
 ```

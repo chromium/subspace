@@ -31,7 +31,7 @@ TEST(CompatSet, FromIterator) {
                  .filter([](const i32& i) { return i % 2 == 0; })
                  .collect<std::set<i32>>();
   static_assert(std::same_as<decltype(out), std::set<i32>>);
-  sus::check(out == std::set<i32>{2, 4, 6});
+  sus_check(out == std::set<i32>{2, 4, 6});
 }
 
 TEST(CompaMultiSet, FromIterator) {
@@ -41,7 +41,7 @@ TEST(CompaMultiSet, FromIterator) {
                  .filter([](const i32& i) { return i % 2 == 0; })
                  .collect<std::multiset<i32>>();
   static_assert(std::same_as<decltype(out), std::multiset<i32>>);
-  sus::check(out == std::multiset<i32>{2, 2, 2, 4, 6});
+  sus_check(out == std::multiset<i32>{2, 2, 2, 4, 6});
 }
 
 }  // namespace

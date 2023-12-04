@@ -41,11 +41,11 @@ TEST(IterGenerator, Example_Fibonacci) {
   for (i32 i : generate_fibonacci().take(7u)) {
     v.push(i);
   }
-  sus::check(v == sus::Vec<i32>(0, 1, 1, 2, 3, 5, 8));
+  sus_check(v == sus::Vec<i32>(0, 1, 1, 2, 3, 5, 8));
 
   // Using `from_generator`, with collect.
   sus::Vec<i32> v2 = generate_fibonacci().take(7u).collect_vec();
-  sus::check(v2 == sus::Vec<i32>(0, 1, 1, 2, 3, 5, 8));
+  sus_check(v2 == sus::Vec<i32>(0, 1, 1, 2, 3, 5, 8));
 }
 
 TEST(IterGenerator, Iterator) {

@@ -31,7 +31,7 @@ TEST(CompatQueue, FromIterator) {
                  .filter([](const i32& i) { return i % 2 == 0; })
                  .collect<std::queue<i32>>();
   static_assert(std::same_as<decltype(out), std::queue<i32>>);
-  sus::check(out == std::queue<i32>(std::deque<i32>{2, 4, 6}));
+  sus_check(out == std::queue<i32>(std::deque<i32>{2, 4, 6}));
 }
 
 TEST(CompatQueue, FromIteratorRef) {
@@ -42,7 +42,7 @@ TEST(CompatQueue, FromIteratorRef) {
                  .rev()
                  .collect<std::queue<i32>>();
   static_assert(std::same_as<decltype(out), std::queue<i32>>);
-  sus::check(out == std::queue<i32>(std::deque<i32>{6, 4, 2}));
+  sus_check(out == std::queue<i32>(std::deque<i32>{6, 4, 2}));
 }
 
 TEST(CompatPriorityQueue, FromIterator) {
@@ -54,13 +54,13 @@ TEST(CompatPriorityQueue, FromIterator) {
   static_assert(std::same_as<decltype(out), std::priority_queue<i32>>);
   auto cmp =
       std::priority_queue<i32>(std::less<i32>(), std::vector<i32>{2, 4, 6});
-  sus::check(out.top() == cmp.top());
+  sus_check(out.top() == cmp.top());
   out.pop(), cmp.pop();
-  sus::check(out.top() == cmp.top());
+  sus_check(out.top() == cmp.top());
   out.pop(), cmp.pop();
-  sus::check(out.top() == cmp.top());
+  sus_check(out.top() == cmp.top());
   out.pop(), cmp.pop();
-  sus::check(out.empty() && cmp.empty());
+  sus_check(out.empty() && cmp.empty());
 }
 
 TEST(CompatPriorityQueue, FromIteratorRef) {
@@ -73,13 +73,13 @@ TEST(CompatPriorityQueue, FromIteratorRef) {
   static_assert(std::same_as<decltype(out), std::priority_queue<i32>>);
   auto cmp =
       std::priority_queue<i32>(std::less<i32>(), std::vector<i32>{2, 4, 6});
-  sus::check(out.top() == cmp.top());
+  sus_check(out.top() == cmp.top());
   out.pop(), cmp.pop();
-  sus::check(out.top() == cmp.top());
+  sus_check(out.top() == cmp.top());
   out.pop(), cmp.pop();
-  sus::check(out.top() == cmp.top());
+  sus_check(out.top() == cmp.top());
   out.pop(), cmp.pop();
-  sus::check(out.empty() && cmp.empty());
+  sus_check(out.empty() && cmp.empty());
 }
 
 }  // namespace

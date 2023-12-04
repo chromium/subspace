@@ -138,7 +138,7 @@ struct StorageVoid {
       switch (o.state) {
         case Ok: break;
         case Err: std::construct_at(&u.err, o.u.err); break;
-        case Moved: panic_with_message("Result used after move");
+        case Moved: sus_panic_with_message("Result used after move");
       }
       // After construct_at since it may write into the field if it's in tail
       // padding.
@@ -152,7 +152,7 @@ struct StorageVoid {
       requires(!std::is_trivially_copy_assignable_v<E> &&
                std::is_copy_assignable_v<E>)
     {
-      check_with_message(o.state != Moved, "Result used after move");
+      sus_check_with_message(o.state != Moved, "Result used after move");
       if (state == o.state) {
         switch (state) {
           case Ok: break;
@@ -167,11 +167,11 @@ struct StorageVoid {
         }
         // If this trips, it means the destructor in this Result moved out
         // of the Result that is being assigned from.
-        check_with_message(o.state != Moved, "Result used after move");
+        sus_check_with_message(o.state != Moved, "Result used after move");
         switch (o.state) {
           case Ok: break;
           case Err: std::construct_at(&u.err, o.u.err); break;
-          case Moved: sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+          case Moved: sus_unreachable_unchecked(::sus::marker::unsafe_fn);
         }
       }
       // After construct_at since it may write into the field if it's in tail
@@ -189,7 +189,7 @@ struct StorageVoid {
       switch (o.state) {
         case Ok: break;
         case Err: std::construct_at(&u.err, ::sus::move(o.u.err)); break;
-        case Moved: panic_with_message("Result used after move");
+        case Moved: sus_panic_with_message("Result used after move");
       }
       // After construct_at since it may write into the field if it's in tail
       // padding.
@@ -202,7 +202,7 @@ struct StorageVoid {
     constexpr Inner& operator=(Inner&& o)
       requires(!std::is_trivially_move_assignable_v<E>)
     {
-      check_with_message(o.state != Moved, "Result used after move");
+      sus_check_with_message(o.state != Moved, "Result used after move");
       if (state == o.state) {
         switch (state) {
           case Ok: break;
@@ -217,14 +217,14 @@ struct StorageVoid {
         }
         // If this trips, it means the destructor in this Result moved out
         // of the Result that is being assigned from.
-        check_with_message(o.state != Moved, "Result used after move");
+        sus_check_with_message(o.state != Moved, "Result used after move");
         switch (o.state) {
           case Ok: break;
           case Err:
             std::construct_at(&u.err, ::sus::move(o.u.err));
             std::destroy_at(&o.u.err);
             break;
-          case Moved: sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+          case Moved: sus_unreachable_unchecked(::sus::marker::unsafe_fn);
         }
       }
       // After construct_at since it may write into the field if it's in tail
@@ -384,7 +384,7 @@ struct StorageNonVoid {
       switch (o.state) {
         case Ok: std::construct_at(&u.ok, o.u.ok); break;
         case Err: std::construct_at(&u.err, o.u.err); break;
-        case Moved: panic_with_message("Result used after move");
+        case Moved: sus_panic_with_message("Result used after move");
       }
       // After construct_at since it may write into the field if it's in tail
       // padding.
@@ -400,7 +400,7 @@ struct StorageNonVoid {
                 !std::is_trivially_copy_assignable_v<E>) &&
                std::is_copy_assignable_v<T> && std::is_copy_assignable_v<E>)
     {
-      check_with_message(o.state != Moved, "Result used after move");
+      sus_check_with_message(o.state != Moved, "Result used after move");
       if (state == o.state) {
         switch (state) {
           case Ok: u.ok = o.u.ok; break;
@@ -415,11 +415,11 @@ struct StorageNonVoid {
         }
         // If this trips, it means the destructor in this Result moved out
         // of the Result that is being assigned from.
-        check_with_message(o.state != Moved, "Result used after move");
+        sus_check_with_message(o.state != Moved, "Result used after move");
         switch (o.state) {
           case Ok: std::construct_at(&u.ok, o.u.ok); break;
           case Err: std::construct_at(&u.err, o.u.err); break;
-          case Moved: sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+          case Moved: sus_unreachable_unchecked(::sus::marker::unsafe_fn);
         }
       }
       // After construct_at since it may write into the field if it's in tail
@@ -441,7 +441,7 @@ struct StorageNonVoid {
       switch (o.state) {
         case Ok: std::construct_at(&u.ok, ::sus::move(o.u.ok)); break;
         case Err: std::construct_at(&u.err, ::sus::move(o.u.err)); break;
-        case Moved: panic_with_message("Result used after move");
+        case Moved: sus_panic_with_message("Result used after move");
       }
       // After construct_at since it may write into the field if it's in tail
       // padding.
@@ -457,7 +457,7 @@ struct StorageNonVoid {
                 !std::is_trivially_move_assignable_v<E>) &&
                std::is_move_assignable_v<T> && std::is_move_assignable_v<E>)
     {
-      check_with_message(o.state != Moved, "Result used after move");
+      sus_check_with_message(o.state != Moved, "Result used after move");
       if (state == o.state) {
         switch (state) {
           case Ok: u.ok = ::sus::move(o.u.ok); break;
@@ -472,7 +472,7 @@ struct StorageNonVoid {
         }
         // If this trips, it means the destructor in this Result moved out
         // of the Result that is being assigned from.
-        check_with_message(o.state != Moved, "Result used after move");
+        sus_check_with_message(o.state != Moved, "Result used after move");
         switch (o.state) {
           case Ok:
             std::construct_at(&u.ok, ::sus::move(o.u.ok));
@@ -482,7 +482,7 @@ struct StorageNonVoid {
             std::construct_at(&u.err, ::sus::move(o.u.err));
             std::destroy_at(&o.u.err);
             break;
-          case Moved: sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+          case Moved: sus_unreachable_unchecked(::sus::marker::unsafe_fn);
         }
       }
       // After construct_at since it may write into the field if it's in tail

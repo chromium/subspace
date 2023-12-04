@@ -14,17 +14,18 @@
 
 #pragma once
 
-#include <source_location>
-
 #include "sus/assertions/panic.h"
 #include "sus/macros/builtin.h"
-#include "sus/macros/inline.h"
 #include "sus/marker/unsafe.h"
 
-namespace sus::assertions {
+#if __has_builtin(__builtin_unreachable)
+#  define _sus_unreachable_unchecked_impl() __builtin_unreachable()
+#else
+#  define _sus_unreachable_unchecked_impl() __assume(false)
+#endif
 
 /// Indicates to the developer that the location should not be reached, and
-/// terminates the program with a [`panic`]($sus::assertions::panic).
+/// terminates the program with a [`panic`]($sus_panic).
 ///
 /// This is similar to [`std::unreachable!`](
 /// https://doc.rust-lang.org/stable/std/macro.unreachable.html) in Rust,
@@ -35,15 +36,12 @@ namespace sus::assertions {
 /// https://en.cppreference.com/w/cpp/utility/unreachable) in C++ which is
 /// Undefined Behaviour if reached. It is closer to [`std::abort`](
 /// https://en.cppreference.com/w/cpp/utility/program/abort) except built on
-/// top of [`panic`]($sus::assertions::panic).
+/// top of [`sus_panic`]($sus_panic).
 /// The Subspace library matches the safer behaviour of Rust to avoid confusion
 /// and security bugs when working across languages. Use
 /// [`unreachable_unchecked`]($sus::assertions::unreachable_unchecked) to
 /// indicate to the compiler the code is not reachable.
-[[noreturn]] sus_always_inline void unreachable(
-    const std::source_location location = std::source_location::current()) {
-  panic(location);
-}
+#define sus_unreachable() sus_panic_with_message("entered unreachable code")
 
 /// Indicates to the compiler that the location will never be reached, allowing
 /// it to optimize code generation accordingly. If this function is actually
@@ -54,18 +52,7 @@ namespace sus::assertions {
 ///
 /// # Safety
 /// This function must never actually be reached, or Undefined Behaviour occurs.
-[[noreturn]] sus_always_inline void unreachable_unchecked(
-    ::sus::marker::UnsafeFnMarker) {
-#if __has_builtin(__builtin_unreachable)
-  __builtin_unreachable();
-#else
-  __assume(false);
-#endif
-}
-
-}  // namespace sus::assertions
-
-namespace sus {
-using sus::assertions::unreachable;
-using sus::assertions::unreachable_unchecked;
-}  // namespace sus
+#define sus_unreachable_unchecked(unsafe_fn_marker)                 \
+  static_assert(std::same_as<decltype(unsafe_fn_marker),            \
+                             const ::sus::marker::UnsafeFnMarker>); \
+  _sus_unreachable_unchecked_impl()

@@ -159,9 +159,9 @@ concept TryInto = ::sus::construct::TryFrom<ToType, FromType> ||
 /// # Example
 /// ```
 /// auto valid = sus::try_into<u8>(123_i32).unwrap_or_default();
-/// sus::check(valid == 123);
+/// sus_check(valid == 123);
 /// auto invalid = sus::try_into<u8>(-1_i32).unwrap_or_default();
-/// sus::check(invalid == 0);
+/// sus_check(invalid == 0);
 /// ```
 template <class ToType, TryInto<ToType> FromType>
 constexpr inline auto try_into(FromType&& from) noexcept {

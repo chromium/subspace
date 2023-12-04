@@ -221,7 +221,7 @@ void apply_syntax_highlighting(std::string& str) noexcept {
 
       // There's a <code> tag at the start so we can always look backward one
       // char.
-      sus::check(pos > 0u);
+      sus_check(pos > 0u);
       char before = view[pos - 1u];
 
       // True if `c` is a character that is a valid part of an identifier.

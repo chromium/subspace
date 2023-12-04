@@ -295,7 +295,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                   "No parent namespace found in db for NamespaceDecl context");
       add_record_to_db(decl, sus::move(re), parent.records);
     } else {
-      sus::check(clang::isa<clang::RecordDecl>(context));
+      sus_check(clang::isa<clang::RecordDecl>(context));
       if (sus::Option<RecordElement&> parent =
               docs_db_.find_record_mut(clang::cast<clang::RecordDecl>(context));
           parent.is_some()) {
@@ -479,7 +479,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(te),
                         parent->aliases, decl->getASTContext());
     } else {
-      sus::check(clang::isa<clang::TranslationUnitDecl>(context));
+      sus_check(clang::isa<clang::TranslationUnitDecl>(context));
       NamespaceElement& parent = docs_db_.find_namespace_mut(nullptr).unwrap();
       add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(te),
                       parent.aliases, decl->getASTContext());
@@ -527,7 +527,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
           // unit.
           decl->dump();
           decl->getDeclContext()->dumpAsDecl();
-          sus::unreachable();
+          sus_unreachable();
         }
 
         auto te = AliasElement(
@@ -557,7 +557,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
           // unit.
           decl->dump();
           decl->getDeclContext()->dumpAsDecl();
-          sus::unreachable();
+          sus_unreachable();
         }
 
         auto te = AliasElement(
@@ -588,7 +588,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
           // The context for a concept is a namespace or translation unit.
           decl->dump();
           decl->getDeclContext()->dumpAsDecl();
-          sus::unreachable();
+          sus_unreachable();
         }
 
         sus::Vec<Namespace> target_namespaces =
@@ -616,7 +616,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         decl->getBeginLoc().dump(decl->getASTContext().getSourceManager());
         // TODO: Put these into static fields on a record, and const global
         // variables on a namespace.
-        //sus::unreachable();
+        //sus_unreachable();
       } else if (auto* vardecl =
                      clang::dyn_cast<clang::VarDecl>(shadow->getTargetDecl())) {
         auto* context =
@@ -627,7 +627,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
           // can't write an alias to a static class data member.
           decl->dump();
           decl->getDeclContext()->dumpAsDecl();
-          sus::unreachable();
+          sus_unreachable();
         }
 
         sus::Vec<Namespace> target_namespaces =
@@ -656,7 +656,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
           // The context for a using method is a record.
           decl->dump();
           decl->getDeclContext()->dumpAsDecl();
-          sus::unreachable();
+          sus_unreachable();
         }
 
         auto te = AliasElement(
@@ -693,7 +693,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
           // The context for a function is a namespace or translation unit.
           decl->dump();
           decl->getDeclContext()->dumpAsDecl();
-          sus::unreachable();
+          sus_unreachable();
         }
 
         sus::Vec<Namespace> target_namespaces =
@@ -725,7 +725,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
           // The context for a function is a namespace or translation unit.
           decl->dump();
           decl->getDeclContext()->dumpAsDecl();
-          sus::unreachable();
+          sus_unreachable();
         }
 
         sus::Vec<Namespace> target_namespaces =
@@ -753,7 +753,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         decl->getBeginLoc().dump(decl->getASTContext().getSourceManager());
         fmt::println(stderr, "");
         shadow->getTargetDecl()->dump();
-        sus::unreachable();
+        sus_unreachable();
       }
     }
 
@@ -812,7 +812,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             std::unordered_map<FunctionId, FunctionElement, FunctionId::Hash>&,
             std::string_view>> {
       if (clang::isa<clang::CXXConstructorDecl>(decl)) {
-        sus::check(clang::isa<clang::RecordDecl>(context));
+        sus_check(clang::isa<clang::RecordDecl>(context));
         if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
                 clang::cast<clang::RecordDecl>(context));
             parent.is_some()) {
@@ -820,7 +820,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
               sus::tuple(parent.as_value_mut().ctors, parent.as_value().name));
         }
       } else if (clang::isa<clang::CXXDestructorDecl>(decl)) {
-        sus::check(clang::isa<clang::RecordDecl>(context));
+        sus_check(clang::isa<clang::RecordDecl>(context));
         if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
                 clang::cast<clang::RecordDecl>(context));
             parent.is_some()) {
@@ -828,7 +828,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
               sus::tuple(parent.as_value_mut().dtors, parent.as_value().name));
         }
       } else if (clang::isa<clang::CXXConversionDecl>(decl)) {
-        sus::check(clang::isa<clang::RecordDecl>(context));
+        sus_check(clang::isa<clang::RecordDecl>(context));
         if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
                 clang::cast<clang::RecordDecl>(context));
             parent.is_some()) {
@@ -836,7 +836,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                                       parent.as_value().name));
         }
       } else if (clang::isa<clang::CXXMethodDecl>(decl)) {
-        sus::check(clang::isa<clang::RecordDecl>(context));
+        sus_check(clang::isa<clang::RecordDecl>(context));
         if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
                 clang::cast<clang::RecordDecl>(context));
             parent.is_some()) {
@@ -844,7 +844,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                                       parent.as_value().name));
         }
       } else if (clang::isa<clang::CXXDeductionGuideDecl>(decl)) {
-        sus::check(clang::isa<clang::NamespaceDecl>(context));
+        sus_check(clang::isa<clang::NamespaceDecl>(context));
         // TODO: How do we get from here to the class that the deduction guide
         // is for reliably? getCorrespondingConstructor() would work if it's
         // generated only. Will the DeclContext find it?
@@ -1031,7 +1031,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             decl->getLocation()));
 
     if (auto* mdecl = clang::dyn_cast<clang::CXXMethodDecl>(decl)) {
-      sus::check(clang::isa<clang::RecordDecl>(context));
+      sus_check(clang::isa<clang::RecordDecl>(context));
 
       // TODO: It's possible to overload a method in a base class. What
       // should we show then? Let's show protected virtual methods just
@@ -1075,7 +1075,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                       else
                         return MethodQualifier::MutableRValue;
                   }
-                  sus::unreachable();
+                  sus_unreachable();
                 }(),
         });
       }
@@ -1119,7 +1119,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     }
 
     if (add_overload) {
-      ::sus::check_with_message(
+      sus_check_with_message(
           db_element.overloads.len() == 1u,
           "Expected to add FunctionElement with 1 overload");
 
@@ -1354,7 +1354,7 @@ bool VisitCx::should_include_decl_based_on_file(clang::Decl* decl) noexcept {
   while (loc.isMacroID()) {
     loc = sm.getExpansionLoc(loc);
     entry = sm.getFileEntryForID(sm.getFileID(loc));
-    sus::check(entry != nullptr);
+    sus_check(entry != nullptr);
   }
 
   // No FileEntry (and not a macro, since we've found the macro expansion
@@ -1389,7 +1389,7 @@ bool VisitCx::should_include_decl_based_on_file(clang::Decl* decl) noexcept {
     case CheckPath: {
       auto [it, inserted] =
           visited_paths_.emplace(sus::move(canonical_path), VisitedPath(true));
-      sus::check(inserted);
+      sus_check(inserted);
       auto& [path_str, visited_path] = *it;
       if (!std::regex_search(path_str, options.include_path_patterns)) {
         visited_path.included = false;
@@ -1402,7 +1402,7 @@ bool VisitCx::should_include_decl_based_on_file(clang::Decl* decl) noexcept {
       return true;
     }
   }
-  sus::unreachable();
+  sus_unreachable();
 }
 
 }  // namespace subdoc

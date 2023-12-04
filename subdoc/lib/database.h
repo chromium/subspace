@@ -83,7 +83,7 @@ struct CommentElement {
         name(sus::move(name)),
         sort_key(sort_key) {
     // All elements have the Global namespace in their path.
-    sus::check(this->namespace_path.len() > 0u);
+    sus_check(this->namespace_path.len() > 0u);
   }
 
   sus::Vec<Namespace> namespace_path;

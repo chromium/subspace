@@ -21,7 +21,7 @@ namespace {
 
 TEST(Empty, Example) {
   auto empty = sus::iter::empty<u16>();
-  sus::check(empty.next().is_none());
+  sus_check(empty.next().is_none());
 }
 
 }  // namespace

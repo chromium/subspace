@@ -38,7 +38,7 @@ TEST(CompatUnorderedMap, FromIterator) {
                    return get<0>(i) % 2 == 0;
                  })
                  .collect<std::unordered_map<i32, u32>>();
-  sus::check(out == std::unordered_map<i32, u32>{{4, 5u}, {6, 7u}});
+  sus_check(out == std::unordered_map<i32, u32>{{4, 5u}, {6, 7u}});
 }
 
 TEST(CompatUnorderedMap, FromIteratorSusTuple) {
@@ -50,7 +50,7 @@ TEST(CompatUnorderedMap, FromIteratorSusTuple) {
                    return i.at<0>() % 2 == 0;
                  })
                  .collect<std::unordered_map<i32, u32>>();
-  sus::check(out == std::unordered_map<i32, u32>{{4, 5u}, {6, 7u}});
+  sus_check(out == std::unordered_map<i32, u32>{{4, 5u}, {6, 7u}});
 }
 
 TEST(CompatUnorderedMultiMap, FromIterator) {
@@ -61,7 +61,7 @@ TEST(CompatUnorderedMultiMap, FromIterator) {
                    return get<0>(i) % 2 == 0;
                  })
                  .collect<std::unordered_multimap<i32, u32>>();
-  sus::check(out == std::unordered_multimap<i32, u32>{{4, 4u}, {4, 5u}, {6, 7u}, {4, 6u}});
+  sus_check(out == std::unordered_multimap<i32, u32>{{4, 4u}, {4, 5u}, {6, 7u}, {4, 6u}});
 }
 
 }  // namespace

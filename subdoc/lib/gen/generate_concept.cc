@@ -73,7 +73,7 @@ void generate_concept_overview(HtmlWriter::OpenDiv& record_div,
               break;  // Function can't be an ancesor of a concept.
             case CppPathConcept: return "concept-name";
           }
-          sus::unreachable();
+          sus_unreachable();
         }());
         ancestor_anchor.add_href(e.link_href);
         ancestor_anchor.write_text(e.name);

@@ -2236,7 +2236,7 @@ TEST(Slice, ConcatExample) {
   i32 a1[] = {1, 2}, a2[] = {3, 4};
   Slice<i32> as[] = {Slice<i32>::from(a1), Slice<i32>::from(a2)};
   Vec<i32> v = Slice<Slice<i32>>::from(as).concat();
-  sus::check(v == Slice<i32>::from({1, 2, 3, 4}));
+  sus_check(v == Slice<i32>::from({1, 2, 3, 4}));
 }
 
 TEST(Slice, JoinSlices) {
@@ -2291,11 +2291,11 @@ TEST(Slice, JoinExample) {
 
   // Join slices with a slice between.
   Vec<i32> v = Slice<Slice<i32>>::from(as).join(Slice<i32>::from(asep));
-  sus::check(v == sus::Vec<i32>(1, 2, 10, 11, 12, 3, 4));
+  sus_check(v == sus::Vec<i32>(1, 2, 10, 11, 12, 3, 4));
 
   // Join slices with a single item between.
   Vec<i32> v2 = Slice<Slice<i32>>::from(as).join(99);
-  sus::check(v2 == sus::Vec<i32>(1, 2, 99, 3, 4));
+  sus_check(v2 == sus::Vec<i32>(1, 2, 99, 3, 4));
 }
 
 TEST(SliceMut, ConvertsToSlice) {
@@ -2402,7 +2402,7 @@ TEST(Slice, CopyFromSliceUnchecked) {
   EXPECT_EQ(v1[2u], 3);
   EXPECT_EQ(v1[3u], 4);
 
-  // Overlapping oops. Does not check(), but we can't verify what the outcome
+  // Overlapping oops. Does not sus_check(), but we can't verify what the outcome
   // would be.
   v1["0..2"_r].copy_from_slice_unchecked(unsafe_fn, v2["1..3"_r]);
 
@@ -3759,7 +3759,7 @@ TEST(SliceMut, Reverse_Example) {
   auto backward = sus::Vec<i32>(3, 2, 1);
   auto sb = backward[".."_r];
   sf.reverse();
-  sus::check(sf == sb);
+  sus_check(sf == sb);
 }
 
 TEST(SliceMut, Reverse) {

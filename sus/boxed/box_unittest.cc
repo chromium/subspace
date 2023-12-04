@@ -483,33 +483,33 @@ TEST(BoxDynFn, Example_Call) {
   {
     const auto b = Box<sus::fn::DynFn<usize(std::string_view)>>::from(
         &std::string_view::size);
-    sus::check(b("hello world") == 11u);
+    sus_check(b("hello world") == 11u);
 
     auto mut_b = Box<sus::fn::DynFn<usize(std::string_view)>>::from(
         &std::string_view::size);
-    sus::check(mut_b("hello world") == 11u);
+    sus_check(mut_b("hello world") == 11u);
 
-    sus::check(sus::move(mut_b)("hello world") == 11u);
+    sus_check(sus::move(mut_b)("hello world") == 11u);
     // The object inside `mut_b` is now destroyed.
   }
   {
     auto mut_b = Box<sus::fn::DynFnMut<usize(std::string_view)>>::from(
         &std::string_view::size);
-    sus::check(mut_b("hello world") == 11u);
+    sus_check(mut_b("hello world") == 11u);
 
-    sus::check(sus::move(mut_b)("hello world") == 11u);
+    sus_check(sus::move(mut_b)("hello world") == 11u);
     // The object inside `mut_b` is now destroyed.
   }
   {
     auto b = Box<sus::fn::DynFnOnce<usize(std::string_view)>>::from(
         &std::string_view::size);
-    sus::check(sus::move(b)("hello world") == 11u);
+    sus_check(sus::move(b)("hello world") == 11u);
 
     auto x = [] {
       return Box<sus::fn::DynFnOnce<usize(std::string_view)>>::from(
           &std::string_view::size);
     };
-    sus::check(x()("hello world") == 11u);
+    sus_check(x()("hello world") == 11u);
   }
 }
 

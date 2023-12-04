@@ -37,8 +37,8 @@ namespace sus {
 /// As these are concepts, not concrete types, they can not enforce any
 /// behaviour but rather represent a protocol of expectations. Types designed to
 /// satisfy these concepts should adhere to them, and safely handle misuse, such
-/// as panicking (via [`panic`]($sus::assertions::panic)) if called twice
-/// when it is not supported.
+/// as panicking (via [`panic`]($sus_panic)) if called twice when it is not
+/// supported.
 ///
 /// To make a type satisfy [`Fn`]($sus::fn::Fn) it should have a
 /// const call `operator()`, to safisfy [`FnMut`]($sus::fn::FnMut) it

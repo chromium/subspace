@@ -113,7 +113,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] Chunks final
   constexpr Chunks(::sus::iter::IterRef ref, const Slice<ItemT>& values,
                    ::sus::num::usize chunk_size) noexcept
       : ref_(::sus::move(ref)), v_(values), chunk_size_(chunk_size) {
-    ::sus::check(chunk_size > 0u);
+    sus_check(chunk_size > 0u);
   }
 
   [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
@@ -215,7 +215,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksMut final
   constexpr ChunksMut(::sus::iter::IterRef ref, const SliceMut<ItemT>& values,
                       ::sus::num::usize chunk_size) noexcept
       : ref_(::sus::move(ref)), v_(values), chunk_size_(chunk_size) {
-    ::sus::check(chunk_size > 0u);
+    sus_check(chunk_size > 0u);
   }
 
   [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
@@ -312,7 +312,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExact final
   static constexpr auto with_slice(::sus::iter::IterRef ref,
                                    const Slice<ItemT>& values,
                                    ::sus::num::usize chunk_size) noexcept {
-    ::sus::check(chunk_size > 0u);
+    sus_check(chunk_size > 0u);
     auto rem = values.len() % chunk_size;
     // SAFETY: rem <= len() by construction above, so len() - rem is a
     // non-negative value <= len() <= usize:MAX.
@@ -426,7 +426,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExactMut final
   static constexpr auto with_slice(::sus::iter::IterRef ref,
                                    const SliceMut<ItemT>& values,
                                    ::sus::num::usize chunk_size) noexcept {
-    ::sus::check(chunk_size > 0u);
+    sus_check(chunk_size > 0u);
     auto rem = values.len() % chunk_size;
     // SAFETY: rem < len() by construction above, so len() - rem is a
     // non-negative value <= len() <= usize::MAX.
@@ -550,7 +550,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunks final
   constexpr RChunks(::sus::iter::IterRef ref, const Slice<ItemT>& values,
                     ::sus::num::usize chunk_size) noexcept
       : ref_(::sus::move(ref)), v_(values), chunk_size_(chunk_size) {
-    ::sus::check(chunk_size > 0u);
+    sus_check(chunk_size > 0u);
   }
 
   [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
@@ -646,7 +646,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksMut final
   constexpr RChunksMut(::sus::iter::IterRef ref, const SliceMut<ItemT>& values,
                        ::sus::num::usize chunk_size) noexcept
       : ref_(::sus::move(ref)), v_(values), chunk_size_(chunk_size) {
-    ::sus::check(chunk_size > 0u);
+    sus_check(chunk_size > 0u);
   }
 
   [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
@@ -740,7 +740,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExact final
   static constexpr auto with_slice(::sus::iter::IterRef ref,
                                    const Slice<ItemT>& values,
                                    ::sus::num::usize chunk_size) noexcept {
-    ::sus::check(chunk_size > 0u);
+    sus_check(chunk_size > 0u);
     auto rem = values.len() % chunk_size;
     // SAFETY: 0 <= rem <= values.len() by construction above.
     auto [fst, snd] = values.split_at_unchecked(::sus::marker::unsafe_fn, rem);
@@ -846,7 +846,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExactMut final
   static constexpr auto with_slice(::sus::iter::IterRef ref,
                              const SliceMut<ItemT>& values,
                              ::sus::num::usize chunk_size) noexcept {
-    ::sus::check(chunk_size > 0u);
+    sus_check(chunk_size > 0u);
     auto rem = values.len() % chunk_size;
     // SAFETY: 0 <= rem <= values.len() by construction above.
     auto [fst, snd] =

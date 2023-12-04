@@ -63,14 +63,14 @@ class IteratorOverRange;
 /// Iterates over references of a vector, copying and summing:
 /// ```
 /// const auto v = std::vector<i32>({1, 2, 3});
-/// sus::check(sus::iter::from_range(v).copied().sum() == 1 + 2 + 3);
+/// sus_check(sus::iter::from_range(v).copied().sum() == 1 + 2 + 3);
 /// ```
 ///
 /// Moving out of a vector and iterating over its values, not as references.
 /// This leaves behind a vector of moved-from elements.
 /// ```
 /// auto v = std::vector<i32>({1, 2, 3});
-/// sus::check(sus::iter::from_range(v).moved(unsafe_fn).sum() == 1 + 2 + 3);
+/// sus_check(sus::iter::from_range(v).moved(unsafe_fn).sum() == 1 + 2 + 3);
 /// v.clear();
 /// ```
 template <class R>

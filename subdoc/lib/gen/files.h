@@ -99,7 +99,7 @@ inline std::filesystem::path construct_html_namespace_file_path(
         return fmt::format("namespace.{}",
                            namespace_path[0u].as<Namespace::Tag::Named>());
     }
-    sus::unreachable();
+    sus_unreachable();
   }();
 
   fname << name;
@@ -231,7 +231,7 @@ inline std::filesystem::path construct_html_file_path_for_function(
 
 inline std::string construct_html_url_anchor_for_method(
     const FunctionElement& element) noexcept {
-  sus::check(!element.record_path.is_empty());
+  sus_check(!element.record_path.is_empty());
   // There's no escaping that happens for anchors on the record page, unlike
   // for file paths. So we don't use construct_html_file_path_for_function()
   // here which escapes.
@@ -286,7 +286,7 @@ inline sus::Option<std::string> construct_html_url_for_alias(
           switch (ref) {
             case TypeRef::Tag::Record: {
               const RecordElement& e = ref.as<TypeRef::Tag::Record>();
-              sus::check_with_message(
+              sus_check_with_message(
                   !e.hidden(),
                   fmt::format("reference to hidden Record {}", e.name));
               return construct_html_url_for_type(e);
@@ -297,7 +297,7 @@ inline sus::Option<std::string> construct_html_url_for_alias(
               // aliases.
               break;
           }
-          sus::unreachable();
+          sus_unreachable();
         });
       }
       case AliasTarget::Tag::AliasOfConcept: {
@@ -311,11 +311,11 @@ inline sus::Option<std::string> construct_html_url_for_alias(
           }
           case ConceptRefOrName::Tag::Name: return sus::none();
         }
-        sus::unreachable();
+        sus_unreachable();
       }
       case AliasTarget::Tag::AliasOfMethod: {
         // TODO: Link to method.
-        sus::unreachable();
+        sus_unreachable();
       }
       case AliasTarget::Tag::AliasOfFunction: {
         const LinkedFunction& fun =
@@ -328,11 +328,11 @@ inline sus::Option<std::string> construct_html_url_for_alias(
           }
           case FunctionRefOrName::Tag::Name: return sus::none();
         }
-        sus::unreachable();
+        sus_unreachable();
       }
       case AliasTarget::Tag::AliasOfEnumConstant: {
         // TODO: Link to constant.
-        sus::unreachable();
+        sus_unreachable();
       }
       case AliasTarget::Tag::AliasOfVariable: {
         const LinkedVariable& var =
@@ -345,10 +345,10 @@ inline sus::Option<std::string> construct_html_url_for_alias(
           }
           case VariableRefOrName::Tag::Name: return sus::none();
         }
-        sus::unreachable();
+        sus_unreachable();
       }
     }
-    sus::unreachable();
+    sus_unreachable();
   } else {
     // TODO: Link to the alias' page.
     return sus::some("TODO");

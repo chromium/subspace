@@ -1066,7 +1066,7 @@ sus_pure constexpr inline bool is_subnormal() const& noexcept {
 /// # Panics
 /// Panics if min > max, min is NaN, or max is NaN.
 sus_pure constexpr inline _self clamp(_self min, _self max) const& noexcept {
-  ::sus::check(!min.is_nan() && !max.is_nan() &&
+  sus_check(!min.is_nan() && !max.is_nan() &&
                min.primitive_value <= max.primitive_value);
   // SAFETY: We have verified that the min and max are not NaN and that
   // `min <= max`.

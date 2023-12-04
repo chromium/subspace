@@ -3101,12 +3101,12 @@ TEST(Option, QuickStart_Example) {
     return sus::none();
   };
 
-  sus::check(is_power(9001).unwrap() == "power!");
+  sus_check(is_power(9001).unwrap() == "power!");
 
   if (Option<std::string> lvalue = is_power(9001); lvalue.is_some())
-    sus::check(lvalue.as_value() == "power!");
+    sus_check(lvalue.as_value() == "power!");
 
-  sus::check(is_power(9000).unwrap_or("unlucky") == "unlucky");
+  sus_check(is_power(9000).unwrap_or("unlucky") == "unlucky");
 }
 
 TEST(Option, BooleanOperators_Example) {
@@ -3134,7 +3134,7 @@ TEST(Option, BooleanOperators_Example) {
                 .unwrap();
           })
           .collect<Vec<std::string>>();
-  sus::check(res ==
+  sus_check(res ==
              sus::Vec<const char*>("error!", "error!", "foo", "error!", "bar"));
 }
 

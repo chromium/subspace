@@ -70,7 +70,7 @@ struct sus::error::ErrorImpl<subdoc::gen::GenerateError> {
         return fmt::format("parsing doc comment markdown");
       }
     }
-    sus::unreachable();
+    sus_unreachable();
   }
   static sus::Option<const sus::error::DynError&> source(
       const GenerateError& e) noexcept {
@@ -88,6 +88,6 @@ struct sus::error::ErrorImpl<subdoc::gen::GenerateError> {
         return sus::some(*p);
       }
     }
-    sus::unreachable();
+    sus_unreachable();
   }
 };

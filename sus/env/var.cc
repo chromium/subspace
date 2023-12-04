@@ -142,7 +142,7 @@ void set_var(const std::string& key, const std::string& value) noexcept {
 #if defined(WIN32)
   auto key16 = to_u16s(key).expect("key was invalid utf8");
   auto value16 = to_u16s(value).expect("value was invalid utf8");
-  sus::check_with_message(
+  sus_check_with_message(
       SetEnvironmentVariableW(key16.as_ptr(), value16.as_ptr()),
       "SetEnvironmentVariable failed");
 #else
@@ -155,7 +155,7 @@ void set_var(const std::string& key, const std::string& value) noexcept {
   // Take the pointer out of the Vec, as putenv retains ownership of it. The Vec
   // must be using the default allocator as well as a result.
   auto [ptr, len, cap] = sus::move(v).into_raw_parts();
-  sus::check_with_message(putenv(ptr) == 0, "set_env failed");
+  sus_check_with_message(putenv(ptr) == 0, "set_env failed");
 #endif
 }
 

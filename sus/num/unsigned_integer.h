@@ -282,7 +282,7 @@ constexpr inline P operator>>(P l, U r) noexcept = delete;
 [[nodiscard]] sus_pure_const constexpr inline u8 operator<<(
     u8 l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    ::sus::check_with_message(r < u8::BITS,
+    sus_check_with_message(r < u8::BITS,
                               "attempt to shift left with overflow");
     return u8(
         __private::unchecked_shl(l.primitive_value, u64(r).primitive_value));
@@ -310,7 +310,7 @@ constexpr inline u8 operator<<(u8 l, U r) noexcept = delete;
 [[nodiscard]] sus_pure_const constexpr inline u8 operator>>(
     u8 l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    ::sus::check_with_message(r < u8::BITS,
+    sus_check_with_message(r < u8::BITS,
                               "attempt to shift right with overflow");
     return u8(
         __private::unchecked_shr(l.primitive_value, u64(r).primitive_value));
@@ -328,7 +328,7 @@ constexpr inline u8 operator>>(u8 l, U r) noexcept = delete;
 [[nodiscard]] sus_pure_const constexpr inline u16 operator<<(
     u16 l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    ::sus::check_with_message(r < u16::BITS,
+    sus_check_with_message(r < u16::BITS,
                               "attempt to shift left with overflow");
     return u16(
         __private::unchecked_shl(l.primitive_value, u64(r).primitive_value));
@@ -346,7 +346,7 @@ constexpr inline u16 operator<<(u16 l, U r) noexcept = delete;
 [[nodiscard]] sus_pure_const constexpr inline u16 operator>>(
     u16 l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    ::sus::check_with_message(r < u16::BITS,
+    sus_check_with_message(r < u16::BITS,
                               "attempt to shift right with overflow");
     return u16(
         __private::unchecked_shr(l.primitive_value, u64(r).primitive_value));
@@ -364,7 +364,7 @@ constexpr inline u16 operator>>(u16 l, U r) noexcept = delete;
 [[nodiscard]] sus_pure_const constexpr inline u32 operator<<(
     u32 l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    ::sus::check_with_message(r < u32::BITS, "attempt to shift left with overflow");
+    sus_check_with_message(r < u32::BITS, "attempt to shift left with overflow");
     return u32(
         __private::unchecked_shl(l.primitive_value, u64(r).primitive_value));
   } else {
@@ -381,7 +381,7 @@ constexpr inline u32 operator<<(u32 l, U r) noexcept = delete;
 [[nodiscard]] sus_pure_const constexpr inline u32 operator>>(
     u32 l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    ::sus::check_with_message(r < u32::BITS,
+    sus_check_with_message(r < u32::BITS,
                               "attempt to shift right with overflow");
     return u32(
         __private::unchecked_shr(l.primitive_value, u64(r).primitive_value));
@@ -399,7 +399,7 @@ constexpr inline u32 operator>>(u32 l, U r) noexcept = delete;
 [[nodiscard]] sus_pure_const constexpr inline u64 operator<<(
     u64 l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    ::sus::check_with_message(r < u64::BITS, "attempt to shift left with overflow");
+    sus_check_with_message(r < u64::BITS, "attempt to shift left with overflow");
     return u64(
         __private::unchecked_shl(l.primitive_value, u64(r).primitive_value));
   } else {
@@ -416,7 +416,7 @@ constexpr inline u64 operator<<(u64 l, U r) noexcept = delete;
 [[nodiscard]] sus_pure_const constexpr inline u64 operator>>(
     u64 l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    ::sus::check_with_message(r < u64::BITS,
+    sus_check_with_message(r < u64::BITS,
                               "attempt to shift right with overflow");
     return u64(
         __private::unchecked_shr(l.primitive_value, u64(r).primitive_value));
@@ -434,7 +434,7 @@ constexpr inline u64 operator>>(u64 l, U r) noexcept = delete;
 [[nodiscard]] sus_pure_const constexpr inline usize operator<<(
     usize l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    ::sus::check_with_message(r < usize::BITS, "attempt to shift left with overflow");
+    sus_check_with_message(r < usize::BITS, "attempt to shift left with overflow");
     return usize(
         __private::unchecked_shl(l.primitive_value, u64(r).primitive_value));
   } else {
@@ -451,7 +451,7 @@ constexpr inline usize operator<<(usize l, U r) noexcept = delete;
 [[nodiscard]] sus_pure_const constexpr inline usize operator>>(
     usize l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    ::sus::check_with_message(r < usize::BITS, "attempt to shift right with overflow");
+    sus_check_with_message(r < usize::BITS, "attempt to shift right with overflow");
     return usize(
         __private::unchecked_shr(l.primitive_value, u64(r).primitive_value));
   } else {
@@ -468,7 +468,7 @@ constexpr inline usize operator>>(usize l, U r) noexcept = delete;
 [[nodiscard]] sus_pure_const constexpr inline uptr operator<<(
     uptr l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    ::sus::check_with_message(r < uptr::BITS, "attempt to shift left with overflow");
+    sus_check_with_message(r < uptr::BITS, "attempt to shift left with overflow");
     return uptr(
         __private::unchecked_shl(l.primitive_value, u64(r).primitive_value));
   } else {
@@ -485,7 +485,7 @@ constexpr inline uptr operator<<(uptr l, U r) noexcept = delete;
 [[nodiscard]] sus_pure_const constexpr inline uptr operator>>(
     uptr l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    ::sus::check_with_message(r < uptr::BITS, "attempt to shift right with overflow");
+    sus_check_with_message(r < uptr::BITS, "attempt to shift right with overflow");
     return uptr(
         __private::unchecked_shr(l.primitive_value, u64(r).primitive_value));
   } else {

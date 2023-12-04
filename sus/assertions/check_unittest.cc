@@ -16,33 +16,43 @@
 
 #include "googletest/include/gtest/gtest.h"
 
+// Incredibly, on Posix we can use [0-9] but on Windows we can't. Yet on Windows
+// we can use `\d` and on Posix we can't (or it doesn't match).
+#if GTEST_USES_SIMPLE_RE
+#  define DIGIT "\\d"
+#else
+#  define DIGIT "[0-9]"
+#endif
+
 namespace sus {
 namespace {
 
 TEST(Check, CheckPasses) {
-  check(true);
-  check_with_message(true, "hello world");
+  sus_check(true);
+  sus_check_with_message(true, "hello world");
 }
 
 TEST(Check, CheckFails) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(check(false), "");
+  EXPECT_DEATH(sus_check(false),
+               "at .*check_unittest.cc:" DIGIT "+:" DIGIT "+\n$");
 #endif
 }
 
 TEST(Check, WithMessage) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(check_with_message(false, "hello world"), "'hello world'");
+  EXPECT_DEATH(sus_check_with_message(false, "hello world"),
+               "'hello world', .*check_unittest.cc:" DIGIT "+:" DIGIT "+\n$");
 #endif
 #if GTEST_HAS_DEATH_TEST
   // Verify it does not read past the string_view's end.
-  EXPECT_DEATH(check_with_message(
+  EXPECT_DEATH(sus_check_with_message(
                    false, std::string_view("hello world123").substr(0u, 11u)),
-               "'hello world'");
+               "'hello world', .*check_unittest.cc:" DIGIT "+:" DIGIT "+\n$");
 #endif
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(check_with_message(false, std::string("hello world")),
-               "'hello world'");
+  EXPECT_DEATH(sus_check_with_message(false, std::string("hello world")),
+               "'hello world', .*check_unittest.cc:" DIGIT "+:" DIGIT "+\n$");
 #endif
 }
 

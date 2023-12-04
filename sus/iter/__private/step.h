@@ -72,13 +72,13 @@ constexpr T step_max() noexcept {
 
 template <::sus::num::PrimitiveInteger T>
 constexpr T step_forward(T l) noexcept {
-  ::sus::check(l < ::sus::num::__private::max_value<T>());
+  sus_check(l < ::sus::num::__private::max_value<T>());
   // SAFETY: All `PrimitiveInteger` can hold `1`.
   return l + T(1);
 }
 template <::sus::num::PrimitiveInteger T>
 constexpr T step_backward(T l) noexcept {
-  ::sus::check(l > ::sus::num::__private::min_value<T>());
+  sus_check(l > ::sus::num::__private::min_value<T>());
   // SAFETY: All `PrimitiveInteger` can hold `1`.
   return l - T(1);
 }

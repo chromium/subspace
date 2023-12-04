@@ -21,9 +21,9 @@
 // we can use `\d` and on Posix we can't (well, it causes UBSan to fire during
 // compilation and then it doesn't match).
 #if GTEST_USES_SIMPLE_RE
-#define DIGIT "\\d"
+#  define DIGIT "\\d"
 #else
-#define DIGIT "[0-9]"
+#  define DIGIT "[0-9]"
 #endif
 
 namespace sus {
@@ -31,7 +31,7 @@ namespace {
 
 TEST(UnreachableDeathTest, Unreachable) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(unreachable(),
+  EXPECT_DEATH(sus_unreachable(),
                "^PANIC! at .*unreachable_unittest.cc:" DIGIT "+:" DIGIT "+\n$");
 #endif
 }
@@ -42,7 +42,7 @@ TEST(Unreachable, Unchecked) {
   }
   // We can't actually land here or we'd introduce UB, but the test confirms
   // we can write it and it compiles without warnings.
-  unreachable_unchecked(unsafe_fn);
+  sus_unreachable_unchecked(unsafe_fn);
 }
 
 }  // namespace

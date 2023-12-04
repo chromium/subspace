@@ -117,7 +117,7 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
       if (!link_to_page) {
         // Only methods are not given their own page, and are just a named
         // anchor on the Record's page.
-        sus::check(overload.method.is_some());
+        sus_check(overload.method.is_some());
         auto name_anchor = signature_div.open_a();
         name_anchor.add_name(construct_html_url_anchor_for_method(element));
       }
@@ -163,7 +163,7 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
         } else {
           // Only methods are not given their own page, and are just a named
           // anchor on the Record's page.
-          sus::check(overload.method.is_some());
+          sus_check(overload.method.is_some());
           link_anchor.add_href(construct_html_url_for_function(element));
         }
         link_anchor.add_class("function-name");
@@ -278,7 +278,7 @@ sus::Result<void, MarkdownToHtmlError> generate_function(
             case CppPathConcept:
               break;  // Concept can't be an ancestor of a function.
           }
-          sus::unreachable();
+          sus_unreachable();
         }());
         ancestor_anchor.add_href(e.link_href);
         ancestor_anchor.write_text(e.name);

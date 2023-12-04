@@ -47,7 +47,7 @@ struct sus::error::ErrorImpl<ErrorReason> {
     switch (self) {
       case ErrorReason::SomeReason: return "we saw SomeReason happen";
     }
-    sus::unreachable();
+    sus_unreachable();
   }
 };
 static_assert(sus::error::error_display(ErrorReason::SomeReason) ==
@@ -98,7 +98,7 @@ static_assert(sus::boxed::DynConcept<DynError, SuperErrorSideKick>);
 
 TEST(Error, Example_ToString) {
   auto err = u32::try_from(-1).unwrap_err();
-  sus::check(fmt::to_string(err) == "out of bounds");
+  sus_check(fmt::to_string(err) == "out of bounds");
 }
 
 TEST(Error, Example_Result) {
@@ -109,9 +109,9 @@ TEST(Error, Example_Result) {
     return sus::ok();
   };
 
-  sus::check(fmt::format("{}", f(20)) == "Err(we saw SomeReason happen)");
-  sus::check(fmt::format("{}", f(-20)) == "Err(too low)");
-  sus::check(fmt::format("{}", f(0)) == "Ok(<void>)");
+  sus_check(fmt::format("{}", f(20)) == "Err(we saw SomeReason happen)");
+  sus_check(fmt::format("{}", f(-20)) == "Err(too low)");
+  sus_check(fmt::format("{}", f(0)) == "Ok(<void>)");
 }
 
 TEST(Error, Example_Source) {
@@ -121,8 +121,8 @@ TEST(Error, Example_Source) {
 
   if (auto r = get_super_error(); r.is_err()) {
     auto& e = r.as_err();
-    sus::check(fmt::format("Error: {}", e) == "Error: SuperError is here!");
-    sus::check(
+    sus_check(fmt::format("Error: {}", e) == "Error: SuperError is here!");
+    sus_check(
         fmt::format("Caused by: {}", sus::error::error_source(e).unwrap()) ==
         "Caused by: SuperErrorSideKick is here!");
   }

@@ -22,7 +22,7 @@ namespace {
 TEST(Successors, Example) {
   auto powers_of_10 = sus::iter::successors<u16>(
       sus::some(1_u16), [](const u16& n) { return n.checked_mul(10_u16); });
-  sus::check(
+  sus_check(
       sus::move(powers_of_10).collect<Vec<u16>>() ==
       sus::Slice<u16>::from({1_u16, 10_u16, 100_u16, 1000_u16, 10000_u16}));
 }

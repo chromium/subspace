@@ -282,7 +282,7 @@ template <class T>
   requires(::sus::cmp::Ord<T>)
 constexpr T clamp(T v sus_lifetimebound, T min sus_lifetimebound,
                   T max sus_lifetimebound) noexcept {
-  ::sus::check(min <= max);
+  sus_check(min <= max);
   return v < min ? ::sus::forward<T>(min)
                  : (v > max ? ::sus::forward<T>(max) : ::sus::forward<T>(v));
 }
