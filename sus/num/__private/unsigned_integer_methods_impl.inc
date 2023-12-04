@@ -655,6 +655,28 @@ _self::checked_next_power_of_two() const& noexcept {
   return _self(one_less).checked_add(_self(_primitive{1u}));
 }
 
+sus_pure constexpr ::sus::option::Option<_self> _self::checked_next_multiple_of(
+    _self rhs) const& noexcept {
+  return checked_rem(rhs).and_then([s = *this, rhs](_self r) {
+    return r == _primitive{0}
+               ? Option<_self>(s)
+               // SAFETY: rhs - r cannot overflow because `r` is smaller than
+               // `rhs`, as it's the remainder of `*this / rhs`.
+               : s.checked_add(__private::unchecked_sub(rhs.primitive_value,
+                                                        r.primitive_value));
+  });
+}
+
+#if _pointer
+template <class U>
+  requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+sus_pure constexpr ::sus::option::Option<_self> _self::checked_next_multiple_of(
+    U rhs) const& noexcept {
+  return checked_next_multiple_of(_self(_primitive{rhs}));
+}
+#endif
+
 sus_pure constexpr ::sus::collections::Array<u8,
                                              ::sus::mem::size_of<_primitive>()>
 _self::to_be_bytes() const& noexcept {
@@ -715,7 +737,7 @@ sus_pure constexpr _self _self::from_ne_bytes(
     for (usize i; i < ::sus::mem::size_of<_primitive>(); i += 1u) {
       // size_of<_primitive>() is < u32::MAX so the cast<u32>() is not lossy.
       val |= bytes[i] << ::sus::cast<u32>(::sus::mem::size_of<_primitive>() -
-                                         1u - i);
+                                          1u - i);
     }
   } else {
     ::sus::ptr::copy_nonoverlapping(

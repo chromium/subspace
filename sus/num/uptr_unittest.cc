@@ -1064,7 +1064,6 @@ TEST(uptr, ArithemticWithSmallerIntegers) {
   EXPECT_EQ(i.wrapping_rem_euclid(u), i.wrapping_rem_euclid(i));
 
   // Ceil math.
-
   static_assert(std::same_as<uptr, decltype(i.div_ceil(i))>);
   static_assert(std::same_as<uptr, decltype(i.div_ceil(p))>);
   static_assert(std::same_as<uptr, decltype(i.div_ceil(u))>);
@@ -1082,6 +1081,21 @@ TEST(uptr, ArithemticWithSmallerIntegers) {
   static_assert(std::same_as<Option<u32>, decltype(i.checked_log(u))>);
   EXPECT_EQ(i.checked_log(p), i.checked_log(i));
   EXPECT_EQ(i.checked_log(u), i.checked_log(i));
+
+  // Next multiple of.
+  static_assert(std::same_as<uptr, decltype(i.next_multiple_of(i))>);
+  static_assert(std::same_as<uptr, decltype(i.next_multiple_of(p))>);
+  static_assert(std::same_as<uptr, decltype(i.next_multiple_of(u))>);
+  EXPECT_EQ(i.next_multiple_of(p), i.next_multiple_of(i));
+  EXPECT_EQ(i.next_multiple_of(u), i.next_multiple_of(i));
+  static_assert(
+      std::same_as<Option<uptr>, decltype(i.checked_next_multiple_of(i))>);
+  static_assert(
+      std::same_as<Option<uptr>, decltype(i.checked_next_multiple_of(p))>);
+  static_assert(
+      std::same_as<Option<uptr>, decltype(i.checked_next_multiple_of(u))>);
+  EXPECT_EQ(i.checked_next_multiple_of(p), i.checked_next_multiple_of(i));
+  EXPECT_EQ(i.checked_next_multiple_of(u), i.checked_next_multiple_of(i));
 }
 
 TEST(uptr, fmt) {
