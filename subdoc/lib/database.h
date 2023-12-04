@@ -39,6 +39,7 @@ namespace subdoc {
 struct ConceptElement;
 struct FieldElement;
 struct FunctionElement;
+struct MacroElement;
 struct NamespaceElement;
 struct RecordElement;
 struct TypeElement;
@@ -49,13 +50,15 @@ enum class FoundNameTag {
   Type,  // Includes Records, Aliases, Enums.
   Concept,
   Field,
+  Macro,
 };
 using FoundName = sus::Choice<sus_choice_types(
     (FoundNameTag::Namespace, const NamespaceElement&),
     (FoundNameTag::Function, const FunctionElement&),
     (FoundNameTag::Type, const TypeElement&),
     (FoundNameTag::Concept, const ConceptElement&),
-    (FoundNameTag::Field, const FieldElement&))>;
+    (FoundNameTag::Field, const FieldElement&),
+    (FoundNameTag::Macro, const MacroElement&))>;
 
 struct Comment {
   Comment() = default;
@@ -213,7 +216,6 @@ struct AliasElement : public TypeElement {
   sus::Option<RequiresConstraints> constraints;
   AliasTarget target;
 
-
   bool has_any_comments() const noexcept { return has_found_comment(); }
 
   sus::Option<FoundName> find_name(
@@ -370,6 +372,20 @@ struct ConceptId {
 
   struct Hash {
     std::size_t operator()(const ConceptId& k) const {
+      return std::hash<std::string>()(k.name);
+    }
+  };
+};
+
+struct MacroId {
+  explicit MacroId(std::string name) : name(sus::move(name)) {}
+
+  std::string name;
+
+  bool operator==(const MacroId&) const = default;
+
+  struct Hash {
+    std::size_t operator()(const MacroId& k) const {
       return std::hash<std::string>()(k.name);
     }
   };
@@ -644,6 +660,26 @@ struct RecordElement : public TypeElement {
   }
 };
 
+struct MacroElement : public CommentElement {
+  explicit MacroElement(Comment comment, std::string name, u32 sort_key)
+      : CommentElement(sus::Vec<Namespace>(), sus::move(comment),
+                       sus::move(name), sort_key) {}
+
+  bool has_any_comments() const noexcept { return has_found_comment(); }
+
+  sus::Option<FoundName> find_name(
+      const sus::Slice<std::string_view>& splits) const noexcept {
+    if (!splits.is_empty() && splits[0u] == name) {
+      if (splits.len() == 1u) {
+        return sus::some(FoundName::with<FoundName::Tag::Macro>(*this));
+      }
+    }
+    return sus::none();
+  }
+
+  void for_each_comment(sus::fn::FnMut<void(Comment&)> auto fn) { fn(comment); }
+};
+
 struct NamespaceElement : public CommentElement {
   explicit NamespaceElement(sus::Vec<Namespace> containing_namespaces,
                             Comment comment, std::string name, u32 sort_key)
@@ -661,9 +697,14 @@ struct NamespaceElement : public CommentElement {
   std::unordered_map<FunctionId, FunctionElement, FunctionId::Hash> functions;
   std::unordered_map<AliasId, AliasElement, AliasId::Hash> aliases;
   std::unordered_map<UniqueSymbol, FieldElement> variables;
+  // Only the global namespace will have any macros, since they are not
+  // namespace scoped.
+  std::unordered_map<MacroId, MacroElement, MacroId::Hash> macros;
 
   bool is_empty() const noexcept {
-    return namespaces.empty() && records.empty() && functions.empty();
+    return concepts.empty() && namespaces.empty() && records.empty() &&
+           functions.empty() && aliases.empty() && variables.empty() &&
+           macros.empty();
   }
 
   bool has_any_comments() const noexcept {
@@ -684,6 +725,9 @@ struct NamespaceElement : public CommentElement {
       if (e.has_any_comments()) return true;
     }
     for (const auto& [u, e] : variables) {
+      if (e.has_any_comments()) return true;
+    }
+    for (const auto& [u, e] : macros) {
       if (e.has_any_comments()) return true;
     }
     return false;
@@ -840,6 +884,19 @@ struct NamespaceElement : public CommentElement {
     return out;
   }
 
+  sus::Option<const CommentElement&> find_macro_comment(
+      std::string_view comment_loc) const noexcept {
+    sus::Option<const CommentElement&> out;
+    for (const auto& [u, e] : namespaces) {
+      out = e.find_macro_comment(comment_loc);
+      if (out.is_some()) return out;
+    }
+    for (const auto& [u, e] : macros) {
+      out = e.find_comment(comment_loc);
+      if (out.is_some()) return out;
+    }
+    return out;
+  }
 
   sus::Option<FoundName> find_name(
       const sus::Slice<std::string_view>& splits) const noexcept {
@@ -875,6 +932,9 @@ struct NamespaceElement : public CommentElement {
     for (auto& [k, e] : variables) {
       if (out = e.find_name(splits); out.is_some()) return out;
     }
+    for (auto& [k, e] : macros) {
+      if (out = e.find_name(splits); out.is_some()) return out;
+    }
     return out;
   }
 
@@ -886,6 +946,7 @@ struct NamespaceElement : public CommentElement {
     for (auto& [k, e] : functions) e.for_each_comment(fn);
     for (auto& [k, e] : aliases) e.for_each_comment(fn);
     for (auto& [k, e] : variables) e.for_each_comment(fn);
+    for (auto& [k, e] : macros) e.for_each_comment(fn);
   }
 };
 
@@ -1237,6 +1298,17 @@ struct Database {
     return global.find_variable_comment(comment_loc);
   }
   sus::Option<const CommentElement&> find_variable_comment(
+      std::string_view comment_loc) && = delete;
+
+  /// Finds a comment whose location ends with the `comment_loc` suffix.
+  ///
+  /// The suffix can be used to look for the line:column and ignore the
+  /// filename in the comment location format `filename:line:col`.
+  sus::Option<const CommentElement&> find_macro_comment(
+      std::string_view comment_loc) const& noexcept {
+    return global.find_macro_comment(comment_loc);
+  }
+  sus::Option<const CommentElement&> find_macro_comment(
       std::string_view comment_loc) && = delete;
 
   /// Finds an element in the database by its fully qualified C++ name, e.g.
