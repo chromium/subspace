@@ -146,7 +146,7 @@ concept Cast = requires(const From& from) {
 /// | Concept | Usage | Infallible | Preserves values |
 /// | ------- | ----- | ---------- | ---------------- |
 /// | [`From`]($sus::construct::From) / [`Into`]($sus::construct::Into) | `T::from(x)` / [`sus::into(x)`]($sus::construct::into) | ✅ | ✅ |
-/// | [`TryInto`]($sus::construct::TryInto) | [`sus::try_into<T>(x)`]($sus::construct::try_into) | ❌ | ✅ |
+/// | [`TryFrom`]($sus::construct::TryFrom) / [`TryInto`]($sus::construct::TryInto) | `T::try_from(x)` / [`sus::try_into<T>(x)`]($sus::construct::try_into) | ❌ | ✅ |
 /// | [`Cast`]($sus::construct::Cast) | `sus::cast<T>(x)` | ✅ | ❌ |
 ///
 /// See [`Cast`]($sus::construct::Cast) for how numeric and
