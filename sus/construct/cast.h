@@ -152,7 +152,7 @@ concept Cast = requires(const From& from) {
 /// See [`Cast`]($sus::construct::Cast) for how numeric and
 /// primitive values are converted.
 ///
-/// It is best practive to place a `// SAFETY:` comment on use of [`sus::cast`](
+/// It is best practice to place a `// SAFETY:` comment on use of [`sus::cast`](
 /// $sus::construct::cast) in order to explain why the code intends to change
 /// the value during the cast.
 ///
