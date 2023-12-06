@@ -53,7 +53,7 @@ namespace sus::num {
 /// A 32-bit signed integer.
 ///
 /// See the [namespace level documentation]($sus::num) for more.
-struct [[sus_trivial_abi]] i32 final {
+struct [[_sus_trivial_abi]] i32 final {
 #define _self i32
 #define _primitive int32_t
 #define _unsigned u32
@@ -66,7 +66,7 @@ struct [[sus_trivial_abi]] i32 final {
 /// An 8-bit signed integer.
 ///
 /// See the [namespace level documentation]($sus::num) for more.
-struct [[sus_trivial_abi]] i8 final {
+struct [[_sus_trivial_abi]] i8 final {
 #define _self i8
 #define _primitive int8_t
 #define _unsigned u8
@@ -79,7 +79,7 @@ struct [[sus_trivial_abi]] i8 final {
 /// A 16-bit signed integer.
 ///
 /// See the [namespace level documentation]($sus::num) for more.
-struct [[sus_trivial_abi]] i16 final {
+struct [[_sus_trivial_abi]] i16 final {
 #define _self i16
 #define _primitive int16_t
 #define _unsigned u16
@@ -92,7 +92,7 @@ struct [[sus_trivial_abi]] i16 final {
 /// A 64-bit signed integer.
 ///
 /// See the [namespace level documentation]($sus::num) for more.
-struct [[sus_trivial_abi]] i64 final {
+struct [[_sus_trivial_abi]] i64 final {
 #define _self i64
 #define _primitive int64_t
 #define _unsigned u64
@@ -116,7 +116,7 @@ struct [[sus_trivial_abi]] i64 final {
 ///
 ///
 /// See the [namespace level documentation]($sus::num) for more.
-struct [[sus_trivial_abi]] isize final {
+struct [[_sus_trivial_abi]] isize final {
 #define _self isize
 #define _primitive ::sus::num::__private::addr_type<>::signed_type
 #define _unsigned usize

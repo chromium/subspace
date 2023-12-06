@@ -43,10 +43,10 @@ namespace sus::boxed {
 namespace __private {
 
 template <class Box, class T, bool = sus::iter::IteratorAny<T>>
-struct [[sus_trivial_abi]] BoxBase {};
+struct [[_sus_trivial_abi]] BoxBase {};
 
 template <class Box, class T>
-struct [[sus_trivial_abi]] BoxBase<Box, T, true>
+struct [[_sus_trivial_abi]] BoxBase<Box, T, true>
     : public sus::iter::IteratorBase<Box,
                                      typename std::remove_cvref_t<T>::Item> {
   using Item = typename std::remove_cvref_t<T>::Item;
@@ -129,7 +129,7 @@ struct [[sus_trivial_abi]] BoxBase<Box, T, true>
 /// * [`DoubleEndedIterator`]($sus::iter::DoubleEndedIterator)
 /// * [`ExactSizeIterator`]($sus::iter::ExactSizeIterator)
 template <class T>
-class [[sus_trivial_abi]] Box final : public __private::BoxBase<Box<T>, T> {
+class [[_sus_trivial_abi]] Box final : public __private::BoxBase<Box<T>, T> {
   static_assert(!std::is_reference_v<T>, "Box of a reference is not allowed.");
   static_assert(!std::is_array_v<T>,
                 "Box<T[N]> is not allowed, use Box<Array<T, N>>");

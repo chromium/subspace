@@ -324,7 +324,7 @@ template <class T>
 struct StoragePointer {};
 
 template <class T>
-struct [[sus_trivial_abi]] StoragePointer<T&> {
+struct [[_sus_trivial_abi]] StoragePointer<T&> {
   explicit constexpr _sus_always_inline StoragePointer(T& ref) noexcept
       : ptr_(::sus::mem::addressof(ref)) {}
 

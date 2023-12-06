@@ -37,7 +37,7 @@ namespace sus::collections {
 ///
 /// This type is returned from `Vec::iter()` and `Slice::iter()` among others.
 template <class ItemT>
-struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
+struct [[nodiscard]] [[_sus_trivial_abi]] SliceIter final
     : public ::sus::iter::IteratorBase<SliceIter<ItemT>, ItemT> {
  public:
   using Item = ItemT;
@@ -122,7 +122,7 @@ static_assert(::sus::mem::Move<SliceIter<const i32&>>);
 /// This type is returned from `Vec::iter_mut()` and `Slice::iter_mut()` among
 /// others.
 template <class ItemT>
-struct [[sus_trivial_abi]] SliceIterMut final
+struct [[_sus_trivial_abi]] SliceIterMut final
     : public ::sus::iter::IteratorBase<SliceIterMut<ItemT>, ItemT> {
  public:
   using Item = ItemT;

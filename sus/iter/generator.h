@@ -117,7 +117,7 @@ class IterPromise {
 };
 
 template <class Generator>
-class [[nodiscard]] [[sus_trivial_abi]] GeneratorLoop {
+class [[nodiscard]] [[_sus_trivial_abi]] GeneratorLoop {
  public:
   constexpr GeneratorLoop(Generator& generator sus_lifetimebound) noexcept
       : generator_(generator) {}
@@ -186,7 +186,7 @@ class [[nodiscard]] [[sus_trivial_abi]] GeneratorLoop {
 /// sus_check(v2 == sus::Vec<i32>(0, 1, 1, 2, 3, 5, 8));
 /// ```
 template <class T>
-class [[nodiscard]] [[sus_trivial_abi]] Generator final
+class [[nodiscard]] [[_sus_trivial_abi]] Generator final
     : public ::sus::iter::IteratorBase<Generator<T>, T> {
  public:
   // Coroutine implementation.

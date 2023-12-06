@@ -32,7 +32,7 @@ struct IterRefCounter;
 
 /// An iterator's refcount on the owning collection, preventig mutation while
 /// the iterator is alive.
-struct [[sus_trivial_abi]] IterRef final {
+struct [[_sus_trivial_abi]] IterRef final {
   constexpr IterRef(usize* ptr) noexcept : count_ptr_(ptr) { inc(); }
   constexpr ~IterRef() noexcept { dec(); }
   constexpr IterRef(const IterRef& rhs) noexcept : count_ptr_(rhs.count_ptr_) {
@@ -77,7 +77,7 @@ struct [[sus_trivial_abi]] IterRef final {
 /// that the `count` is empty. This is much like a `RefCell` in Rust, using
 /// runtime verfication that modification does not occur while there are
 /// outstanding references.
-struct [[sus_trivial_abi]] IterRefCounter final {
+struct [[_sus_trivial_abi]] IterRefCounter final {
   static constexpr IterRefCounter for_owner() noexcept {
     return IterRefCounter(FOR_OWNER, 0_usize);
   }
@@ -149,7 +149,7 @@ constexpr IterRefCounter IterRef::to_view() const noexcept {
 
 #else
 
-struct [[sus_trivial_abi]] IterRef final {
+struct [[_sus_trivial_abi]] IterRef final {
   // Used to rebuild a view type from an iterator.
   constexpr IterRefCounter to_view() const noexcept;
 
@@ -163,7 +163,7 @@ struct [[sus_trivial_abi]] IterRef final {
 /// that the `count` is empty. This is much like a `RefCell` in Rust, using
 /// runtime verfication that modification does not occur while there are
 /// outstanding references.
-struct [[sus_trivial_abi]] IterRefCounter final {
+struct [[_sus_trivial_abi]] IterRefCounter final {
   static constexpr IterRefCounter for_owner() noexcept {
     return IterRefCounter();
   }

@@ -49,7 +49,7 @@ namespace sus::num {
 /// as the `float` type specified by the C++ standard.
 ///
 /// See the [namespace level documentation]($sus::num) for more.
-struct [[sus_trivial_abi]] f32 final {
+struct [[_sus_trivial_abi]] f32 final {
 #define _self f32
 #define _primitive float
 #define _unsigned u32
@@ -68,7 +68,7 @@ struct [[sus_trivial_abi]] f32 final {
 /// as the `double` type specified by the C++ standard.
 ///
 /// See the [namespace level documentation]($sus::num) for more.
-struct [[sus_trivial_abi]] f64 final {
+struct [[_sus_trivial_abi]] f64 final {
 #define _self f64
 #define _primitive double
 #define _unsigned u64

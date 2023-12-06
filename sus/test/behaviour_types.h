@@ -93,7 +93,7 @@ struct NotTriviallyRelocatableCopyableOrMoveable final {
   int i;
 };
 
-struct [[sus_trivial_abi]] TrivialAbiRelocatable final {
+struct [[_sus_trivial_abi]] TrivialAbiRelocatable final {
   constexpr TrivialAbiRelocatable(TrivialAbiRelocatable&&) noexcept = default;
   constexpr TrivialAbiRelocatable& operator=(TrivialAbiRelocatable&&) noexcept =
       default;

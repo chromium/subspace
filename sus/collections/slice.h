@@ -67,7 +67,7 @@ namespace sus::collections {
 /// Slices are a view into a block of memory represented as a pointer and a
 /// length.
 template <class T>
-class [[sus_trivial_abi]] Slice final {
+class [[_sus_trivial_abi]] Slice final {
  public:
   static_assert(!std::is_reference_v<T>,
                 "Slice holds references, so the type parameter can not also be "
@@ -297,7 +297,7 @@ class [[sus_trivial_abi]] Slice final {
 ///
 /// A `SliceMut<T>` can be implicitly converted to a `Slice<T>`.
 template <class T>
-class [[sus_trivial_abi]] SliceMut final {
+class [[_sus_trivial_abi]] SliceMut final {
  public:
   static_assert(
       !std::is_reference_v<T>,

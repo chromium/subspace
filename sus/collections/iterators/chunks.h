@@ -32,7 +32,7 @@ namespace sus::collections {
 ///
 /// This struct is created by the `chunks()` method on slices.
 template <class ItemT>
-struct [[nodiscard]] [[sus_trivial_abi]] Chunks final
+struct [[nodiscard]] [[_sus_trivial_abi]] Chunks final
     : public ::sus::iter::IteratorBase<Chunks<ItemT>,
                                        ::sus::collections::Slice<ItemT>> {
  public:
@@ -132,7 +132,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] Chunks final
 ///
 /// This struct is created by the `chunks_mut()` method on slices.
 template <class ItemT>
-struct [[nodiscard]] [[sus_trivial_abi]] ChunksMut final
+struct [[nodiscard]] [[_sus_trivial_abi]] ChunksMut final
     : public ::sus::iter::IteratorBase<ChunksMut<ItemT>,
                                        ::sus::collections::SliceMut<ItemT>> {
  public:
@@ -235,7 +235,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksMut final
 ///
 /// This struct is created by the `chunks_exact()` method on slices.
 template <class ItemT>
-struct [[nodiscard]] [[sus_trivial_abi]] ChunksExact final
+struct [[nodiscard]] [[_sus_trivial_abi]] ChunksExact final
     : public ::sus::iter::IteratorBase<ChunksExact<ItemT>,
                                        ::sus::collections::Slice<ItemT>> {
  public:
@@ -352,7 +352,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExact final
 ///
 /// This struct is created by the `chunks_exact_mut()` method on slices.
 template <class ItemT>
-struct [[nodiscard]] [[sus_trivial_abi]] ChunksExactMut final
+struct [[nodiscard]] [[_sus_trivial_abi]] ChunksExactMut final
     : public ::sus::iter::IteratorBase<ChunksExactMut<ItemT>,
                                        ::sus::collections::SliceMut<ItemT>> {
  public:
@@ -465,7 +465,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExactMut final
 ///
 /// This struct is created by the `rchunks()` method on slices.
 template <class ItemT>
-struct [[nodiscard]] [[sus_trivial_abi]] RChunks final
+struct [[nodiscard]] [[_sus_trivial_abi]] RChunks final
     : public ::sus::iter::IteratorBase<RChunks<ItemT>,
                                        ::sus::collections::Slice<ItemT>> {
  public:
@@ -569,7 +569,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunks final
 ///
 /// This struct is created by the `rchunks_mut()` method on slices.
 template <class ItemT>
-struct [[nodiscard]] [[sus_trivial_abi]] RChunksMut final
+struct [[nodiscard]] [[_sus_trivial_abi]] RChunksMut final
     : public ::sus::iter::IteratorBase<RChunksMut<ItemT>,
                                        ::sus::collections::SliceMut<ItemT>> {
  public:
@@ -666,7 +666,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksMut final
 ///
 /// This struct is created by the `rchunks_exact()` method on slices.
 template <class ItemT>
-struct [[nodiscard]] [[sus_trivial_abi]] RChunksExact final
+struct [[nodiscard]] [[_sus_trivial_abi]] RChunksExact final
     : public ::sus::iter::IteratorBase<RChunksExact<ItemT>,
                                        ::sus::collections::Slice<ItemT>> {
  public:
@@ -776,7 +776,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExact final
 ///
 /// This struct is created by the `rchunks_exact_mut()` method on slices.
 template <class ItemT>
-struct [[nodiscard]] [[sus_trivial_abi]] RChunksExactMut final
+struct [[nodiscard]] [[_sus_trivial_abi]] RChunksExactMut final
     : public ::sus::iter::IteratorBase<RChunksExactMut<ItemT>,
                                        ::sus::collections::SliceMut<ItemT>> {
  public:
