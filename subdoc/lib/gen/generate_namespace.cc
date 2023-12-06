@@ -26,7 +26,6 @@
 #include "subdoc/lib/gen/generate_record.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/markdown_to_html.h"
-#include "subdoc/lib/parse_comment.h"
 #include "sus/assertions/unreachable.h"
 #include "sus/collections/slice.h"
 #include "sus/prelude.h"
