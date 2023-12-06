@@ -23,8 +23,8 @@
 /// as unsafe.
 ///
 /// This is placed as a modifier on the method, before its return type, such as
-/// `sus_nonnull_fn void f(i32* p);
-#define sus_nonnull_fn sus_if_msvc_else(, __attribute__((nonnull)))
+/// `_sus_nonnull_fn void f(i32* p);
+#define _sus_nonnull_fn sus_if_msvc_else(, __attribute__((nonnull)))
 
 /// Defines an attribute to place before the type of a pointer-type function
 /// parameter that declares the pointer is not null. To actually receive null
@@ -33,8 +33,8 @@
 /// that are marked as unsafe.
 ///
 /// This is placed as a modifier on a function parameter before its type, such
-/// as in `void f(sus_nonnull_arg i32* ptr)`.
-#define sus_nonnull_arg sus_if_msvc(_Notnull_)
+/// as in `void f(_sus_nonnull_arg i32* ptr)`.
+#define _sus_nonnull_arg sus_if_msvc(_Notnull_)
 
 /// Defines a pointer variable or function parameter to not be null. If null is
 /// assigned to the variable, Undefined Behaviour results. Thus for function
@@ -42,5 +42,5 @@
 /// marked as unsafe.
 ///
 /// This is placed as a modifier on the pointer `*`, such as in
-/// `i32* sus_nonnull_var ptr_`.
-#define sus_nonnull_var sus_if_clang(_Nonnull)
+/// `i32* _sus_nonnull_var ptr_`.
+#define _sus_nonnull_var sus_if_clang(_Nonnull)
