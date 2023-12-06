@@ -274,6 +274,8 @@ sus::Result<void, MarkdownToHtmlError> generate_function(
             case CppPathNamespace: return "namespace-name";
             case CppPathRecord: return "type-name";
             case CppPathFunction: return "function-name";
+            case CppPathMacro:
+              break;  // Macro can't be an ancestor of a function.
             case CppPathConcept:
               break;  // Concept can't be an ancestor of a function.
           }

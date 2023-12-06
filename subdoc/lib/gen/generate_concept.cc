@@ -70,6 +70,8 @@ void generate_concept_overview(HtmlWriter::OpenDiv& record_div,
               break;  // Reccord can't be an ancesor of a concept.
             case CppPathFunction:
               break;  // Function can't be an ancesor of a concept.
+            case CppPathMacro:
+              break;  // Macro can't be an ancesor of a concept.
             case CppPathConcept: return "concept-name";
           }
           sus_unreachable();

@@ -127,6 +127,8 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
             case CppPathRecord: return "type-name";
             case CppPathFunction:
               break;  // Function can't be an ancesor of a record.
+            case CppPathMacro:
+              break;  // Macro can't be an ancesor of a record.
             case CppPathConcept:
               break;  // Concept can't be an ancestor of a record.
           }

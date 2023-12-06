@@ -231,11 +231,11 @@ pre > code span.punct {
     margin-bottom: 1em;
     font-weight: bold;
 }
-:is(.fields, .functions, .methods, .records, .concepts, .namespaces, .aliases, .variables) .section-header {
+:is(.fields, .functions, .macros, .methods, .records, .concepts, .namespaces, .aliases, .variables) .section-header {
     padding-bottom: 0.2em;
     border-bottom: 1px solid;
 }
-:is(.fields, .functions, .methods, .records, .concepts, .namespaces, .aliases, .variables) .section-header > a {
+:is(.fields, .functions, .macros, .methods, .records, .concepts, .namespaces, .aliases, .variables) .section-header > a {
     text-decoration: none;
     color: inherit;
 }
@@ -308,13 +308,13 @@ code {
     margin-bottom: 0.2rem;
 }
 
-.overview :is(.type-signature, .function-signature) {
+.overview :is(.type-signature, .function-signature, .macro-signature) {
     background-color: rgba(43, 43, 43, 1.0);
     margin-bottom: 0.2rem;
     padding: 0.5rem;
     overflow-x: auto;
 }
-.overview :is(.type-signature, .function-signature) pre {
+.overview :is(.type-signature, .function-signature, .macro-signature) pre {
     margin: 0;
 }
 .overview .type-signature :is(.struct, .class, .union, .final) {
@@ -356,7 +356,7 @@ code {
     color: rgb(166, 240, 176);
 }
 
-:is(.type-signature, .function-signature, .member-signature, .requires, .deleted, .virtual) {
+:is(.type-signature, .function-signature, .macro-signature, .member-signature, .requires, .deleted, .virtual) {
     font-family: monospace;
 }
 
@@ -377,6 +377,13 @@ a.function-name {
     color: rgb(191, 142, 236);
 }
 a.function-name:hover {
+    text-decoration: underline;
+}
+a.macro-name {
+    text-decoration: none;
+    color: rgb(191, 142, 236);
+}
+a.macro-name:hover {
     text-decoration: underline;
 }
 a.namespace-name {

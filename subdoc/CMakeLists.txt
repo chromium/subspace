@@ -26,6 +26,8 @@ target_sources(subdoc_lib PUBLIC
     "lib/gen/generate_function.h"
     "lib/gen/generate_head.cc"
     "lib/gen/generate_head.h"
+    "lib/gen/generate_macro.cc"
+    "lib/gen/generate_macro.h"
     "lib/gen/generate_namespace.cc"
     "lib/gen/generate_namespace.h"
     "lib/gen/generate_nav.cc"

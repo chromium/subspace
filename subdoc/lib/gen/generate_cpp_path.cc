@@ -130,4 +130,13 @@ sus::Vec<CppPathElement> generate_cpp_path_for_function(
                                  sus::Slice<const RecordElement*>(), options);
 }
 
+sus::Vec<CppPathElement> generate_cpp_path_for_macro(
+    const MacroElement& element,
+    sus::Slice<const NamespaceElement*> namespace_ancestors,
+    const Options& options) noexcept {
+  return generate_with_ancestors(element.name, CppPathMacro,
+                                 namespace_ancestors,
+                                 sus::Slice<const RecordElement*>(), options);
+}
+
 }  // namespace subdoc::gen
