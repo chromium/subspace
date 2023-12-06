@@ -279,8 +279,8 @@ union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
   }
   inline constexpr auto into_inner() && { return ::sus::move(tuple_); }
 
-  [[sus_no_unique_address]] Type tuple_;
-  [[sus_no_unique_address]] Storage<I + 1, Elements...> more_;
+  [[_sus_no_unique_address]] Type tuple_;
+  [[_sus_no_unique_address]] Storage<I + 1, Elements...> more_;
 };
 
 template <size_t I, class... Elements>
@@ -375,7 +375,7 @@ union Storage<I, Nothing, Elements...> {
     }
   }
 
-  [[sus_no_unique_address]] Storage<I + 1, Elements...> more_;
+  [[_sus_no_unique_address]] Storage<I + 1, Elements...> more_;
 };
 
 template <size_t I, class T, class... Elements>
@@ -509,8 +509,8 @@ union Storage<I, ::sus::Tuple<T>, Elements...> {
     return ::sus::move(tuple_).template into_inner<0>();
   }
 
-  [[sus_no_unique_address]] Type tuple_;
-  [[sus_no_unique_address]] Storage<I + 1, Elements...> more_;
+  [[_sus_no_unique_address]] Type tuple_;
+  [[_sus_no_unique_address]] Storage<I + 1, Elements...> more_;
 };
 
 template <size_t I, class... Ts>
@@ -603,7 +603,7 @@ union Storage<I, ::sus::Tuple<Ts...>> {
   }
   inline constexpr auto into_inner() && { return ::sus::move(tuple_); }
 
-  [[sus_no_unique_address]] Type tuple_;
+  [[_sus_no_unique_address]] Type tuple_;
 };
 
 template <size_t I>
@@ -733,7 +733,7 @@ union Storage<I, ::sus::Tuple<T>> {
     return ::sus::move(tuple_).template into_inner<0>();
   }
 
-  [[sus_no_unique_address]] ::sus::Tuple<T> tuple_;
+  [[_sus_no_unique_address]] ::sus::Tuple<T> tuple_;
 };
 
 template <size_t I, class S>

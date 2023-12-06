@@ -116,7 +116,7 @@ struct [[nodiscard]] [[_sus_trivial_abi]] Chunks final
     sus_check(chunk_size > 0u);
   }
 
-  [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
+  [[_sus_no_unique_address]] ::sus::iter::IterRef ref_;
   Slice<ItemT> v_;
   ::sus::num::usize chunk_size_;
 
@@ -218,7 +218,7 @@ struct [[nodiscard]] [[_sus_trivial_abi]] ChunksMut final
     sus_check(chunk_size > 0u);
   }
 
-  [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
+  [[_sus_no_unique_address]] ::sus::iter::IterRef ref_;
   SliceMut<ItemT> v_;
   ::sus::num::usize chunk_size_;
 
@@ -333,7 +333,7 @@ struct [[nodiscard]] [[_sus_trivial_abi]] ChunksExact final
         rem_(remainder),
         chunk_size_(chunk_size) {}
 
-  [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
+  [[_sus_no_unique_address]] ::sus::iter::IterRef ref_;
   Slice<ItemT> v_;
   Slice<ItemT> rem_;
   ::sus::num::usize chunk_size_;
@@ -447,7 +447,7 @@ struct [[nodiscard]] [[_sus_trivial_abi]] ChunksExactMut final
         rem_(remainder),
         chunk_size_(chunk_size) {}
 
-  [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
+  [[_sus_no_unique_address]] ::sus::iter::IterRef ref_;
   SliceMut<ItemT> v_;
   SliceMut<ItemT> rem_;
   ::sus::num::usize chunk_size_;
@@ -553,7 +553,7 @@ struct [[nodiscard]] [[_sus_trivial_abi]] RChunks final
     sus_check(chunk_size > 0u);
   }
 
-  [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
+  [[_sus_no_unique_address]] ::sus::iter::IterRef ref_;
   Slice<ItemT> v_;
   ::sus::num::usize chunk_size_;
 
@@ -649,7 +649,7 @@ struct [[nodiscard]] [[_sus_trivial_abi]] RChunksMut final
     sus_check(chunk_size > 0u);
   }
 
-  [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
+  [[_sus_no_unique_address]] ::sus::iter::IterRef ref_;
   SliceMut<ItemT> v_;
   ::sus::num::usize chunk_size_;
 
@@ -757,7 +757,7 @@ struct [[nodiscard]] [[_sus_trivial_abi]] RChunksExact final
         rem_(remainder),
         chunk_size_(chunk_size) {}
 
-  [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
+  [[_sus_no_unique_address]] ::sus::iter::IterRef ref_;
   Slice<ItemT> v_;
   Slice<ItemT> rem_;
   ::sus::num::usize chunk_size_;
@@ -863,7 +863,7 @@ struct [[nodiscard]] [[_sus_trivial_abi]] RChunksExactMut final
         rem_(remainder),
         chunk_size_(chunk_size) {}
 
-  [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
+  [[_sus_no_unique_address]] ::sus::iter::IterRef ref_;
   SliceMut<ItemT> v_;
   SliceMut<ItemT> rem_;
   ::sus::num::usize chunk_size_;

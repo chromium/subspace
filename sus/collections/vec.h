@@ -979,11 +979,11 @@ class Vec final {
   /// signal its moved-from state.
   static constexpr usize kMovedFromCapacity = 0_usize;
 
-  [[sus_no_unique_address]] std::allocator<T> allocator_;
+  [[_sus_no_unique_address]] std::allocator<T> allocator_;
   usize capacity_;
   // These are in the same order as Slice/SliceMut, and come last to make it
   // easier to reuse the same stack space.
-  [[sus_no_unique_address]] ::sus::iter::IterRefCounter iter_refs_;
+  [[_sus_no_unique_address]] ::sus::iter::IterRefCounter iter_refs_;
   T* data_;
   usize len_;
 

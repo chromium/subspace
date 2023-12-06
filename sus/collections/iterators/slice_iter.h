@@ -106,7 +106,7 @@ struct [[nodiscard]] [[_sus_trivial_abi]] SliceIter final
   }
 
  private:
-  [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
+  [[_sus_no_unique_address]] ::sus::iter::IterRef ref_;
   const RawItem* ptr_;
   const RawItem* end_;
 
@@ -197,7 +197,7 @@ struct [[_sus_trivial_abi]] SliceIterMut final
   }
 
  private:
-  [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
+  [[_sus_no_unique_address]] ::sus::iter::IterRef ref_;
   RawItem* ptr_;
   RawItem* end_;
 

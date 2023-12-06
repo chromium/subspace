@@ -24,6 +24,6 @@
 /// https://devblogs.microsoft.com/cppblog/msvc-cpp20-and-the-std-cpp20-switch/
 //
 // clang-format off
-#define sus_no_unique_address \
+#define _sus_no_unique_address \
     sus_clang_bug_49358_else(sus_if_msvc(msvc::)no_unique_address)
 // clang-format on

@@ -28,7 +28,7 @@ constexpr inline size_t min_size(size_t a, size_t b) { return a < b ? a : b; }
 
 template <class T, size_t bytes>
 struct NoUnique {
-  [[sus_no_unique_address]] T x;
+  [[_sus_no_unique_address]] T x;
   char c[bytes];
 };
 

@@ -68,7 +68,7 @@ static_assert(sizeof(Result<void, TailPadding>) ==
 
 template <class T>
 struct Holds {
-  [[sus_no_unique_address]] T t;
+  [[_sus_no_unique_address]] T t;
   char c = 0;
 };
 // An element in the Result's union has tail padding, so it can't allow anything

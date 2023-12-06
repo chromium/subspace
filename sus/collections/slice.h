@@ -264,7 +264,7 @@ class [[_sus_trivial_abi]] Slice final {
   template <class VecT>
   friend class Vec;
 
-  [[sus_no_unique_address]] ::sus::iter::IterRefCounter iter_refs_;
+  [[_sus_no_unique_address]] ::sus::iter::IterRefCounter iter_refs_;
   T* data_;
   usize len_;
 

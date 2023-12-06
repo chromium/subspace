@@ -50,7 +50,7 @@ struct TupleStorage<T> {
   inline constexpr T&& into_inner() && noexcept { return ::sus::move(value); }
 
  private:
-  [[sus_no_unique_address]] T value;
+  [[_sus_no_unique_address]] T value;
 };
 
 template <class T>
@@ -84,7 +84,7 @@ struct TupleStorage<T, Ts...> : TupleStorage<Ts...> {
   inline constexpr T&& into_inner() && noexcept { return ::sus::move(value); }
 
  private:
-  [[sus_no_unique_address]] T value;
+  [[_sus_no_unique_address]] T value;
 };
 
 template <class T, class... Ts>

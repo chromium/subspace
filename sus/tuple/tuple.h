@@ -400,7 +400,7 @@ class Tuple final {
   // `[[no_unique_address]]` on the Tuple. For example, Choice does this with
   // its internal Tuples to put its tag inside the Tuples' storage when
   // possible.
-  [[sus_no_unique_address]] Storage storage_;
+  [[_sus_no_unique_address]] Storage storage_;
 
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn, T, Ts...);
 };
