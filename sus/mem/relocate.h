@@ -32,7 +32,7 @@ namespace __private {
 /// The static member is created by `sus_class_trivially_relocatable()` and
 /// similar macros.
 template <class T>
-struct relocatable_tag final {
+struct RelocatableTag final {
   static constexpr bool value(...) { return false; }
 
   static constexpr bool value(int)
@@ -52,7 +52,7 @@ concept TriviallyRelocatable_impl =
     std::is_reference_v<T>
     || (!std::is_volatile_v<std::remove_all_extents_t<T>>
        && sus::mem::data_size_of<std::remove_all_extents_t<std::remove_reference_t<T>>>() != size_t(-1)
-       && (__private::relocatable_tag<std::remove_all_extents_t<T>>::value(0)
+       && (__private::RelocatableTag<std::remove_all_extents_t<T>>::value(0)
          || std::is_trivially_copyable_v<std::remove_all_extents_t<T>>
          || (std::is_trivially_move_constructible_v<std::remove_all_extents_t<T>> &&
              std::is_trivially_move_assignable_v<std::remove_all_extents_t<T>> &&
@@ -216,7 +216,7 @@ concept TriviallyRelocatable = (... && __private::TriviallyRelocatable_impl<T>);
   static_assert(std::is_same_v<decltype(unsafe_fn),                   \
                                const ::sus::marker::UnsafeFnMarker>); \
   template <class SusOuterClassTypeForTriviallyReloc>                 \
-  friend struct ::sus::mem::__private::relocatable_tag;               \
+  friend struct ::sus::mem::__private::RelocatableTag;                \
   /** #[doc.hidden] */                                                \
   static constexpr bool SusUnsafeTrivialRelocate =                    \
       ::sus::mem::TriviallyRelocatable<__VA_ARGS__>
@@ -262,7 +262,7 @@ concept TriviallyRelocatable = (... && __private::TriviallyRelocatable_impl<T>);
   static_assert(                                                             \
       std::is_same_v<std::remove_cv_t<decltype(is_trivially_reloc)>, bool>); \
   template <class SusOuterClassTypeForTriviallyReloc>                        \
-  friend struct ::sus::mem::__private::relocatable_tag;                      \
+  friend struct ::sus::mem::__private::RelocatableTag;                       \
   static constexpr bool SusUnsafeTrivialRelocate = is_trivially_reloc
 
 /// Mark a class as unconditionally trivially relocatable, without any
@@ -298,5 +298,5 @@ concept TriviallyRelocatable = (... && __private::TriviallyRelocatable_impl<T>);
   static_assert(std::is_same_v<decltype(unsafe_fn),                   \
                                const ::sus::marker::UnsafeFnMarker>); \
   template <class SusOuterClassTypeForTriviallyReloc>                 \
-  friend struct ::sus::mem::__private::relocatable_tag;               \
+  friend struct ::sus::mem::__private::RelocatableTag;                \
   static constexpr bool SusUnsafeTrivialRelocate = true
