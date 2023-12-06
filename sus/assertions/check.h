@@ -16,8 +16,8 @@
 
 #include "sus/assertions/panic.h"
 
-/// Verifies that `cond` is true, and will [`panic`]($sus_panic)
-/// otherwise, terminating the program.
+/// Verifies that the input, evaluated to a `bool`, is true. Otherwise, it will
+/// [`panic`]($sus_panic), printing a message and terminating the program.
 ///
 /// See [`sus_check_with_message`]($sus_check_with_message) to add a
 /// message to the display of the panic.
@@ -30,9 +30,9 @@
   }                                  \
   static_assert(true)
 
-/// Verifies that `cond` is true, and will
-/// [`sus_panic_with_message`]($sus_panic_with_message)
-/// otherwise, terminating the program.
+/// Verifies that the input `cond`, evaluated to a `bool`, is true. Otherwise,
+/// it will [`panic`]($sus_panic), printing a customized message, and
+/// terminating the program.
 ///
 /// Use [`sus_check`]($sus_check) when there's nothing useful to add
 /// in the message.
