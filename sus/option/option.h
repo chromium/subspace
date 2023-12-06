@@ -718,11 +718,11 @@ class Option final {
   /// const/mutable access, or through
   /// [`operator*`]($sus::option::Option::operator*)
   /// and [`operator->`]($sus::option::Option::operator->).
-  sus_pure constexpr bool is_some() const noexcept {
+  _sus_pure constexpr bool is_some() const noexcept {
     return t_.state() == Some;
   }
   /// Returns whether the option is currently empty, containing no value.
-  sus_pure constexpr bool is_none() const noexcept {
+  _sus_pure constexpr bool is_none() const noexcept {
     return t_.state() == None;
   }
 
@@ -743,7 +743,7 @@ class Option final {
   ///   return -1;
   /// }
   /// ```
-  sus_pure constexpr operator State() const& { return t_.state(); }
+  _sus_pure constexpr operator State() const& { return t_.state(); }
 
   /// Returns the contained value inside the option.
   ///
@@ -880,12 +880,12 @@ class Option final {
   /// Implementation note: We only allow calling this on an rvalue Option if the
   /// contained value is a reference, otherwise we are returning a reference to
   /// a short-lived object which leads to common C++ memory bugs.
-  sus_pure constexpr const std::remove_reference_t<T>& as_value()
+  _sus_pure constexpr const std::remove_reference_t<T>& as_value()
       const& noexcept {
     sus_check(t_.state() == Some);
     return t_.val();
   }
-  sus_pure constexpr const std::remove_reference_t<T>& as_value() && noexcept
+  _sus_pure constexpr const std::remove_reference_t<T>& as_value() && noexcept
     requires(std::is_reference_v<T>)
   {
     sus_check(t_.state() == Some);
@@ -908,17 +908,17 @@ class Option final {
   /// Implementation note: We only allow calling this on an rvalue Option if the
   /// contained value is a reference, otherwise we are returning a reference to
   /// a short-lived object which leads to common C++ memory bugs.
-  sus_pure constexpr std::remove_reference_t<T>& as_value_mut() & noexcept {
+  _sus_pure constexpr std::remove_reference_t<T>& as_value_mut() & noexcept {
     sus_check(t_.state() == Some);
     return t_.val_mut();
   }
-  sus_pure constexpr std::remove_reference_t<T>& as_value_mut() && noexcept
+  _sus_pure constexpr std::remove_reference_t<T>& as_value_mut() && noexcept
     requires(std::is_reference_v<T>)
   {
     sus_check(t_.state() == Some);
     return t_.val_mut();
   }
-  sus_pure constexpr std::remove_reference_t<T>& as_value_mut() const& noexcept
+  _sus_pure constexpr std::remove_reference_t<T>& as_value_mut() const& noexcept
     requires(std::is_reference_v<T>)
   {
     return ::sus::clone(*this).as_value_mut();
@@ -939,11 +939,11 @@ class Option final {
   /// Implementation note: We only allow calling this on an rvalue Option if the
   /// contained value is a reference, otherwise we are returning a reference to
   /// a short-lived object which leads to common C++ memory bugs.
-  sus_pure constexpr const std::remove_reference_t<T>& as_value_unchecked(
+  _sus_pure constexpr const std::remove_reference_t<T>& as_value_unchecked(
       ::sus::marker::UnsafeFnMarker) const& noexcept {
     return t_.val();
   }
-  sus_pure constexpr const std::remove_reference_t<T>& as_value_unchecked(
+  _sus_pure constexpr const std::remove_reference_t<T>& as_value_unchecked(
       ::sus::marker::UnsafeFnMarker) && noexcept
     requires(std::is_reference_v<T>)
   {
@@ -964,17 +964,17 @@ class Option final {
   /// Implementation note: We only allow calling this on an rvalue Option if the
   /// contained value is a reference, otherwise we are returning a reference to
   /// a short-lived object which leads to common C++ memory bugs.
-  sus_pure constexpr std::remove_reference_t<T>& as_value_unchecked_mut(
+  _sus_pure constexpr std::remove_reference_t<T>& as_value_unchecked_mut(
       ::sus::marker::UnsafeFnMarker) & noexcept {
     return t_.val_mut();
   }
-  sus_pure constexpr std::remove_reference_t<T>& as_value_unchecked_mut(
+  _sus_pure constexpr std::remove_reference_t<T>& as_value_unchecked_mut(
       ::sus::marker::UnsafeFnMarker) && noexcept
     requires(std::is_reference_v<T>)
   {
     return t_.val_mut();
   }
-  sus_pure constexpr std::remove_reference_t<T>& as_value_unchecked_mut(
+  _sus_pure constexpr std::remove_reference_t<T>& as_value_unchecked_mut(
       ::sus::marker::UnsafeFnMarker) const& noexcept
     requires(std::is_reference_v<T>)
   {
@@ -1017,18 +1017,18 @@ class Option final {
   ///   and other pre-existing collection-of-one things to provide access
   ///   through [`operator*`]($sus::option::Option::operator*) and
   ///   [`operator->`]($sus::option::Option::operator->).
-  sus_pure constexpr const std::remove_reference_t<T>& operator*()
+  _sus_pure constexpr const std::remove_reference_t<T>& operator*()
       const& noexcept {
     sus_check(t_.state() == Some);
     return t_.val();
   }
-  sus_pure constexpr const std::remove_reference_t<T>& operator*() && noexcept
+  _sus_pure constexpr const std::remove_reference_t<T>& operator*() && noexcept
     requires(std::is_reference_v<T>)
   {
     sus_check(t_.state() == Some);
     return t_.val();
   }
-  sus_pure constexpr std::remove_reference_t<T>& operator*() & noexcept {
+  _sus_pure constexpr std::remove_reference_t<T>& operator*() & noexcept {
     sus_check(t_.state() == Some);
     return t_.val_mut();
   }
@@ -1069,20 +1069,20 @@ class Option final {
   ///   and other pre-existing collection-of-one things to provide access
   ///   through [`operator*`]($sus::option::Option::operator*) and
   ///   [`operator->`]($sus::option::Option::operator->).
-  sus_pure constexpr const std::remove_reference_t<T>* operator->()
+  _sus_pure constexpr const std::remove_reference_t<T>* operator->()
       const& noexcept {
     sus_check(t_.state() == Some);
     return ::sus::mem::addressof(
         static_cast<const std::remove_reference_t<T>&>(t_.val()));
   }
-  sus_pure constexpr const std::remove_reference_t<T>* operator->() && noexcept
+  _sus_pure constexpr const std::remove_reference_t<T>* operator->() && noexcept
     requires(std::is_reference_v<T>)
   {
     sus_check(t_.state() == Some);
     return ::sus::mem::addressof(
         static_cast<const std::remove_reference_t<T>&>(t_.val()));
   }
-  sus_pure constexpr std::remove_reference_t<T>* operator->() & noexcept {
+  _sus_pure constexpr std::remove_reference_t<T>* operator->() & noexcept {
     sus_check(t_.state() == Some);
     return ::sus::mem::addressof(
         static_cast<std::remove_reference_t<T>&>(t_.val_mut()));
@@ -1634,7 +1634,7 @@ class Option final {
   /// Implementation note: We only allow calling this on an rvalue option if the
   /// contained value is a reference, otherwise we are returning a reference to
   /// a short-lived object which leads to common C++ memory bugs.
-  sus_pure constexpr Option<const std::remove_reference_t<T>&> as_ref()
+  _sus_pure constexpr Option<const std::remove_reference_t<T>&> as_ref()
       const& noexcept {
     if (t_.state() == None)
       return Option<const std::remove_reference_t<T>&>();
@@ -1642,7 +1642,7 @@ class Option final {
       return Option<const std::remove_reference_t<T>&>(
           Option<const std::remove_reference_t<T>&>::WITH_SOME, t_.val());
   }
-  sus_pure constexpr Option<const std::remove_reference_t<T>&>
+  _sus_pure constexpr Option<const std::remove_reference_t<T>&>
   as_ref() && noexcept
     requires(std::is_reference_v<T>)
   {
@@ -1657,7 +1657,7 @@ class Option final {
   /// Returns an [`Option<T&>`]($sus::option::Option) from this
   /// [`Option<T>`]($sus::option::Option), that either holds `None` or a
   /// reference to the value in this option.
-  sus_pure constexpr Option<T&> as_mut() & noexcept {
+  _sus_pure constexpr Option<T&> as_mut() & noexcept {
     if (t_.state() == None)
       return Option<T&>();
     else
@@ -1666,7 +1666,7 @@ class Option final {
   // Calling as_mut() on an rvalue is not returning a reference to the inner
   // value if the inner value is already a reference, so we allow calling it on
   // an rvalue Option in that case.
-  sus_pure constexpr Option<T&> as_mut() && noexcept
+  _sus_pure constexpr Option<T&> as_mut() && noexcept
     requires(std::is_reference_v<T>)
   {
     if (t_.state() == None)
@@ -1674,20 +1674,20 @@ class Option final {
     else
       return Option<T&>(Option<T&>::WITH_SOME, t_.take_and_set_none());
   }
-  sus_pure constexpr Option<T&> as_mut() const& noexcept
+  _sus_pure constexpr Option<T&> as_mut() const& noexcept
     requires(std::is_reference_v<T>)
   {
     return ::sus::clone(*this).as_mut();
   }
 
-  sus_pure constexpr OptionIter<const std::remove_reference_t<T>&> iter()
+  _sus_pure constexpr OptionIter<const std::remove_reference_t<T>&> iter()
       const& noexcept;
   constexpr OptionIter<const std::remove_reference_t<T>&> iter() && noexcept
     requires(std::is_reference_v<T>);
   constexpr OptionIter<const std::remove_reference_t<T>&> iter() const& noexcept
     requires(std::is_reference_v<T>);
 
-  sus_pure constexpr OptionIter<T&> iter_mut() & noexcept;
+  _sus_pure constexpr OptionIter<T&> iter_mut() & noexcept;
   constexpr OptionIter<T&> iter_mut() && noexcept
     requires(std::is_reference_v<T>);
   constexpr OptionIter<T&> iter_mut() const& noexcept
@@ -2028,7 +2028,7 @@ template <class T>
 /// Calling none() produces a hint to make an option but does not actually
 /// construct the option. This is because the type `T` is not known until the
 /// construction is explicitly requested.
-sus_pure_const inline constexpr auto none() noexcept {
+__sus_pure_const inline constexpr auto none() noexcept {
   return __private::NoneMarker();
 }
 
@@ -2224,7 +2224,7 @@ constexpr Option<T> from_sum_impl(Iter&& it) noexcept {
 namespace sus::option {
 
 template <class T>
-sus_pure constexpr OptionIter<const std::remove_reference_t<T>&>
+_sus_pure constexpr OptionIter<const std::remove_reference_t<T>&>
 Option<T>::iter() const& noexcept {
   return OptionIter<const std::remove_reference_t<T>&>(as_ref());
 }
@@ -2245,7 +2245,7 @@ constexpr OptionIter<const std::remove_reference_t<T>&> Option<T>::iter()
 }
 
 template <class T>
-sus_pure constexpr OptionIter<T&> Option<T>::iter_mut() & noexcept {
+_sus_pure constexpr OptionIter<T&> Option<T>::iter_mut() & noexcept {
   return OptionIter<T&>(as_mut());
 }
 template <class T>

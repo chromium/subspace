@@ -146,7 +146,7 @@ class Vec final {
   ///
   /// # Panics
   /// Panics if the capacity exceeds `isize::MAX` bytes.
-  sus_pure static constexpr Vec with_capacity(usize capacity) noexcept {
+  _sus_pure static constexpr Vec with_capacity(usize capacity) noexcept {
     sus_check(::sus::mem::size_of<T>() * capacity <=
           ::sus::cast<usize>(isize::MAX));
     return Vec(WITH_CAPACITY, std::allocator<T>(), capacity);
@@ -173,7 +173,7 @@ class Vec final {
   /// * The allocated size in bytes must be no larger than `isize::MAX`.
   /// * If `ptr` is null, then `length` and `capacity` must be `0_usize`, and
   ///   vice versa.
-  sus_pure static constexpr Vec from_raw_parts(::sus::marker::UnsafeFnMarker,
+  _sus_pure static constexpr Vec from_raw_parts(::sus::marker::UnsafeFnMarker,
                                                T* ptr, usize length,
                                                usize capacity) noexcept {
     return Vec(FROM_PARTS, std::allocator<T>(), capacity, ptr, length);
@@ -339,7 +339,7 @@ class Vec final {
   ///
   /// This may be larger than the number of elements present, which is returned
   /// by [`len`]($sus::collections::Vec::len).
-  sus_pure constexpr inline usize capacity() const& noexcept {
+  _sus_pure constexpr inline usize capacity() const& noexcept {
     sus_check(!is_moved_from());
     return capacity_;
   }
@@ -672,14 +672,14 @@ class Vec final {
 
   /// Returns a [`Slice`]($sus::collections::Slice) that references all the
   /// elements of the vector as const references.
-  sus_pure constexpr Slice<T> as_slice() const& noexcept sus_lifetimebound {
+  _sus_pure constexpr Slice<T> as_slice() const& noexcept sus_lifetimebound {
     return *this;
   }
   constexpr Slice<T> as_slice() && = delete;
 
   /// Returns a [`SliceMut`]($sus::collections::SliceMut) that references all
   /// the elements of the vector as mutable references.
-  sus_pure constexpr SliceMut<T> as_mut_slice() & noexcept sus_lifetimebound {
+  _sus_pure constexpr SliceMut<T> as_mut_slice() & noexcept sus_lifetimebound {
     return *this;
   }
 
@@ -731,7 +731,7 @@ class Vec final {
   /// # Panics
   /// If the index `i` is beyond the end of the Vec, the function will panic.
   /// #[doc.overloads=vec.index.usize]
-  sus_pure constexpr const T& operator[](::sus::num::usize i) const& noexcept {
+  _sus_pure constexpr const T& operator[](::sus::num::usize i) const& noexcept {
     sus_check(i < len_);
     return *(as_ptr() + i);
   }
@@ -743,7 +743,7 @@ class Vec final {
   /// # Panics
   /// If the index `i` is beyond the end of the Vec, the function will panic.
   /// #[doc.overloads=vec.index_mut.usize]
-  sus_pure constexpr T& operator[](::sus::num::usize i) & noexcept {
+  _sus_pure constexpr T& operator[](::sus::num::usize i) & noexcept {
     sus_check(i < len_);
     return *(as_mut_ptr() + i);
   }
@@ -760,7 +760,7 @@ class Vec final {
   /// If the Range would otherwise contain an element that is out of bounds,
   /// the function will panic.
   /// #[doc.overloads=vec.index.range]
-  sus_pure constexpr Slice<T> operator[](
+  _sus_pure constexpr Slice<T> operator[](
       const ::sus::ops::RangeBounds<::sus::num::usize> auto range)
       const& noexcept {
     const ::sus::num::usize length = len_;
@@ -791,7 +791,7 @@ class Vec final {
   /// If the Range would otherwise contain an element that is out of bounds,
   /// the function will panic.
   /// #[doc.overloads=vec.index_mut.range]
-  sus_pure constexpr SliceMut<T> operator[](
+  _sus_pure constexpr SliceMut<T> operator[](
       const ::sus::ops::RangeBounds<::sus::num::usize> auto range) & noexcept {
     const ::sus::num::usize length = len_;
     const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
@@ -808,13 +808,13 @@ class Vec final {
 
   /// Converts to a [`Slice<T>`]($sus::collections::Slice). A `Vec` can be used
   /// anywhere a [`Slice`]($sus::collections::Slice) is wanted.
-  sus_pure constexpr operator Slice<T>() const& noexcept {
+  _sus_pure constexpr operator Slice<T>() const& noexcept {
     sus_check(!is_moved_from());
     return Slice<T>::from_raw_collection(
         ::sus::marker::unsafe_fn, iter_refs_.to_view_from_owner(), data_, len_);
   }
-  sus_pure constexpr operator Slice<T>() && = delete;
-  sus_pure constexpr operator Slice<T>() & noexcept {
+  _sus_pure constexpr operator Slice<T>() && = delete;
+  _sus_pure constexpr operator Slice<T>() & noexcept {
     sus_check(!is_moved_from());
     return Slice<T>::from_raw_collection(
         ::sus::marker::unsafe_fn, iter_refs_.to_view_from_owner(), data_, len_);
@@ -823,7 +823,7 @@ class Vec final {
   /// Converts to a [`SliceMut<T>`]($sus::collections::SliceMut). A mutable
   /// `Vec` can be used anywhere a [`SliceMut`]($sus::collections::SliceMut) is
   /// wanted.
-  sus_pure constexpr operator SliceMut<T>() & noexcept {
+  _sus_pure constexpr operator SliceMut<T>() & noexcept {
     sus_check(!is_moved_from());
     return SliceMut<T>::from_raw_collection_mut(
         ::sus::marker::unsafe_fn, iter_refs_.to_view_from_owner(), data_, len_);

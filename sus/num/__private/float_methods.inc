@@ -147,7 +147,7 @@ constexpr inline _self(P v) noexcept : primitive_value(v) {}
 /// #[doc.overloads=from.float]
 template <Float F>
   requires(::sus::mem::size_of<F>() <= ::sus::mem::size_of<_primitive>())
-sus_pure static constexpr _self from(F v) noexcept {
+_sus_pure static constexpr _self from(F v) noexcept {
   return _self(v);
 }
 
@@ -156,7 +156,7 @@ sus_pure static constexpr _self from(F v) noexcept {
 /// #[doc.overloads=from.primitive_float]
 template <PrimitiveFloat P>
   requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<_primitive>())
-sus_pure static constexpr _self from(P v) noexcept {
+_sus_pure static constexpr _self from(P v) noexcept {
   return _self(v);
 }
 
@@ -189,7 +189,7 @@ constexpr inline _self& operator=(P v) noexcept {
 template <Integer I>
   requires(::sus::mem::size_of<I>() * 8 <=
            __private::num_mantissa_digits<_primitive>())
-sus_pure static constexpr _self from(I v) noexcept {
+_sus_pure static constexpr _self from(I v) noexcept {
   return _self(static_cast<_primitive>(v.primitive_value));
 }
 
@@ -202,7 +202,7 @@ sus_pure static constexpr _self from(I v) noexcept {
 template <PrimitiveInteger P>
   requires(::sus::mem::size_of<P>() * 8 <=
            __private::num_mantissa_digits<_primitive>())
-sus_pure static constexpr _self from(P v) noexcept {
+_sus_pure static constexpr _self from(P v) noexcept {
   return _self(static_cast<_primitive>(v));
 }
 
@@ -258,7 +258,7 @@ static constexpr _self from_product(
 /// `sus::cast<float>(3_f64)` or `sus::cast<f32>(3_f64)`.
 template <PrimitiveFloat U>
   requires(::sus::mem::size_of<U>() >= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr inline operator U() const noexcept {
+_sus_pure constexpr inline operator U() const noexcept {
   return primitive_value;
 }
 
@@ -266,7 +266,7 @@ sus_pure constexpr inline operator U() const noexcept {
 ///
 /// This allows Subspace numerics be used with APIs that expect a pointer to a
 /// C++ primitive type.
-sus_pure constexpr _primitive* as_mut_ptr() & noexcept {
+_sus_pure constexpr _primitive* as_mut_ptr() & noexcept {
   return &primitive_value;
 }
 
@@ -274,24 +274,24 @@ sus_pure constexpr _primitive* as_mut_ptr() & noexcept {
 ///
 /// This allows Subspace numerics be used with APIs that expect a pointer to a
 /// C++ primitive type.
-sus_pure constexpr const _primitive* as_ptr() const& noexcept {
+_sus_pure constexpr const _primitive* as_ptr() const& noexcept {
   return &primitive_value;
 }
-sus_pure constexpr const _primitive* as_ptr() && noexcept = delete;
+_sus_pure constexpr const _primitive* as_ptr() && noexcept = delete;
 
 /// Satisfies the [`Eq`]($sus::cmp::Eq) concept for floating point numbers.
 /// #[doc.overloads=float.eq]
-[[nodiscard]] sus_pure_const friend constexpr inline bool operator==(
+[[nodiscard]] __sus_pure_const friend constexpr inline bool operator==(
     _self l, _self r) noexcept {
   return (l.primitive_value <=> r.primitive_value) == 0;
 }
 /// #[doc.overloads=float.eq]
-[[nodiscard]] sus_pure_const friend constexpr inline bool operator==(
+[[nodiscard]] __sus_pure_const friend constexpr inline bool operator==(
     _self l, Float auto r) noexcept {
   return (l.primitive_value <=> r.primitive_value) == 0;
 }
 /// #[doc.overloads=float.eq]
-[[nodiscard]] sus_pure_const friend constexpr inline bool operator==(
+[[nodiscard]] __sus_pure_const friend constexpr inline bool operator==(
     _self l, PrimitiveFloat auto r) noexcept {
   return (l.primitive_value <=> r) == 0;
 }
@@ -299,17 +299,17 @@ sus_pure constexpr const _primitive* as_ptr() && noexcept = delete;
 /// Satisfies the [`PartialOrd`]($sus::cmp::PartialOrd) concept for floating
 /// point numbers.
 /// #[doc.overloads=float.partialord]
-[[nodiscard]] sus_pure_const friend constexpr inline std::partial_ordering
+[[nodiscard]] __sus_pure_const friend constexpr inline std::partial_ordering
 operator<=>(_self l, _self r) noexcept {
   return l.primitive_value <=> r.primitive_value;
 }
 /// #[doc.overloads=float.partialord]
-[[nodiscard]] sus_pure_const friend constexpr inline std::partial_ordering
+[[nodiscard]] __sus_pure_const friend constexpr inline std::partial_ordering
 operator<=>(_self l, Float auto r) noexcept {
   return l.primitive_value <=> r.primitive_value;
 }
 /// #[doc.overloads=float.partialord]
-[[nodiscard]] sus_pure_const friend constexpr inline std::partial_ordering
+[[nodiscard]] __sus_pure_const friend constexpr inline std::partial_ordering
 operator<=>(_self l, PrimitiveFloat auto r) noexcept {
   return l.primitive_value <=> r;
 }
@@ -350,33 +350,33 @@ operator<=>(_self l, PrimitiveFloat auto r) noexcept {
 /// [`std::weak_ordering`](https://en.cppreference.com/w/cpp/utility/compare/weak_ordering)
 /// which can be used in situations that require [`Ord`]($sus::cmp::Ord)
 /// because different NaNs will be ordered equivalently.
-sus_pure constexpr std::weak_ordering total_cmp(_self other) const& noexcept {
+_sus_pure constexpr std::weak_ordering total_cmp(_self other) const& noexcept {
   return __private::float_strong_ordering(primitive_value,
                                           other.primitive_value);
 }
 
 /// Satisfies the [`Neg<@doc.self>`]($sus::num::Neg) concept.
-sus_pure constexpr inline _self operator-() const {
+_sus_pure constexpr inline _self operator-() const {
   return _self(-primitive_value);
 }
 
 /// Satisfies the [`Add`]($sus::num::Add) concept for floating point values.
 /// #[doc.overloads=float.+]
-[[nodiscard]] sus_pure friend constexpr inline _self operator+(
+[[nodiscard]] _sus_pure friend constexpr inline _self operator+(
     _self l, _self r) noexcept {
   return l.primitive_value + r.primitive_value;
 }
 /// #[doc.overloads=float.+]
 template <PrimitiveFloat U>
   requires(std::convertible_to<U, _self>)
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator+(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator+(
     _self l, U r) noexcept {
   return l + _self(r);
 }
 /// #[doc.overloads=float.+]
 template <PrimitiveFloat U>
   requires(std::convertible_to<U, _self>)
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator+(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator+(
     U l, _self r) noexcept {
   return _self(l) + r;
 }
@@ -390,21 +390,21 @@ template <PrimitiveFloat U>
 friend constexpr inline _self operator+(U l, _self r) noexcept = delete;
 /// Satisfies the [`Sub`]($sus::num::Sub) concept for floating point values.
 /// #[doc.overloads=float.-]
-[[nodiscard]] sus_pure friend constexpr inline _self operator-(
+[[nodiscard]] _sus_pure friend constexpr inline _self operator-(
     _self l, _self r) noexcept {
   return l.primitive_value - r.primitive_value;
 }
 /// #[doc.overloads=float.-]
 template <PrimitiveFloat U>
   requires(std::convertible_to<U, _self>)
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator-(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator-(
     _self l, U r) noexcept {
   return l - _self(r);
 }
 /// #[doc.overloads=float.-]
 template <PrimitiveFloat U>
   requires(std::convertible_to<U, _self>)
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator-(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator-(
     U l, _self r) noexcept {
   return _self(l) - r;
 }
@@ -418,21 +418,21 @@ template <PrimitiveFloat U>
 friend constexpr inline _self operator-(U l, _self r) noexcept = delete;
 /// Satisfies the [`Mul`]($sus::num::Mul) concept for floating point values.
 /// #[doc.overloads=float.*]
-[[nodiscard]] sus_pure friend constexpr inline _self operator*(
+[[nodiscard]] _sus_pure friend constexpr inline _self operator*(
     _self l, _self r) noexcept {
   return l.primitive_value * r.primitive_value;
 }
 /// #[doc.overloads=float.*]
 template <PrimitiveFloat U>
   requires(std::convertible_to<U, _self>)
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator*(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator*(
     _self l, U r) noexcept {
   return l * _self(r);
 }
 /// #[doc.overloads=float.*]
 template <PrimitiveFloat U>
   requires(std::convertible_to<U, _self>)
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator*(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator*(
     U l, _self r) noexcept {
   return _self(l) * r;
 }
@@ -446,21 +446,21 @@ template <PrimitiveFloat U>
 friend constexpr inline _self operator*(U l, _self r) noexcept = delete;
 /// Satisfies the [`Div`]($sus::num::Div) concept for floating point values.
 /// #[doc.overloads=float./]
-[[nodiscard]] sus_pure friend constexpr inline _self operator/(
+[[nodiscard]] _sus_pure friend constexpr inline _self operator/(
     _self l, _self r) noexcept {
   return l.primitive_value / r.primitive_value;
 }
 /// #[doc.overloads=float./]
 template <PrimitiveFloat U>
   requires(std::convertible_to<U, _self>)
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator/(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator/(
     _self l, U r) noexcept {
   return l / _self(r);
 }
 /// #[doc.overloads=float./]
 template <PrimitiveFloat U>
   requires(std::convertible_to<U, _self>)
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator/(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator/(
     U l, _self r) noexcept {
   return _self(l) / r;
 }
@@ -480,7 +480,7 @@ friend constexpr inline _self operator/(U l, _self r) noexcept = delete;
 /// `l - (l / r).trunc() * r`.
 ///
 /// #[doc.overloads=float.%]
-[[nodiscard]] sus_pure friend constexpr inline _self operator%(
+[[nodiscard]] _sus_pure friend constexpr inline _self operator%(
     _self l, _self r) noexcept {
   const auto x = l.primitive_value;
   const auto y = r.primitive_value;
@@ -489,14 +489,14 @@ friend constexpr inline _self operator/(U l, _self r) noexcept = delete;
 /// #[doc.overloads=float.%]
 template <PrimitiveFloat U>
   requires(std::convertible_to<U, _self>)
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator%(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator%(
     _self l, U r) noexcept {
   return l % _self(r);
 }
 /// #[doc.overloads=float.%]
 template <PrimitiveFloat U>
   requires(std::convertible_to<U, _self>)
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator%(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator%(
     U l, _self r) noexcept {
   return _self(l) % r;
 }
@@ -538,7 +538,7 @@ constexpr inline void operator%=(_self r) & noexcept {
 }
 
 // Computes the absolute value of itself.
-sus_pure inline _self abs() const& noexcept {
+_sus_pure inline _self abs() const& noexcept {
   return __private::into_float(
       __private::into_unsigned_integer(primitive_value) &
       ~__private::high_bit<_primitive>());
@@ -546,7 +546,7 @@ sus_pure inline _self abs() const& noexcept {
 
 /// Computes the arccosine of a number. Return value is in radians in the
 /// range [0, pi] or NaN if the number is outside the range [-1, 1].
-sus_pure inline _self acos() const& noexcept {
+_sus_pure inline _self acos() const& noexcept {
   if (primitive_value < _primitive{-1} || primitive_value > _primitive{1})
       [[unlikely]]
     return NAN;
@@ -555,7 +555,7 @@ sus_pure inline _self acos() const& noexcept {
 }
 /// Inverse hyperbolic cosine function, or NaN if the number is less than
 /// -1.
-sus_pure inline _self acosh() const& noexcept {
+_sus_pure inline _self acosh() const& noexcept {
   if (primitive_value < _primitive{-1}) [[unlikely]]
     return NAN;
   // MSVC acosh(float) is returning a double for some reason.
@@ -563,7 +563,7 @@ sus_pure inline _self acosh() const& noexcept {
 }
 /// Computes the arcsine of a number. Return value is in radians in the
 /// range [-pi/2, pi/2] or NaN if the number is outside the range [-1, 1].
-sus_pure inline _self asin() const& noexcept {
+_sus_pure inline _self asin() const& noexcept {
   if (primitive_value < _primitive{-1} || primitive_value > _primitive{1})
       [[unlikely]]
     return NAN;
@@ -571,7 +571,7 @@ sus_pure inline _self asin() const& noexcept {
   return static_cast<_primitive>(::asin(primitive_value));
 }
 /// Inverse hyperbolic sine function.
-sus_pure inline _self asinh() const& noexcept {
+_sus_pure inline _self asinh() const& noexcept {
   if (primitive_value < _primitive{-1}) [[unlikely]]
     return NAN;
   // MSVC asinh(float) is returning a double for some reason.
@@ -579,7 +579,7 @@ sus_pure inline _self asinh() const& noexcept {
 }
 /// Computes the arctangent of a number. Return value is in radians in the
 /// range [-pi/2, pi/2];
-sus_pure inline _self atan() const& noexcept {
+_sus_pure inline _self atan() const& noexcept {
   // MSVC atan(float) is returning a double for some reason.
   return static_cast<_primitive>(::atan(primitive_value));
 }
@@ -592,23 +592,23 @@ sus_pure inline _self atan() const& noexcept {
 /// - y < 0: arctan(y/x) - pi -> (-pi, -pi/2)
 ///
 /// Returns NaN if both `self` and `other` are 0.
-sus_pure inline _self atan2(_self other) const& noexcept {
+_sus_pure inline _self atan2(_self other) const& noexcept {
   // MSVC atan2(float) is returning a double for some reason.
   return static_cast<_primitive>(
       ::atan2(primitive_value, other.primitive_value));
 }
 /// Inverse hyperbolic tangent function.
-sus_pure inline _self atanh() const& noexcept {
+_sus_pure inline _self atanh() const& noexcept {
   // MSVC atanh(float) is returning a double for some reason.
   return static_cast<_primitive>(::atanh(primitive_value));
 }
 /// Returns the cube root of a number.
-sus_pure inline _self cbrt() const& noexcept {
+_sus_pure inline _self cbrt() const& noexcept {
   // MSVC cbrt(float) is returning a double for some reason.
   return static_cast<_primitive>(::cbrt(primitive_value));
 }
 /// Returns the smallest integer greater than or equal to self.
-sus_pure inline _self ceil() const& noexcept {
+_sus_pure inline _self ceil() const& noexcept {
   // MSVC ceil(float) is returning a double for some reason.
   return static_cast<_primitive>(::ceil(primitive_value));
 }
@@ -618,67 +618,67 @@ sus_pure inline _self ceil() const& noexcept {
 /// to -self. If self is a NaN, then a NaN with the sign bit of sign is
 /// returned. Note, however, that conserving the sign bit on NaN across
 /// arithmetical operations is not generally guaranteed.
-sus_pure inline _self copysign(_self sign) const& noexcept {
+_sus_pure inline _self copysign(_self sign) const& noexcept {
   // MSVC copysign(float) is returning a double for some reason.
   return static_cast<_primitive>(
       ::copysign(primitive_value, sign.primitive_value));
 }
 /// Computes the cosine of a number (in radians).
-sus_pure inline _self cos() const& noexcept {
+_sus_pure inline _self cos() const& noexcept {
   // MSVC cos(float) is returning a double for some reason.
   return static_cast<_primitive>(::cos(primitive_value));
 }
 /// Hyperbolic cosine function.
-sus_pure inline _self cosh() const& noexcept {
+_sus_pure inline _self cosh() const& noexcept {
   // MSVC cosh(float) is returning a double for some reason.
   return static_cast<_primitive>(::cosh(primitive_value));
 }
 /// Returns `e^(self)`, (the exponential function).
-sus_pure inline _self exp() const& noexcept {
+_sus_pure inline _self exp() const& noexcept {
   // MSVC exp(float) is returning a double for some reason.
   return static_cast<_primitive>(::exp(primitive_value));
 }
 /// Returns `2^(self)`.
-sus_pure inline _self exp2() const& noexcept {
+_sus_pure inline _self exp2() const& noexcept {
   // MSVC exp2(float) is returning a double for some reason.
   return static_cast<_primitive>(::exp2(primitive_value));
 }
 /// Returns `e^(self) - 1` in a way that is accurate even if the number is
 /// close to zero.
-sus_pure inline _self exp_m1() const& noexcept {
+_sus_pure inline _self exp_m1() const& noexcept {
   // MSVC expm1(float) is returning a double for some reason.
   return static_cast<_primitive>(::expm1(primitive_value));
 }
 /// Returns the largest integer less than or equal to self.
-sus_pure inline _self floor() const& noexcept {
+_sus_pure inline _self floor() const& noexcept {
   // MSVC floor(float) is returning a double for some reason.
   return static_cast<_primitive>(::floor(primitive_value));
 }
 /// Calculates the length of the hypotenuse of a right-angle triangle given
 /// legs of length x and y.
-sus_pure inline _self hypot(_self other) const& noexcept {
+_sus_pure inline _self hypot(_self other) const& noexcept {
   // MSVC hypot(float) is returning a double for some reason.
   return static_cast<_primitive>(
       ::hypot(primitive_value, other.primitive_value));
 }
 /// Returns the natural logarithm of the number.
-sus_pure inline _self ln() const& noexcept {
+_sus_pure inline _self ln() const& noexcept {
   // MSVC log(float) is returning a double for some reason.
   return static_cast<_primitive>(::log(primitive_value));
 }
 /// Returns ln(1+n) (natural logarithm) more accurately than if the
 /// operations were performed separately.
-sus_pure inline _self ln_1p() const& noexcept {
+_sus_pure inline _self ln_1p() const& noexcept {
   // MSVC log1p(float) is returning a double for some reason.
   return static_cast<_primitive>(::log1p(primitive_value));
 }
 /// Returns the base 10 logarithm of the number.
-sus_pure inline _self log10() const& noexcept {
+_sus_pure inline _self log10() const& noexcept {
   // MSVC log10(float) is returning a double for some reason.
   return static_cast<_primitive>(::log10(primitive_value));
 }
 /// Returns the base 2 logarithm of the number.
-sus_pure inline _self log2() const& noexcept {
+_sus_pure inline _self log2() const& noexcept {
   // MSVC log2(float) is returning a double for some reason.
   return static_cast<_primitive>(::log2(primitive_value));
 }
@@ -687,13 +687,13 @@ sus_pure inline _self log2() const& noexcept {
 /// The result might not be correctly rounded owing to implementation
 /// details; self.log2() can produce more accurate results for base 2, and
 /// self.log10() can produce more accurate results for base 10.
-sus_pure inline _self log(_self base) const& noexcept {
+_sus_pure inline _self log(_self base) const& noexcept {
   return ln() / base.ln();
 }
 /// Returns the maximum of the two numbers, ignoring NaN.
 ///
 /// If one of the arguments is NaN, then the other argument is returned.
-sus_pure inline _self max(_self other) const& noexcept {
+_sus_pure inline _self max(_self other) const& noexcept {
   // MSVC fmax(float) is returning a double for some reason.
   return static_cast<_primitive>(
       ::fmax(primitive_value, other.primitive_value));
@@ -701,7 +701,7 @@ sus_pure inline _self max(_self other) const& noexcept {
 /// Returns the minimum of the two numbers, ignoring NaN.
 ///
 /// If one of the arguments is NaN, then the other argument is returned.
-sus_pure inline _self min(_self other) const& noexcept {
+_sus_pure inline _self min(_self other) const& noexcept {
   // MSVC fmin(float) is returning a double for some reason.
   return static_cast<_primitive>(
       ::fmin(primitive_value, other.primitive_value));
@@ -713,7 +713,7 @@ sus_pure inline _self min(_self other) const& noexcept {
 /// target architecture has a dedicated fma CPU instruction. However, this is
 /// not always true, and will be heavily dependent on designing algorithms
 /// with specific target hardware in mind.
-sus_pure inline _self mul_add(_self a, _self b) const& noexcept {
+_sus_pure inline _self mul_add(_self a, _self b) const& noexcept {
   // MSVC fma(float) is returning a double for some reason.
   return static_cast<_primitive>(
       ::fma(primitive_value, a.primitive_value, b.primitive_value));
@@ -728,12 +728,12 @@ sus_pure inline _self mul_add(_self a, _self b) const& noexcept {
 /// the documentation for details on errors.
 //
 // TODO: constexpr in C++23.
-sus_pure inline _self next_toward(_self toward) const& noexcept {
+_sus_pure inline _self next_toward(_self toward) const& noexcept {
   return __private::next_toward(primitive_value, toward.primitive_value);
 }
 
 /// Raises a number to a floating point power.
-sus_pure inline _self powf(_self n) const& noexcept {
+_sus_pure inline _self powf(_self n) const& noexcept {
   // MSVC pow(float) is returning a double for some reason.
   return static_cast<_primitive>(::pow(primitive_value, n.primitive_value));
 }
@@ -742,13 +742,13 @@ sus_pure inline _self powf(_self n) const& noexcept {
 /// Using this function may be faster than using [`powf`]($sus::num::@doc.self::powf). It
 /// might have a different sequence of rounding operations than
 /// [`powf`]($sus::num::@doc.self::powf), so the results are not guaranteed to agree.
-sus_pure inline _self powi(i32 n) const& noexcept {
+_sus_pure inline _self powi(i32 n) const& noexcept {
   // MSVC pow(float) is returning a double for some reason.
   return static_cast<_primitive>(
       ::pow(primitive_value, int{n.primitive_value}));
 }
 /// Takes the reciprocal (inverse) of a number, `1/x`.
-sus_pure inline _self recip() const& noexcept {
+_sus_pure inline _self recip() const& noexcept {
   return _primitive{1} / primitive_value;
 }
 /// Returns the nearest integer to `self`. If a value is half-way between two
@@ -767,7 +767,7 @@ sus_pure inline _self recip() const& noexcept {
 /// https://doc.rust-lang.org/stable/std/primitive.@doc.self.html#method.round),
 /// this method preserves the sign bit when the result is `-0.0`, but this is
 /// unlike [`std::round`](https://en.cppreference.com/w/cpp/numeric/math/round).
-sus_pure inline _self round() const& noexcept {
+_sus_pure inline _self round() const& noexcept {
   return __private::float_round(primitive_value);
 }
 /// Returns the nearest integer to `self`. If a value is half-way between two
@@ -795,7 +795,7 @@ sus_pure inline _self round() const& noexcept {
 /// and with [`std::nearbyint`](
 /// https://en.cppreference.com/w/cpp/numeric/math/nearbyint), this method
 /// preserves the sign bit when the result is `-0.0`.
-sus_pure inline _self round_ties() const& noexcept {
+_sus_pure inline _self round_ties() const& noexcept {
   return __private::float_round_ties_by_mode(primitive_value);
 }
 /// Returns the nearest [`i8`]($sus::num::i8) representable by `self`.
@@ -809,7 +809,7 @@ sus_pure inline _self round_ties() const& noexcept {
 /// to break ties. The default mode will round ties to the nearest even number.
 ///
 /// A `NaN` input will return 0.
-sus_pure inline i8 round_to_i8() const& noexcept {
+_sus_pure inline i8 round_to_i8() const& noexcept {
   return __private::float_round_to<decltype(i8::MAX_PRIMITIVE)>(
       primitive_value);
 }
@@ -824,7 +824,7 @@ sus_pure inline i8 round_to_i8() const& noexcept {
 /// to break ties. The default mode will round ties to the nearest even number.
 ///
 /// A `NaN` input will return 0.
-sus_pure inline i16 round_to_i16() const& noexcept {
+_sus_pure inline i16 round_to_i16() const& noexcept {
   return __private::float_round_to<decltype(i16::MAX_PRIMITIVE)>(
       primitive_value);
 }
@@ -839,7 +839,7 @@ sus_pure inline i16 round_to_i16() const& noexcept {
 /// to break ties. The default mode will round ties to the nearest even number.
 ///
 /// A `NaN` input will return 0.
-sus_pure inline i32 round_to_i32() const& noexcept {
+_sus_pure inline i32 round_to_i32() const& noexcept {
   return __private::float_round_to<decltype(i32::MAX_PRIMITIVE)>(
       primitive_value);
 }
@@ -854,7 +854,7 @@ sus_pure inline i32 round_to_i32() const& noexcept {
 /// to break ties. The default mode will round ties to the nearest even number.
 ///
 /// A `NaN` input will return 0.
-sus_pure inline i64 round_to_i64() const& noexcept {
+_sus_pure inline i64 round_to_i64() const& noexcept {
   return __private::float_round_to<decltype(i64::MAX_PRIMITIVE)>(
       primitive_value);
 }
@@ -869,7 +869,7 @@ sus_pure inline i64 round_to_i64() const& noexcept {
 /// to break ties. The default mode will round ties to the nearest even number.
 ///
 /// A `NaN` input will return 0.
-sus_pure inline isize round_to_isize() const& noexcept {
+_sus_pure inline isize round_to_isize() const& noexcept {
   return __private::float_round_to<decltype(isize::MAX_PRIMITIVE)>(
       primitive_value);
 }
@@ -881,59 +881,59 @@ sus_pure inline isize round_to_isize() const& noexcept {
 ///   [`NEG_INFINITY`]($sus::num::@doc.self::NEG_INFINITY).
 /// * `NaN` if the number is `NaN`. The input value is returned exactly,
 ///   preserving signaling NaNs.
-sus_pure inline _self signum() const& noexcept {
+_sus_pure inline _self signum() const& noexcept {
   // This method can't be constexpr and still preserve the input NaN, as they
   // get normalized to quiet NaN.
   return __private::float_signum(primitive_value);
 }
 /// Computes the sine of a number (in radians).
-sus_pure inline _self sin() const& noexcept {
+_sus_pure inline _self sin() const& noexcept {
   // MSVC sin(float) is returning a double for some reason.
   return static_cast<_primitive>(::sin(primitive_value));
 }
 /// Hyperbolic sine function.
-sus_pure inline _self sinh() const& noexcept {
+_sus_pure inline _self sinh() const& noexcept {
   // MSVC sinh(float) is returning a double for some reason.
   return static_cast<_primitive>(::sinh(primitive_value));
 }
 /// Returns the square root of a number.
 ///
 /// Returns NaN if self is a negative number other than `-0.0`.
-sus_pure inline _self sqrt() const& noexcept {
+_sus_pure inline _self sqrt() const& noexcept {
   if (primitive_value < -_primitive{0}) [[unlikely]]
     return NAN;
   // MSVC sqrt(float) is returning a double for some reason.
   return static_cast<_primitive>(::sqrt(primitive_value));
 }
 /// Computes the tangent of a number (in radians).
-sus_pure inline _self tan() const& noexcept {
+_sus_pure inline _self tan() const& noexcept {
   // MSVC tan(float) is returning a double for some reason.
   return static_cast<_primitive>(::tan(primitive_value));
 }
 /// Hyperbolic tangent function.
-sus_pure inline _self tanh() const& noexcept {
+_sus_pure inline _self tanh() const& noexcept {
   // MSVC tanh(float) is returning a double for some reason.
   return static_cast<_primitive>(::tanh(primitive_value));
 }
 
 // Returns the fractional part of self.
-sus_pure inline _self fract() const& noexcept {
+_sus_pure inline _self fract() const& noexcept {
   return primitive_value - __private::truncate_float(primitive_value);
 }
 /// Returns the integer part of self. This means that non-integer numbers
 /// are always truncated towards zero.
-sus_pure inline _self trunc() const& noexcept {
+_sus_pure inline _self trunc() const& noexcept {
   return __private::truncate_float(primitive_value);
 }
 
 /// Converts radians to degrees.
-sus_pure inline _self to_degrees() const& noexcept {
+_sus_pure inline _self to_degrees() const& noexcept {
   // Use a constant for better precision.
   constexpr auto PIS_IN_180 = _primitive{57.2957795130823208767981548141051703};
   return primitive_value * PIS_IN_180;
 }
 /// Converts degrees to radians.
-sus_pure inline _self to_radians() const& noexcept {
+_sus_pure inline _self to_radians() const& noexcept {
   return primitive_value * (consts::PI.primitive_value / _primitive{180});
 }
 
@@ -947,7 +947,7 @@ sus_pure inline _self to_radians() const& noexcept {
 /// * Be representable in the return type `Int`, after truncating off its
 ///   fractional part.
 template <Integer Int>
-sus_pure constexpr inline Int to_int_unchecked(
+_sus_pure constexpr inline Int to_int_unchecked(
     ::sus::marker::UnsafeFnMarker) const& noexcept {
   return static_cast<decltype(Int::primitive_value)>(primitive_value);
 }
@@ -992,7 +992,7 @@ sus_pure constexpr inline Int to_int_unchecked(
 ///
 /// This function is not constexpr, as converting a NaN does not preserve the
 /// exact bits in a constexpr context.
-sus_pure static _self from_bits(_unsigned v) noexcept {
+_sus_pure static _self from_bits(_unsigned v) noexcept {
   return std::bit_cast<_self>(v);
 }
 /// Raw transmutation to ##UnsignedT##.
@@ -1006,7 +1006,7 @@ sus_pure static _self from_bits(_unsigned v) noexcept {
 ///
 /// Note that this function is distinct from `Cast` casting, which
 /// attempts to preserve the *numeric* value, and not the bitwise value.
-sus_pure constexpr inline _unsigned to_bits() const& noexcept {
+_sus_pure constexpr inline _unsigned to_bits() const& noexcept {
   return std::bit_cast<decltype(_unsigned::primitive_value)>(primitive_value);
 }
 
@@ -1014,24 +1014,24 @@ sus_pure constexpr inline _unsigned to_bits() const& noexcept {
 ///
 /// If only one property is going to be tested, it is generally faster to use
 /// the specific predicate instead.
-sus_pure constexpr inline FpCategory classify() const& noexcept {
+_sus_pure constexpr inline FpCategory classify() const& noexcept {
   return __private::float_category(primitive_value);
 }
 /// Returns true if this number is neither infinite nor NaN.
-sus_pure constexpr inline bool is_finite() const& noexcept {
+_sus_pure constexpr inline bool is_finite() const& noexcept {
   return !__private::float_is_inf_or_nan(primitive_value);
 }
 /// Returns true if this value is positive infinity or negative infinity,
 /// and false otherwise.
-sus_pure constexpr inline bool is_infinite() const& noexcept {
+_sus_pure constexpr inline bool is_infinite() const& noexcept {
   return __private::float_is_inf(primitive_value);
 }
 /// Returns true if this value is NaN.
-sus_pure constexpr inline bool is_nan() const& noexcept {
+_sus_pure constexpr inline bool is_nan() const& noexcept {
   return __private::float_is_nan(primitive_value);
 }
 /// Returns true if the number is neither zero, infinite, subnormal, or NaN.
-sus_pure constexpr inline bool is_normal() const& noexcept {
+_sus_pure constexpr inline bool is_normal() const& noexcept {
   return __private::float_is_normal(primitive_value);
 }
 /// Returns true if self has a negative sign, including -0.0, NaNs with
@@ -1039,7 +1039,7 @@ sus_pure constexpr inline bool is_normal() const& noexcept {
 ///
 /// Note that IEEE-745 doesn't assign any meaning to the sign bit in case of
 /// a NaN
-sus_pure constexpr inline bool is_sign_negative() const& noexcept {
+_sus_pure constexpr inline bool is_sign_negative() const& noexcept {
   return __private::float_signbit(primitive_value);
 }
 /// Returns true if self has a positive sign, including +0.0, NaNs with
@@ -1047,11 +1047,11 @@ sus_pure constexpr inline bool is_sign_negative() const& noexcept {
 ///
 /// Note that IEEE-745 doesn't assign any meaning to the sign bit in case of
 /// a NaN.
-sus_pure constexpr inline bool is_sign_positive() const& noexcept {
+_sus_pure constexpr inline bool is_sign_positive() const& noexcept {
   return !__private::float_signbit(primitive_value);
 }
 /// Returns true if the number is subnormal.
-sus_pure constexpr inline bool is_subnormal() const& noexcept {
+_sus_pure constexpr inline bool is_subnormal() const& noexcept {
   return !__private::float_is_zero(primitive_value) &&
          __private::float_nonzero_is_subnormal(primitive_value);
 }
@@ -1065,7 +1065,7 @@ sus_pure constexpr inline bool is_subnormal() const& noexcept {
 ///
 /// # Panics
 /// Panics if min > max, min is NaN, or max is NaN.
-sus_pure constexpr inline _self clamp(_self min, _self max) const& noexcept {
+_sus_pure constexpr inline _self clamp(_self min, _self max) const& noexcept {
   sus_check(!min.is_nan() && !max.is_nan() &&
                min.primitive_value <= max.primitive_value);
   // SAFETY: We have verified that the min and max are not NaN and that
@@ -1080,7 +1080,7 @@ sus_pure constexpr inline _self clamp(_self min, _self max) const& noexcept {
 /// This computes the integer `n` such that `self = n * rhs +
 /// self.rem_euclid(rhs)`. In other words, the result is `self / rhs` rounded
 /// to the integer `n` such that `self >= n * rhs`.
-sus_pure _self div_euclid(_self rhs) const& noexcept {
+_sus_pure _self div_euclid(_self rhs) const& noexcept {
   const auto q = (*this / rhs).trunc();
   if (*this % rhs < _primitive{0}) {
     if (rhs > _self{_primitive{0}})
@@ -1100,7 +1100,7 @@ sus_pure _self div_euclid(_self rhs) const& noexcept {
 /// closest floating point number in the real numbers and thus fulfills the
 /// property `self == self.div_euclid(rhs) * rhs + self.rem_euclid(rhs)`
 /// approximately.
-sus_pure _self rem_euclid(_self rhs) const& noexcept {
+_sus_pure _self rem_euclid(_self rhs) const& noexcept {
   const auto r = *this % rhs;
   if (r < _self{_primitive{0}})
     return r + rhs.abs();
@@ -1110,12 +1110,12 @@ sus_pure _self rem_euclid(_self rhs) const& noexcept {
 
 /// Return the memory representation of this floating point number as a byte
 /// array in big-endian (network) byte order.
-sus_pure constexpr ::sus::collections::Array<u8,
+_sus_pure constexpr ::sus::collections::Array<u8,
                                              ::sus::mem::size_of<_primitive>()>
 to_be_bytes() const& noexcept;
 /// Return the memory representation of this floating point number as a byte
 /// array in little-endian byte order.
-sus_pure constexpr ::sus::collections::Array<u8,
+_sus_pure constexpr ::sus::collections::Array<u8,
                                              ::sus::mem::size_of<_primitive>()>
 to_le_bytes() const& noexcept;
 /// Return the memory representation of this floating point number as a byte
@@ -1124,7 +1124,7 @@ to_le_bytes() const& noexcept;
 /// As the target platform's native endianness is used, portable code should
 /// use [`to_be_bytes`]($sus::num::@doc.self::to_be_bytes) or
 /// [`to_le_bytes`]($sus::num::@doc.self::to_le_bytes), as appropriate, instead.
-sus_pure constexpr ::sus::collections::Array<u8,
+_sus_pure constexpr ::sus::collections::Array<u8,
                                              ::sus::mem::size_of<_primitive>()>
 to_ne_bytes() const& noexcept;
 /// Create a floating point value from its representation as a byte array in
@@ -1132,7 +1132,7 @@ to_ne_bytes() const& noexcept;
 ///
 /// See [`from_bits`]($sus::num::@doc.self::from_bits) for why this function is
 /// not  constexpr.
-sus_pure static _self from_be_bytes(
+_sus_pure static _self from_be_bytes(
     const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept;
 /// Create a floating point value from its representation as a byte array in
@@ -1140,7 +1140,7 @@ sus_pure static _self from_be_bytes(
 ///
 /// See [`from_bits`]($sus::num::@doc.self::from_bits) for why this function is
 /// not constexpr.
-sus_pure static _self from_le_bytes(
+_sus_pure static _self from_le_bytes(
     const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept;
 /// Create a floating point value from its representation as a byte array in
@@ -1153,7 +1153,7 @@ sus_pure static _self from_le_bytes(
 ///
 /// See [`from_bits`]($sus::num::@doc.self::from_bits) for why this function is
 /// not constexpr.
-sus_pure static _self from_ne_bytes(
+_sus_pure static _self from_ne_bytes(
     const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept;
 

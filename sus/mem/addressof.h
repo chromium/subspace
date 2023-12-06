@@ -26,7 +26,7 @@ namespace sus::mem {
 /// without pulling in all of the `<memory>` header. It also supports Obj-C ARC
 /// pointers.
 template <class T>
-sus_pure_const inline constexpr T* addressof(T& arg) noexcept {
+__sus_pure_const inline constexpr T* addressof(T& arg) noexcept {
   // __builtin_addressof also handles Obj-C ARC pointers.
   return __builtin_addressof(arg);
 }

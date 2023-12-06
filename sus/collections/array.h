@@ -362,12 +362,12 @@ class Array final {
   }
 
   // Const Array can be used as a Slice.
-  sus_pure constexpr operator Slice<T>() const& noexcept
+  _sus_pure constexpr operator Slice<T>() const& noexcept
     requires(N == 0u)
   {
     return Slice<T>();
   }
-  sus_pure constexpr operator Slice<T>() const& noexcept
+  _sus_pure constexpr operator Slice<T>() const& noexcept
     requires(N > 0u)
   {
     return Slice<T>::from_raw_collection(
@@ -375,13 +375,13 @@ class Array final {
         // TODO: Would Iterator invalidation on move be useful?
         sus::iter::IterRefCounter::empty_for_view(), storage_.data_, N);
   }
-  sus_pure constexpr operator Slice<T>() && = delete;
-  sus_pure constexpr operator Slice<T>() & noexcept
+  _sus_pure constexpr operator Slice<T>() && = delete;
+  _sus_pure constexpr operator Slice<T>() & noexcept
     requires(N == 0u)
   {
     return Slice<T>();
   }
-  sus_pure constexpr operator Slice<T>() & noexcept
+  _sus_pure constexpr operator Slice<T>() & noexcept
     requires(N > 0u)
   {
     return Slice<T>::from_raw_collection(
@@ -391,12 +391,12 @@ class Array final {
   }
 
   // Mutable Array can be used as a SliceMut.
-  sus_pure constexpr operator SliceMut<T>() & noexcept
+  _sus_pure constexpr operator SliceMut<T>() & noexcept
     requires(N == 0u)
   {
     return SliceMut<T>();
   }
-  sus_pure constexpr operator SliceMut<T>() & noexcept
+  _sus_pure constexpr operator SliceMut<T>() & noexcept
     requires(N > 0u)
   {
     return SliceMut<T>::from_raw_collection_mut(

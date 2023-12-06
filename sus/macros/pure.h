@@ -21,14 +21,14 @@
 ///
 /// A pure function is allowed to dereference pointers, and access global
 /// memory, but it may not change them. To do so can cause Undefined Behaviour.
-#define sus_pure sus_if_msvc_else([[nodiscard]], __attribute__((pure)))
+#define _sus_pure sus_if_msvc_else([[nodiscard]], __attribute__((pure)))
 
 /// Used to mark a function as "const", meaning it does not change any values
 /// outside of its own scope, and does not read global memory.
 ///
-/// Functions that dereference pointers can not be marked `sus_pure_const`.
+/// Functions that dereference pointers can not be marked `__sus_pure_const`.
 ///
 /// A const function is allowed to only read from its inputs and determine an
 /// output from them, without going through pointers or accessing global memory.
 /// To do so anyway can cause Undefined Behaviour.
-#define sus_pure_const sus_if_msvc_else([[nodiscard]], __attribute__((const)))
+#define __sus_pure_const sus_if_msvc_else([[nodiscard]], __attribute__((const)))

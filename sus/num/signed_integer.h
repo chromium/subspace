@@ -135,7 +135,7 @@ struct [[sus_trivial_abi]] isize final {
 /// #[doc.overloads=ptr.add.isize]
 template <class T, Signed S>
   requires(std::constructible_from<isize, S>)
-sus_pure_const constexpr inline T* operator+(T* t, S offset) {
+__sus_pure_const constexpr inline T* operator+(T* t, S offset) {
   return t + ptrdiff_t{offset};
 }
 
@@ -160,7 +160,7 @@ constexpr inline T*& operator+=(T*& t, isize offset) {
 ///
 /// #[doc.overloads=ptr.sub.isize]
 template <class T>
-sus_pure_const constexpr inline T* operator-(T* t, isize offset) {
+__sus_pure_const constexpr inline T* operator-(T* t, isize offset) {
   return t - ptrdiff_t{offset};
 }
 
@@ -183,7 +183,7 @@ constexpr inline T*& operator-=(T*& t, isize offset) {
 template <class P, Integer U>
   requires((SignedPrimitiveInteger<P> || SignedPrimitiveEnum<P>) &&
            std::convertible_to<U, u64>)
-[[nodiscard]] sus_pure_const constexpr inline P operator<<(P l, U r) noexcept {
+[[nodiscard]] __sus_pure_const constexpr inline P operator<<(P l, U r) noexcept {
   // No UB checks on primitive types, since there's no promotion to a Subspace
   // return type?
   return l << u64(r).primitive_value;
@@ -202,7 +202,7 @@ constexpr inline P operator<<(P l, U r) noexcept = delete;
 template <class P, Integer U>
   requires((SignedPrimitiveInteger<P> || SignedPrimitiveEnum<P>) &&
            std::convertible_to<U, u64>)
-[[nodiscard]] sus_pure_const constexpr inline P operator>>(P l, U r) noexcept {
+[[nodiscard]] __sus_pure_const constexpr inline P operator>>(P l, U r) noexcept {
   // No UB checks on primitive types, since there's no promotion to a Subspace
   // return type?
   return l >> u64(r).primitive_value;
@@ -232,7 +232,7 @@ constexpr inline P operator>>(P l, U r) noexcept = delete;
 /// behaviour.
 ///
 /// #[doc.overloads=signedint.<<]
-[[nodiscard]] sus_pure_const constexpr inline i8 operator<<(
+[[nodiscard]] __sus_pure_const constexpr inline i8 operator<<(
     i8 l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
@@ -261,7 +261,7 @@ constexpr inline i8 operator<<(i8 l, U r) noexcept = delete;
 /// behaviour.
 ///
 /// #[doc.overloads=signedint.>>]
-[[nodiscard]] sus_pure_const constexpr inline i8 operator>>(
+[[nodiscard]] __sus_pure_const constexpr inline i8 operator>>(
     i8 l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
@@ -278,7 +278,7 @@ template <class U>
   requires(!std::convertible_to<U, u64>)
 constexpr inline i8 operator>>(i8 l, U r) noexcept = delete;
 /// #[doc.overloads=signedint.<<]
-[[nodiscard]] sus_pure_const constexpr inline i16 operator<<(
+[[nodiscard]] __sus_pure_const constexpr inline i16 operator<<(
     i16 l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
@@ -295,7 +295,7 @@ template <class U>
   requires(!std::convertible_to<U, u64>)
 constexpr inline i16 operator<<(i16 l, U r) noexcept = delete;
 /// #[doc.overloads=signedint.>>]
-[[nodiscard]] sus_pure_const constexpr inline i16 operator>>(
+[[nodiscard]] __sus_pure_const constexpr inline i16 operator>>(
     i16 l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
@@ -312,7 +312,7 @@ template <class U>
   requires(!std::convertible_to<U, u64>)
 constexpr inline i16 operator>>(i16 l, U r) noexcept = delete;
 /// #[doc.overloads=signedint.<<]
-[[nodiscard]] sus_pure_const constexpr inline i32 operator<<(
+[[nodiscard]] __sus_pure_const constexpr inline i32 operator<<(
     i32 l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
@@ -329,7 +329,7 @@ template <class U>
   requires(!std::convertible_to<U, u64>)
 constexpr inline i32 operator<<(i32 l, U r) noexcept = delete;
 /// #[doc.overloads=signedint.>>]
-[[nodiscard]] sus_pure_const constexpr inline i32 operator>>(
+[[nodiscard]] __sus_pure_const constexpr inline i32 operator>>(
     i32 l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
@@ -346,7 +346,7 @@ template <class U>
   requires(!std::convertible_to<U, u64>)
 constexpr inline i32 operator>>(i32 l, U r) noexcept = delete;
 /// #[doc.overloads=signedint.<<]
-[[nodiscard]] sus_pure_const constexpr inline i64 operator<<(
+[[nodiscard]] __sus_pure_const constexpr inline i64 operator<<(
     i64 l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
@@ -363,7 +363,7 @@ template <class U>
   requires(!std::convertible_to<U, u64>)
 constexpr inline i64 operator<<(i64 l, U r) noexcept = delete;
 /// #[doc.overloads=signedint.>>]
-[[nodiscard]] sus_pure_const constexpr inline i64 operator>>(
+[[nodiscard]] __sus_pure_const constexpr inline i64 operator>>(
     i64 l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
@@ -380,7 +380,7 @@ template <class U>
   requires(!std::convertible_to<U, u64>)
 constexpr inline i64 operator>>(i64 l, U r) noexcept = delete;
 /// #[doc.overloads=signedint.<<]
-[[nodiscard]] sus_pure_const constexpr inline isize operator<<(
+[[nodiscard]] __sus_pure_const constexpr inline isize operator<<(
     isize l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
@@ -397,7 +397,7 @@ template <class U>
   requires(!std::convertible_to<U, u64>)
 constexpr inline isize operator<<(isize l, U r) noexcept = delete;
 /// #[doc.overloads=signedint.>>]
-[[nodiscard]] sus_pure_const constexpr inline isize operator>>(
+[[nodiscard]] __sus_pure_const constexpr inline isize operator>>(
     isize l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =

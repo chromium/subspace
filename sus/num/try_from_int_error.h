@@ -32,10 +32,10 @@ class TryFromIntError {
   constexpr static TryFromIntError with_out_of_bounds() noexcept;
 
   /// Gives the kind of error that occured.
-  sus_pure constexpr Kind kind() const noexcept;
+  _sus_pure constexpr Kind kind() const noexcept;
 
   /// Satisfies the [`Eq`]($sus::cmp::Eq) concept.
-  sus_pure constexpr bool operator==(TryFromIntError rhs) const noexcept;
+  _sus_pure constexpr bool operator==(TryFromIntError rhs) const noexcept;
 
  private:
   enum Construct { CONSTRUCT };

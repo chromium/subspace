@@ -106,10 +106,10 @@ struct Storage<T, false> final {
     if (state_ == Some) std::construct_at(&val_, o.take_and_set_none());
   }
 
-  sus_pure constexpr const T& val() const noexcept { return val_; }
-  sus_pure constexpr T& val_mut() noexcept { return val_; }
+  _sus_pure constexpr const T& val() const noexcept { return val_; }
+  _sus_pure constexpr T& val_mut() noexcept { return val_; }
 
-  sus_pure constexpr inline State state() const noexcept { return state_; }
+  _sus_pure constexpr inline State state() const noexcept { return state_; }
 
   constexpr inline void construct_from_none(const T& t) noexcept
     requires(::sus::mem::Copy<T>)
@@ -250,12 +250,12 @@ struct Storage<T, true> final {
       std::construct_at(&access_);
   }
 
-  sus_pure constexpr const T& val() const noexcept {
+  _sus_pure constexpr const T& val() const noexcept {
     return access_.as_inner();
   };
-  sus_pure constexpr T& val_mut() noexcept { return access_.as_inner_mut(); };
+  _sus_pure constexpr T& val_mut() noexcept { return access_.as_inner_mut(); };
 
-  sus_pure constexpr inline State state() const noexcept {
+  _sus_pure constexpr inline State state() const noexcept {
     return access_.is_constructed() ? Some : None;
   }
 
