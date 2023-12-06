@@ -404,6 +404,8 @@ jobs:
             --exclude-file-pattern /third_party/ \
             --exclude-file-pattern /test/ \
             --exclude-file-pattern test.cc \
+            --include-macro-prefix sus_ \
+            --include-macro-prefix SUS_ \
             --copy-file subdoc/gen_tests/subdoc-test-style.css \
             --copy-file web/logo.png \
             --copy-file web/logo32.png \

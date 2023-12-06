@@ -190,8 +190,10 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     for (auto& [identifier_info, macro_state] : preprocessor_.macros()) {
       auto name = std::string(identifier_info->getName());
 
-      // TODO: Filter by name properly.
-      if (!name.starts_with("sus_") && !name.starts_with("SUS_")) continue;
+      if (!cx_.options.macro_prefixes.iter().any(
+              [&](const auto& prefix) { return name.starts_with(prefix); })) {
+        continue;
+      }
 
       // Get all comments in the file the macro definition was from.
       clang::MacroDefinition defn =

@@ -83,7 +83,7 @@ void secret() {}
 
 ```
 subdoc --project-name NAME [--include-file-pattern PATH] [--exclude-file-pattern PATH]
-    [--css PATH] [--copy-file PATH] [--project-md PATH]
+    [--include-macro-prefix PREFIX] [--css PATH] [--copy-file PATH] [--project-md PATH]
     FILES...
 ```
 
@@ -112,6 +112,13 @@ are included.
 Symbols defined in files whose path contains the `PATH` as a substring are
 excluded. This overrides symbols that would have been included by
 `--include-file-pattern`.
+
+```
+--include-macro-prefix PREFIX
+```
+Macros are only included in the generated docs if they match a prefix specified
+by this flag. It can be given more than once to name multiple prefixes to match
+against.
 
 By default Subdoc also excludes symbols in a namespace named `__private` or
 `test`, or any namespace nested within one.

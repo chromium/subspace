@@ -98,6 +98,14 @@ int main(int argc, const char** argv) {
           "patterns."),
       llvm::cl::cat(option_category));
 
+  llvm::cl::list<std::string> option_include_macro_prefixes(
+      "include-macro-prefix",
+      llvm::cl::desc(
+          "Macros are only included in the generated output if they match a "
+          "prefix specified by --include-macro-prefix. May be specified "
+          "multiple times for multiple prefixes."),
+      llvm::cl::cat(option_category));
+
   llvm::cl::opt<bool> option_ignore_bad_code_links(
       "ignore-bad-code-links",
       llvm::cl::desc("Ignore bad code links, don't generate an error. Useful "
@@ -196,6 +204,10 @@ int main(int argc, const char** argv) {
       run_options.project_overview_text = sus::move(stream).str();
     }
   }
+  run_options.macro_prefixes =
+      sus::iter::from_range(option_include_macro_prefixes)
+          .cloned()
+          .collect<sus::Vec<std::string>>();
 
   auto fs = llvm::vfs::getRealFileSystem();
   auto result = subdoc::run_files(comp_db, sus::move(run_against_files),

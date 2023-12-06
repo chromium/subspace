@@ -45,6 +45,10 @@ struct RunOptions {
     on_tu_complete = sus::some(sus::move(fn));
     return sus::move(*this);
   }
+  RunOptions set_macro_prefixes(sus::Vec<std::string> prefixes) && {
+    macro_prefixes = sus::move(prefixes);
+    return sus::move(*this);
+  }
 
   /// Whether to print progress while collecting documentation from souce files.
   bool show_progress = true;
@@ -52,6 +56,8 @@ struct RunOptions {
   std::regex include_path_patterns = std::regex("");
   /// Defaults to match nothing.
   std::regex exclude_path_patterns;
+  /// Prefixes of macros to be included in docs.
+  sus::Vec<std::string> macro_prefixes;
   /// A closure to run after parsing each translation unit.
   ///
   /// Used for tests to observe the AST and test subdoc methods that act on
