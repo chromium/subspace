@@ -29,7 +29,7 @@
 /// If the condition `expr` were to actually be false, Undefined Behaviour will
 /// result.
 // clang-format off
-#define sus_assume(unsafe_fn, expr)                                       \
+#define _sus_assume(unsafe_fn, expr)                                       \
   static_assert(std::same_as<std::decay_t<decltype(unsafe_fn)>,           \
                              ::sus::marker::UnsafeFnMarker>);             \
   sus_if_clang(_Pragma("clang diagnostic push"))                          \

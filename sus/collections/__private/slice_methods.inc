@@ -140,7 +140,7 @@ binary_search_by(
       right = mid;
     } else {
       // SAFETY: same as the `get_unchecked` above.
-      sus_assume(::sus::marker::unsafe_fn,
+      _sus_assume(::sus::marker::unsafe_fn,
                  mid.primitive_value < _len_expr.primitive_value);
       return ::sus::ok(mid);
     }
@@ -150,7 +150,7 @@ binary_search_by(
 
   // SAFETY: directly true from the overall invariant.
   // Note that this is `<=`, unlike the assume in the `ok()` path.
-  sus_assume(::sus::marker::unsafe_fn,
+  _sus_assume(::sus::marker::unsafe_fn,
              left.primitive_value <= _len_expr.primitive_value);
   return ::sus::err(left);
 }
