@@ -2116,7 +2116,7 @@ struct fmt::formatter<::sus::option::Option<T>, Char> {
 };
 
 // Stream support.
-sus__format_to_stream(sus::option, Option, T);
+_sus_format_to_stream(sus::option, Option, T);
 
 // Promote Option and its enum values into the `sus` namespace.
 namespace sus {

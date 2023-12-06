@@ -1095,7 +1095,7 @@ struct fmt::formatter<::sus::collections::Vec<T>, Char> {
 };
 
 // Stream support.
-sus__format_to_stream(sus::collections, Vec, T);
+_sus_format_to_stream(sus::collections, Vec, T);
 
 namespace sus::collections {
 /// Implicit for-ranged loop iteration for all collections via the `iter`

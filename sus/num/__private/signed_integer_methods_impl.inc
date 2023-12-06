@@ -138,7 +138,7 @@ struct fmt::formatter<::sus::num::_self, Char> {
 };
 
 // Stream support.
-sus__format_to_stream(sus::num, _self);
+_sus_format_to_stream(sus::num, _self);
 
 #undef _self
 #undef _primitive

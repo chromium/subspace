@@ -709,7 +709,7 @@ struct fmt::formatter<::sus::boxed::Box<T>, Char> {
 };
 
 // Stream support.
-sus__format_to_stream(sus::boxed, Box, T);
+_sus_format_to_stream(sus::boxed, Box, T);
 
 // Promote `Box` into the `sus` namespace.
 namespace sus {

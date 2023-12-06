@@ -49,12 +49,12 @@ S& format_to_stream(S& os, const std::basic_string<Char>& s) {
 
 }  // namespace sus::string::__private
 
-#define sus__format_to_stream_add_class(x) class x
-#define sus__format_to_stream_parameter_concept(...) \
+#define _sus_format_to_stream_add_class(x) class x
+#define _sus_format_to_stream_parameter_concept(...) \
   std::same_as<__VA_ARGS__> Sus_ValueType,
-#define sus__format_to_stream_parameter_concept_with_template(...)
-#define sus__format_to_stream_parameter(...) Sus_ValueType
-#define sus__format_to_stream_parameter_with_template(...) __VA_ARGS__
+#define _sus_format_to_stream_parameter_concept_with_template(...)
+#define _sus_format_to_stream_parameter(...) Sus_ValueType
+#define _sus_format_to_stream_parameter_with_template(...) __VA_ARGS__
 
 /// Defines operator<< for type `Type` in namespace `Namespace`. The operator
 /// uses fmt::formatter<T, char> to generate a string and stream it.
@@ -79,15 +79,15 @@ S& format_to_stream(S& os, const std::basic_string<Char>& s) {
 /// match. So we can revert back to the usual incantation then.
 //
 // clang-format off
-#define sus__format_to_stream(Namespace, Type, ...)                            \
+#define _sus_format_to_stream(Namespace, Type, ...)                            \
   namespace Namespace {                                                        \
   using namespace ::sus::string::__private;                                    \
   template<                                                                    \
-      sus_for_each(sus__format_to_stream_add_class, sus_for_each_sep_comma,    \
+      sus_for_each(_sus_format_to_stream_add_class, sus_for_each_sep_comma,    \
                    __VA_ARGS__) __VA_OPT__(,)                                  \
       /* Inserts `std::same_as<Type> Sus_ValueType` if required for GCC. */    \
       sus_if_gcc(                                                              \
-          sus__format_to_stream_parameter_concept##__VA_OPT__(_with_template)( \
+          _sus_format_to_stream_parameter_concept##__VA_OPT__(_with_template)( \
               Type __VA_OPT__(<__VA_ARGS__>)                                   \
           )                                                                    \
       )                                                                        \
@@ -100,7 +100,7 @@ S& format_to_stream(S& os, const std::basic_string<Char>& s) {
     /* Uses `Sus_ValueType` as the type if required for GCC, or `Type`. */     \
     sus_if_gcc(                                                                \
         const                                                                  \
-        sus__format_to_stream_parameter##__VA_OPT__(_with_template)(           \
+        _sus_format_to_stream_parameter##__VA_OPT__(_with_template)(           \
             Type __VA_OPT__(<__VA_ARGS__>)                                     \
         )                                                                      \
         & value                                                                \

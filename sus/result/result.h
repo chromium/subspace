@@ -1142,7 +1142,7 @@ struct fmt::formatter<::sus::result::Result<T, E>, Char> {
 };
 
 // Stream support.
-sus__format_to_stream(sus::result, Result, T, E);
+_sus_format_to_stream(sus::result, Result, T, E);
 
 namespace sus {
 using ::sus::result::Err;
