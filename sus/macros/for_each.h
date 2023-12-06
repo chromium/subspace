@@ -14,17 +14,17 @@
 
 #pragma once
 
-/// sus_for_each() will apply `macro` to each argument in the variadic argument
+/// _sus_for_each() will apply `macro` to each argument in the variadic argument
 /// list, putting the output of `sep()` between each one.
 ///
-/// The `sep` should be one of sus_for_each_sep_XYZ() macros, or a function
+/// The `sep` should be one of _sus_for_each_sep_XYZ() macros, or a function
 /// macro that returns a separator.
-#define sus_for_each(macro, sep, ...) \
+#define _sus_for_each(macro, sep, ...) \
   __VA_OPT__(                         \
       _sus__for_each_expand(_sus__for_each_helper(macro, sep, __VA_ARGS__)))
 
-#define sus_for_each_sep_comma() ,
-#define sus_for_each_sep_none()
+#define _sus_for_each_sep_comma() ,
+#define _sus_for_each_sep_none()
 
 // Private helpers.
 

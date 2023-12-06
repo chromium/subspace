@@ -83,7 +83,7 @@ S& format_to_stream(S& os, const std::basic_string<Char>& s) {
   namespace Namespace {                                                        \
   using namespace ::sus::string::__private;                                    \
   template<                                                                    \
-      sus_for_each(_sus_format_to_stream_add_class, sus_for_each_sep_comma,    \
+      _sus_for_each(_sus_format_to_stream_add_class, _sus_for_each_sep_comma,    \
                    __VA_ARGS__) __VA_OPT__(,)                                  \
       /* Inserts `std::same_as<Type> Sus_ValueType` if required for GCC. */    \
       sus_if_gcc(                                                              \

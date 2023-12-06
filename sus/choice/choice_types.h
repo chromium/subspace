@@ -51,10 +51,10 @@
 // clang-format off
 #define sus_choice_types(...) \
     sus::choice_type::__private::TypeList< \
-        sus_for_each(_sus__make_union_storage_type, sus_for_each_sep_comma, \
-                     sus_for_each(_sus__value_types_types, sus_for_each_sep_comma, \
+        _sus_for_each(_sus__make_union_storage_type, _sus_for_each_sep_comma, \
+                     _sus_for_each(_sus__value_types_types, _sus_for_each_sep_comma, \
                                   __VA_ARGS__))>, \
-    sus_for_each(_sus__value_types_value, sus_for_each_sep_comma, \
+    _sus_for_each(_sus__value_types_value, _sus_for_each_sep_comma, \
                  __VA_ARGS__)
 
 // clang-format on
