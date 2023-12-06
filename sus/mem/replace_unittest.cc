@@ -129,7 +129,7 @@ TEST(Replace, Convertible) {
   static i32 converted = 0;
 
   struct Target {};
-  struct [[sus_trivial_abi]] Copyable {
+  struct [[_sus_trivial_abi]] Copyable {
     Copyable() = default;
     Copyable(const Copyable&) = default;
     Copyable& operator=(const Copyable&) = default;
@@ -138,7 +138,7 @@ TEST(Replace, Convertible) {
       return Target();
     }
   };
-  struct [[sus_trivial_abi]] MoveableCopyConvert {
+  struct [[_sus_trivial_abi]] MoveableCopyConvert {
     MoveableCopyConvert() = default;
     MoveableCopyConvert(MoveableCopyConvert&&) = default;
     MoveableCopyConvert& operator=(MoveableCopyConvert&&) = default;
@@ -148,7 +148,7 @@ TEST(Replace, Convertible) {
       return Target();
     }
   };
-  struct [[sus_trivial_abi]] MoveableMoveConvert {
+  struct [[_sus_trivial_abi]] MoveableMoveConvert {
     MoveableMoveConvert() = default;
     MoveableMoveConvert(MoveableMoveConvert&&) = default;
     MoveableMoveConvert& operator=(MoveableMoveConvert&&) = default;

@@ -40,7 +40,7 @@ constexpr inline Empty<Item> empty() noexcept {
 ///
 /// This type is created by `sus::iter::empty()`.
 template <class ItemT>
-class [[nodiscard]] [[sus_trivial_abi]] Empty final
+class [[nodiscard]] [[_sus_trivial_abi]] Empty final
     : public IteratorBase<Empty<ItemT>, ItemT> {
  public:
   using Item = ItemT;

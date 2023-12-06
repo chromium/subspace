@@ -34,7 +34,7 @@ namespace sus::collections {
 ///
 /// This struct is created by the `windows()` method on slices.
 template <class ItemT>
-class [[nodiscard]] [[sus_trivial_abi]] Windows final
+class [[nodiscard]] [[_sus_trivial_abi]] Windows final
     : public ::sus::iter::IteratorBase<Windows<ItemT>,
                                        ::sus::collections::Slice<ItemT>> {
  public:
@@ -108,7 +108,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Windows final
 ///
 /// This struct is created by the `windows()` method on slices.
 template <class ItemT>
-class [[nodiscard]] [[sus_trivial_abi]] WindowsMut final
+class [[nodiscard]] [[_sus_trivial_abi]] WindowsMut final
     : public ::sus::iter::IteratorBase<WindowsMut<ItemT>,
                                        ::sus::collections::SliceMut<ItemT>> {
  public:

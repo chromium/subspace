@@ -43,7 +43,7 @@ namespace sus::ptr {
 /// TODO: Make a NonNullArray type? https://godbolt.org/z/3vW3xsz5h
 template <class T>
   requires(!std::is_reference_v<T>)
-class [[sus_trivial_abi]] NonNull {
+class [[_sus_trivial_abi]] NonNull {
  public:
   /// Constructs a `NonNull<T>` from a reference to `T`.
   explicit constexpr NonNull(T& t) noexcept : ptr_(::sus::mem::addressof(t)) {}

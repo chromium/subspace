@@ -31,7 +31,7 @@ namespace sus::iter {
 ///
 /// This type is returned from `Iterator::by_ref()`.
 template <class RefIterator>
-class [[nodiscard]] [[sus_trivial_abi]] ByRef final
+class [[nodiscard]] [[_sus_trivial_abi]] ByRef final
     : public IteratorBase<ByRef<RefIterator>, typename RefIterator::Item> {
  public:
   using Item = RefIterator::Item;

@@ -388,7 +388,7 @@ class RangeTo final {
 /// A RangeFull<usize> can be constructed as a literal as `".."_r`.
 template <class T>
   requires(::sus::cmp::Ord<T>)
-class [[sus_trivial_abi]] RangeFull final {
+class [[_sus_trivial_abi]] RangeFull final {
   static_assert(!std::is_reference_v<T>,
                 "RangeFull must be over values, not references");
 

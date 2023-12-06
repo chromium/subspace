@@ -49,7 +49,7 @@ namespace sus::num {
 /// A 32-bit unsigned integer.
 ///
 /// See the [namespace level documentation]($sus::num) for more.
-struct [[sus_trivial_abi]] u32 final {
+struct [[_sus_trivial_abi]] u32 final {
 #define _self u32
 #define _pointer false
 #define _pointer_sized
@@ -65,7 +65,7 @@ struct [[sus_trivial_abi]] u32 final {
 /// An 8-bit unsigned integer.
 ///
 /// See the [namespace level documentation]($sus::num) for more.
-struct [[sus_trivial_abi]] u8 final {
+struct [[_sus_trivial_abi]] u8 final {
 #define _self u8
 #define _pointer false
 #define _pointer_sized
@@ -81,7 +81,7 @@ struct [[sus_trivial_abi]] u8 final {
 /// A 16-bit unsigned integer.
 ///
 /// See the [namespace level documentation]($sus::num) for more.
-struct [[sus_trivial_abi]] u16 final {
+struct [[_sus_trivial_abi]] u16 final {
 #define _self u16
 #define _pointer false
 #define _pointer_sized
@@ -97,7 +97,7 @@ struct [[sus_trivial_abi]] u16 final {
 /// A 64-bit unsigned integer.
 ///
 /// See the [namespace level documentation]($sus::num) for more.
-struct [[sus_trivial_abi]] u64 final {
+struct [[_sus_trivial_abi]] u64 final {
 #define _self u64
 #define _pointer false
 #define _pointer_sized
@@ -127,7 +127,7 @@ struct [[sus_trivial_abi]] u64 final {
 ///
 ///
 /// See the [namespace level documentation]($sus::num) for more.
-struct [[sus_trivial_abi]] usize final {
+struct [[_sus_trivial_abi]] usize final {
 #define _self usize
 #define _pointer false
 #define _pointer_sized
@@ -166,7 +166,7 @@ struct [[sus_trivial_abi]] usize final {
 ///
 ///
 /// See the [namespace level documentation]($sus::num) for more.
-struct [[sus_trivial_abi]] uptr final {
+struct [[_sus_trivial_abi]] uptr final {
 #define _self uptr
 #define _pointer true
 #define _pointer_sized ::sus::num::__private::ptr_type<>::pointer_sized_type

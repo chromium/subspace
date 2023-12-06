@@ -103,7 +103,7 @@ concept relocate_by_memcpy = (... && __private::relocate_by_memcpy_impl<T>);
 /// `sus_class_trivially_relocatable_unchecked()`.
 ///
 /// This also enables trivial relocation in libc++ if compiled with clang.
-#define sus_trivial_abi sus_if_clang(clang::trivial_abi)
+#define _sus_trivial_abi sus_if_clang(clang::trivial_abi)
 
 /// Mark a class as unconditionally trivially relocatable while also asserting
 /// that all of the types passed as arguments are also marked as such.
@@ -112,7 +112,7 @@ concept relocate_by_memcpy = (... && __private::relocate_by_memcpy_impl<T>);
 /// its arguments.
 ///
 /// To additionally allow the class to be passed in registers, the class can be
-/// marked with the `sus_trivial_abi` attribute.
+/// marked with the `_sus_trivial_abi` attribute.
 ///
 /// # Example
 /// ```
@@ -139,7 +139,7 @@ concept relocate_by_memcpy = (... && __private::relocate_by_memcpy_impl<T>);
 /// are unknown and can be passed to the macro to determine if they are
 /// trivially relocatable.
 ///
-/// Avoid marking the class with the `sus_trivial_abi` attribute, as when the
+/// Avoid marking the class with the `_sus_trivial_abi` attribute, as when the
 /// class is not trivially relocatable (since a subtype is not trivially
 /// relocatable), it can cause memory safety bugs and Undefined Behaviour.
 ///
@@ -170,7 +170,7 @@ concept relocate_by_memcpy = (... && __private::relocate_by_memcpy_impl<T>);
 /// This macro is most useful in templates where the condition is based on the
 /// template parameters.
 ///
-/// Avoid marking the class with the `sus_trivial_abi` attribute, as when the
+/// Avoid marking the class with the `_sus_trivial_abi` attribute, as when the
 /// class is not trivially relocatable (the value is false), it can cause
 /// memory safety bugs and Undefined Behaviour.
 ///
@@ -204,7 +204,7 @@ concept relocate_by_memcpy = (... && __private::relocate_by_memcpy_impl<T>);
 /// all field types passed to the macro.
 ///
 /// To additionally allow the class to be passed in registers, the class can be
-/// marked with the `sus_trivial_abi` attribute.
+/// marked with the `_sus_trivial_abi` attribute.
 ///
 /// # Example
 /// ```
