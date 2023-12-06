@@ -33,7 +33,9 @@
 
 #include "sus/num/__private/intrinsics.h"
 
-/// A macro that replaces the `NAN` macro from the `<cmath>` header.
+/// A macro that replaces the `NAN` macro from the `<cmath>` header. Consider
+/// using f32::NAN instead.
 #define SUS_NAN ::sus::num::__private::nan<float>()
 /// A macro that replaces the `INFINITY` macro from the `<cmath>` header.
+/// Consider using f32::INFINITY instead.
 #define SUS_INFINITY ::sus::num::__private::infinity<float>()
