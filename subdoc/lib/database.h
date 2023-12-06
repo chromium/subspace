@@ -661,10 +661,13 @@ struct RecordElement : public TypeElement {
 };
 
 struct MacroElement : public CommentElement {
-  explicit MacroElement(Comment comment, std::string name, u32 sort_key)
+  explicit MacroElement(Comment comment, std::string name,
+                        sus::Option<sus::Vec<std::string>> parameters,
+                        u32 sort_key)
       : CommentElement(
             sus::Vec<Namespace>(Namespace::with<Namespace::Tag::Global>()),
-            sus::move(comment), sus::move(name), sort_key) {}
+            sus::move(comment), sus::move(name), sort_key),
+        parameters(sus::move(parameters)) {}
 
   bool has_any_comments() const noexcept { return has_found_comment(); }
 
@@ -679,6 +682,10 @@ struct MacroElement : public CommentElement {
   }
 
   void for_each_comment(sus::fn::FnMut<void(Comment&)> auto fn) { fn(comment); }
+
+  /// When present, it means the macro is a function-type macro and is called
+  /// with parentheses. Then the vector contains the parameter names, if any.
+  sus::Option<sus::Vec<std::string>> parameters;
 };
 
 struct NamespaceElement : public CommentElement {

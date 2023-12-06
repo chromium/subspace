@@ -251,8 +251,23 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         continue;
       }
 
+      auto params = sus::Option<sus::Vec<std::string>>();
+      if (info->isFunctionLike()) {
+        params = sus::some(sus::iter::from_range(info->params())
+                               .map([](const clang::IdentifierInfo* p) {
+                                 // A `...` comes out with the __VA_ARGS__ name
+                                 // here.
+                                 if (p->getName() == "__VA_ARGS__")
+                                   return std::string("...");
+                                 else
+                                   return std::string(p->getName());
+                               })
+                               .collect<sus::Vec<std::string>>());
+      }
+
       Comment comment = make_db_comment(decl->getASTContext(), raw_comment, "");
-      auto me = MacroElement(sus::move(comment), sus::move(name), macro_start);
+      auto me = MacroElement(sus::move(comment), sus::move(name),
+                             sus::move(params), macro_start);
       add_macro_to_db(decl, sus::move(me), docs_db_.global.macros);
     }
     return true;
