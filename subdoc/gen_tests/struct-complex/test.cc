@@ -1,6 +1,18 @@
 // This tests static and non-static members. They are intermixed and will
 // come out grouped and in alphabetical order.
 
+/// Comment headline on sus_macro_for_test_fn.
+///
+/// Also refers to [the other]($sus_macro_for_test)
+#define sus_macro_for_test_fn(a, b, c, ...)
+/// Comment headline on sus_macro_for_test.
+///
+/// Also refers to [the other]($sus_macro_for_test_fn)
+#define sus_macro_for_test
+
+/// A private macro which is not in the docs.
+#define _sus_macro_for_test
+
 struct OtherType {};
 
 namespace __private { struct Private {}; }

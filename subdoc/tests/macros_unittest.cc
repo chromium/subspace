@@ -147,16 +147,23 @@ TEST_F(SubDocTest, MacroUsedInExcludedFile) {
 #endif
 
 TEST_F(SubDocTest, Macro) {
-  auto result = run_code(R"(
+  const auto opts =
+      subdoc::RunOptions()           //
+          .set_show_progress(false)  //
+          .set_macro_prefixes(sus::Vec<std::string>("one_", "TWO_"));
+  auto result = run_code_with_options(opts, R"(
     /// Comment headline
-    #define f() 
+    #define one_f() 
     /// Comment headline 2
-    #  define g() 
+    #  define TWO_G() 
+    /// Comment headline 3
+    #  define ONE_G() 
 
-    void h() {}
+    void h() {}  // Without any code there's no AST to visit.
   )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_macro_comment(db, "2:5", "<p>Comment headline</p>"));
   EXPECT_TRUE(has_macro_comment(db, "4:5", "<p>Comment headline 2</p>"));
+  EXPECT_TRUE(!has_macro_comment(db, "6:5", "<p>Comment headline 3</p>"));
 }

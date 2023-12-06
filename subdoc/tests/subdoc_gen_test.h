@@ -43,7 +43,9 @@ class SubDocGenTest : public testing::Test {
     auto args = sus::Vec<std::string>();
     args.push(std::string(subdoc::tests::cpp_version_flag(cpp_version_)));
 
-    auto run_options = subdoc::RunOptions().set_show_progress(false);
+    auto run_options =
+        subdoc::RunOptions().set_show_progress(false).set_macro_prefixes(
+            sus::Vec<std::string>("sus_"));
 
     auto result = subdoc::run_test(sus::move(content), args.as_slice(),
                                    sus::move(run_options));
