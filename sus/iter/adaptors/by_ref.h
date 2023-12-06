@@ -86,7 +86,7 @@ class [[nodiscard]] [[sus_trivial_abi]] ByRef final
     // TODO: Add a refcount on the thing `next_iter_` is iterating on.
   }
 
-  RefIterator* sus_nonnull_var next_iter_;
+  RefIterator* _sus_nonnull_var next_iter_;
 
   // The RefIterator pointer is trivially relocatable.
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn,

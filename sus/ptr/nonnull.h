@@ -77,9 +77,9 @@ class [[sus_trivial_abi]] NonNull {
   /// This method must not be called with a null pointer, or Undefined Behaviour
   /// results.
   template <::sus::ptr::SameOrSubclassOf<T*> U>
-  static constexpr inline sus_nonnull_fn NonNull
+  static constexpr inline _sus_nonnull_fn NonNull
   with_ptr_unchecked(::sus::marker::UnsafeFnMarker,
-                     sus_nonnull_arg U sus_nonnull_var t) noexcept {
+                     _sus_nonnull_arg U _sus_nonnull_var t) noexcept {
     return NonNull(*t);
   }
 

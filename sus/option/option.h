@@ -749,14 +749,14 @@ class Option final {
   ///
   /// The function will panic with the given `message` if the option's state is
   /// currently `None`.
-  constexpr sus_nonnull_fn T expect(
-      /* TODO: string view type */ sus_nonnull_arg const char* sus_nonnull_var
+  constexpr _sus_nonnull_fn T expect(
+      /* TODO: string view type */ _sus_nonnull_arg const char* _sus_nonnull_var
           message) && noexcept {
     sus_check_with_message(t_.state() == Some, message);
     return ::sus::move(*this).unwrap_unchecked(::sus::marker::unsafe_fn);
   }
-  constexpr sus_nonnull_fn T expect(
-      /* TODO: string view type */ sus_nonnull_arg const char* sus_nonnull_var
+  constexpr _sus_nonnull_fn T expect(
+      /* TODO: string view type */ _sus_nonnull_arg const char* _sus_nonnull_var
           message) const& noexcept
     requires(::sus::mem::CopyOrRef<T>)
   {

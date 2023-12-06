@@ -63,7 +63,7 @@ struct TupleStorage<T&> {
   inline constexpr T& into_inner() && noexcept { return *value; }
 
  private:
-  T* sus_nonnull_var value;
+  T* _sus_nonnull_var value;
 };
 
 template <class T, class... Ts>
