@@ -41,7 +41,12 @@ struct PanicLocation {
   constexpr static PanicLocation current(
       const char* file_name = __builtin_FILE(),
       unsigned line = __builtin_LINE(),
-      unsigned column = __builtin_COLUMN()) noexcept {
+  #if __has_builtin(__builtin_COLUMN)
+      unsigned column = __builtin_COLUMN()
+  #else
+      unsigned column = 0u
+  #endif
+  ) noexcept {
     return PanicLocation{
         .file_name = file_name,
         .line = line,
