@@ -23,7 +23,7 @@
 
 namespace sus::iter {
 
-using ::sus::mem::relocate_by_memcpy;
+using ::sus::mem::TriviallyRelocatable;
 
 namespace __private {
 template <class T>

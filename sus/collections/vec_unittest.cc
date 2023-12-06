@@ -1144,7 +1144,7 @@ TEST(Vec, Extend) {
 }
 
 TEST(Vec, Drain_TriviallyRelocatable) {
-  static_assert(sus::mem::relocate_by_memcpy<i32>);
+  static_assert(sus::mem::TriviallyRelocatable<i32>);
 
   // Drain back range.
   {
@@ -1271,7 +1271,7 @@ TEST(Vec, Drain_NonTriviallyRelocatable) {
   static_assert(sus::cmp::Eq<S>);
   static_assert(sus::cmp::Eq<S, i32>);
   static_assert(sus::cmp::Eq<S, int>);
-  static_assert(!sus::mem::relocate_by_memcpy<S>);
+  static_assert(!sus::mem::TriviallyRelocatable<S>);
 
   // Drain in the middle.
   {

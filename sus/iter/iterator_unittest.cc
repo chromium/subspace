@@ -401,14 +401,14 @@ struct Filtering {
   ~Filtering() {}
   i32 i;
 };
-static_assert(!sus::mem::relocate_by_memcpy<Filtering>);
+static_assert(!sus::mem::TriviallyRelocatable<Filtering>);
 
 TEST(Iterator, FilterNonTriviallyRelocatable) {
   Filtering nums[5] = {Filtering(1), Filtering(2), Filtering(3), Filtering(4),
                        Filtering(5)};
 
   auto non_relocatable_it = ArrayIterator<Filtering, 5>::with_array(nums);
-  static_assert(!sus::mem::relocate_by_memcpy<decltype(non_relocatable_it)>);
+  static_assert(!sus::mem::TriviallyRelocatable<decltype(non_relocatable_it)>);
 
   // Previously we needed iterators to be trivially relocatable to nest them in
   // an adaptor iterator like filter(). So this test would call box() to move
@@ -1457,7 +1457,7 @@ struct UnknownLimitIter final
 };
 static_assert(sus::mem::Clone<UnknownLimitIter>);
 static_assert(sus::iter::Iterator<UnknownLimitIter, i32>);
-static_assert(sus::mem::relocate_by_memcpy<UnknownLimitIter>);
+static_assert(sus::mem::TriviallyRelocatable<UnknownLimitIter>);
 
 TEST(Iterator, Cycle) {
   // Empty.
@@ -3058,7 +3058,7 @@ TEST(Iterator, Peekable) {
     auto a = sus::Array<i32, 3>(1, 2, 3);
     auto it = a.iter().peekable();
     static_assert(sus::mem::Clone<decltype(it)>);
-    static_assert(sus::mem::relocate_by_memcpy<decltype(it)>);
+    static_assert(sus::mem::TriviallyRelocatable<decltype(it)>);
     static_assert(sus::iter::Iterator<decltype(it), const i32&>);
     static_assert(sus::iter::DoubleEndedIterator<decltype(it), const i32&>);
     static_assert(sus::iter::ExactSizeIterator<decltype(it), const i32&>);

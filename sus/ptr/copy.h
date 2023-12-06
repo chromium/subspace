@@ -57,10 +57,10 @@ namespace sus::ptr {
 /// [`copy_nonoverlapping`]($sus::ptr::copy_nonoverlapping) creates a bitwise
 /// copy of `T`,
 /// regardless of whether `T` is [`TrivialCopy`]($sus::mem::TrivialCopy)
-/// or [`relocate_by_memcpy`]($sus::mem::relocate_by_memcpy). If `T`
+/// or [`TriviallyRelocatable`]($sus::mem::TriviallyRelocatable). If `T`
 /// is not [`TrivialCopy`]($sus::mem::TrivialCopy), using the value in
 /// `*dst` can violate memory safety.
-/// If `T` is not [`relocate_by_memcpy`]($sus::mem::relocate_by_memcpy),
+/// If `T` is not [`TriviallyRelocatable`]($sus::mem::TriviallyRelocatable),
 /// using both the values in `*src` and in `*dst` can violate memory safety.
 ///
 /// Note that even if the effectively copied size (`count * size_of<T>()`) is 0,
@@ -116,10 +116,10 @@ void copy_nonoverlapping(::sus::marker::UnsafeFnMarker, const T* src, T* dst,
 /// [`copy`]($sus::ptr::copy) creates a bitwise copy of `T`, regardless of
 /// whether `T` is
 /// [`TrivialCopy`]($sus::mem::TrivialCopy) or
-/// [`relocate_by_memcpy`]($sus::mem::relocate_by_memcpy). If `T` is not
+/// [`TriviallyRelocatable`]($sus::mem::TriviallyRelocatable). If `T` is not
 /// [`TrivialCopy`]($sus::mem::TrivialCopy), using
 /// the value in `*dst` can violate memory safety. If `T` is not
-/// [`relocate_by_memcpy`]($sus::mem::relocate_by_memcpy), using both the
+/// [`TriviallyRelocatable`]($sus::mem::TriviallyRelocatable), using both the
 /// values in `*src` and in `*dst` can violate memory safety.
 ///
 /// Note that even if the effectively copied size (`count * size_of<T>()`) is 0,

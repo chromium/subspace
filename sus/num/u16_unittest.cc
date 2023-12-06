@@ -39,7 +39,7 @@ static_assert(sizeof(u16) == sizeof(decltype(u16::primitive_value)));
 static_assert(sus::mem::Copy<u16>);
 static_assert(sus::mem::TrivialCopy<u16>);
 static_assert(sus::mem::Clone<u16>);
-static_assert(sus::mem::relocate_by_memcpy<u16>);
+static_assert(sus::mem::TriviallyRelocatable<u16>);
 static_assert(sus::mem::Move<u16>);
 
 namespace behaviour {
@@ -68,7 +68,7 @@ static_assert(!std::is_trivially_constructible_v<T, From>, "");
 static_assert(std::is_assignable_v<T, From>, "");
 static_assert(std::is_nothrow_destructible_v<T>, "");
 static_assert(sus::construct::Default<T>, "");
-static_assert(sus::mem::relocate_by_memcpy<T>, "");
+static_assert(sus::mem::TriviallyRelocatable<T>, "");
 }  // namespace behaviour
 
 // u16::MAX

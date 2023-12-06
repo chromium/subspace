@@ -28,7 +28,7 @@ namespace sus::ptr {
 /// Swaps the object array at `x` with the object array at `y`, where both
 /// arrays have a length of `count`.
 ///
-/// If `T` is trivially relocatable (`sus::mem::relocate_by_memcpy<T>` is true),
+/// If `T` is trivially relocatable (`sus::mem::TriviallyRelocatable<T>` is true),
 /// then the swap may be done by memcpy() or equivalent to be more efficient.
 ///
 /// # Safety
@@ -70,7 +70,7 @@ inline constexpr void swap_nonoverlapping(::sus::marker::UnsafeFnMarker, T* x,
 
   const ::sus::Option<usize> opt_byte_count = count.checked_mul(t_size);
 
-  if (std::is_constant_evaluated() || !::sus::mem::relocate_by_memcpy<T> ||
+  if (std::is_constant_evaluated() || !::sus::mem::TriviallyRelocatable<T> ||
       !has_split_up_alignment || !has_split_up_size ||
       opt_byte_count.is_none()) {
     // If the type can be vectorized already, or can't be relocated by memcpy,

@@ -32,7 +32,7 @@
 using sus::collections::Array;
 using sus::collections::Slice;
 using sus::collections::SliceMut;
-using sus::mem::relocate_by_memcpy;
+using sus::mem::TriviallyRelocatable;
 using sus::test::ensure_use;
 
 namespace {
@@ -55,7 +55,7 @@ static_assert(
 static_assert(
     sus::iter::ExactSizeIterator<sus::collections::ArrayIntoIter<i32, 3>, i32>);
 
-struct TriviallyRelocatable {
+struct TriviallyRelocatableType {
   int i;
 };
 
@@ -67,7 +67,7 @@ static_assert(std::is_standard_layout_v<Array<int, 2>>);
 // TODO: This covers a trivially relocatable type, but what about the rest?
 // (like Option unit tests.)
 namespace trivially_relocatable {
-using T = TriviallyRelocatable;
+using T = TriviallyRelocatableType;
 static_assert(std::is_move_constructible_v<Array<T, 2>>);
 static_assert(std::is_move_assignable_v<Array<T, 2>>);
 static_assert(std::is_trivially_destructible_v<Array<T, 2>>);
@@ -85,7 +85,7 @@ static_assert(!std::is_assignable_v<Array<T, 2>, const T&>);
 static_assert(!std::is_constructible_v<Array<T, 2>, T>);
 static_assert(!std::is_assignable_v<Array<T, 2>, T>);
 static_assert(std::is_nothrow_destructible_v<Array<T, 2>>);
-static_assert(relocate_by_memcpy<Array<T, 2>>);
+static_assert(TriviallyRelocatable<Array<T, 2>>);
 }  // namespace trivially_relocatable
 
 struct NonAggregate {

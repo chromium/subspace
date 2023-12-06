@@ -22,7 +22,7 @@
 
 namespace sus::iter {
 
-using ::sus::mem::relocate_by_memcpy;
+using ::sus::mem::TriviallyRelocatable;
 
 /// An iterator that only iterates over the first n iterations of another
 /// iterator.

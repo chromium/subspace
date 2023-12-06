@@ -1026,7 +1026,7 @@ constexpr T* Vec<T>::grow_to_internal_check_cap(usize cap) noexcept {
   sus_check(cap <= ::sus::cast<usize>(isize::MAX));
   T* const new_data =
       std::allocator_traits<std::allocator<T>>::allocate(allocator_, cap);
-  if constexpr (::sus::mem::relocate_by_memcpy<T>) {
+  if constexpr (::sus::mem::TriviallyRelocatable<T>) {
     if (!std::is_constant_evaluated()) {
       // SAFETY: new_t was just allocated above, so does not alias
       // with `old_t` which was the previous allocation.

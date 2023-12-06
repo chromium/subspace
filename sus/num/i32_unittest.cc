@@ -46,7 +46,7 @@ static_assert(sizeof(i32) == sizeof(decltype(i32::primitive_value)));
 static_assert(sus::mem::Copy<i32>);
 static_assert(sus::mem::TrivialCopy<i32>);
 static_assert(sus::mem::Clone<i32>);
-static_assert(sus::mem::relocate_by_memcpy<i32>);
+static_assert(sus::mem::TriviallyRelocatable<i32>);
 static_assert(sus::mem::Move<i32>);
 
 namespace behaviour {
@@ -75,7 +75,7 @@ static_assert(!std::is_trivially_constructible_v<T, From>);
 static_assert(std::is_assignable_v<T, From>);
 static_assert(std::is_nothrow_destructible_v<T>);
 static_assert(sus::construct::Default<T>);
-static_assert(sus::mem::relocate_by_memcpy<T>);
+static_assert(sus::mem::TriviallyRelocatable<T>);
 }  // namespace behaviour
 
 // i32::MAX

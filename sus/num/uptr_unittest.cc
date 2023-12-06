@@ -39,7 +39,7 @@ static_assert(sizeof(uptr) == sizeof(decltype(uptr::primitive_value)));
 static_assert(sus::mem::Copy<uptr>);
 static_assert(sus::mem::TrivialCopy<uptr>);
 static_assert(sus::mem::Clone<uptr>);
-static_assert(sus::mem::relocate_by_memcpy<uptr>);
+static_assert(sus::mem::TriviallyRelocatable<uptr>);
 static_assert(sus::mem::Move<uptr>);
 
 namespace behaviour {
@@ -68,7 +68,7 @@ static_assert(!std::is_trivially_constructible_v<T, From>);
 static_assert(std::is_assignable_v<T, From>);
 static_assert(std::is_nothrow_destructible_v<T>);
 static_assert(sus::construct::Default<T>);
-static_assert(sus::mem::relocate_by_memcpy<T>);
+static_assert(sus::mem::TriviallyRelocatable<T>);
 }  // namespace behaviour
 
 // uptr::MAX_BIT_PATTERN

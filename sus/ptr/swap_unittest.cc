@@ -30,7 +30,7 @@ TEST(PtrSwapNonOverlapping, SmallSizedType_PowTwoSized) {
   static_assert(alignof(S) <= alignof(S*));
   static_assert(sus::mem::size_of<S>() <= sus::mem::size_of<S*>() * 2);
   static_assert(usize(sus::mem::size_of<S>()).is_power_of_two());
-  static_assert(sus::mem::relocate_by_memcpy<S>);
+  static_assert(sus::mem::TriviallyRelocatable<S>);
 
   auto a = sus::Array<S, 100>::with_initializer(
       [i = 0_u8]() mutable { return S(sus::mem::replace(i, i + 1_u8)); });
@@ -54,7 +54,7 @@ TEST(PtrSwapNonOverlapping, SmallSizedType_NonPowTwoSized) {
   static_assert(alignof(S) <= alignof(S*));
   static_assert(sus::mem::size_of<S>() <= sus::mem::size_of<S*>() * 2);
   static_assert(!usize(sus::mem::size_of<S>()).is_power_of_two());
-  static_assert(sus::mem::relocate_by_memcpy<S>);
+  static_assert(sus::mem::TriviallyRelocatable<S>);
 
   auto a = sus::Array<S, 100>::with_initializer(
       [i = 0_u8]() mutable { return S(sus::mem::replace(i, i + 1_u8)); });
@@ -78,7 +78,7 @@ TEST(PtrSwapNonOverlapping, LargeSizedType_PtrAlign_PtrMultipleSize_Trivial) {
   static_assert(alignof(S) == alignof(S*));
   static_assert(sus::mem::size_of<S>() > sus::mem::size_of<S*>() * 2u);
   static_assert(sus::mem::size_of<S>() % sus::mem::size_of<S*>() == 0u);
-  static_assert(sus::mem::relocate_by_memcpy<S>);
+  static_assert(sus::mem::TriviallyRelocatable<S>);
 
   auto a = sus::Array<S, 100>::with_initializer(
       [i = 0_u8]() mutable { return S(sus::mem::replace(i, i + 1_u8)); });
@@ -105,7 +105,7 @@ TEST(PtrSwapNonOverlapping,
   static_assert(alignof(S) == alignof(S*));
   static_assert(sus::mem::size_of<S>() > sus::mem::size_of<S*>() * 2u);
   static_assert(sus::mem::size_of<S>() % sus::mem::size_of<S*>() == 0u);
-  static_assert(!sus::mem::relocate_by_memcpy<S>);
+  static_assert(!sus::mem::TriviallyRelocatable<S>);
 
   auto a = sus::Array<S, 100>::with_initializer(
       [i = 0_u8]() mutable { return S(sus::mem::replace(i, i + 1_u8)); });

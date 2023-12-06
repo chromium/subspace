@@ -36,7 +36,7 @@ static_assert(sizeof(f32) == sizeof(decltype(f32::primitive_value)));
 static_assert(sus::mem::Copy<f32>);
 static_assert(sus::mem::TrivialCopy<f32>);
 static_assert(sus::mem::Clone<f32>);
-static_assert(sus::mem::relocate_by_memcpy<f32>);
+static_assert(sus::mem::TriviallyRelocatable<f32>);
 static_assert(sus::mem::Move<f32>);
 
 // std hashing

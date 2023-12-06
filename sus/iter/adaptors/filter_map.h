@@ -23,7 +23,7 @@
 
 namespace sus::iter {
 
-using ::sus::mem::relocate_by_memcpy;
+using ::sus::mem::TriviallyRelocatable;
 
 /// An iterator that uses a function to both filter and map elements from
 /// another `Iterator`.

@@ -19,19 +19,19 @@
 
 namespace {
 
-using sus::mem::relocate_by_memcpy;
+using sus::mem::TriviallyRelocatable;
 
-static_assert(relocate_by_memcpy<int>);
-static_assert(relocate_by_memcpy<char>);
+static_assert(TriviallyRelocatable<int>);
+static_assert(TriviallyRelocatable<char>);
 
 struct A {
   i32 i;
 };
-static_assert(relocate_by_memcpy<A>);
+static_assert(TriviallyRelocatable<A>);
 
 // Volatile types are not trivially relocatable:
 // https://quuxplusone.github.io/blog/2018/07/13/trivially-copyable-corner-cases/
-static_assert(!relocate_by_memcpy<volatile A>);
+static_assert(!TriviallyRelocatable<volatile A>);
 
 // User defined default move operations and destructor for a trivially
 // relocatable field means the outer type is also trivially relocatable.
@@ -41,7 +41,7 @@ struct B {
   ~B() = default;
   i32 i;
 };
-static_assert(relocate_by_memcpy<B>);
+static_assert(TriviallyRelocatable<B>);
 
 // A non-default assignment operator means the type needs to opt into being
 // trivially relocatable, as it needs to be trivially relocatable for
@@ -52,7 +52,7 @@ struct C {
   ~C() = default;
   i32 i;
 };
-static_assert(!relocate_by_memcpy<C>);
+static_assert(!TriviallyRelocatable<C>);
 
 // A non-default constructor means the type needs to opt into being trivially
 // relocatable, as it needs to be trivially relocatable for construction and
@@ -63,7 +63,7 @@ struct D {
   ~D() = default;
   i32 i;
 };
-static_assert(!relocate_by_memcpy<D>);
+static_assert(!TriviallyRelocatable<D>);
 
 // A non-default destructor means the type needs to opt into being trivially
 // relocatable.
@@ -73,7 +73,7 @@ struct E {
   ~E() {}
   i32 i;
 };
-static_assert(!relocate_by_memcpy<E>);
+static_assert(!TriviallyRelocatable<E>);
 
 struct [[_sus_trivial_abi]] F {
   F(F&&) {}
@@ -81,9 +81,9 @@ struct [[_sus_trivial_abi]] F {
   i32 i;
 };
 #if defined(__clang__) && __has_extension(trivially_relocatable)
-static_assert(relocate_by_memcpy<F>);
+static_assert(TriviallyRelocatable<F>);
 #else
-static_assert(!relocate_by_memcpy<F>);
+static_assert(!TriviallyRelocatable<F>);
 #endif
 
 struct [[_sus_trivial_abi]] G {
@@ -92,7 +92,7 @@ struct [[_sus_trivial_abi]] G {
   ~G() {}
   i32 i;
 };
-static_assert(relocate_by_memcpy<G>);
+static_assert(TriviallyRelocatable<G>);
 
 struct [[_sus_trivial_abi]] H {
   sus_class_trivially_relocatable_if(unsafe_fn, false);
@@ -100,12 +100,12 @@ struct [[_sus_trivial_abi]] H {
   ~H() {}
   i32 i;
 };
-static_assert(!relocate_by_memcpy<H>);
+static_assert(!TriviallyRelocatable<H>);
 
 // A mixture of explicit relocatable tag and trivial move + destroy.
-static_assert(relocate_by_memcpy<G, int>);
-static_assert(relocate_by_memcpy<int, G>);
-static_assert(relocate_by_memcpy<int, G, int>);
+static_assert(TriviallyRelocatable<G, int>);
+static_assert(TriviallyRelocatable<int, G>);
+static_assert(TriviallyRelocatable<int, G, int>);
 
 union U {
   i32 i;
@@ -115,6 +115,6 @@ union U {
 // A union has unknown types with padding inside, so can't be considered
 // trivially relocatable without knowing more. The author would need to verify
 // all fields are trivially relocatable *and have the same data-size*.
-static_assert(!relocate_by_memcpy<U>);
+static_assert(!TriviallyRelocatable<U>);
 
 }  // namespace

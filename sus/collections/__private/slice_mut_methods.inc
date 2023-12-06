@@ -452,7 +452,7 @@ void rotate_left(::sus::num::usize mid) NO_RETURN_REF noexcept
   const ::sus::num::usize k = length - mid;
   T* const p = as_mut_ptr();
 
-  if constexpr (::sus::mem::relocate_by_memcpy<T>) {
+  if constexpr (::sus::mem::TriviallyRelocatable<T>) {
     if (!std::is_constant_evaluated()) {
       // TODO: Implement this faster path.
 

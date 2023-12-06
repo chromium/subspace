@@ -18,7 +18,7 @@
 #include "sus/test/behaviour_types.h"
 
 using sus::construct::Default;
-using sus::mem::relocate_by_memcpy;
+using sus::mem::TriviallyRelocatable;
 
 namespace sus::test::default_constructible {
 using T = sus::Choice<sus_choice_types((0, sus::test::DefaultConstructible))>;
@@ -46,7 +46,7 @@ static_assert(std::is_trivially_constructible_v<T, From>);
 static_assert(std::is_assignable_v<T, From>);
 static_assert(std::is_nothrow_destructible_v<T>);
 static_assert(!Default<T>);
-static_assert(relocate_by_memcpy<T>);
+static_assert(TriviallyRelocatable<T>);
 }  // namespace sus::test::default_constructible
 
 namespace sus::test::trivially_default_constructible {
@@ -76,7 +76,7 @@ static_assert(std::is_trivially_constructible_v<T, From>);
 static_assert(std::is_assignable_v<T, From>);
 static_assert(std::is_nothrow_destructible_v<T>);
 static_assert(!Default<T>);
-static_assert(relocate_by_memcpy<T>);
+static_assert(TriviallyRelocatable<T>);
 }  // namespace sus::test::trivially_default_constructible
 
 namespace sus::test::not_default_constructible {
@@ -106,7 +106,7 @@ static_assert(std::is_trivially_constructible_v<T, From>);
 static_assert(std::is_assignable_v<T, From>);
 static_assert(std::is_nothrow_destructible_v<T>);
 static_assert(!Default<T>);
-static_assert(relocate_by_memcpy<T>);
+static_assert(TriviallyRelocatable<T>);
 }  // namespace sus::test::not_default_constructible
 
 namespace sus::test::trivially_copyable {
@@ -134,7 +134,7 @@ static_assert(std::is_constructible_v<T, From>);
 static_assert(std::is_assignable_v<T, From>);
 static_assert(std::is_nothrow_destructible_v<T>);
 static_assert(!Default<T>);
-static_assert(relocate_by_memcpy<T>);
+static_assert(TriviallyRelocatable<T>);
 }  // namespace sus::test::trivially_copyable
 
 namespace sus::test::trivially_moveable_and_relocatable {
@@ -164,7 +164,7 @@ static_assert(std::is_trivially_constructible_v<T, From>);
 static_assert(std::is_assignable_v<T, From>);
 static_assert(std::is_nothrow_destructible_v<T>);
 static_assert(!Default<T>);
-static_assert(relocate_by_memcpy<T>);
+static_assert(TriviallyRelocatable<T>);
 }  // namespace sus::test::trivially_moveable_and_relocatable
 
 namespace sus::test::trivially_copyable_not_destructible {
@@ -194,7 +194,7 @@ static_assert(!std::is_trivially_constructible_v<T, From>);
 static_assert(std::is_assignable_v<T, From>);
 static_assert(std::is_nothrow_destructible_v<T>);
 static_assert(!Default<T>);
-static_assert(!relocate_by_memcpy<T>);
+static_assert(!TriviallyRelocatable<T>);
 }  // namespace sus::test::trivially_copyable_not_destructible
 
 namespace sus::test::trivially_moveable_not_destructible {
@@ -224,7 +224,7 @@ static_assert(!std::is_trivially_constructible_v<T, From>);
 static_assert(std::is_assignable_v<T, From>);
 static_assert(std::is_nothrow_destructible_v<T>);
 static_assert(!Default<T>);
-static_assert(!relocate_by_memcpy<T>);
+static_assert(!TriviallyRelocatable<T>);
 }  // namespace sus::test::trivially_moveable_not_destructible
 
 namespace sus::test::not_trivially_relocatable_copyable_or_moveable {
@@ -254,7 +254,7 @@ static_assert(!std::is_trivially_constructible_v<T, From>);
 static_assert(std::is_assignable_v<T, From>);
 static_assert(std::is_nothrow_destructible_v<T>);
 static_assert(!Default<T>);
-static_assert(!relocate_by_memcpy<T>);
+static_assert(!TriviallyRelocatable<T>);
 }  // namespace sus::test::not_trivially_relocatable_copyable_or_moveable
 
 namespace sus::test::trivial_abi_relocatable {
@@ -283,5 +283,5 @@ static_assert(!std::is_trivially_constructible_v<T, From>);
 static_assert(std::is_assignable_v<T, From>);
 static_assert(std::is_nothrow_destructible_v<T>);
 static_assert(!Default<T>);
-static_assert(relocate_by_memcpy<T>);
+static_assert(TriviallyRelocatable<T>);
 }  // namespace sus::test::trivial_abi_relocatable

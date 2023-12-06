@@ -69,10 +69,10 @@ static_assert(!sus::iter::Iterator<sus::ops::Range<NoDefault>, NoDefault>);
 static_assert(!sus::iter::Iterator<sus::ops::RangeFrom<NoDefault>, NoDefault>);
 
 // Range types are trivially relocatable if the inner type is.
-static_assert(sus::mem::relocate_by_memcpy<sus::ops::Range<usize>>);
-static_assert(sus::mem::relocate_by_memcpy<sus::ops::RangeFrom<usize>>);
-static_assert(sus::mem::relocate_by_memcpy<sus::ops::RangeTo<usize>>);
-static_assert(sus::mem::relocate_by_memcpy<sus::ops::RangeFull<usize>>);
+static_assert(sus::mem::TriviallyRelocatable<sus::ops::Range<usize>>);
+static_assert(sus::mem::TriviallyRelocatable<sus::ops::RangeFrom<usize>>);
+static_assert(sus::mem::TriviallyRelocatable<sus::ops::RangeTo<usize>>);
+static_assert(sus::mem::TriviallyRelocatable<sus::ops::RangeFull<usize>>);
 
 // The types produced by the various literal syntaxes.
 static_assert(std::same_as<decltype(".."_r), sus::ops::RangeFull<usize>>);
