@@ -27,7 +27,7 @@ namespace {
 
 TEST(Swap, ConstexprTrivialRelocate) {
   using T = int;
-  static_assert(sus::mem::relocate_by_memcpy<T>, "");
+  static_assert(sus::mem::TriviallyRelocatable<T>, "");
 
   auto i = []() constexpr {
     T i(2);
@@ -57,7 +57,7 @@ TEST(Swap, ConstexprTrivialAbi) {
   // [[_sus_trivial_abi]].
   static_assert(!std::is_trivially_move_constructible_v<S>, "");
   static_assert(
-      sus::mem::relocate_by_memcpy<S> == __has_extension(trivially_relocatable),
+      sus::mem::TriviallyRelocatable<S> == __has_extension(trivially_relocatable),
       "");
 
   auto i = []() constexpr {
@@ -87,7 +87,7 @@ TEST(Swap, ConstexprNonTrivial) {
     int num;
     int moves = 0;
   };
-  static_assert(!sus::mem::relocate_by_memcpy<S>, "");
+  static_assert(!sus::mem::TriviallyRelocatable<S>, "");
 
   auto i = []() constexpr {
     S i(2);
@@ -110,7 +110,7 @@ TEST(Swap, ConstexprNonTrivial) {
 
 TEST(Swap, TrivialRelocate) {
   using T = int;
-  static_assert(sus::mem::relocate_by_memcpy<T>, "");
+  static_assert(sus::mem::TriviallyRelocatable<T>, "");
 
   T i(2);
   T j(5);
@@ -134,7 +134,7 @@ TEST(Swap, TrivialAbi) {
   // [[_sus_trivial_abi]].
   static_assert(!std::is_trivially_move_constructible_v<S>, "");
   static_assert(
-      sus::mem::relocate_by_memcpy<S> == __has_extension(trivially_relocatable),
+      sus::mem::TriviallyRelocatable<S> == __has_extension(trivially_relocatable),
       "");
 
   S i(2);
@@ -162,7 +162,7 @@ TEST(Swap, NonTrivial) {
     int num;
     int moves = 0;
   };
-  static_assert(!sus::mem::relocate_by_memcpy<S>, "");
+  static_assert(!sus::mem::TriviallyRelocatable<S>, "");
 
   S i(2);
   S j(5);

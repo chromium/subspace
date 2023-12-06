@@ -199,6 +199,6 @@ constexpr IterRefCounter IterRef::to_view() const noexcept {
 
 static_assert(sus::mem::Copy<IterRefCounter>);
 static_assert(sus::mem::Move<IterRefCounter>);
-static_assert(sus::mem::relocate_by_memcpy<IterRefCounter>);
+static_assert(sus::mem::TriviallyRelocatable<IterRefCounter>);
 
 }  // namespace sus::iter

@@ -51,7 +51,7 @@ static_assert(sus::mem::CloneFrom<Box<i32>>);
 // For any T.
 static_assert(sus::mem::NeverValueField<Box<i32>>);
 // For any T.
-static_assert(sus::mem::relocate_by_memcpy<Box<i32>>);
+static_assert(sus::mem::TriviallyRelocatable<Box<i32>>);
 
 TEST(Box, RecursiveType) {
   struct Cycle {

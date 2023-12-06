@@ -39,7 +39,7 @@ static_assert(sizeof(isize) == sizeof(decltype(isize::primitive_value)));
 static_assert(sus::mem::Copy<isize>);
 static_assert(sus::mem::TrivialCopy<isize>);
 static_assert(sus::mem::Clone<isize>);
-static_assert(sus::mem::relocate_by_memcpy<isize>);
+static_assert(sus::mem::TriviallyRelocatable<isize>);
 static_assert(sus::mem::Move<isize>);
 
 // `isize` can be explicitly converted to an unsigned int of the same size.
@@ -76,7 +76,7 @@ static_assert(!std::is_trivially_constructible_v<T, From>);
 static_assert(std::is_assignable_v<T, From>);
 static_assert(std::is_nothrow_destructible_v<T>);
 static_assert(sus::construct::Default<T>);
-static_assert(sus::mem::relocate_by_memcpy<T>);
+static_assert(sus::mem::TriviallyRelocatable<T>);
 }  // namespace behaviour
 
 // isize::MAX

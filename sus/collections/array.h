@@ -459,7 +459,7 @@ class Array final {
 
   sus_class_trivially_relocatable_if(::sus::marker::unsafe_fn,
                                      (N == 0 ||
-                                      ::sus::mem::relocate_by_memcpy<T>));
+                                      ::sus::mem::TriviallyRelocatable<T>));
 };
 
 template <class T, class... Ts>

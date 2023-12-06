@@ -48,7 +48,7 @@ struct relocatable_tag final {
 // `T` is a reference type to an undefined (forward-declared) type.
 // clang-format off
 template <class T>
-concept relocate_by_memcpy_impl =
+concept TriviallyRelocatable_impl =
     std::is_reference_v<T>
     || (!std::is_volatile_v<std::remove_all_extents_t<T>>
        && sus::mem::data_size_of<std::remove_all_extents_t<std::remove_reference_t<T>>>() != size_t(-1)
@@ -67,32 +67,64 @@ concept relocate_by_memcpy_impl =
 }  // namespace __private
 
 /// Tests if a variable of type `T` can be relocated with
-/// [`copy`]($sus::ptr::copy).
-///
-/// Checking for trivially movable and destructible is not sufficient - this
-/// also honors the `[[trivial_abi]]` Clang attribute, as types annotated with
-/// the attribute are now considered "trivially relocatable" in
-/// https://reviews.llvm.org/D114732. References are treated like pointers, and
-/// are always trivially relocatable, as reference data members are relocatable
-/// in the same way pointers are.
+/// [`ptr::copy`]($sus::ptr::copy).
 ///
 /// IMPORTANT: If a class satisfies this trait, only
 /// [`sus::mem::data_size_of<T>()`]($sus::mem::data_size_of)
-/// bytes should be copied when relocating the type, or Undefine Behaviour can
+/// bytes should be copied when relocating the type, or Undefined Behaviour can
 /// result, due to the possibility of overwriting data stored in the tail
 /// padding bytes of `T`. See the docs on
 /// [`data_size_of`]($sus::mem::data_size_of) for more.
 ///
-/// Volatile types are excluded, as they can not be safely memcpy()'d
+/// Volatile types are excluded, as they can not be safely `memcpy`'d
 /// byte-by-byte without introducing tearing.
+/// References are treated like pointers, and are always trivially relocatable,
+/// as reference data members are relocatable in the same way pointers are.
 ///
+/// # Marking a type as trivially relocatable
+///
+/// Use one of the provided macros inside a class to mark it as conditionally or
+/// unconditionally trivially relocatable. They are unsafe because there are no
+/// compiler checks that the claim is actually true, though macros are provided
+/// to make this easier. The
+/// [`sus_class_trivially_relocatable`]($sus_class_trivially_relocatable) and
+/// [`sus_class_trivially_relocatable_if_types`]($sus_class_trivially_relocatable_if_types)
+/// macros verify that all the types given to it are also trivially relocatable.
+/// As long as every field type of the class is given as a parameter, and each
+/// field type correctly advertises its trivial relocatability, it will ensure
+/// correctness.
+///
+/// This concept also honors the `[[clang::trivial_abi]]` Clang attribute, as
+/// types annotated with the attribute are now considered trivially relocatable
+/// in https://reviews.llvm.org/D114732. However, when marking a class with this
+/// attribute it is highly recommended to use the
+/// [`sus_class_trivially_relocatable`]($sus_class_trivially_relocatable) macro
+/// as well to help verify correctness and gain compiler independence.
+///
+/// | Macro | Style |
+/// | ----- | ----- |
+/// | [`sus_class_trivially_relocatable`]($sus_class_trivially_relocatable) | **asserts** all param types are trivially relocatable |
+/// | [`sus_class_trivially_relocatable_if_types`]($sus_class_trivially_relocatable_if_types) | is **conditionally** trivially relocatable if all param types are |
+/// | [`sus_class_trivially_relocatable_if`]($sus_class_trivially_relocatable_if) | is **conditionally** trivially relocatable if the condition is true |
+/// | [`sus_class_trivially_relocatable_unchecked`]($sus_class_trivially_relocatable_unchecked) | is trivially relocatable without any condition or assertion |
+///
+/// # Implementation notes
 /// The concept tests against
 /// [`std::remove_all_extents_t<T>`](
 /// https://en.cppreference.com/w/cpp/types/remove_all_extents)
 /// so that the same answer is returned for arrays of `T`, such as for `T` or
 /// `T[]` or `T[][][]`.
+///
+/// While the standard expects types to be `std::is_trivially_copyble` in order
+/// to copy by `memcpy`, Clang also allows trivial relocation of move-only types
+/// with non-trivial move operations and destructors through
+/// `[[clang::trivial_abi]]` while also noting that attributes are not part of
+/// and do not modify the type or how the compiler itself treats it outside of
+/// argument passing. As such, we consider trivally moveable and destructible
+/// types as automatically trivially relocatable, and allow other types to opt
+/// in conditionally with the macros and without `[[clang::trivial_abi]]`.
 template <class... T>
-concept relocate_by_memcpy = (... && __private::relocate_by_memcpy_impl<T>);
+concept TriviallyRelocatable = (... && __private::TriviallyRelocatable_impl<T>);
 
 }  // namespace sus::mem
 
@@ -113,6 +145,18 @@ concept relocate_by_memcpy = (... && __private::relocate_by_memcpy_impl<T>);
 ///
 /// To additionally allow the class to be passed in registers, the class can be
 /// marked with the `[[clang::trivial_abi]]` attribute.
+///
+/// Use the [`TriviallyRelocatable`]($sus::mem::TriviallyRelocatable) concept to
+/// determine if a type is trivially relocatable, and to test with static_assert
+/// that types are matching what you are expecting. This allows containers to
+/// optimize their implementations when relocating the type in memory.
+///
+/// | Macro | Style |
+/// | ----- | ----- |
+/// | [`sus_class_trivially_relocatable`]($sus_class_trivially_relocatable) | **asserts** all param types are trivially relocatable |
+/// | [`sus_class_trivially_relocatable_if_types`]($sus_class_trivially_relocatable_if_types) | is **conditionally** trivially relocatable if all param types are |
+/// | [`sus_class_trivially_relocatable_if`]($sus_class_trivially_relocatable_if) | is **conditionally** trivially relocatable if the condition is true |
+/// | [`sus_class_trivially_relocatable_unchecked`]($sus_class_trivially_relocatable_unchecked) | is trivially relocatable without any condition or assertion |
 ///
 /// # Example
 /// ```
@@ -143,6 +187,18 @@ concept relocate_by_memcpy = (... && __private::relocate_by_memcpy_impl<T>);
 /// the class is not trivially relocatable (since a subtype is not trivially
 /// relocatable), it can cause memory safety bugs and Undefined Behaviour.
 ///
+/// Use the [`TriviallyRelocatable`]($sus::mem::TriviallyRelocatable) concept to
+/// determine if a type is trivially relocatable, and to test with static_assert
+/// that types are matching what you are expecting. This allows containers to
+/// optimize their implementations when relocating the type in memory.
+///
+/// | Macro | Style |
+/// | ----- | ----- |
+/// | [`sus_class_trivially_relocatable`]($sus_class_trivially_relocatable) | **asserts** all param types are trivially relocatable |
+/// | [`sus_class_trivially_relocatable_if_types`]($sus_class_trivially_relocatable_if_types) | is **conditionally** trivially relocatable if all param types are |
+/// | [`sus_class_trivially_relocatable_if`]($sus_class_trivially_relocatable_if) | is **conditionally** trivially relocatable if the condition is true |
+/// | [`sus_class_trivially_relocatable_unchecked`]($sus_class_trivially_relocatable_unchecked) | is trivially relocatable without any condition or assertion |
+///
 /// # Example
 /// ```
 /// template <class T>
@@ -163,7 +219,7 @@ concept relocate_by_memcpy = (... && __private::relocate_by_memcpy_impl<T>);
   friend struct ::sus::mem::__private::relocatable_tag;               \
   /** #[doc.hidden] */                                                \
   static constexpr bool SusUnsafeTrivialRelocate =                    \
-      ::sus::mem::relocate_by_memcpy<__VA_ARGS__>
+      ::sus::mem::TriviallyRelocatable<__VA_ARGS__>
 
 /// Mark a class as trivially relocatable based on a compile-time condition.
 ///
@@ -173,6 +229,18 @@ concept relocate_by_memcpy = (... && __private::relocate_by_memcpy_impl<T>);
 /// Avoid marking the class with the `[[clang::trivial_abi]]` attribute, as when
 /// the class is not trivially relocatable (the value is false), it can cause
 /// memory safety bugs and Undefined Behaviour.
+///
+/// Use the [`TriviallyRelocatable`]($sus::mem::TriviallyRelocatable) concept to
+/// determine if a type is trivially relocatable, and to test with static_assert
+/// that types are matching what you are expecting. This allows containers to
+/// optimize their implementations when relocating the type in memory.
+///
+/// | Macro | Style |
+/// | ----- | ----- |
+/// | [`sus_class_trivially_relocatable`]($sus_class_trivially_relocatable) | **asserts** all param types are trivially relocatable |
+/// | [`sus_class_trivially_relocatable_if_types`]($sus_class_trivially_relocatable_if_types) | is **conditionally** trivially relocatable if all param types are |
+/// | [`sus_class_trivially_relocatable_if`]($sus_class_trivially_relocatable_if) | is **conditionally** trivially relocatable if the condition is true |
+/// | [`sus_class_trivially_relocatable_unchecked`]($sus_class_trivially_relocatable_unchecked) | is trivially relocatable without any condition or assertion |
 ///
 /// # Example
 /// ```
@@ -184,8 +252,8 @@ concept relocate_by_memcpy = (... && __private::relocate_by_memcpy_impl<T>);
 ///   sus_class_trivially_relocatable_if(
 ///       unsafe_fn,
 ///       SomeCondition<Thing<T>>
-///       && sus::mem::relocate_by_memcpy<decltype(thing)>
-///       && sus::mem::relocate_by_memcpy<decltype(more)>);
+///       && sus::mem::TriviallyRelocatable<decltype(thing)>
+///       && sus::mem::TriviallyRelocatable<decltype(more)>);
 /// };
 /// ```
 #define sus_class_trivially_relocatable_if(unsafe_fn, is_trivially_reloc)    \
@@ -200,11 +268,22 @@ concept relocate_by_memcpy = (... && __private::relocate_by_memcpy_impl<T>);
 /// Mark a class as unconditionally trivially relocatable, without any
 /// additional assertion to help verify correctness.
 ///
-/// Genrally, prefer to use sus_class_trivially_relocatable() with
+/// Generally, prefer to use sus_class_trivially_relocatable() with
 /// all field types passed to the macro.
-///
 /// To additionally allow the class to be passed in registers, the class can be
 /// marked with the `[[clang::trivial_abi]]` attribute.
+///
+/// Use the [`TriviallyRelocatable`]($sus::mem::TriviallyRelocatable) concept to
+/// determine if a type is trivially relocatable, and to test with static_assert
+/// that types are matching what you are expecting. This allows containers to
+/// optimize their implementations when relocating the type in memory.
+///
+/// | Macro | Style |
+/// | ----- | ----- |
+/// | [`sus_class_trivially_relocatable`]($sus_class_trivially_relocatable) | **asserts** all param types are trivially relocatable |
+/// | [`sus_class_trivially_relocatable_if_types`]($sus_class_trivially_relocatable_if_types) | is **conditionally** trivially relocatable if all param types are |
+/// | [`sus_class_trivially_relocatable_if`]($sus_class_trivially_relocatable_if) | is **conditionally** trivially relocatable if the condition is true |
+/// | [`sus_class_trivially_relocatable_unchecked`]($sus_class_trivially_relocatable_unchecked) | is trivially relocatable without any condition or assertion |
 ///
 /// # Example
 /// ```

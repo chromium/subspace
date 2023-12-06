@@ -24,7 +24,7 @@
 
 namespace sus::iter {
 
-using ::sus::mem::relocate_by_memcpy;
+using ::sus::mem::TriviallyRelocatable;
 
 /// An iterator with a `peek()` that returns an optional reference to the next
 /// element.

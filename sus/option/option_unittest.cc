@@ -38,7 +38,7 @@ using sus::Option;
 using sus::Some;
 using sus::Tuple;
 using sus::construct::Default;
-using sus::mem::relocate_by_memcpy;
+using sus::mem::TriviallyRelocatable;
 using namespace sus::test;
 
 namespace sus::test::option {

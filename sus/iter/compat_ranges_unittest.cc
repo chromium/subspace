@@ -137,7 +137,7 @@ TEST(CompatRanges, FromRange) {
     static_assert(sus::mem::Move<decltype(it)>);
     static_assert(!sus::mem::Copy<decltype(it)>);
     static_assert(sus::mem::Clone<decltype(it)>);
-    static_assert(sus::mem::relocate_by_memcpy<decltype(it)>);
+    static_assert(sus::mem::TriviallyRelocatable<decltype(it)>);
   }
 
   // Mutable use of vector.

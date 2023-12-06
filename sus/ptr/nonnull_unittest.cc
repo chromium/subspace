@@ -30,7 +30,7 @@
 
 using sus::ptr::NonNull;
 
-static_assert(sus::mem::relocate_by_memcpy<NonNull<int>>);
+static_assert(sus::mem::TriviallyRelocatable<NonNull<int>>);
 
 static_assert(sus::mem::NeverValueField<NonNull<int>>);
 static_assert(sizeof(sus::Option<NonNull<int>>) == sizeof(int*));

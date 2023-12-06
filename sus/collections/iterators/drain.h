@@ -99,7 +99,7 @@ struct [[nodiscard]] Drain final
       Item* const src = unyielded_ptr;
       Item* const dst = start_ptr;
 
-      if constexpr (::sus::mem::relocate_by_memcpy<Item>) {
+      if constexpr (::sus::mem::TriviallyRelocatable<Item>) {
         // Since the Drain'd elements have been moved, and they are trivially
         // relocatable, move+destroy is a no-op, so we can skip the destructors
         // here and just memmove `src` into them moved-from `dst` objects.
@@ -155,7 +155,7 @@ struct [[nodiscard]] Drain final
       Item* const src = vec_.as_mut_ptr() + tail;
       Item* const dst = vec_.as_mut_ptr() + start;
 
-      if constexpr (::sus::mem::relocate_by_memcpy<Item>) {
+      if constexpr (::sus::mem::TriviallyRelocatable<Item>) {
         // Since the Drain'd elements have been moved, and they are trivially
         // relocatable, move+destroy is a no-op, so we can skip the destructors
         // here and just memmove `src` into them moved-from `dst` objects.

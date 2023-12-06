@@ -35,7 +35,7 @@ template <class T>
   requires(sus::mem::Move<T> && !std::is_const_v<T>)
 inline constexpr void swap(T& lhs, T& rhs) noexcept {
   if (::sus::mem::addressof(lhs) != ::sus::mem::addressof(rhs)) [[likely]] {
-    if constexpr (::sus::mem::relocate_by_memcpy<T>) {
+    if constexpr (::sus::mem::TriviallyRelocatable<T>) {
       // copy_one() is not constexpr so we can't use it in constexpr evaluation.
       if (!std::is_constant_evaluated()) {
         constexpr auto data_size = ::sus::mem::data_size_of<T>();
@@ -69,7 +69,7 @@ template <class T>
   requires(sus::mem::Move<T> && !std::is_const_v<T>)
 inline constexpr void swap_nonoverlapping(::sus::marker::UnsafeFnMarker, T& lhs,
                                           T& rhs) noexcept {
-  if constexpr (::sus::mem::relocate_by_memcpy<T>) {
+  if constexpr (::sus::mem::TriviallyRelocatable<T>) {
     // memcpy() is not constexpr so we can't use it in constexpr evaluation.
     if (!std::is_constant_evaluated()) {
       constexpr auto data_size = ::sus::mem::data_size_of<T>();
