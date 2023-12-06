@@ -22,6 +22,7 @@
 #include "subdoc/lib/gen/generate_cpp_path.h"
 #include "subdoc/lib/gen/generate_function.h"
 #include "subdoc/lib/gen/generate_head.h"
+#include "subdoc/lib/gen/generate_macro.h"
 #include "subdoc/lib/gen/generate_nav.h"
 #include "subdoc/lib/gen/generate_record.h"
 #include "subdoc/lib/gen/html_writer.h"
@@ -40,6 +41,7 @@ using SortedFunctionByName = sus::Tuple<std::string_view, u32, FunctionId>;
 using SortedRecordByName = sus::Tuple<std::string_view, u32, RecordId>;
 using SortedAliasByName = sus::Tuple<std::string_view, u32, AliasId>;
 using SortedVariableByName = sus::Tuple<std::string_view, u32, UniqueSymbol>;
+using SortedMacroByName = sus::Tuple<std::string_view, u32, MacroId>;
 
 const NamespaceElement& namespace_element_from_sorted(
     const NamespaceElement& element, const SortedNamespaceByName& s) noexcept {
@@ -69,6 +71,11 @@ const AliasElement& alias_element_from_sorted(
 const FieldElement& field_element_from_sorted(
     const NamespaceElement& element, const SortedVariableByName& s) noexcept {
   return element.variables.at(s.at<2>());
+}
+
+const MacroElement& macro_element_from_sorted(
+    const NamespaceElement& element, const SortedMacroByName& s) noexcept {
+  return element.macros.at(s.at<2>());
 }
 
 constexpr inline std::weak_ordering cmp_namespaces_by_name(
@@ -108,6 +115,13 @@ constexpr inline std::weak_ordering cmp_aliases_by_name(
 
 constexpr inline std::weak_ordering cmp_variables_by_name(
     const SortedVariableByName& a, const SortedVariableByName& b) noexcept {
+  auto ord = a.at<0>() <=> b.at<0>();
+  if (ord != 0) return ord;
+  return a.at<1>() <=> b.at<1>();
+}
+
+constexpr inline std::weak_ordering cmp_macros_by_name(
+    const SortedMacroByName& a, const SortedMacroByName& b) noexcept {
   auto ord = a.at<0>() <=> b.at<0>();
   if (ord != 0) return ord;
   return a.at<1>() <=> b.at<1>();
@@ -170,6 +184,8 @@ void generate_namespace_overview(HtmlWriter::OpenDiv& namespace_div,
             case CppPathRecord: return "type-name";
             case CppPathFunction:
               break;  // Function can't be an ancesor of a record.
+            case CppPathMacro:
+              break;  // Macro can't be an ancesor of a record.
             case CppPathConcept:
               break;  // Concept can't be an ancestor of a namespace.
           }
@@ -453,6 +469,42 @@ sus::Result<void, MarkdownToHtmlError> generate_function_references(
   return sus::ok();
 }
 
+sus::Result<void, MarkdownToHtmlError> generate_macro_references(
+    HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
+    sus::Slice<SortedMacroByName> macros, ParseMarkdownPageState& page_state) {
+  if (macros.is_empty()) return sus::ok();
+
+  auto section_div = namespace_div.open_div();
+  section_div.add_class("section");
+  section_div.add_class("macros");
+
+  {
+    auto header_div = section_div.open_div();
+    header_div.add_class("section-header");
+    {
+      auto header_name = header_div.open_a();
+      header_name.add_name("macros");
+      header_name.add_href("#macros");
+      header_name.write_text("Macros");
+    }
+  }
+  {
+    auto items_list = section_div.open_ul();
+    items_list.add_class("section-items");
+    items_list.add_class("item-table");
+
+    for (const SortedMacroByName& sorted_macro : macros) {
+      const MacroElement& me = macro_element_from_sorted(element, sorted_macro);
+      if (auto result = generate_macro_reference(items_list, me, page_state);
+          result.is_err()) {
+        return sus::err(sus::move(result).unwrap_err());
+      }
+    }
+  }
+
+  return sus::ok();
+}
+
 sus::Result<void, MarkdownToHtmlError> generate_variable_references(
     HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
     sus::Slice<SortedVariableByName> variables,
@@ -560,6 +612,14 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
   }
   sorted_functions.sort_unstable_by(cmp_functions_by_name);
   sorted_operators.sort_unstable_by(cmp_functions_by_name);
+
+  sus::Vec<SortedMacroByName> sorted_macros;
+  for (const auto& [macro_id, sub_element] : element.macros) {
+    if (sub_element.hidden()) continue;
+    sorted_macros.push(
+        sus::tuple(sub_element.name, sub_element.sort_key, macro_id));
+  }
+  sorted_macros.sort_unstable_by(cmp_macros_by_name);
 
   sus::Vec<SortedVariableByName> sorted_variables;
   for (const auto& [function_id, sub_element] : element.variables) {
@@ -765,6 +825,15 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
       }
     }
   }
+  if (!sorted_macros.is_empty()) {
+    sidebar_links.push(
+        SidebarLink(SidebarLinkStyle::GroupHeader, "Macros", "#macros"));
+    for (const SortedMacroByName& sorted_macro : sorted_macros) {
+      const MacroElement& me = macro_element_from_sorted(element, sorted_macro);
+      sidebar_links.push(SidebarLink(SidebarLinkStyle::Item, me.name,
+                                     construct_html_url_for_macro(me)));
+    }
+  }
 
   auto body = html.open_body();
   if (element.namespace_name == Namespace::Tag::Global)
@@ -874,6 +943,14 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
     }
   }
 
+  if (!sorted_macros.is_empty()) {
+    if (auto result = generate_macro_references(namespace_div, element,
+                                                sorted_macros, page_state);
+        result.is_err()) {
+      return sus::err(sus::move(result).unwrap_err());
+    }
+  }
+
   // Recurse into namespaces, concepts, records and functions.
   ancestors.push(&element);
   for (const auto& [u, sub_element] : element.namespaces) {
@@ -902,6 +979,13 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
   for (const auto& [u, sub_element] : element.functions) {
     if (sub_element.hidden()) continue;
     if (auto result = generate_function(db, sub_element, ancestors, options);
+        result.is_err()) {
+      return sus::err(sus::move(result).unwrap_err());
+    }
+  }
+  for (const auto& [u, sub_element] : element.macros) {
+    if (sub_element.hidden()) continue;
+    if (auto result = generate_macro(db, sub_element, ancestors, options);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }

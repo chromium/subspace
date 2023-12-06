@@ -403,7 +403,6 @@ sus::Result<MarkdownToHtml, MarkdownToHtmlError> markdown_to_html(
           href = construct_html_url_for_type(
               found.as_value().as<FoundName::Tag::Type>());
           break;
-
         case FoundName::Tag::Concept:
           href = construct_html_url_for_concept(
               found.as_value().as<FoundName::Tag::Concept>());
@@ -411,6 +410,10 @@ sus::Result<MarkdownToHtml, MarkdownToHtmlError> markdown_to_html(
         case FoundName::Tag::Field:
           href = construct_html_url_for_field(
               found.as_value().as<FoundName::Tag::Field>());
+          break;
+        case FoundName::Tag::Macro:
+          href = construct_html_url_for_macro(
+              found.as_value().as<FoundName::Tag::Macro>());
           break;
       }
       int r = render(html, href.data(), u32::try_from(href.size()).unwrap());

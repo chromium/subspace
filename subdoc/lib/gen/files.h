@@ -167,6 +167,22 @@ inline std::string construct_html_url_anchor_for_field(
   return sus::move(url).str();
 }
 
+inline std::string construct_html_url_anchor_for_method(
+    const FunctionElement& element) noexcept {
+  sus_check(!element.record_path.is_empty());
+  // There's no escaping that happens for anchors on the record page, unlike
+  // for file paths. So we don't use construct_html_file_path_for_function()
+  // here which escapes.
+  std::ostringstream url;
+  url << "method.";
+  url << element.name;
+  if (element.overload_set.is_some()) {
+    url << ".";
+    url << element.overload_set.as_value();
+  }
+  return sus::move(url).str();
+}
+
 inline std::filesystem::path construct_html_file_path_for_function(
     std::filesystem::path root, const FunctionElement& element) noexcept {
   std::ostringstream s;
@@ -229,22 +245,6 @@ inline std::filesystem::path construct_html_file_path_for_function(
                                   sus::Slice<std::string>(), name);
 }
 
-inline std::string construct_html_url_anchor_for_method(
-    const FunctionElement& element) noexcept {
-  sus_check(!element.record_path.is_empty());
-  // There's no escaping that happens for anchors on the record page, unlike
-  // for file paths. So we don't use construct_html_file_path_for_function()
-  // here which escapes.
-  std::ostringstream url;
-  url << "method.";
-  url << element.name;
-  if (element.overload_set.is_some()) {
-    url << ".";
-    url << element.overload_set.as_value();
-  }
-  return sus::move(url).str();
-}
-
 inline std::string construct_html_url_for_function(
     const FunctionElement& element) noexcept {
   if (!element.record_path.is_empty()) {
@@ -265,6 +265,23 @@ inline std::string construct_html_url_for_function(
                                                  element)
         .string();
   }
+}
+
+inline std::filesystem::path construct_html_file_path_for_macro(
+    std::filesystem::path root, const MacroElement& element) noexcept {
+  std::ostringstream s;
+  s << "macro.";
+  s << element.name;
+  std::string name = sus::move(s).str();
+  return construct_html_file_path(sus::move(root),
+                                  element.namespace_path.as_slice(),
+                                  sus::Slice<std::string>(), name);
+}
+
+inline std::string construct_html_url_for_macro(
+    const MacroElement& element) noexcept {
+  return construct_html_file_path_for_macro(std::filesystem::path(), element)
+      .string();
 }
 
 /// The AliasElement may point to something not in the database, in which case

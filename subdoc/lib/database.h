@@ -662,8 +662,9 @@ struct RecordElement : public TypeElement {
 
 struct MacroElement : public CommentElement {
   explicit MacroElement(Comment comment, std::string name, u32 sort_key)
-      : CommentElement(sus::Vec<Namespace>(), sus::move(comment),
-                       sus::move(name), sort_key) {}
+      : CommentElement(
+            sus::Vec<Namespace>(Namespace::with<Namespace::Tag::Global>()),
+            sus::move(comment), sus::move(name), sort_key) {}
 
   bool has_any_comments() const noexcept { return has_found_comment(); }
 

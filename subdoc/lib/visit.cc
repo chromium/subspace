@@ -191,7 +191,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       auto name = std::string(identifier_info->getName());
 
       // TODO: Filter by name properly.
-      if (name.size() != 1u) continue;
+      if (!name.starts_with("sus_") && !name.starts_with("SUS_")) continue;
 
       // Get all comments in the file the macro definition was from.
       clang::MacroDefinition defn =
@@ -245,15 +245,15 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         between = between.substr(0u, between.size() - strlen("#"));
 
       // There should be no other declarations or macros between the comment and
-      // this macro.
+      // this macro. This pattern is copied from
+      // clang::ASTContext::getRawCommentForDeclNoCacheImpl().
       if (between.find_last_of(";{}#@") != llvm::StringRef::npos) {
         continue;
       }
 
       Comment comment = make_db_comment(decl->getASTContext(), raw_comment, "");
-      fmt::println(stderr, "macro {} has comment: {}", name, comment.text);
-      //MacroElement(sus::move(comment), sus::move(name), macro_start);
-      // TODO: Store the macro element.
+      auto me = MacroElement(sus::move(comment), sus::move(name), macro_start);
+      add_macro_to_db(decl, sus::move(me), docs_db_.global.macros);
     }
     return true;
   }
@@ -1204,6 +1204,31 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
           });
       if (!exists)
         db_map.at(key).overloads.push(sus::move(db_element.overloads[0u]));
+    }
+  }
+
+  template <class MapT>
+  void add_macro_to_db(clang::Decl* decl, MacroElement db_element,
+                       MapT& db_map) noexcept {
+    auto key = MacroId(sus::clone(db_element.name));
+    auto it = db_map.find(key);
+    if (it == db_map.end()) {
+      db_map.emplace(key, std::move(db_element));
+    } else if (!it->second.has_found_comment() &&
+               db_element.has_found_comment()) {
+      // Steal the comment.
+      sus::mem::swap(db_map.at(key).comment, db_element.comment);
+    } else if (!db_element.has_found_comment()) {
+      // Leave the existing comment in place, do nothing.
+    } else if (db_element.comment.begin_loc == it->second.comment.begin_loc) {
+      // We already visited this thing, from another translation unit.
+    } else {
+      auto& ast_cx = decl->getASTContext();
+      const MacroElement& old_element = it->second;
+      ast_cx.getDiagnostics()
+          .Report(db_element.comment.attrs.location,
+                  diag_ids_.superceded_comment)
+          .AddString(old_element.comment.begin_loc);
     }
   }
 
