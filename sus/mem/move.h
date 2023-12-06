@@ -81,7 +81,7 @@ concept MoveOrRefOrVoid = MoveOrRef<T> || std::is_void_v<T>;
 /// rvalue-qualified methods on `T` even if it is not `Move`.
 template <class T>
   requires(!std::is_const_v<std::remove_reference_t<T>>)
-sus_pure_const sus_always_inline constexpr decltype(auto) move(T&& t) noexcept {
+sus_pure_const _sus_always_inline constexpr decltype(auto) move(T&& t) noexcept {
   return static_cast<std::remove_reference_t<T>&&>(t);
 }
 

@@ -428,7 +428,7 @@ concept Fn = requires {
 /// * Verifies that the thing being invoked is being moved from so that the
 ///   correct overload will be invoked.
 template <class F, class... Args>
-sus_always_inline constexpr decltype(auto) call_once(F&& f, Args&&... args)
+_sus_always_inline constexpr decltype(auto) call_once(F&& f, Args&&... args)
   requires(::sus::mem::IsMoveRef<decltype(f)>)
 {
   return std::invoke(sus::move(f), sus::forward<Args>(args)...);
@@ -444,7 +444,7 @@ sus_always_inline constexpr decltype(auto) call_once(F&& f, Args&&... args)
 ///   that the correct overload will be invoked.
 template <class F, class... Args>
   requires(!std::is_const_v<std::remove_reference_t<F>>)
-sus_always_inline constexpr decltype(auto) call_mut(F&& f, Args&&... args) {
+_sus_always_inline constexpr decltype(auto) call_mut(F&& f, Args&&... args) {
   return std::invoke(static_cast<std::remove_reference_t<F>&>(f),
                      sus::forward<Args>(args)...);
 }
@@ -458,7 +458,7 @@ sus_always_inline constexpr decltype(auto) call_mut(F&& f, Args&&... args) {
 /// * Verifies that the thing being invoked is called as a const lvalue so
 ///   that the correct overload will be invoked.
 template <class F, class... Args>
-sus_always_inline constexpr decltype(auto) call(F&& f, Args&&... args) {
+_sus_always_inline constexpr decltype(auto) call(F&& f, Args&&... args) {
   return std::invoke(static_cast<const std::remove_reference_t<F>&>(f),
                      sus::forward<Args>(args)...);
 }

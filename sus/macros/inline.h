@@ -17,9 +17,9 @@
 #include "sus/macros/compiler.h"
 
 /// Replace the `inline` keyword on a function declaration with
-/// `sus_always_inline` to force the compiler to inline it regardless of its
+/// `_sus_always_inline` to force the compiler to inline it regardless of its
 /// heuristics.
-#define sus_always_inline \
+#define _sus_always_inline \
   sus_if_msvc_else(__forceinline, inline __attribute__((always_inline)))
 
 /// Add `sus_no_inline` to the start of a function declaration to prevent the

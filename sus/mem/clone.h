@@ -111,7 +111,7 @@ concept CloneFrom =
 ///
 /// If `T` is a reference type, it will clone the underlying object.
 template <Clone T>
-[[nodiscard]] sus_always_inline constexpr std::decay_t<T> clone(
+[[nodiscard]] _sus_always_inline constexpr std::decay_t<T> clone(
     const T& source) noexcept {
   if constexpr (Copy<T>) {
     return source;
@@ -128,7 +128,7 @@ template <Clone T>
 /// If `T` is a reference type, it copies and returns the reference instead of
 /// the underlying object.
 template <CloneOrRef T>
-[[nodiscard]] sus_always_inline constexpr T clone_or_forward(
+[[nodiscard]] _sus_always_inline constexpr T clone_or_forward(
     const std::remove_reference_t<T>& source) noexcept {
   if constexpr (std::is_reference_v<T>) {
     return source;
@@ -148,7 +148,7 @@ template <CloneOrRef T>
 //
 // TODO: Provide a concept to verify that this method exists.
 template <Clone T>
-sus_always_inline constexpr void clone_into(T& dest, const T& source) noexcept {
+_sus_always_inline constexpr void clone_into(T& dest, const T& source) noexcept {
   if constexpr (Copy<T>) {
     dest = source;
   } else if constexpr (CloneFrom<T>) {
