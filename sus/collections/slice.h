@@ -112,7 +112,7 @@ class [[sus_trivial_abi]] Slice final {
   /// which is Undefined Behaviour in C++. To support dangling pointers, those
   /// methods would need `length == 0` branches. Care must be applied when
   /// converting slices between languages as a result.
-  sus_pure static constexpr Slice from_raw_parts(
+  _sus_pure static constexpr Slice from_raw_parts(
       ::sus::marker::UnsafeFnMarker, const T* data sus_lifetimebound,
       usize len) noexcept {
     sus_check(len <= ::sus::cast<usize>(isize::MAX));
@@ -147,7 +147,7 @@ class [[sus_trivial_abi]] Slice final {
   /// which is Undefined Behaviour in C++. To support dangling pointers, those
   /// methods would need `length == 0` branches. Care must be applied when
   /// converting slices between languages as a result.
-  sus_pure static constexpr Slice from_raw_collection(
+  _sus_pure static constexpr Slice from_raw_collection(
       ::sus::marker::UnsafeFnMarker, ::sus::iter::IterRefCounter refs,
       const T* data sus_lifetimebound, usize len) noexcept {
     sus_check(len <= ::sus::cast<usize>(isize::MAX));
@@ -164,7 +164,7 @@ class [[sus_trivial_abi]] Slice final {
   /// #[doc.overloads=from.array]
   template <size_t N>
     requires(N <= ::sus::cast<usize>(isize::MAX))
-  sus_pure static constexpr Slice from(const T (&data)[N] sus_lifetimebound) {
+  _sus_pure static constexpr Slice from(const T (&data)[N] sus_lifetimebound) {
     // We strip the `const` off `data`, however only const access is provided
     // through this class. This is done so that mutable types can compose Slice
     // and store a mutable pointer.
@@ -174,7 +174,7 @@ class [[sus_trivial_abi]] Slice final {
 
   /// Converts the slice into an iterator that consumes the slice and returns
   /// each element in the same order they appear in the slice.
-  sus_pure constexpr SliceIter<const T&> into_iter() && noexcept {
+  _sus_pure constexpr SliceIter<const T&> into_iter() && noexcept {
     return SliceIter<const T&>(
         // This method is in Slice only, so it's a view type.
         iter_refs_.to_iter_from_view(), data_, len_);
@@ -204,7 +204,7 @@ class [[sus_trivial_abi]] Slice final {
   /// # Panics
   /// If the index `i` is beyond the end of the slice, the function will panic.
   /// #[doc.overloads=slice.index.usize]
-  sus_pure constexpr const T& operator[](usize i) const& noexcept {
+  _sus_pure constexpr const T& operator[](usize i) const& noexcept {
     sus_check(i < len());
     return *(as_ptr() + i);
   }
@@ -221,7 +221,7 @@ class [[sus_trivial_abi]] Slice final {
   /// If the Range would otherwise contain an element that is out of bounds,
   /// the function will panic.
   /// #[doc.overloads=slice.index.range]
-  sus_pure constexpr Slice<T> operator[](
+  _sus_pure constexpr Slice<T> operator[](
       const ::sus::ops::RangeBounds<usize> auto range) const& noexcept {
     const usize length = len();
     const usize rstart = range.start_bound().unwrap_or(0u);
@@ -339,7 +339,7 @@ class [[sus_trivial_abi]] SliceMut final {
   /// which is Undefined Behaviour in C++. To support dangling pointers, those
   /// methods would need `length == 0` branches. Care must be applied when
   /// converting slices between languages as a result.
-  sus_pure static constexpr SliceMut from_raw_parts_mut(
+  _sus_pure static constexpr SliceMut from_raw_parts_mut(
       ::sus::marker::UnsafeFnMarker, T* data sus_lifetimebound,
       usize len) noexcept {
     sus_check(len <= ::sus::cast<usize>(isize::MAX));
@@ -369,7 +369,7 @@ class [[sus_trivial_abi]] SliceMut final {
   /// which is Undefined Behaviour in C++. To support dangling pointers, those
   /// methods would need `length == 0` branches. Care must be applied when
   /// converting slices between languages as a result.
-  sus_pure static constexpr SliceMut from_raw_collection_mut(
+  _sus_pure static constexpr SliceMut from_raw_collection_mut(
       ::sus::marker::UnsafeFnMarker, ::sus::iter::IterRefCounter refs,
       T* data sus_lifetimebound, usize len) noexcept {
     sus_check(len <= ::sus::cast<usize>(isize::MAX));
@@ -383,13 +383,13 @@ class [[sus_trivial_abi]] SliceMut final {
   /// #[doc.overloads=from.array]
   template <size_t N>
     requires(N <= ::sus::cast<usize>(isize::MAX_PRIMITIVE))
-  sus_pure static constexpr SliceMut from(T (&data)[N] sus_lifetimebound) {
+  _sus_pure static constexpr SliceMut from(T (&data)[N] sus_lifetimebound) {
     return SliceMut(::sus::iter::IterRefCounter::empty_for_view(), data, N);
   }
 
   /// Converts the slice into an iterator that consumes the slice and returns
   /// each element in the same order they appear in the slice.
-  sus_pure constexpr SliceIterMut<T&> into_iter() && noexcept {
+  _sus_pure constexpr SliceIterMut<T&> into_iter() && noexcept {
     return SliceIterMut<T&>(
         // This method is in SliceMut only, so it's a view type.
         slice_.iter_refs_.to_iter_from_view(), slice_.data_, slice_.len_);
@@ -415,7 +415,7 @@ class [[sus_trivial_abi]] SliceMut final {
   /// # Panics
   /// If the index `i` is beyond the end of the slice, the function will panic.
   /// #[doc.overloads=slicemut.index.usize]
-  sus_pure constexpr T& operator[](usize i) const& noexcept {
+  _sus_pure constexpr T& operator[](usize i) const& noexcept {
     sus_check(i < len());
     return *(as_mut_ptr() + i);
   }
@@ -432,7 +432,7 @@ class [[sus_trivial_abi]] SliceMut final {
   /// If the Range would otherwise contain an element that is out of bounds,
   /// the function will panic.
   /// #[doc.overloads=slicemut.index.range]
-  sus_pure constexpr SliceMut<T> operator[](
+  _sus_pure constexpr SliceMut<T> operator[](
       const ::sus::ops::RangeBounds<usize> auto range) const& noexcept {
     const usize length = len();
     const usize rstart = range.start_bound().unwrap_or(0u);
@@ -444,11 +444,11 @@ class [[sus_trivial_abi]] SliceMut final {
   constexpr Slice<T> as_slice() const& noexcept { return *this; }
 
   // SliceMut can be used as a Slice.
-  sus_pure constexpr operator const Slice<T>&() const& noexcept {
+  _sus_pure constexpr operator const Slice<T>&() const& noexcept {
     return slice_;
   }
-  sus_pure constexpr operator Slice<T>&() & noexcept { return slice_; }
-  sus_pure constexpr operator Slice<T>() && noexcept {
+  _sus_pure constexpr operator Slice<T>&() & noexcept { return slice_; }
+  _sus_pure constexpr operator Slice<T>() && noexcept {
     return ::sus::move(slice_);
   }
 

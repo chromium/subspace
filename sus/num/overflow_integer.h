@@ -73,7 +73,7 @@ class OverflowInteger {
   /// `OverflowInteger` is constructible from `U`.
   template <class U>
     requires(std::constructible_from<OverflowInteger, U>)
-  sus_pure static constexpr OverflowInteger from(U u) noexcept {
+  _sus_pure static constexpr OverflowInteger from(U u) noexcept {
     return OverflowInteger(u);
   }
 
@@ -81,7 +81,7 @@ class OverflowInteger {
   /// integer type `I` satisfies `sus::construct::TryFrom<I, U>`.
   template <class U>
     requires(::sus::construct::TryFrom<I, U>)
-  sus_pure static constexpr ::sus::result::Result<OverflowInteger,
+  _sus_pure static constexpr ::sus::result::Result<OverflowInteger,
                                                   ::sus::num::TryFromIntError>
   try_from(U u) noexcept {
     // TODO: Use map() when it exists.
@@ -126,16 +126,16 @@ class OverflowInteger {
     return p;
   }
 
-  sus_pure bool is_valid() const noexcept { return v_.is_some(); }
-  sus_pure bool is_overflow() const noexcept { return v_.is_none(); }
+  _sus_pure bool is_valid() const noexcept { return v_.is_some(); }
+  _sus_pure bool is_overflow() const noexcept { return v_.is_none(); }
 
-  sus_pure constexpr I as_value() const& noexcept { return v_.as_value(); }
-  sus_pure constexpr I as_value_unchecked(
+  _sus_pure constexpr I as_value() const& noexcept { return v_.as_value(); }
+  _sus_pure constexpr I as_value_unchecked(
       ::sus::marker::UnsafeFnMarker) const& noexcept {
     return v_.as_value_unchecked(::sus::marker::unsafe_fn);
   }
-  sus_pure constexpr I& as_value_mut() & noexcept { return v_.as_value_mut(); }
-  sus_pure constexpr I& as_value_unchecked_mut(
+  _sus_pure constexpr I& as_value_mut() & noexcept { return v_.as_value_mut(); }
+  _sus_pure constexpr I& as_value_unchecked_mut(
       ::sus::marker::UnsafeFnMarker) & noexcept {
     return v_.as_value_unchecked_mut(::sus::marker::unsafe_fn);
   }
@@ -147,7 +147,7 @@ class OverflowInteger {
 
   /// Converts the `OverflowInteger` into an `Option` that contains the integer
   /// value. If overflow has occured, returns `None`.
-  sus_pure constexpr Option<I> to_option() const noexcept { return v_; }
+  _sus_pure constexpr Option<I> to_option() const noexcept { return v_; }
 
   constexpr void operator+=(I rhs) noexcept {
     v_ = v_.and_then([=](I vi) { return vi.checked_add(rhs); });
@@ -191,93 +191,93 @@ class OverflowInteger {
     });
   }
 
-  sus_pure friend constexpr OverflowInteger operator+(OverflowInteger lhs,
+  _sus_pure friend constexpr OverflowInteger operator+(OverflowInteger lhs,
                                                       I rhs) noexcept {
     return OverflowInteger(FROM_OPTION, lhs.v_.and_then([=](I lhsi) {
       return lhsi.checked_add(rhs);
     }));
   }
-  sus_pure friend constexpr OverflowInteger operator-(OverflowInteger lhs,
+  _sus_pure friend constexpr OverflowInteger operator-(OverflowInteger lhs,
                                                       I rhs) noexcept {
     return OverflowInteger(FROM_OPTION, lhs.v_.and_then([=](I lhsi) {
       return lhsi.checked_sub(rhs);
     }));
   }
-  sus_pure friend constexpr OverflowInteger operator*(OverflowInteger lhs,
+  _sus_pure friend constexpr OverflowInteger operator*(OverflowInteger lhs,
                                                       I rhs) noexcept {
     return OverflowInteger(FROM_OPTION, lhs.v_.and_then([=](I lhsi) {
       return lhsi.checked_mul(rhs);
     }));
   }
-  sus_pure friend constexpr OverflowInteger operator/(OverflowInteger lhs,
+  _sus_pure friend constexpr OverflowInteger operator/(OverflowInteger lhs,
                                                       I rhs) noexcept {
     return OverflowInteger(FROM_OPTION, lhs.v_.and_then([=](I lhsi) {
       return lhsi.checked_div(rhs);
     }));
   }
-  sus_pure friend constexpr OverflowInteger operator%(OverflowInteger lhs,
+  _sus_pure friend constexpr OverflowInteger operator%(OverflowInteger lhs,
                                                       I rhs) noexcept {
     return OverflowInteger(FROM_OPTION, lhs.v_.and_then([=](I lhsi) {
       return lhsi.checked_rem(rhs);
     }));
   }
 
-  sus_pure friend constexpr OverflowInteger operator+(
+  _sus_pure friend constexpr OverflowInteger operator+(
       I lhs, OverflowInteger rhs) noexcept {
     return OverflowInteger(FROM_OPTION, rhs.v_.and_then([=](I rhsi) {
       return lhs.checked_add(rhsi);
     }));
   }
-  sus_pure friend constexpr OverflowInteger operator-(
+  _sus_pure friend constexpr OverflowInteger operator-(
       I lhs, OverflowInteger rhs) noexcept {
     return OverflowInteger(FROM_OPTION, rhs.v_.and_then([=](I rhsi) {
       return lhs.checked_sub(rhsi);
     }));
   }
-  sus_pure friend constexpr OverflowInteger operator*(
+  _sus_pure friend constexpr OverflowInteger operator*(
       I lhs, OverflowInteger rhs) noexcept {
     return OverflowInteger(FROM_OPTION, rhs.v_.and_then([=](I rhsi) {
       return lhs.checked_mul(rhsi);
     }));
   }
-  sus_pure friend constexpr OverflowInteger operator/(
+  _sus_pure friend constexpr OverflowInteger operator/(
       I lhs, OverflowInteger rhs) noexcept {
     return OverflowInteger(FROM_OPTION, rhs.v_.and_then([=](I rhsi) {
       return lhs.checked_div(rhsi);
     }));
   }
-  sus_pure friend constexpr OverflowInteger operator%(
+  _sus_pure friend constexpr OverflowInteger operator%(
       I lhs, OverflowInteger rhs) noexcept {
     return OverflowInteger(FROM_OPTION, rhs.v_.and_then([=](I rhsi) {
       return lhs.checked_rem(rhsi);
     }));
   }
 
-  sus_pure friend constexpr OverflowInteger operator+(
+  _sus_pure friend constexpr OverflowInteger operator+(
       OverflowInteger lhs, OverflowInteger rhs) noexcept {
     return OverflowInteger(FROM_OPTION, lhs.v_.and_then([=](I lhsi) {
       return rhs.v_.and_then([=](I rhsi) { return lhsi.checked_add(rhsi); });
     }));
   }
-  sus_pure friend constexpr OverflowInteger operator-(
+  _sus_pure friend constexpr OverflowInteger operator-(
       OverflowInteger lhs, OverflowInteger rhs) noexcept {
     return OverflowInteger(FROM_OPTION, lhs.v_.and_then([=](I lhsi) {
       return rhs.v_.and_then([=](I rhsi) { return lhsi.checked_sub(rhsi); });
     }));
   }
-  sus_pure friend constexpr OverflowInteger operator*(
+  _sus_pure friend constexpr OverflowInteger operator*(
       OverflowInteger lhs, OverflowInteger rhs) noexcept {
     return OverflowInteger(FROM_OPTION, lhs.v_.and_then([=](I lhsi) {
       return rhs.v_.and_then([=](I rhsi) { return lhsi.checked_mul(rhsi); });
     }));
   }
-  sus_pure friend constexpr OverflowInteger operator/(
+  _sus_pure friend constexpr OverflowInteger operator/(
       OverflowInteger lhs, OverflowInteger rhs) noexcept {
     return OverflowInteger(FROM_OPTION, lhs.v_.and_then([=](I lhsi) {
       return rhs.v_.and_then([=](I rhsi) { return lhsi.checked_div(rhsi); });
     }));
   }
-  sus_pure friend constexpr OverflowInteger operator%(
+  _sus_pure friend constexpr OverflowInteger operator%(
       OverflowInteger lhs, OverflowInteger rhs) noexcept {
     return OverflowInteger(FROM_OPTION, lhs.v_.and_then([=](I lhsi) {
       return rhs.v_.and_then([=](I rhsi) { return lhsi.checked_rem(rhsi); });

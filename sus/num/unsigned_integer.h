@@ -191,7 +191,7 @@ struct [[sus_trivial_abi]] uptr final {
 /// #[doc.overloads=ptr.add.usize]
 template <class T, Unsigned U>
   requires(std::constructible_from<usize, U>)
-sus_pure_const constexpr inline T* operator+(T* t, U offset) {
+__sus_pure_const constexpr inline T* operator+(T* t, U offset) {
   return t + size_t{offset};
 }
 
@@ -216,7 +216,7 @@ constexpr inline T*& operator+=(T*& t, usize offset) {
 ///
 /// #[doc.overloads=ptr.sub.usize]
 template <class T>
-sus_pure_const constexpr inline T* operator-(T* t, usize offset) {
+__sus_pure_const constexpr inline T* operator-(T* t, usize offset) {
   return t - size_t{offset};
 }
 
@@ -240,7 +240,7 @@ constexpr inline T*& operator-=(T*& t, usize offset) {
 template <class P, Integer U>
   requires((UnsignedPrimitiveInteger<P> || UnsignedPrimitiveEnum<P>) &&
            std::convertible_to<U, u64>)
-[[nodiscard]] sus_pure_const constexpr inline P operator<<(P l, U r) noexcept {
+[[nodiscard]] __sus_pure_const constexpr inline P operator<<(P l, U r) noexcept {
   // No UB checks on primitive types, since there's no promotion to a Subspace
   // return type?
   return l << u64(r).primitive_value;
@@ -257,7 +257,7 @@ constexpr inline P operator<<(P l, U r) noexcept = delete;
 template <class P, Integer U>
   requires((UnsignedPrimitiveInteger<P> || UnsignedPrimitiveEnum<P>) &&
            std::convertible_to<U, u64>)
-[[nodiscard]] sus_pure_const constexpr inline P operator>>(P l, U r) noexcept {
+[[nodiscard]] __sus_pure_const constexpr inline P operator>>(P l, U r) noexcept {
   // No UB checks on primitive types, since there's no promotion to a Subspace
   // return type?
   return l >> u64(r).primitive_value;
@@ -279,7 +279,7 @@ constexpr inline P operator>>(P l, U r) noexcept = delete;
 /// behaviour.
 ///
 /// #[doc.overloads=unsignedint.<<]
-[[nodiscard]] sus_pure_const constexpr inline u8 operator<<(
+[[nodiscard]] __sus_pure_const constexpr inline u8 operator<<(
     u8 l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     sus_check_with_message(r < u8::BITS,
@@ -307,7 +307,7 @@ constexpr inline u8 operator<<(u8 l, U r) noexcept = delete;
 /// behaviour.
 ///
 /// #[doc.overloads=unsignedint.>>]
-[[nodiscard]] sus_pure_const constexpr inline u8 operator>>(
+[[nodiscard]] __sus_pure_const constexpr inline u8 operator>>(
     u8 l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     sus_check_with_message(r < u8::BITS,
@@ -325,7 +325,7 @@ template <class U>
   requires(!std::convertible_to<U, u64>)
 constexpr inline u8 operator>>(u8 l, U r) noexcept = delete;
 /// #[doc.overloads=unsignedint.<<]
-[[nodiscard]] sus_pure_const constexpr inline u16 operator<<(
+[[nodiscard]] __sus_pure_const constexpr inline u16 operator<<(
     u16 l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     sus_check_with_message(r < u16::BITS,
@@ -343,7 +343,7 @@ template <class U>
   requires(!std::convertible_to<U, u64>)
 constexpr inline u16 operator<<(u16 l, U r) noexcept = delete;
 /// #[doc.overloads=unsignedint.>>]
-[[nodiscard]] sus_pure_const constexpr inline u16 operator>>(
+[[nodiscard]] __sus_pure_const constexpr inline u16 operator>>(
     u16 l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     sus_check_with_message(r < u16::BITS,
@@ -361,7 +361,7 @@ template <class U>
   requires(!std::convertible_to<U, u64>)
 constexpr inline u16 operator>>(u16 l, U r) noexcept = delete;
 /// #[doc.overloads=unsignedint.<<]
-[[nodiscard]] sus_pure_const constexpr inline u32 operator<<(
+[[nodiscard]] __sus_pure_const constexpr inline u32 operator<<(
     u32 l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     sus_check_with_message(r < u32::BITS, "attempt to shift left with overflow");
@@ -378,7 +378,7 @@ template <class U>
   requires(!std::convertible_to<U, u64>)
 constexpr inline u32 operator<<(u32 l, U r) noexcept = delete;
 /// #[doc.overloads=unsignedint.>>]
-[[nodiscard]] sus_pure_const constexpr inline u32 operator>>(
+[[nodiscard]] __sus_pure_const constexpr inline u32 operator>>(
     u32 l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     sus_check_with_message(r < u32::BITS,
@@ -396,7 +396,7 @@ template <class U>
   requires(!std::convertible_to<U, u64>)
 constexpr inline u32 operator>>(u32 l, U r) noexcept = delete;
 /// #[doc.overloads=unsignedint.<<]
-[[nodiscard]] sus_pure_const constexpr inline u64 operator<<(
+[[nodiscard]] __sus_pure_const constexpr inline u64 operator<<(
     u64 l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     sus_check_with_message(r < u64::BITS, "attempt to shift left with overflow");
@@ -413,7 +413,7 @@ template <class U>
   requires(!std::convertible_to<U, u64>)
 constexpr inline u64 operator<<(u64 l, U r) noexcept = delete;
 /// #[doc.overloads=unsignedint.>>]
-[[nodiscard]] sus_pure_const constexpr inline u64 operator>>(
+[[nodiscard]] __sus_pure_const constexpr inline u64 operator>>(
     u64 l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     sus_check_with_message(r < u64::BITS,
@@ -431,7 +431,7 @@ template <class U>
   requires(!std::convertible_to<U, u64>)
 constexpr inline u64 operator>>(u64 l, U r) noexcept = delete;
 /// #[doc.overloads=unsignedint.<<]
-[[nodiscard]] sus_pure_const constexpr inline usize operator<<(
+[[nodiscard]] __sus_pure_const constexpr inline usize operator<<(
     usize l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     sus_check_with_message(r < usize::BITS, "attempt to shift left with overflow");
@@ -448,7 +448,7 @@ template <class U>
   requires(!std::convertible_to<U, u64>)
 constexpr inline usize operator<<(usize l, U r) noexcept = delete;
 /// #[doc.overloads=unsignedint.>>]
-[[nodiscard]] sus_pure_const constexpr inline usize operator>>(
+[[nodiscard]] __sus_pure_const constexpr inline usize operator>>(
     usize l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     sus_check_with_message(r < usize::BITS, "attempt to shift right with overflow");
@@ -465,7 +465,7 @@ template <class U>
   requires(!std::convertible_to<U, u64>)
 constexpr inline usize operator>>(usize l, U r) noexcept = delete;
 /// #[doc.overloads=unsignedint.<<]
-[[nodiscard]] sus_pure_const constexpr inline uptr operator<<(
+[[nodiscard]] __sus_pure_const constexpr inline uptr operator<<(
     uptr l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     sus_check_with_message(r < uptr::BITS, "attempt to shift left with overflow");
@@ -482,7 +482,7 @@ template <class U>
   requires(!std::convertible_to<U, u64>)
 constexpr inline uptr operator<<(uptr l, U r) noexcept = delete;
 /// #[doc.overloads=unsignedint.>>]
-[[nodiscard]] sus_pure_const constexpr inline uptr operator>>(
+[[nodiscard]] __sus_pure_const constexpr inline uptr operator>>(
     uptr l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     sus_check_with_message(r < uptr::BITS, "attempt to shift right with overflow");

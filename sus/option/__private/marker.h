@@ -82,12 +82,12 @@ struct [[nodiscard]] NoneMarker {
   // Gtest macros force evaluation against a const reference.
   // https://github.com/google/googletest/issues/4350
   template <class U>
-  sus_pure_const inline constexpr operator Option<U>() const& noexcept {
+  __sus_pure_const inline constexpr operator Option<U>() const& noexcept {
     return Option<U>();
   }
 
   template <class U>
-  sus_pure_const inline constexpr operator Option<U>() && noexcept {
+  __sus_pure_const inline constexpr operator Option<U>() && noexcept {
     return Option<U>();
   }
 

@@ -443,7 +443,7 @@ struct [[nodiscard]] TupleMarker {
   // be copyable (marker types are not) but construction from const is more
   // likely.
   template <class... Us>
-  sus_pure inline constexpr operator Tuple<Us...>() const& noexcept {
+  _sus_pure inline constexpr operator Tuple<Us...>() const& noexcept {
     static_assert(
         (... &&
          std::convertible_to<::sus::mem::remove_rvalue_reference<Ts>, Us>),

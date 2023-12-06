@@ -291,7 +291,7 @@ _self with_addr(usize addr) const& noexcept {
 ///
 /// #[doc.overloads=uptr.from.pointer]
 template <class U>
-sus_pure static _self from(U* u) noexcept {
+_sus_pure static _self from(U* u) noexcept {
   return _self(reinterpret_cast<_primitive>(u));
 }
 
@@ -301,7 +301,7 @@ sus_pure static _self from(U* u) noexcept {
 ///
 /// #[doc.overloads=ptr]
 template <class U>
-sus_pure static constexpr ::sus::result::Result<_self,
+_sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
 try_from(U* u) noexcept;
 
@@ -312,7 +312,7 @@ try_from(U* u) noexcept;
 /// #[doc.overloads=unsigned.from.unsigned]
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() == ::sus::mem::size_of<_primitive>())
-sus_pure static constexpr _self from(U u) noexcept {
+_sus_pure static constexpr _self from(U u) noexcept {
   return _self(static_cast<_primitive>(u.primitive_value));
 }
 
@@ -325,7 +325,7 @@ sus_pure static constexpr _self from(U u) noexcept {
 /// #[doc.overloads=unsigned]
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() == ::sus::mem::size_of<_primitive>())
-sus_pure static constexpr ::sus::result::Result<_self,
+_sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
 try_from(U u) noexcept;
 
@@ -335,7 +335,7 @@ try_from(U u) noexcept;
 /// #[doc.overloads=unsigned.from.unsignedprimitive]
 template <UnsignedPrimitiveInteger U>
   requires(::sus::mem::size_of<U>() == ::sus::mem::size_of<_primitive>())
-sus_pure static constexpr _self from(U u) noexcept {
+_sus_pure static constexpr _self from(U u) noexcept {
   return _self(static_cast<_primitive>(u));
 }
 
@@ -347,7 +347,7 @@ sus_pure static constexpr _self from(U u) noexcept {
 /// #[doc.overloads=unsigned.primitive]
 template <UnsignedPrimitiveInteger U>
   requires(::sus::mem::size_of<U>() == ::sus::mem::size_of<_primitive>())
-sus_pure static constexpr ::sus::result::Result<_self,
+_sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
 try_from(U u) noexcept;
 
@@ -360,7 +360,7 @@ try_from(U u) noexcept;
 /// #[doc.overloads=unsigned.from.unsigned]
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure static constexpr _self from(U u) noexcept {
+_sus_pure static constexpr _self from(U u) noexcept {
   return _self(static_cast<_primitive>(u.primitive_value));
 }
 
@@ -371,7 +371,7 @@ sus_pure static constexpr _self from(U u) noexcept {
 ///
 /// #[doc.overloads=unsigned]
 template <Unsigned U>
-sus_pure static constexpr ::sus::result::Result<_self,
+_sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
 try_from(U u) noexcept;
 
@@ -381,7 +381,7 @@ try_from(U u) noexcept;
 /// #[doc.overloads=unsigned.from.unsignedprimitive]
 template <UnsignedPrimitiveInteger U>
   requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure static constexpr _self from(U u) noexcept {
+_sus_pure static constexpr _self from(U u) noexcept {
   return _self(static_cast<_primitive>(u));
 }
 
@@ -392,7 +392,7 @@ sus_pure static constexpr _self from(U u) noexcept {
 ///
 /// #[doc.overloads=unsigned.primitive]
 template <UnsignedPrimitiveInteger U>
-sus_pure static constexpr ::sus::result::Result<_self,
+_sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
 try_from(U u) noexcept;
 
@@ -403,7 +403,7 @@ try_from(U u) noexcept;
 ///
 /// #[doc.overloads=signed]
 template <Signed S>
-sus_pure static constexpr ::sus::result::Result<_self,
+_sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
 try_from(S s) noexcept;
 
@@ -414,7 +414,7 @@ try_from(S s) noexcept;
 ///
 /// #[doc.overloads=signed.primitive]
 template <SignedPrimitiveInteger S>
-sus_pure static constexpr ::sus::result::Result<_self,
+_sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
 try_from(S s) noexcept;
 
@@ -426,7 +426,7 @@ try_from(S s) noexcept;
 /// #[doc.overloads=signed.enum]
 template <class S>
   requires(SignedPrimitiveEnum<S> || SignedPrimitiveEnumClass<S>)
-sus_pure static constexpr ::sus::result::Result<_self,
+_sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
 try_from(S s) noexcept;
 
@@ -437,7 +437,7 @@ try_from(S s) noexcept;
 template <class U>
   requires((UnsignedPrimitiveEnum<U> || UnsignedPrimitiveEnumClass<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure static constexpr _self from(U u) noexcept {
+_sus_pure static constexpr _self from(U u) noexcept {
   return _self(static_cast<std::underlying_type_t<U>>(u));
 }
 
@@ -449,7 +449,7 @@ sus_pure static constexpr _self from(U u) noexcept {
 /// #[doc.overloads=unsigned.enum]
 template <class U>
   requires(UnsignedPrimitiveEnum<U> || UnsignedPrimitiveEnumClass<U>)
-sus_pure static constexpr ::sus::result::Result<_self,
+_sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
 try_from(U u) noexcept;
 
@@ -532,7 +532,7 @@ static constexpr _self from_sum(::sus::iter::Iterator<_self> auto&& it) noexcept
 /// `sus::cast<uint32_t>(uptr())` or `sus::cast<int32_t>(uptr())`, or even
 /// `sus::cast<u32>(uptr())`.
 template <std::same_as<uintptr_t> U>
-sus_pure constexpr inline operator U() const noexcept {
+_sus_pure constexpr inline operator U() const noexcept {
   // SAFETY: The `primitive_value` in uptr has the same size as `uintptr_t` even
   // though it's not explicitly that type.
   return static_cast<uintptr_t>(primitive_value);
@@ -561,7 +561,7 @@ sus_pure constexpr inline operator U() const noexcept {
 /// `sus::cast<i32>(3_u32)`.
 template <UnsignedPrimitiveInteger U>
   requires(::sus::mem::size_of<U>() >= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr inline operator U() const noexcept {
+_sus_pure constexpr inline operator U() const noexcept {
   return primitive_value;
 }
 
@@ -571,7 +571,7 @@ sus_pure constexpr inline operator U() const noexcept {
 ///
 /// This allows Subspace numerics be used with APIs that expect a pointer to a
 /// C++ primitive type.
-sus_pure constexpr _primitive* as_mut_ptr() & noexcept {
+_sus_pure constexpr _primitive* as_mut_ptr() & noexcept {
   return &primitive_value;
 }
 
@@ -579,25 +579,25 @@ sus_pure constexpr _primitive* as_mut_ptr() & noexcept {
 ///
 /// This allows Subspace numerics be used with APIs that expect a pointer to a
 /// C++ primitive type.
-sus_pure constexpr const _primitive* as_ptr() const& noexcept {
+_sus_pure constexpr const _primitive* as_ptr() const& noexcept {
   return &primitive_value;
 }
-sus_pure constexpr const _primitive* as_ptr() && noexcept = delete;
+_sus_pure constexpr const _primitive* as_ptr() && noexcept = delete;
 
 /// Returns whether `l` and `r` are equal for unsigned integers.
 ///
 /// Satisfies the [`Eq`]($sus::cmp::Eq) concept.
 ///
 /// #[doc.overloads=uint.eq]
-[[nodiscard]] sus_pure_const friend constexpr inline bool operator==(
+[[nodiscard]] __sus_pure_const friend constexpr inline bool operator==(
     _self l, _self r) noexcept = default;
 /// #[doc.overloads=uint.eq]
-[[nodiscard]] sus_pure_const friend constexpr inline bool operator==(
+[[nodiscard]] __sus_pure_const friend constexpr inline bool operator==(
     _self l, Unsigned auto r) noexcept {
   return l.primitive_value == r.primitive_value;
 }
 /// #[doc.overloads=uint.eq]
-[[nodiscard]] sus_pure_const friend constexpr inline bool operator==(
+[[nodiscard]] __sus_pure_const friend constexpr inline bool operator==(
     _self l, UnsignedPrimitiveInteger auto r) noexcept {
   return l.primitive_value == r;
 }
@@ -607,17 +607,17 @@ sus_pure constexpr const _primitive* as_ptr() && noexcept = delete;
 /// satisfies the [`StrongOrd`]($sus::cmp::StrongOrd) concept.
 ///
 /// #[doc.overloads=uint.strongord]
-[[nodiscard]] sus_pure_const friend constexpr inline std::strong_ordering
+[[nodiscard]] __sus_pure_const friend constexpr inline std::strong_ordering
 operator<=>(_self l, _self r) noexcept {
   return l.primitive_value <=> r.primitive_value;
 }
 /// #[doc.overloads=uint.strongord]
-[[nodiscard]] sus_pure_const friend constexpr inline std::strong_ordering
+[[nodiscard]] __sus_pure_const friend constexpr inline std::strong_ordering
 operator<=>(_self l, Unsigned auto r) noexcept {
   return l.primitive_value <=> r.primitive_value;
 }
 /// #[doc.overloads=uint.strongord]
-[[nodiscard]] sus_pure_const friend constexpr inline std::strong_ordering
+[[nodiscard]] __sus_pure_const friend constexpr inline std::strong_ordering
 operator<=>(_self l, UnsignedPrimitiveInteger auto r) noexcept {
   return l.primitive_value <=> r;
 }
@@ -627,7 +627,7 @@ operator<=>(_self l, UnsignedPrimitiveInteger auto r) noexcept {
 /// Computes the bitwise complement (bitwise inverse) of the current value.
 ///
 /// Satisfies the [`BitNot<@doc.self>`]($sus::num::BitNot) concept.
-sus_pure constexpr inline _self operator~() const& noexcept {
+_sus_pure constexpr inline _self operator~() const& noexcept {
   return _self(__private::unchecked_not(primitive_value));
 }
 
@@ -649,7 +649,7 @@ sus_pure constexpr inline _self operator~() const& noexcept {
 /// behaviour.
 ///
 /// #[doc.overloads=unsignedint.+]
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator+(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator+(
     _self l, _self r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
@@ -665,14 +665,14 @@ sus_pure constexpr inline _self operator~() const& noexcept {
 /// #[doc.overloads=unsignedint.+]
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator+(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator+(
     _self l, U r) noexcept {
   return l + _primitive{r.primitive_value};
 }
 /// #[doc.overloads=unsignedint.+]
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator+(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator+(
     U l, _self r) noexcept {
   return _primitive{l.primitive_value} + r;
 }
@@ -682,7 +682,7 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                  //
            (UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator+(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator+(
     _self l, U r) noexcept {
   return l + _self(static_cast<_primitive>(r));
 }
@@ -691,7 +691,7 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                  //
            (UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator+(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator+(
     U l, _self r) noexcept {
   return _self(static_cast<_primitive>(l)) + r;
 }
@@ -725,7 +725,7 @@ friend constexpr inline _self operator+(U l, _self r) noexcept = delete;
 /// behaviour.
 ///
 /// #[doc.overloads=unsignedint.-]
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator-(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator-(
     _self l, _self r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
@@ -742,14 +742,14 @@ friend constexpr inline _self operator+(U l, _self r) noexcept = delete;
 /// #[doc.overloads=unsignedint.-]
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator-(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator-(
     _self l, U r) noexcept {
   return l - _primitive{r.primitive_value};
 }
 /// #[doc.overloads=unsignedint.-]
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator-(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator-(
     U l, _self r) noexcept {
   return _primitive{l.primitive_value} - r;
 }
@@ -759,7 +759,7 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                   //
            ((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator-(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator-(
     _self l, U r) noexcept {
   return l - _self(static_cast<_primitive>(r));
 }
@@ -768,7 +768,7 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                   //
            ((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator-(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator-(
     U l, _self r) noexcept {
   return _self(static_cast<_primitive>(l)) - r;
 }
@@ -802,7 +802,7 @@ friend constexpr inline _self operator-(U l, _self r) noexcept = delete;
 /// behaviour.
 ///
 /// #[doc.overloads=unsignedint.*]
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator*(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator*(
     _self l, _self r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
@@ -819,14 +819,14 @@ friend constexpr inline _self operator-(U l, _self r) noexcept = delete;
 /// #[doc.overloads=unsignedint.*]
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator*(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator*(
     _self l, U r) noexcept {
   return l * _primitive{r.primitive_value};
 }
 /// #[doc.overloads=unsignedint.*]
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator*(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator*(
     U l, _self r) noexcept {
   return _primitive{l.primitive_value} * r;
 }
@@ -836,7 +836,7 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                   //
            ((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator*(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator*(
     _self l, U r) noexcept {
   return l * _self(static_cast<_primitive>(r));
 }
@@ -845,7 +845,7 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                   //
            ((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator*(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator*(
     U l, _self r) noexcept {
   return _self(static_cast<_primitive>(l)) * r;
 }
@@ -874,7 +874,7 @@ friend constexpr inline _self operator*(U l, _self r) noexcept = delete;
 /// This operation will panic if `r` is 0.
 ///
 /// #[doc.overloads=unsignedint./]
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator/(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator/(
     _self l, _self r) noexcept {
   sus_check_with_message(r.primitive_value != _primitive{0},
                             "attempt to divide by zero");
@@ -884,14 +884,14 @@ friend constexpr inline _self operator*(U l, _self r) noexcept = delete;
 /// #[doc.overloads=unsignedint./]
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator/(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator/(
     _self l, U r) noexcept {
   return l / _primitive{r.primitive_value};
 }
 /// #[doc.overloads=unsignedint./]
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator/(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator/(
     U l, _self r) noexcept {
   return _primitive{l.primitive_value} / r;
 }
@@ -901,7 +901,7 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                   //
            ((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator/(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator/(
     _self l, U r) noexcept {
   return l / _self(static_cast<_primitive>(r));
 }
@@ -910,7 +910,7 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                   //
            ((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator/(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator/(
     U l, _self r) noexcept {
   return _self(static_cast<_primitive>(l)) / r;
 }
@@ -940,7 +940,7 @@ friend constexpr inline _self operator/(U l, _self r) noexcept = delete;
 /// This operation will panic if `r` is 0.
 ///
 /// #[doc.overloads=unsignedint.%]
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator%(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator%(
     _self l, _self r) noexcept {
   sus_check_with_message(
       r.primitive_value != _primitive{0},
@@ -951,14 +951,14 @@ friend constexpr inline _self operator/(U l, _self r) noexcept = delete;
 /// #[doc.overloads=unsignedint.%]
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator%(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator%(
     _self l, U r) noexcept {
   return l % _primitive{r.primitive_value};
 }
 /// #[doc.overloads=unsignedint.%]
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator%(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator%(
     U l, _self r) noexcept {
   return _primitive{l.primitive_value} % r;
 }
@@ -968,7 +968,7 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                   //
            ((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator%(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator%(
     _self l, U r) noexcept {
   return l % _self(static_cast<_primitive>(r));
 }
@@ -977,7 +977,7 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                   //
            ((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator%(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator%(
     U l, _self r) noexcept {
   return _self(static_cast<_primitive>(l)) % r;
 }
@@ -1004,7 +1004,7 @@ friend constexpr inline _self operator%(U l, _self r) noexcept = delete;
 /// integer.
 ///
 /// #[doc.overloads=unsignedint.&]
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator&(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator&(
     _self l, _self r) noexcept {
   return _self(__private::unchecked_and(l.primitive_value, r.primitive_value));
 }
@@ -1012,14 +1012,14 @@ friend constexpr inline _self operator%(U l, _self r) noexcept = delete;
 /// #[doc.overloads=unsignedint.&]
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator&(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator&(
     _self l, U r) noexcept {
   return l & _primitive{r.primitive_value};
 }
 /// #[doc.overloads=unsignedint.&]
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator&(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator&(
     U l, _self r) noexcept {
   return _primitive{l.primitive_value} & r;
 }
@@ -1029,7 +1029,7 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                   //
            ((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator&(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator&(
     _self l, U r) noexcept {
   return l & _self(static_cast<_primitive>(r));
 }
@@ -1038,7 +1038,7 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                   //
            ((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator&(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator&(
     U l, _self r) noexcept {
   return _self(static_cast<_primitive>(l)) & r;
 }
@@ -1064,7 +1064,7 @@ friend constexpr inline _self operator&(U l, _self r) noexcept = delete;
 /// integer.
 ///
 /// #[doc.overloads=unsignedint.|]
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator|(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator|(
     _self l, _self r) noexcept {
   return _self(__private::unchecked_or(l.primitive_value, r.primitive_value));
 }
@@ -1072,14 +1072,14 @@ friend constexpr inline _self operator&(U l, _self r) noexcept = delete;
 /// #[doc.overloads=unsignedint.|]
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator|(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator|(
     _self l, U r) noexcept {
   return l | _primitive{r.primitive_value};
 }
 /// #[doc.overloads=unsignedint.|]
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator|(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator|(
     U l, _self r) noexcept {
   return _primitive{l.primitive_value} | r;
 }
@@ -1089,7 +1089,7 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                   //
            ((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator|(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator|(
     _self l, U r) noexcept {
   return l | _self(static_cast<_primitive>(r));
 }
@@ -1098,7 +1098,7 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                   //
            ((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator|(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator|(
     U l, _self r) noexcept {
   return _self(static_cast<_primitive>(l)) | r;
 }
@@ -1124,7 +1124,7 @@ friend constexpr inline _self operator|(U l, _self r) noexcept = delete;
 /// integer.
 ///
 /// #[doc.overloads=unsignedint.^]
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator^(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator^(
     _self l, _self r) noexcept {
   return _self(__private::unchecked_xor(l.primitive_value, r.primitive_value));
 }
@@ -1132,14 +1132,14 @@ friend constexpr inline _self operator|(U l, _self r) noexcept = delete;
 /// #[doc.overloads=unsignedint.^]
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator^(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator^(
     _self l, U r) noexcept {
   return l ^ _primitive { r.primitive_value };
 }
 /// #[doc.overloads=unsignedint.^]
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator^(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator^(
     U l, _self r) noexcept {
   return _primitive{l.primitive_value} ^ r;
 }
@@ -1149,7 +1149,7 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                   //
            ((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator^(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator^(
     _self l, U r) noexcept {
   return l ^ _self(static_cast<_primitive>(r));
 }
@@ -1158,7 +1158,7 @@ template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                   //
            ((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
-[[nodiscard]] sus_pure_const friend constexpr inline _self operator^(
+[[nodiscard]] __sus_pure_const friend constexpr inline _self operator^(
     U l, _self r) noexcept {
   return _self(static_cast<_primitive>(l)) ^ r;
 }
@@ -1353,7 +1353,7 @@ constexpr inline void operator<<=(u64 r) & noexcept;
 constexpr inline void operator>>=(u64 r) & noexcept;
 
 /// Computes the absolute difference between `self` and `other`.
-sus_pure constexpr _self abs_diff(_self other) const& noexcept {
+_sus_pure constexpr _self abs_diff(_self other) const& noexcept {
   if (primitive_value >= other.primitive_value) {
     return _self(
         __private::unchecked_sub(primitive_value, other.primitive_value));
@@ -1365,14 +1365,14 @@ sus_pure constexpr _self abs_diff(_self other) const& noexcept {
 
 /// Checked integer addition. Computes `self + rhs`, returning `None` if
 /// overflow occurred.
-sus_pure constexpr ::sus::option::Option<_self> checked_add(
+_sus_pure constexpr ::sus::option::Option<_self> checked_add(
     _self rhs) const& noexcept;
 
 #if _pointer
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::option::Option<_self> checked_add(
+_sus_pure constexpr ::sus::option::Option<_self> checked_add(
     U rhs) const& noexcept;
 #endif
 
@@ -1380,7 +1380,7 @@ sus_pure constexpr ::sus::option::Option<_self> checked_add(
 
 /// Checked integer addition with a signed `rhs`. Computes `self + rhs`,
 /// returning `None` if overflow occurred.
-sus_pure constexpr ::sus::option::Option<_self> checked_add_signed(
+_sus_pure constexpr ::sus::option::Option<_self> checked_add_signed(
     _signed rhs) const& noexcept;
 
 #endif
@@ -1390,14 +1390,14 @@ sus_pure constexpr ::sus::option::Option<_self> checked_add_signed(
 /// Returns a tuple of the addition along with a boolean indicating whether an
 /// arithmetic overflow would occur. If an overflow would have occurred then the
 /// wrapped value is returned.
-sus_pure constexpr sus::tuple_type::Tuple<_self, bool> overflowing_add(
+_sus_pure constexpr sus::tuple_type::Tuple<_self, bool> overflowing_add(
     _self rhs) const& noexcept;
 
 #if _pointer
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr sus::tuple_type::Tuple<_self, bool> overflowing_add(
+_sus_pure constexpr sus::tuple_type::Tuple<_self, bool> overflowing_add(
     U rhs) const& noexcept;
 #endif
 
@@ -1408,14 +1408,14 @@ sus_pure constexpr sus::tuple_type::Tuple<_self, bool> overflowing_add(
 /// Returns a tuple of the addition along with a boolean indicating whether an
 /// arithmetic overflow would occur. If an overflow would have occurred then the
 /// wrapped value is returned.
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_add_signed(
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_add_signed(
     _signed rhs) const& noexcept;
 
 #endif
 
 /// Saturating integer addition. Computes `self + rhs`, saturating at the
 /// numeric bounds instead of overflowing.
-sus_pure constexpr _self saturating_add(_self rhs) const& noexcept {
+_sus_pure constexpr _self saturating_add(_self rhs) const& noexcept {
   return _self(__private::saturating_add(primitive_value, rhs.primitive_value));
 }
 
@@ -1423,7 +1423,7 @@ sus_pure constexpr _self saturating_add(_self rhs) const& noexcept {
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr _self saturating_add(U rhs) const& noexcept {
+_sus_pure constexpr _self saturating_add(U rhs) const& noexcept {
   return saturating_add(_self(_primitive{rhs}));
 }
 #endif
@@ -1432,7 +1432,7 @@ sus_pure constexpr _self saturating_add(U rhs) const& noexcept {
 
 /// Saturating integer addition with a signed `rhs`. Computes `self + rhs`,
 /// saturating at the numeric bounds instead of overflowing.
-sus_pure constexpr _self saturating_add_signed(_signed rhs) const& noexcept;
+_sus_pure constexpr _self saturating_add_signed(_signed rhs) const& noexcept;
 
 #endif
 
@@ -1447,7 +1447,7 @@ sus_pure constexpr _self saturating_add_signed(_signed rhs) const& noexcept;
 /// `self + rhs < `[`MIN`]($sus::num::@doc.self::MIN), i.e. when
 /// [`checked_add`]($sus::num::@doc.self::checked_add)
 /// would return `None`.
-sus_pure inline constexpr _self unchecked_add(::sus::marker::UnsafeFnMarker,
+_sus_pure inline constexpr _self unchecked_add(::sus::marker::UnsafeFnMarker,
                                               _self rhs) const& noexcept {
   return _self(__private::unchecked_add(primitive_value, rhs.primitive_value));
 }
@@ -1463,7 +1463,7 @@ sus_pure inline constexpr _self unchecked_add(::sus::marker::UnsafeFnMarker,
 /// `self + rhs < `[`MIN`]($sus::num::@doc.self::MIN), i.e. when
 /// [`checked_add`]($sus::num::@doc.self::checked_add)
 /// would return `None`.
-sus_pure inline constexpr _self unchecked_add(::sus::marker::UnsafeFnMarker,
+_sus_pure inline constexpr _self unchecked_add(::sus::marker::UnsafeFnMarker,
                                               _self rhs) const& noexcept {
   return _self(__private::unchecked_add(primitive_value, rhs.primitive_value));
 }
@@ -1471,7 +1471,7 @@ sus_pure inline constexpr _self unchecked_add(::sus::marker::UnsafeFnMarker,
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr _self unchecked_add(::sus::marker::UnsafeFnMarker,
+_sus_pure constexpr _self unchecked_add(::sus::marker::UnsafeFnMarker,
                                        U rhs) const& noexcept {
   return _self(__private::unchecked_add(primitive_value, _primitive{rhs}));
 }
@@ -1480,7 +1480,7 @@ sus_pure constexpr _self unchecked_add(::sus::marker::UnsafeFnMarker,
 
 /// Wrapping (modular) addition. Computes `self + rhs`, wrapping around at the
 /// boundary of the type.
-sus_pure constexpr _self wrapping_add(_self rhs) const& noexcept {
+_sus_pure constexpr _self wrapping_add(_self rhs) const& noexcept {
   return _self(__private::wrapping_add(primitive_value, rhs.primitive_value));
 }
 
@@ -1488,7 +1488,7 @@ sus_pure constexpr _self wrapping_add(_self rhs) const& noexcept {
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr _self wrapping_add(U rhs) const& noexcept {
+_sus_pure constexpr _self wrapping_add(U rhs) const& noexcept {
   return wrapping_add(_self(_primitive{rhs}));
 }
 #endif
@@ -1497,20 +1497,20 @@ sus_pure constexpr _self wrapping_add(U rhs) const& noexcept {
 
 /// Wrapping (modular) addition with an unsigned rhs. Computes `self + rhs`,
 /// wrapping around at the boundary of the type.
-sus_pure constexpr _self wrapping_add_signed(_signed rhs) const& noexcept;
+_sus_pure constexpr _self wrapping_add_signed(_signed rhs) const& noexcept;
 
 #endif
 
 /// Checked integer division. Computes `self / rhs`, returning `None` if
 /// `rhs == 0`.
-sus_pure constexpr ::sus::option::Option<_self> checked_div(
+_sus_pure constexpr ::sus::option::Option<_self> checked_div(
     _self rhs) const& noexcept;
 
 #if _pointer
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::option::Option<_self> checked_div(
+_sus_pure constexpr ::sus::option::Option<_self> checked_div(
     U rhs) const& noexcept;
 #endif
 
@@ -1522,14 +1522,14 @@ sus_pure constexpr ::sus::option::Option<_self> checked_div(
 ///
 /// # Panics
 /// This function will panic if `rhs` is 0.
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_div(
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_div(
     _self rhs) const& noexcept;
 
 #if _pointer
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_div(
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_div(
     U rhs) const& noexcept;
 #endif
 
@@ -1540,7 +1540,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_div(
 ///
 /// # Panics
 /// This function will panic if `rhs` is 0.
-sus_pure constexpr _self saturating_div(_self rhs) const& noexcept {
+_sus_pure constexpr _self saturating_div(_self rhs) const& noexcept {
   sus_check_with_message(rhs.primitive_value != _primitive{0},
                             "attempt to divide by zero");
   return _self(__private::unchecked_div(primitive_value, rhs.primitive_value));
@@ -1550,7 +1550,7 @@ sus_pure constexpr _self saturating_div(_self rhs) const& noexcept {
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr _self saturating_div(U rhs) const& noexcept {
+_sus_pure constexpr _self saturating_div(U rhs) const& noexcept {
   return saturating_div(_self(_primitive{rhs}));
 }
 #endif
@@ -1562,7 +1562,7 @@ sus_pure constexpr _self saturating_div(U rhs) const& noexcept {
 ///
 /// # Panics
 /// This function will panic if `rhs` is 0.
-sus_pure constexpr _self wrapping_div(_self rhs) const& noexcept {
+_sus_pure constexpr _self wrapping_div(_self rhs) const& noexcept {
   sus_check_with_message(rhs.primitive_value != _primitive{0},
                             "attempt to divide by zero");
   return _self(__private::unchecked_div(primitive_value, rhs.primitive_value));
@@ -1572,21 +1572,21 @@ sus_pure constexpr _self wrapping_div(_self rhs) const& noexcept {
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr _self wrapping_div(U rhs) const& noexcept {
+_sus_pure constexpr _self wrapping_div(U rhs) const& noexcept {
   return wrapping_div(_self(_primitive{rhs}));
 }
 #endif
 
 /// Checked integer multiplication. Computes `self * rhs`, returning `None` if
 /// overflow occurred.
-sus_pure constexpr ::sus::option::Option<_self> checked_mul(
+_sus_pure constexpr ::sus::option::Option<_self> checked_mul(
     _self rhs) const& noexcept;
 
 #if _pointer
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::option::Option<_self> checked_mul(
+_sus_pure constexpr ::sus::option::Option<_self> checked_mul(
     U rhs) const& noexcept;
 #endif
 
@@ -1595,20 +1595,20 @@ sus_pure constexpr ::sus::option::Option<_self> checked_mul(
 /// Returns a tuple of the multiplication along with a boolean indicating
 /// whether an arithmetic overflow would occur. If an overflow would have
 /// occurred then the wrapped value is returned.
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_mul(
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_mul(
     _self rhs) const& noexcept;
 
 #if _pointer
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_mul(
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_mul(
     U rhs) const& noexcept;
 #endif
 
 /// Saturating integer multiplication. Computes `self * rhs`, saturating at the
 /// numeric bounds instead of overflowing.
-sus_pure constexpr _self saturating_mul(_self rhs) const& noexcept {
+_sus_pure constexpr _self saturating_mul(_self rhs) const& noexcept {
   return _self(__private::saturating_mul(primitive_value, rhs.primitive_value));
 }
 
@@ -1616,7 +1616,7 @@ sus_pure constexpr _self saturating_mul(_self rhs) const& noexcept {
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr _self saturating_mul(U rhs) const& noexcept {
+_sus_pure constexpr _self saturating_mul(U rhs) const& noexcept {
   return saturating_mul(_self(_primitive{rhs}));
 }
 #endif
@@ -1632,7 +1632,7 @@ sus_pure constexpr _self saturating_mul(U rhs) const& noexcept {
 /// `self * rhs < `[`MIN`]($sus::num::@doc.self::MIN), i.e. when
 /// [`checked_mul`]($sus::num::@doc.self::checked_mul)
 /// would return `None`.
-sus_pure constexpr _self unchecked_mul(::sus::marker::UnsafeFnMarker,
+_sus_pure constexpr _self unchecked_mul(::sus::marker::UnsafeFnMarker,
                                        _self rhs) const& noexcept {
   return _self(__private::unchecked_mul(primitive_value, rhs.primitive_value));
 }
@@ -1648,7 +1648,7 @@ sus_pure constexpr _self unchecked_mul(::sus::marker::UnsafeFnMarker,
 /// `self * rhs < `[`MIN`]($sus::num::@doc.self::MIN), i.e. when
 /// [`checked_mul`]($sus::num::@doc.self::checked_mul)
 /// would return `None`.
-sus_pure constexpr _self unchecked_mul(::sus::marker::UnsafeFnMarker,
+_sus_pure constexpr _self unchecked_mul(::sus::marker::UnsafeFnMarker,
                                        _self rhs) const& noexcept {
   return _self(__private::unchecked_mul(primitive_value, rhs.primitive_value));
 }
@@ -1656,7 +1656,7 @@ sus_pure constexpr _self unchecked_mul(::sus::marker::UnsafeFnMarker,
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr _self unchecked_mul(::sus::marker::UnsafeFnMarker,
+_sus_pure constexpr _self unchecked_mul(::sus::marker::UnsafeFnMarker,
                                        U rhs) const& noexcept {
   return _self(__private::unchecked_mul(primitive_value, _primitive{rhs}));
 }
@@ -1664,7 +1664,7 @@ sus_pure constexpr _self unchecked_mul(::sus::marker::UnsafeFnMarker,
 
 /// Wrapping (modular) multiplication. Computes `self * rhs`, wrapping around
 /// at the boundary of the type.
-sus_pure constexpr _self wrapping_mul(_self rhs) const& noexcept {
+_sus_pure constexpr _self wrapping_mul(_self rhs) const& noexcept {
   return _self(__private::wrapping_mul(primitive_value, rhs.primitive_value));
 }
 
@@ -1672,7 +1672,7 @@ sus_pure constexpr _self wrapping_mul(_self rhs) const& noexcept {
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr _self wrapping_mul(U rhs) const& noexcept {
+_sus_pure constexpr _self wrapping_mul(U rhs) const& noexcept {
   return wrapping_mul(_self(_primitive{rhs}));
 }
 #endif
@@ -1680,14 +1680,14 @@ sus_pure constexpr _self wrapping_mul(U rhs) const& noexcept {
 /// Checked negation. Computes `-self`, returning None unless `self == 0`.
 ///
 /// Note that negating any positive integer will overflow.
-sus_pure constexpr ::sus::option::Option<_self> checked_neg() const& noexcept;
+_sus_pure constexpr ::sus::option::Option<_self> checked_neg() const& noexcept;
 
 /// Negates `self` in an overflowing fashion.
 ///
 /// Returns `~self + 1` using wrapping operations to return the value that
 /// represents the negation of this unsigned value. Note that for positive
 /// unsigned values overflow always occurs, but negating 0 does not overflow.
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_neg()
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_neg()
     const& noexcept;
 
 /// Wrapping (modular) negation. Computes `-self`, wrapping around at the
@@ -1699,20 +1699,20 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_neg()
 /// the corresponding signed value. Any larger values are equivalent to
 /// `MAX + 1 - (val - MAX - 1)` where MAX is the corresponding signed type's
 /// maximum.
-sus_pure constexpr _self wrapping_neg() const& noexcept {
+_sus_pure constexpr _self wrapping_neg() const& noexcept {
   return (_self(_primitive{0u})).wrapping_sub(*this);
 }
 
 /// Checked integer remainder. Computes `self % rhs`, returning `None` if
 /// `rhs == 0`.
-sus_pure constexpr ::sus::option::Option<_self> checked_rem(
+_sus_pure constexpr ::sus::option::Option<_self> checked_rem(
     _self rhs) const& noexcept;
 
 #if _pointer
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::option::Option<_self> checked_rem(
+_sus_pure constexpr ::sus::option::Option<_self> checked_rem(
     U rhs) const& noexcept;
 #endif
 
@@ -1725,14 +1725,14 @@ sus_pure constexpr ::sus::option::Option<_self> checked_rem(
 ///
 /// # Panics
 /// This function will panic if `rhs` is 0.
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_rem(
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_rem(
     _self rhs) const& noexcept;
 
 #if _pointer
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_rem(
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_rem(
     U rhs) const& noexcept;
 #endif
 
@@ -1744,7 +1744,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_rem(
 ///
 /// # Panics
 /// This function will panic if `rhs` is 0.
-sus_pure constexpr _self wrapping_rem(_self rhs) const& noexcept {
+_sus_pure constexpr _self wrapping_rem(_self rhs) const& noexcept {
   sus_check_with_message(
       rhs.primitive_value != _primitive{0},
       "attempt to calculate the remainder with a divisor of zero");
@@ -1755,7 +1755,7 @@ sus_pure constexpr _self wrapping_rem(_self rhs) const& noexcept {
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr _self wrapping_rem(U rhs) const& noexcept {
+_sus_pure constexpr _self wrapping_rem(U rhs) const& noexcept {
   return wrapping_rem(_self(_primitive{rhs}));
 }
 #endif
@@ -1771,7 +1771,7 @@ sus_pure constexpr _self wrapping_rem(U rhs) const& noexcept {
 /// ```
 /// sus_check((7_u8).div_ceil(4u) == 2u);
 /// ```
-sus_pure constexpr _self div_ceil(_self rhs) const& noexcept {
+_sus_pure constexpr _self div_ceil(_self rhs) const& noexcept {
   sus_check_with_message(rhs.primitive_value != _primitive{0},
                             "attempt to divide by zero");
   _self d =
@@ -1785,7 +1785,7 @@ sus_pure constexpr _self div_ceil(_self rhs) const& noexcept {
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr _self div_ceil(U rhs) const& noexcept {
+_sus_pure constexpr _self div_ceil(U rhs) const& noexcept {
   return div_ceil(_self(_primitive{rhs}));
 }
 #endif
@@ -1797,7 +1797,7 @@ sus_pure constexpr _self div_ceil(U rhs) const& noexcept {
 ///
 /// # Panics
 /// This function will panic if `rhs` is 0.
-sus_pure constexpr _self div_euclid(_self rhs) const& noexcept {
+_sus_pure constexpr _self div_euclid(_self rhs) const& noexcept {
   sus_check_with_message(rhs.primitive_value != _primitive{0},
                             "attempt to divide by zero");
   return _self(__private::unchecked_div(primitive_value, rhs.primitive_value));
@@ -1807,21 +1807,21 @@ sus_pure constexpr _self div_euclid(_self rhs) const& noexcept {
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr _self div_euclid(U rhs) const& noexcept {
+_sus_pure constexpr _self div_euclid(U rhs) const& noexcept {
   return div_euclid(_self(_primitive{rhs}));
 }
 #endif
 
 /// Checked Euclidean division. Computes `self.`[`div_euclid`](
 /// $sus::num::@doc.self::div_euclid)`(rhs)`, returning `None` if `rhs == 0`.
-sus_pure constexpr ::sus::option::Option<_self> checked_div_euclid(
+_sus_pure constexpr ::sus::option::Option<_self> checked_div_euclid(
     _self rhs) const& noexcept;
 
 #if _pointer
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::option::Option<_self> checked_div_euclid(
+_sus_pure constexpr ::sus::option::Option<_self> checked_div_euclid(
     U rhs) const& noexcept;
 #endif
 
@@ -1836,14 +1836,14 @@ sus_pure constexpr ::sus::option::Option<_self> checked_div_euclid(
 ///
 /// # Panics
 /// This function will panic if `rhs` is 0.
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_div_euclid(
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_div_euclid(
     _self rhs) const& noexcept;
 
 #if _pointer
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_div_euclid(
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_div_euclid(
     U rhs) const& noexcept;
 #endif
 
@@ -1858,7 +1858,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_div_euclid(
 ///
 /// # Panics
 /// This function will panic if `rhs` is 0.
-sus_pure constexpr _self wrapping_div_euclid(_self rhs) const& noexcept {
+_sus_pure constexpr _self wrapping_div_euclid(_self rhs) const& noexcept {
   sus_check_with_message(rhs.primitive_value != _primitive{0},
                             "attempt to divide by zero");
   return _self(__private::unchecked_div(primitive_value, rhs.primitive_value));
@@ -1868,7 +1868,7 @@ sus_pure constexpr _self wrapping_div_euclid(_self rhs) const& noexcept {
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr _self wrapping_div_euclid(U rhs) const& noexcept {
+_sus_pure constexpr _self wrapping_div_euclid(U rhs) const& noexcept {
   return wrapping_div_euclid(_self(_primitive{rhs}));
 }
 #endif
@@ -1880,7 +1880,7 @@ sus_pure constexpr _self wrapping_div_euclid(U rhs) const& noexcept {
 ///
 /// # Panics
 /// This function will panic if `rhs` is 0.
-sus_pure constexpr _self rem_euclid(_self rhs) const& noexcept {
+_sus_pure constexpr _self rem_euclid(_self rhs) const& noexcept {
   sus_check_with_message(
       rhs.primitive_value != _primitive{0},
       "attempt to calculate the remainder with a divisor of zero");
@@ -1891,7 +1891,7 @@ sus_pure constexpr _self rem_euclid(_self rhs) const& noexcept {
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr _self rem_euclid(U rhs) const& noexcept {
+_sus_pure constexpr _self rem_euclid(U rhs) const& noexcept {
   return rem_euclid(_self(_primitive{rhs}));
 }
 #endif
@@ -1899,14 +1899,14 @@ sus_pure constexpr _self rem_euclid(U rhs) const& noexcept {
 /// Checked Euclidean modulo. Computes `self.`[`rem_euclid`](
 /// $sus::num::@doc.self::rem_euclid)`(rhs)`, returning `None` if
 /// `rhs == 0`.
-sus_pure constexpr ::sus::option::Option<_self> checked_rem_euclid(
+_sus_pure constexpr ::sus::option::Option<_self> checked_rem_euclid(
     _self rhs) const& noexcept;
 
 #if _pointer
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::option::Option<_self> checked_rem_euclid(
+_sus_pure constexpr ::sus::option::Option<_self> checked_rem_euclid(
     U rhs) const& noexcept;
 #endif
 
@@ -1921,14 +1921,14 @@ sus_pure constexpr ::sus::option::Option<_self> checked_rem_euclid(
 ///
 /// # Panics
 /// This function will panic if `rhs` is 0.
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_rem_euclid(
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_rem_euclid(
     _self rhs) const& noexcept;
 
 #if _pointer
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_rem_euclid(
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_rem_euclid(
     U rhs) const& noexcept;
 #endif
 
@@ -1943,7 +1943,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_rem_euclid(
 ///
 /// # Panics
 /// This function will panic if `rhs` is 0.
-sus_pure constexpr _self wrapping_rem_euclid(_self rhs) const& noexcept {
+_sus_pure constexpr _self wrapping_rem_euclid(_self rhs) const& noexcept {
   sus_check_with_message(
       rhs.primitive_value != _primitive{0},
       "attempt to calculate the remainder with a divisor of zero");
@@ -1954,14 +1954,14 @@ sus_pure constexpr _self wrapping_rem_euclid(_self rhs) const& noexcept {
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr _self wrapping_rem_euclid(U rhs) const& noexcept {
+_sus_pure constexpr _self wrapping_rem_euclid(U rhs) const& noexcept {
   return wrapping_rem_euclid(_self(_primitive{rhs}));
 }
 #endif
 
 /// Checked shift left. Computes `self << rhs`, returning `None` if `rhs` is
 /// larger than or equal to the number of bits in `self`.
-sus_pure constexpr ::sus::option::Option<_self> checked_shl(
+_sus_pure constexpr ::sus::option::Option<_self> checked_shl(
     u64 rhs) const& noexcept;
 
 /// Shifts self left by `rhs` bits.
@@ -1970,7 +1970,7 @@ sus_pure constexpr ::sus::option::Option<_self> checked_shl(
 /// indicating whether the shift value was larger than or equal to the number of
 /// bits. If the shift value is too large, then value is masked by `(N-1)` where
 /// `N` is the number of bits, and this value is then used to perform the shift.
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_shl(
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_shl(
     u64 rhs) const& noexcept;
 
 /// Panic-free bitwise shift-left; yields `self << mask(rhs)`, where mask
@@ -1983,11 +1983,11 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_shl(
 /// integer types all implement a [`rotate_left`](
 /// $sus::num::@doc.self::rotate_left) function, which may be what you
 /// want instead.
-sus_pure constexpr _self wrapping_shl(u64 rhs) const& noexcept;
+_sus_pure constexpr _self wrapping_shl(u64 rhs) const& noexcept;
 
 /// Checked shift right. Computes `self >> rhs`, returning `None` if `rhs` is
 /// larger than or equal to the number of bits in `self`.
-sus_pure constexpr ::sus::option::Option<_self> checked_shr(
+_sus_pure constexpr ::sus::option::Option<_self> checked_shr(
     u64 rhs) const& noexcept;
 
 /// Shifts self right by `rhs` bits.
@@ -1997,7 +1997,7 @@ sus_pure constexpr ::sus::option::Option<_self> checked_shr(
 /// bits. If the shift value is too large, then value is masked by `(N-1)`
 /// where `N` is the number of bits, and this value is then used to perform the
 /// shift.
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_shr(
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_shr(
     u64 rhs) const& noexcept;
 
 /// Panic-free bitwise shift-right; yields `self >> mask(rhs)`, where mask
@@ -2010,17 +2010,17 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_shr(
 /// integer types all implement a [`rotate_right`](
 /// $sus::num::@doc.self::rotate_right) function, which may be what you
 /// want instead.
-sus_pure constexpr _self wrapping_shr(u64 rhs) const& noexcept;
+_sus_pure constexpr _self wrapping_shr(u64 rhs) const& noexcept;
 
 /// Checked integer subtraction. Computes `self - rhs`, returning `None` if
 /// overflow occurred.
-sus_pure constexpr ::sus::option::Option<_self> checked_sub(_self rhs) const&;
+_sus_pure constexpr ::sus::option::Option<_self> checked_sub(_self rhs) const&;
 
 #if _pointer
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::option::Option<_self> checked_sub(
+_sus_pure constexpr ::sus::option::Option<_self> checked_sub(
     U rhs) const& noexcept;
 #endif
 
@@ -2029,20 +2029,20 @@ sus_pure constexpr ::sus::option::Option<_self> checked_sub(
 /// Returns a tuple of the subtraction along with a boolean indicating whether
 /// an arithmetic overflow would occur. If an overflow would have occurred then
 /// the wrapped value is returned.
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_sub(
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_sub(
     _self rhs) const& noexcept;
 
 #if _pointer
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_sub(
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_sub(
     U rhs) const& noexcept;
 #endif
 
 /// Saturating integer subtraction. Computes `self - rhs`, saturating at the
 /// numeric bounds instead of overflowing.
-sus_pure constexpr _self saturating_sub(_self rhs) const& {
+_sus_pure constexpr _self saturating_sub(_self rhs) const& {
   return _self(__private::saturating_sub(primitive_value, rhs.primitive_value));
 }
 
@@ -2050,7 +2050,7 @@ sus_pure constexpr _self saturating_sub(_self rhs) const& {
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr _self saturating_sub(U rhs) const& noexcept {
+_sus_pure constexpr _self saturating_sub(U rhs) const& noexcept {
   return saturating_sub(_self(_primitive{rhs}));
 }
 #endif
@@ -2066,7 +2066,7 @@ sus_pure constexpr _self saturating_sub(U rhs) const& noexcept {
 /// `self - rhs < `[`MIN`]($sus::num::@doc.self::MIN), i.e. when
 /// [`checked_sub`]($sus::num::@doc.self::checked_sub)
 /// would return `None`.
-sus_pure constexpr _self unchecked_sub(::sus::marker::UnsafeFnMarker,
+_sus_pure constexpr _self unchecked_sub(::sus::marker::UnsafeFnMarker,
                                        _self rhs) const& noexcept {
   return _self(__private::unchecked_sub(primitive_value, rhs.primitive_value));
 }
@@ -2082,7 +2082,7 @@ sus_pure constexpr _self unchecked_sub(::sus::marker::UnsafeFnMarker,
 /// `self - rhs < `[`MIN`]($sus::num::@doc.self::MIN), i.e. when
 /// [`checked_sub`]($sus::num::@doc.self::checked_sub)
 /// would return `None`.
-sus_pure constexpr _self unchecked_sub(::sus::marker::UnsafeFnMarker,
+_sus_pure constexpr _self unchecked_sub(::sus::marker::UnsafeFnMarker,
                                        _self rhs) const& noexcept {
   return _self(__private::unchecked_sub(primitive_value, rhs.primitive_value));
 }
@@ -2090,7 +2090,7 @@ sus_pure constexpr _self unchecked_sub(::sus::marker::UnsafeFnMarker,
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr _self unchecked_sub(::sus::marker::UnsafeFnMarker,
+_sus_pure constexpr _self unchecked_sub(::sus::marker::UnsafeFnMarker,
                                        U rhs) const& noexcept {
   return _self(__private::unchecked_sub(primitive_value, _primitive{rhs}));
 }
@@ -2099,7 +2099,7 @@ sus_pure constexpr _self unchecked_sub(::sus::marker::UnsafeFnMarker,
 
 /// Wrapping (modular) subtraction. Computes `self - rhs`, wrapping around at
 /// the boundary of the type.
-sus_pure constexpr _self wrapping_sub(_self rhs) const& noexcept {
+_sus_pure constexpr _self wrapping_sub(_self rhs) const& noexcept {
   return _self(__private::wrapping_sub(primitive_value, rhs.primitive_value));
 }
 
@@ -2107,51 +2107,51 @@ sus_pure constexpr _self wrapping_sub(_self rhs) const& noexcept {
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr _self wrapping_sub(U rhs) const& noexcept {
+_sus_pure constexpr _self wrapping_sub(U rhs) const& noexcept {
   return wrapping_sub(_self(_primitive{rhs}));
 }
 #endif
 
 /// Returns the number of ones in the binary representation of the current
 /// value.
-sus_pure constexpr u32 count_ones() const& noexcept {
+_sus_pure constexpr u32 count_ones() const& noexcept {
   return __private::count_ones(primitive_value);
 }
 
 /// Returns the number of zeros in the binary representation of the current
 /// value.
-sus_pure constexpr u32 count_zeros() const& noexcept {
+_sus_pure constexpr u32 count_zeros() const& noexcept {
   return (~(*this)).count_ones();
 }
 
 /// Returns the number of leading ones in the binary representation of the
 /// current value.
-sus_pure constexpr u32 leading_ones() const& noexcept {
+_sus_pure constexpr u32 leading_ones() const& noexcept {
   return (~(*this)).leading_zeros();
 }
 
 /// Returns the number of leading zeros in the binary representation of the
 /// current value.
-sus_pure constexpr u32 leading_zeros() const& noexcept {
+_sus_pure constexpr u32 leading_zeros() const& noexcept {
   return __private::leading_zeros(primitive_value);
 }
 
 /// Returns the number of trailing ones in the binary representation of the
 /// current value.
-sus_pure constexpr u32 trailing_ones() const& noexcept {
+_sus_pure constexpr u32 trailing_ones() const& noexcept {
   return (~(*this)).trailing_zeros();
 }
 
 /// Returns the number of trailing zeros in the binary representation of the
 /// current value.
-sus_pure constexpr u32 trailing_zeros() const& noexcept {
+_sus_pure constexpr u32 trailing_zeros() const& noexcept {
   return __private::trailing_zeros(primitive_value);
 }
 
 /// Reverses the order of bits in the integer. The least significant bit becomes
 /// the most significant bit, second least-significant bit becomes second
 /// most-significant bit, etc.
-sus_pure constexpr _self reverse_bits() const& noexcept {
+_sus_pure constexpr _self reverse_bits() const& noexcept {
   return _self(__private::reverse_bits(primitive_value));
 }
 
@@ -2159,16 +2159,16 @@ sus_pure constexpr _self reverse_bits() const& noexcept {
 /// truncated bits to the end of the resulting integer.
 ///
 /// Please note this isn't the same operation as the `<<` shifting operator!
-sus_pure constexpr _self rotate_left(u64 n) const& noexcept;
+_sus_pure constexpr _self rotate_left(u64 n) const& noexcept;
 
 /// Shifts the bits to the right by a specified amount, n, wrapping the
 /// truncated bits to the beginning of the resulting integer.
 ///
 /// Please note this isn't the same operation as the >> shifting operator!
-sus_pure constexpr _self rotate_right(u64 n) const& noexcept;
+_sus_pure constexpr _self rotate_right(u64 n) const& noexcept;
 
 /// Reverses the byte order of the integer.
-sus_pure constexpr _self swap_bytes() const& noexcept {
+_sus_pure constexpr _self swap_bytes() const& noexcept {
   return _self(__private::swap_bytes(primitive_value));
 }
 
@@ -2181,7 +2181,7 @@ sus_pure constexpr _self swap_bytes() const& noexcept {
 ///
 /// See [overflow checks]($sus::num#overflow-behaviour) for controlling this
 /// behaviour.
-sus_pure constexpr _self pow(u32 rhs) const& noexcept {
+_sus_pure constexpr _self pow(u32 rhs) const& noexcept {
   const auto out =
       __private::pow_with_overflow(primitive_value, rhs.primitive_value);
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
@@ -2193,43 +2193,43 @@ sus_pure constexpr _self pow(u32 rhs) const& noexcept {
 
 /// Checked exponentiation. Computes [`pow`]($sus::num::@doc.self::pow),
 /// returning `None` if overflow occurred.
-sus_pure constexpr ::sus::option::Option<_self> checked_pow(
+_sus_pure constexpr ::sus::option::Option<_self> checked_pow(
     u32 rhs) const& noexcept;
 
 /// Raises self to the power of `exp`, using exponentiation by squaring.
 ///
 /// Returns a tuple of the exponentiation along with a bool indicating whether
 /// an overflow happened.
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_pow(
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_pow(
     u32 exp) const& noexcept;
 
 /// Wrapping (modular) exponentiation. Computes [`pow`](
 /// $sus::num::@doc.self::pow), wrapping around at the boundary of the type.
-sus_pure constexpr _self wrapping_pow(u32 exp) const& noexcept {
+_sus_pure constexpr _self wrapping_pow(u32 exp) const& noexcept {
   return _self(__private::wrapping_pow(primitive_value, exp.primitive_value));
 }
 
 /// Returns the base 2 logarithm of the number, rounded down.
 ///
 /// Returns `None` if the number is zero.
-sus_pure constexpr ::sus::option::Option<u32> checked_log2() const& noexcept;
+_sus_pure constexpr ::sus::option::Option<u32> checked_log2() const& noexcept;
 
 /// Returns the base 2 logarithm of the number, rounded down.
 ///
 /// # Panics
 /// When the number is zero the function will panic.
-sus_pure constexpr u32 log2() const& noexcept;
+_sus_pure constexpr u32 log2() const& noexcept;
 
 /// Returns the base 10 logarithm of the number, rounded down.
 ///
 /// Returns None if the number is zero.
-sus_pure constexpr ::sus::option::Option<u32> checked_log10() const& noexcept;
+_sus_pure constexpr ::sus::option::Option<u32> checked_log10() const& noexcept;
 
 /// Returns the base 10 logarithm of the number, rounded down.
 ///
 /// # Panics
 /// When the number is zero the function will panic.
-sus_pure constexpr u32 log10() const& noexcept;
+_sus_pure constexpr u32 log10() const& noexcept;
 
 /// Returns the logarithm of the number with respect to an arbitrary base,
 /// rounded down.
@@ -2241,14 +2241,14 @@ sus_pure constexpr u32 log10() const& noexcept;
 /// more efficiently for base 2, and
 /// [`checked_log10`]($sus::num::@doc.self::checked_log10) can produce results
 /// more efficiently for base 10.
-sus_pure constexpr ::sus::option::Option<u32> checked_log(
+_sus_pure constexpr ::sus::option::Option<u32> checked_log(
     _self base) const& noexcept;
 
 #if _pointer
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::option::Option<u32> checked_log(
+_sus_pure constexpr ::sus::option::Option<u32> checked_log(
     U rhs) const& noexcept;
 #endif
 
@@ -2263,17 +2263,17 @@ sus_pure constexpr ::sus::option::Option<u32> checked_log(
 /// # Panics
 /// This function will panic if the current value is zero, or if `base` is less
 /// than 2.
-sus_pure constexpr u32 log(_self base) const& noexcept;
+_sus_pure constexpr u32 log(_self base) const& noexcept;
 
 #if _pointer
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr u32 log(U rhs) const& noexcept;
+_sus_pure constexpr u32 log(U rhs) const& noexcept;
 #endif
 
 /// Returns `true` if and only if `self == 2^k` for some `k`.
-sus_pure constexpr bool is_power_of_two() const& noexcept {
+_sus_pure constexpr bool is_power_of_two() const& noexcept {
   return count_ones() == _self(_primitive{1u});
 }
 
@@ -2293,7 +2293,7 @@ sus_pure constexpr bool is_power_of_two() const& noexcept {
 /// sus_check((16_u32).next_multiple_of(8u) == 16u);
 /// sus_check((23_u32).next_multiple_of(8u) == 24u);
 /// ```
-sus_pure constexpr _self next_multiple_of(_self rhs) const& noexcept {
+_sus_pure constexpr _self next_multiple_of(_self rhs) const& noexcept {
   const _self r = *this % rhs;
   return r == _primitive{0} ? *this : *this + (rhs - r);
 }
@@ -2302,7 +2302,7 @@ sus_pure constexpr _self next_multiple_of(_self rhs) const& noexcept {
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr _self next_multiple_of(U rhs) const& noexcept {
+_sus_pure constexpr _self next_multiple_of(U rhs) const& noexcept {
   return next_multiple_of(_self(_primitive{rhs}));
 }
 #endif
@@ -2319,14 +2319,14 @@ sus_pure constexpr _self next_multiple_of(U rhs) const& noexcept {
 /// sus_check((1_u32).checked_next_multiple_of(0u) == sus::none());
 /// sus_check(u32::MAX.checked_next_multiple_of(2u) == sus::none());
 /// ```
-sus_pure constexpr ::sus::option::Option<_self> checked_next_multiple_of(
+_sus_pure constexpr ::sus::option::Option<_self> checked_next_multiple_of(
     _self rhs) const& noexcept;
 
 #if _pointer
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::option::Option<_self> checked_next_multiple_of(
+_sus_pure constexpr ::sus::option::Option<_self> checked_next_multiple_of(
     U rhs) const& noexcept;
 #endif
 
@@ -2340,7 +2340,7 @@ sus_pure constexpr ::sus::option::Option<_self> checked_next_multiple_of(
 ///
 /// See [overflow checks]($sus::num#overflow-behaviour) for controlling this
 /// behaviour.
-sus_pure constexpr _self next_power_of_two() const& noexcept {
+_sus_pure constexpr _self next_power_of_two() const& noexcept {
   const auto one_less =
       __private::one_less_than_next_power_of_two(primitive_value);
   return _self(one_less) + _self(_primitive{1});
@@ -2350,14 +2350,14 @@ sus_pure constexpr _self next_power_of_two() const& noexcept {
 ///
 /// If the next power of two is greater than the type's maximum value, None is
 /// returned, otherwise the power of two is wrapped in Some.
-sus_pure constexpr ::sus::option::Option<_self> checked_next_power_of_two()
+_sus_pure constexpr ::sus::option::Option<_self> checked_next_power_of_two()
     const& noexcept;
 
 /// Returns the smallest power of two greater than or equal to `self`.
 ///
 /// If the next power of two is greater than the type's maximum value, the
 /// return value is wrapped to 0.
-sus_pure constexpr _self wrapping_next_power_of_two() const& noexcept {
+_sus_pure constexpr _self wrapping_next_power_of_two() const& noexcept {
   const auto one_less =
       __private::one_less_than_next_power_of_two(primitive_value);
   return _self(one_less).wrapping_add(_self(_primitive{1u}));
@@ -2366,7 +2366,7 @@ sus_pure constexpr _self wrapping_next_power_of_two() const& noexcept {
 /// Converts an integer from big endian to the target's endianness.
 ///
 /// On big endian this is a no-op. On little endian the bytes are swapped.
-[[nodiscard]] sus_pure static constexpr _self from_be(const _self& x) noexcept {
+[[nodiscard]] _sus_pure static constexpr _self from_be(const _self& x) noexcept {
   if constexpr (std::endian::native == std::endian::big)
     return x;
   else
@@ -2376,7 +2376,7 @@ sus_pure constexpr _self wrapping_next_power_of_two() const& noexcept {
 /// Converts an integer from little endian to the target's endianness.
 ///
 /// On little endian this is a no-op. On big endian the bytes are swapped.
-[[nodiscard]] sus_pure static constexpr _self from_le(const _self& x) noexcept {
+[[nodiscard]] _sus_pure static constexpr _self from_le(const _self& x) noexcept {
   if constexpr (std::endian::native == std::endian::little)
     return x;
   else
@@ -2386,7 +2386,7 @@ sus_pure constexpr _self wrapping_next_power_of_two() const& noexcept {
 /// Converts self to big endian from the target's endianness.
 ///
 /// On big endian this is a no-op. On little endian the bytes are swapped.
-sus_pure constexpr _self to_be() const& noexcept {
+_sus_pure constexpr _self to_be() const& noexcept {
   if constexpr (std::endian::native == std::endian::big)
     return *this;
   else
@@ -2396,7 +2396,7 @@ sus_pure constexpr _self to_be() const& noexcept {
 /// Converts self to little endian from the target's endianness.
 ///
 /// On little endian this is a no-op. On big endian the bytes are swapped.
-sus_pure constexpr _self to_le() const& noexcept {
+_sus_pure constexpr _self to_le() const& noexcept {
   if constexpr (std::endian::native == std::endian::little)
     return *this;
   else
@@ -2405,13 +2405,13 @@ sus_pure constexpr _self to_le() const& noexcept {
 
 /// Return the memory representation of this integer as a byte array in
 /// big-endian (network) byte order.
-sus_pure constexpr ::sus::collections::Array<u8,
+_sus_pure constexpr ::sus::collections::Array<u8,
                                              ::sus::mem::size_of<_primitive>()>
 to_be_bytes() const& noexcept;
 
 /// Return the memory representation of this integer as a byte array in
 /// little-endian byte order.
-sus_pure constexpr ::sus::collections::Array<u8,
+_sus_pure constexpr ::sus::collections::Array<u8,
                                              ::sus::mem::size_of<_primitive>()>
 to_le_bytes() const& noexcept;
 
@@ -2420,19 +2420,19 @@ to_le_bytes() const& noexcept;
 ///
 /// As the target platform's native endianness is used, portable code should use
 /// `to_be_bytes()` or `to_le_bytes()`, as appropriate, instead.
-sus_pure constexpr ::sus::collections::Array<u8,
+_sus_pure constexpr ::sus::collections::Array<u8,
                                              ::sus::mem::size_of<_primitive>()>
 to_ne_bytes() const& noexcept;
 
 /// Create an integer value from its representation as a byte array in big
 /// endian.
-[[nodiscard]] sus_pure static constexpr _self from_be_bytes(
+[[nodiscard]] _sus_pure static constexpr _self from_be_bytes(
     const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept;
 
 /// Create an integer value from its representation as a byte array in little
 /// endian.
-[[nodiscard]] sus_pure static constexpr _self from_le_bytes(
+[[nodiscard]] _sus_pure static constexpr _self from_le_bytes(
     const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept;
 
@@ -2441,7 +2441,7 @@ to_ne_bytes() const& noexcept;
 ///
 /// As the target platform's native endianness is used, portable code likely
 /// wants to use `from_be_bytes()` or `from_le_bytes()`, as appropriate instead.
-[[nodiscard]] sus_pure static constexpr _self from_ne_bytes(
+[[nodiscard]] _sus_pure static constexpr _self from_ne_bytes(
     const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept;
 
@@ -2452,7 +2452,7 @@ to_ne_bytes() const& noexcept;
 /// In most systems the address is the entire pointer, but in cases where the
 /// pointer is larger, this returns the low bits of the pointer up to the size
 /// of an address.
-sus_pure constexpr usize addr() const& noexcept {
+_sus_pure constexpr usize addr() const& noexcept {
   return static_cast<decltype(std::declval<usize>().primitive_value)>(
       primitive_value);
 }

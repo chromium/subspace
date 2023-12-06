@@ -269,22 +269,22 @@ class [[sus_trivial_abi]] Box final : public __private::BoxBase<Box<T>, T> {
     return *this;
   }
 
-  sus_pure constexpr const T& operator*() const {
+  _sus_pure constexpr const T& operator*() const {
     sus_check_with_message(t_, "Box used after move");
     return *t_;
   }
-  sus_pure constexpr T& operator*()
+  _sus_pure constexpr T& operator*()
     requires(!std::is_const_v<T>)
   {
     sus_check_with_message(t_, "Box used after move");
     return *t_;
   }
 
-  sus_pure constexpr const T* operator->() const {
+  _sus_pure constexpr const T* operator->() const {
     sus_check_with_message(t_, "Box used after move");
     return t_;
   }
-  sus_pure constexpr T* operator->()
+  _sus_pure constexpr T* operator->()
     requires(!std::is_const_v<T>)
   {
     sus_check_with_message(t_, "Box used after move");

@@ -35,7 +35,7 @@ namespace sus::num {
 #if _pointer
 
 template <class U>
-sus_pure constexpr ::sus::result::Result<_self, ::sus::num::TryFromIntError>
+_sus_pure constexpr ::sus::result::Result<_self, ::sus::num::TryFromIntError>
 _self::try_from(U* u) noexcept {
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
   return R(_self(reinterpret_cast<_primitive>(u)));
@@ -43,7 +43,7 @@ _self::try_from(U* u) noexcept {
 
 template <Unsigned U>
   requires(::sus::mem::size_of<U>() == ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::result::Result<_self, ::sus::num::TryFromIntError>
+_sus_pure constexpr ::sus::result::Result<_self, ::sus::num::TryFromIntError>
 _self::try_from(U u) noexcept {
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
   if constexpr (MAX_PRIMITIVE < U::MAX_PRIMITIVE) {
@@ -56,7 +56,7 @@ _self::try_from(U u) noexcept {
 
 template <UnsignedPrimitiveInteger U>
   requires(::sus::mem::size_of<U>() == ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::result::Result<_self, ::sus::num::TryFromIntError>
+_sus_pure constexpr ::sus::result::Result<_self, ::sus::num::TryFromIntError>
 _self::try_from(U u) noexcept {
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
   if constexpr (MAX_PRIMITIVE < __private::max_value<U>()) {
@@ -70,7 +70,7 @@ _self::try_from(U u) noexcept {
 #else
 
 template <Unsigned U>
-sus_pure constexpr ::sus::result::Result<_self, ::sus::num::TryFromIntError>
+_sus_pure constexpr ::sus::result::Result<_self, ::sus::num::TryFromIntError>
 _self::try_from(U u) noexcept {
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
   if constexpr (MAX_PRIMITIVE < U::MAX_PRIMITIVE) {
@@ -82,7 +82,7 @@ _self::try_from(U u) noexcept {
 }
 
 template <UnsignedPrimitiveInteger U>
-sus_pure constexpr ::sus::result::Result<_self, ::sus::num::TryFromIntError>
+_sus_pure constexpr ::sus::result::Result<_self, ::sus::num::TryFromIntError>
 _self::try_from(U u) noexcept {
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
   if constexpr (MAX_PRIMITIVE < __private::max_value<U>()) {
@@ -94,7 +94,7 @@ _self::try_from(U u) noexcept {
 }
 
 template <Signed S>
-sus_pure constexpr ::sus::result::Result<_self, ::sus::num::TryFromIntError>
+_sus_pure constexpr ::sus::result::Result<_self, ::sus::num::TryFromIntError>
 _self::try_from(S s) noexcept {
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
   if (s.primitive_value < decltype(S::primitive_value){0}) {
@@ -110,7 +110,7 @@ _self::try_from(S s) noexcept {
 }
 
 template <SignedPrimitiveInteger S>
-sus_pure constexpr ::sus::result::Result<_self, ::sus::num::TryFromIntError>
+_sus_pure constexpr ::sus::result::Result<_self, ::sus::num::TryFromIntError>
 _self::try_from(S s) noexcept {
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
   if (s < 0) {
@@ -127,7 +127,7 @@ _self::try_from(S s) noexcept {
 
 template <class S>
   requires(SignedPrimitiveEnum<S> || SignedPrimitiveEnumClass<S>)
-sus_pure constexpr ::sus::result::Result<_self, ::sus::num::TryFromIntError>
+_sus_pure constexpr ::sus::result::Result<_self, ::sus::num::TryFromIntError>
 _self::try_from(S s) noexcept {
   using D = std::underlying_type_t<S>;
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
@@ -145,7 +145,7 @@ _self::try_from(S s) noexcept {
 
 template <class U>
   requires(UnsignedPrimitiveEnum<U> || UnsignedPrimitiveEnumClass<U>)
-sus_pure constexpr ::sus::result::Result<_self, ::sus::num::TryFromIntError>
+_sus_pure constexpr ::sus::result::Result<_self, ::sus::num::TryFromIntError>
 _self::try_from(U u) noexcept {
   using D = std::underlying_type_t<U>;
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
@@ -159,7 +159,7 @@ _self::try_from(U u) noexcept {
 
 #endif
 
-sus_pure constexpr ::sus::option::Option<_self> _self::checked_add(
+_sus_pure constexpr ::sus::option::Option<_self> _self::checked_add(
     _self rhs) const& noexcept {
   const auto out =
       __private::add_with_overflow(primitive_value, rhs.primitive_value);
@@ -173,7 +173,7 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_add(
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::option::Option<_self> _self::checked_add(
+_sus_pure constexpr ::sus::option::Option<_self> _self::checked_add(
     U rhs) const& noexcept {
   return checked_add(_self(_primitive{rhs}));
 }
@@ -181,7 +181,7 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_add(
 
 #if !_pointer  // No `_signed` for uptr.
 
-sus_pure constexpr ::sus::option::Option<_self> _self::checked_add_signed(
+_sus_pure constexpr ::sus::option::Option<_self> _self::checked_add_signed(
     _signed rhs) const& noexcept {
   const auto out =
       __private::add_with_overflow_signed(primitive_value, rhs.primitive_value);
@@ -193,7 +193,7 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_add_signed(
 
 #endif
 
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_add(
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_add(
     _self rhs) const& noexcept {
   const auto out =
       __private::add_with_overflow(primitive_value, rhs.primitive_value);
@@ -204,7 +204,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_add(
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr sus::tuple_type::Tuple<_self, bool> _self::overflowing_add(
+_sus_pure constexpr sus::tuple_type::Tuple<_self, bool> _self::overflowing_add(
     U rhs) const& noexcept {
   return overflowing_add(_self(_primitive{rhs}));
 }
@@ -212,14 +212,14 @@ sus_pure constexpr sus::tuple_type::Tuple<_self, bool> _self::overflowing_add(
 
 #if !_pointer  // No `_signed` for uptr.
 
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
 _self::overflowing_add_signed(_signed rhs) const& noexcept {
   const auto r =
       __private::add_with_overflow_signed(primitive_value, rhs.primitive_value);
   return ::sus::tuple_type::Tuple<_self, bool>(r.value, r.overflow);
 }
 
-sus_pure constexpr _self _self::saturating_add_signed(
+_sus_pure constexpr _self _self::saturating_add_signed(
     _signed rhs) const& noexcept {
   const auto r =
       __private::add_with_overflow_signed(primitive_value, rhs.primitive_value);
@@ -235,7 +235,7 @@ sus_pure constexpr _self _self::saturating_add_signed(
   }
 }
 
-sus_pure constexpr _self _self::wrapping_add_signed(
+_sus_pure constexpr _self _self::wrapping_add_signed(
     _signed rhs) const& noexcept {
   return __private::add_with_overflow_signed(primitive_value,
                                              rhs.primitive_value)
@@ -244,7 +244,7 @@ sus_pure constexpr _self _self::wrapping_add_signed(
 
 #endif
 
-sus_pure constexpr ::sus::option::Option<_self> _self::checked_div(
+_sus_pure constexpr ::sus::option::Option<_self> _self::checked_div(
     _self rhs) const& noexcept {
   if (rhs.primitive_value != 0u) [[likely]]
     return ::sus::option::Option<_self>(
@@ -257,13 +257,13 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_div(
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::option::Option<_self> _self::checked_div(
+_sus_pure constexpr ::sus::option::Option<_self> _self::checked_div(
     U rhs) const& noexcept {
   return checked_div(_self(_primitive{rhs}));
 }
 #endif
 
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_div(
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_div(
     _self rhs) const& noexcept {
   sus_check_with_message(rhs.primitive_value != _primitive{0},
                             "attempt to divide by zero");
@@ -276,13 +276,13 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_div(
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_div(
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_div(
     U rhs) const& noexcept {
   return overflowing_div(_self(_primitive{rhs}));
 }
 #endif
 
-sus_pure constexpr ::sus::option::Option<_self> _self::checked_mul(
+_sus_pure constexpr ::sus::option::Option<_self> _self::checked_mul(
     _self rhs) const& noexcept {
   const auto out =
       __private::mul_with_overflow(primitive_value, rhs.primitive_value);
@@ -296,13 +296,13 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_mul(
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::option::Option<_self> _self::checked_mul(
+_sus_pure constexpr ::sus::option::Option<_self> _self::checked_mul(
     U rhs) const& noexcept {
   return checked_mul(_self(_primitive{rhs}));
 }
 #endif
 
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_mul(
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_mul(
     _self rhs) const& noexcept {
   const auto out =
       __private::mul_with_overflow(primitive_value, rhs.primitive_value);
@@ -313,13 +313,13 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_mul(
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_mul(
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_mul(
     U rhs) const& noexcept {
   return overflowing_mul(_self(_primitive{rhs}));
 }
 #endif
 
-sus_pure constexpr ::sus::option::Option<_self> _self::checked_neg()
+_sus_pure constexpr ::sus::option::Option<_self> _self::checked_neg()
     const& noexcept {
   if (primitive_value == 0u)
     return ::sus::option::Option<_self>(_self(_primitive{0u}));
@@ -327,13 +327,13 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_neg()
     return ::sus::option::Option<_self>();
 }
 
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
 _self::overflowing_neg() const& noexcept {
   return ::sus::tuple_type::Tuple<_self, bool>(
       (~(*this)).wrapping_add(_self(_primitive{1u})), primitive_value != 0u);
 }
 
-sus_pure constexpr ::sus::option::Option<_self> _self::checked_rem(
+_sus_pure constexpr ::sus::option::Option<_self> _self::checked_rem(
     _self rhs) const& noexcept {
   if (rhs.primitive_value != 0u) [[likely]]
     return ::sus::option::Option<_self>(
@@ -346,13 +346,13 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_rem(
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::option::Option<_self> _self::checked_rem(
+_sus_pure constexpr ::sus::option::Option<_self> _self::checked_rem(
     U rhs) const& noexcept {
   return checked_rem(_self(_primitive{rhs}));
 }
 #endif
 
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_rem(
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_rem(
     _self rhs) const& noexcept {
   sus_check_with_message(
       rhs.primitive_value != _primitive{0},
@@ -366,13 +366,13 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_rem(
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_rem(
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_rem(
     U rhs) const& noexcept {
   return overflowing_rem(_self(_primitive{rhs}));
 }
 #endif
 
-sus_pure constexpr ::sus::option::Option<_self> _self::checked_div_euclid(
+_sus_pure constexpr ::sus::option::Option<_self> _self::checked_div_euclid(
     _self rhs) const& noexcept {
   if (rhs.primitive_value == 0u) [[unlikely]] {
     return ::sus::option::Option<_self>();
@@ -386,13 +386,13 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_div_euclid(
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::option::Option<_self> _self::checked_div_euclid(
+_sus_pure constexpr ::sus::option::Option<_self> _self::checked_div_euclid(
     U rhs) const& noexcept {
   return checked_div_euclid(_self(_primitive{rhs}));
 }
 #endif
 
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
 _self::overflowing_div_euclid(_self rhs) const& noexcept {
   sus_check_with_message(rhs.primitive_value != _primitive{0},
                             "attempt to divide by zero");
@@ -405,13 +405,13 @@ _self::overflowing_div_euclid(_self rhs) const& noexcept {
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
 _self::overflowing_div_euclid(U rhs) const& noexcept {
   return overflowing_div_euclid(_self(_primitive{rhs}));
 }
 #endif
 
-sus_pure constexpr ::sus::option::Option<_self> _self::checked_rem_euclid(
+_sus_pure constexpr ::sus::option::Option<_self> _self::checked_rem_euclid(
     _self rhs) const& noexcept {
   if (rhs.primitive_value == 0u) [[unlikely]] {
     return ::sus::option::Option<_self>();
@@ -425,13 +425,13 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_rem_euclid(
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::option::Option<_self> _self::checked_rem_euclid(
+_sus_pure constexpr ::sus::option::Option<_self> _self::checked_rem_euclid(
     U rhs) const& noexcept {
   return checked_rem_euclid(_self(_primitive{rhs}));
 }
 #endif
 
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
 _self::overflowing_rem_euclid(_self rhs) const& noexcept {
   sus_check_with_message(
       rhs.primitive_value != _primitive{0},
@@ -445,7 +445,7 @@ _self::overflowing_rem_euclid(_self rhs) const& noexcept {
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
 _self::overflowing_rem_euclid(U rhs) const& noexcept {
   return overflowing_rem_euclid(_self(_primitive{rhs}));
 }
@@ -461,7 +461,7 @@ constexpr inline void _self::operator<<=(u64 r) & noexcept {
   }
 }
 
-sus_pure constexpr ::sus::option::Option<_self> _self::checked_shl(
+_sus_pure constexpr ::sus::option::Option<_self> _self::checked_shl(
     u64 rhs) const& noexcept {
   const auto out =
       __private::shl_with_overflow(primitive_value, rhs.primitive_value);
@@ -471,14 +471,14 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_shl(
     return ::sus::option::Option<_self>();
 }
 
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_shl(
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_shl(
     u64 rhs) const& noexcept {
   const auto out =
       __private::shl_with_overflow(primitive_value, rhs.primitive_value);
   return ::sus::tuple_type::Tuple<_self, bool>(_self(out.value), out.overflow);
 }
 
-sus_pure constexpr _self _self::wrapping_shl(u64 rhs) const& noexcept {
+_sus_pure constexpr _self _self::wrapping_shl(u64 rhs) const& noexcept {
   return _self(
       __private::shl_with_overflow(primitive_value, rhs.primitive_value).value);
 }
@@ -493,7 +493,7 @@ constexpr inline void _self::operator>>=(u64 r) & noexcept {
   }
 }
 
-sus_pure constexpr ::sus::option::Option<_self> _self::checked_shr(
+_sus_pure constexpr ::sus::option::Option<_self> _self::checked_shr(
     u64 rhs) const& noexcept {
   const auto out =
       __private::shr_with_overflow(primitive_value, rhs.primitive_value);
@@ -503,19 +503,19 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_shr(
     return ::sus::option::Option<_self>();
 }
 
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_shr(
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_shr(
     u64 rhs) const& noexcept {
   const auto out =
       __private::shr_with_overflow(primitive_value, rhs.primitive_value);
   return ::sus::tuple_type::Tuple<_self, bool>(_self(out.value), out.overflow);
 }
 
-sus_pure constexpr _self _self::wrapping_shr(u64 rhs) const& noexcept {
+_sus_pure constexpr _self _self::wrapping_shr(u64 rhs) const& noexcept {
   return _self(
       __private::shr_with_overflow(primitive_value, rhs.primitive_value).value);
 }
 
-sus_pure constexpr ::sus::option::Option<_self> _self::checked_sub(
+_sus_pure constexpr ::sus::option::Option<_self> _self::checked_sub(
     _self rhs) const& {
   const auto out =
       __private::sub_with_overflow(primitive_value, rhs.primitive_value);
@@ -529,13 +529,13 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_sub(
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::option::Option<_self> _self::checked_sub(
+_sus_pure constexpr ::sus::option::Option<_self> _self::checked_sub(
     U rhs) const& noexcept {
   return checked_sub(_self(_primitive{rhs}));
 }
 #endif
 
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_sub(
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_sub(
     _self rhs) const& noexcept {
   const auto out =
       __private::sub_with_overflow(primitive_value, rhs.primitive_value);
@@ -546,13 +546,13 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_sub(
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_sub(
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_sub(
     U rhs) const& noexcept {
   return overflowing_sub(_self(_primitive{rhs}));
 }
 #endif
 
-sus_pure constexpr ::sus::option::Option<_self> _self::checked_pow(
+_sus_pure constexpr ::sus::option::Option<_self> _self::checked_pow(
     u32 rhs) const& noexcept {
   const auto out =
       __private::pow_with_overflow(primitive_value, rhs.primitive_value);
@@ -562,22 +562,22 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_pow(
     return ::sus::option::Option<_self>();
 }
 
-sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_pow(
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_pow(
     u32 exp) const& noexcept {
   const auto out =
       __private::pow_with_overflow(primitive_value, exp.primitive_value);
   return ::sus::tuple_type::Tuple<_self, bool>(_self(out.value), out.overflow);
 }
 
-sus_pure constexpr _self _self::rotate_left(u64 n) const& noexcept {
+_sus_pure constexpr _self _self::rotate_left(u64 n) const& noexcept {
   return _self(__private::rotate_left(primitive_value, n.primitive_value));
 }
 
-sus_pure constexpr _self _self::rotate_right(u64 n) const& noexcept {
+_sus_pure constexpr _self _self::rotate_right(u64 n) const& noexcept {
   return _self(__private::rotate_right(primitive_value, n.primitive_value));
 }
 
-sus_pure constexpr ::sus::option::Option<u32> _self::checked_log2()
+_sus_pure constexpr ::sus::option::Option<u32> _self::checked_log2()
     const& noexcept {
   if (primitive_value == 0u) [[unlikely]] {
     return ::sus::option::Option<u32>();
@@ -588,12 +588,12 @@ sus_pure constexpr ::sus::option::Option<u32> _self::checked_log2()
   }
 }
 
-sus_pure constexpr u32 _self::log2() const& noexcept {
+_sus_pure constexpr u32 _self::log2() const& noexcept {
   return checked_log2().expect(
       "argument of integer logarithm must be positive");
 }
 
-sus_pure constexpr ::sus::option::Option<u32> _self::checked_log10()
+_sus_pure constexpr ::sus::option::Option<u32> _self::checked_log10()
     const& noexcept {
   if (primitive_value == 0u) [[unlikely]] {
     return ::sus::option::Option<u32>();
@@ -603,12 +603,12 @@ sus_pure constexpr ::sus::option::Option<u32> _self::checked_log10()
   }
 }
 
-sus_pure constexpr u32 _self::log10() const& noexcept {
+_sus_pure constexpr u32 _self::log10() const& noexcept {
   return checked_log10().expect(
       "argument of integer logarithm must be positive");
 }
 
-sus_pure constexpr ::sus::option::Option<u32> _self::checked_log(
+_sus_pure constexpr ::sus::option::Option<u32> _self::checked_log(
     _self base) const& noexcept {
   if (primitive_value == 0u || base.primitive_value <= 1u) [[unlikely]] {
     return ::sus::option::Option<u32>();
@@ -628,13 +628,13 @@ sus_pure constexpr ::sus::option::Option<u32> _self::checked_log(
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::option::Option<u32> _self::checked_log(
+_sus_pure constexpr ::sus::option::Option<u32> _self::checked_log(
     U rhs) const& noexcept {
   return checked_log(_self(_primitive{rhs}));
 }
 #endif
 
-sus_pure constexpr u32 _self::log(_self base) const& noexcept {
+_sus_pure constexpr u32 _self::log(_self base) const& noexcept {
   return checked_log(base).expect(
       "argument of integer logarithm must be positive");
 }
@@ -643,19 +643,19 @@ sus_pure constexpr u32 _self::log(_self base) const& noexcept {
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr u32 _self::log(U rhs) const& noexcept {
+_sus_pure constexpr u32 _self::log(U rhs) const& noexcept {
   return log(_self(_primitive{rhs}));
 }
 #endif
 
-sus_pure constexpr ::sus::option::Option<_self>
+_sus_pure constexpr ::sus::option::Option<_self>
 _self::checked_next_power_of_two() const& noexcept {
   const auto one_less =
       __private::one_less_than_next_power_of_two(primitive_value);
   return _self(one_less).checked_add(_self(_primitive{1u}));
 }
 
-sus_pure constexpr ::sus::option::Option<_self> _self::checked_next_multiple_of(
+_sus_pure constexpr ::sus::option::Option<_self> _self::checked_next_multiple_of(
     _self rhs) const& noexcept {
   return checked_rem(rhs).and_then([s = *this, rhs](_self r) {
     return r == _primitive{0}
@@ -671,25 +671,25 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_next_multiple_of(
 template <class U>
   requires((UnsignedNumeric<U> || UnsignedPrimitiveInteger<U>) &&
            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr ::sus::option::Option<_self> _self::checked_next_multiple_of(
+_sus_pure constexpr ::sus::option::Option<_self> _self::checked_next_multiple_of(
     U rhs) const& noexcept {
   return checked_next_multiple_of(_self(_primitive{rhs}));
 }
 #endif
 
-sus_pure constexpr ::sus::collections::Array<u8,
+_sus_pure constexpr ::sus::collections::Array<u8,
                                              ::sus::mem::size_of<_primitive>()>
 _self::to_be_bytes() const& noexcept {
   return to_be().to_ne_bytes();
 }
 
-sus_pure constexpr ::sus::collections::Array<u8,
+_sus_pure constexpr ::sus::collections::Array<u8,
                                              ::sus::mem::size_of<_primitive>()>
 _self::to_le_bytes() const& noexcept {
   return to_le().to_ne_bytes();
 }
 
-sus_pure constexpr ::sus::collections::Array<u8,
+_sus_pure constexpr ::sus::collections::Array<u8,
                                              ::sus::mem::size_of<_primitive>()>
 _self::to_ne_bytes() const& noexcept {
   auto bytes =
@@ -716,19 +716,19 @@ _self::to_ne_bytes() const& noexcept {
     return bytes;
   }
 }
-sus_pure constexpr _self _self::from_be_bytes(
+_sus_pure constexpr _self _self::from_be_bytes(
     const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept {
   return from_be(from_ne_bytes(bytes));
 }
 
-sus_pure constexpr _self _self::from_le_bytes(
+_sus_pure constexpr _self _self::from_le_bytes(
     const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept {
   return from_le(from_ne_bytes(bytes));
 }
 
-sus_pure constexpr _self _self::from_ne_bytes(
+_sus_pure constexpr _self _self::from_ne_bytes(
     const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept {
   _self val;
@@ -753,13 +753,13 @@ sus_pure constexpr _self _self::from_ne_bytes(
 // std hash support.
 template <>
 struct std::hash<::sus::num::_self> {
-  sus_pure auto operator()(::sus::num::_self u) const noexcept {
+  _sus_pure auto operator()(::sus::num::_self u) const noexcept {
     return std::hash<_primitive>()(u.primitive_value);
   }
 };
 template <>
 struct std::equal_to<::sus::num::_self> {
-  sus_pure constexpr auto operator()(::sus::num::_self l,
+  _sus_pure constexpr auto operator()(::sus::num::_self l,
                                      ::sus::num::_self r) const noexcept {
     return l == r;
   }

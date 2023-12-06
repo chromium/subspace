@@ -30,19 +30,19 @@
 
 namespace sus::num {
 
-sus_pure constexpr ::sus::collections::Array<u8,
+_sus_pure constexpr ::sus::collections::Array<u8,
                                              ::sus::mem::size_of<_primitive>()>
 _self::to_be_bytes() const& noexcept {
   return to_be().to_ne_bytes();
 }
 
-sus_pure constexpr ::sus::collections::Array<u8,
+_sus_pure constexpr ::sus::collections::Array<u8,
                                              ::sus::mem::size_of<_primitive>()>
 _self::to_le_bytes() const& noexcept {
   return to_le().to_ne_bytes();
 }
 
-sus_pure constexpr ::sus::collections::Array<u8,
+_sus_pure constexpr ::sus::collections::Array<u8,
                                              ::sus::mem::size_of<_primitive>()>
 _self::to_ne_bytes() const& noexcept {
   auto bytes =
@@ -70,19 +70,19 @@ _self::to_ne_bytes() const& noexcept {
   }
 }
 
-sus_pure inline constexpr _self _self::from_be_bytes(
+_sus_pure inline constexpr _self _self::from_be_bytes(
     const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept {
   return from_be(from_ne_bytes(bytes));
 }
 
-sus_pure inline constexpr _self _self::from_le_bytes(
+_sus_pure inline constexpr _self _self::from_le_bytes(
     const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept {
   return from_le(from_ne_bytes(bytes));
 }
 
-sus_pure inline constexpr _self _self::from_ne_bytes(
+_sus_pure inline constexpr _self _self::from_ne_bytes(
     const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept {
   using Unsigned = decltype(__private::into_unsigned(primitive_value));
@@ -108,13 +108,13 @@ sus_pure inline constexpr _self _self::from_ne_bytes(
 // std hash support.
 template <>
 struct std::hash<::sus::num::_self> {
-  sus_pure auto operator()(::sus::num::_self u) const noexcept {
+  _sus_pure auto operator()(::sus::num::_self u) const noexcept {
     return std::hash<_primitive>()(u.primitive_value);
   }
 };
 template <>
 struct std::equal_to<::sus::num::_self> {
-  sus_pure constexpr auto operator()(::sus::num::_self l,
+  _sus_pure constexpr auto operator()(::sus::num::_self l,
                                      ::sus::num::_self r) const noexcept {
     return l == r;
   }

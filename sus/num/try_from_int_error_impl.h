@@ -30,12 +30,12 @@ constexpr TryFromIntError TryFromIntError::with_out_of_bounds() noexcept {
   return TryFromIntError(CONSTRUCT, Kind::OutOfBounds);
 }
 
-sus_pure constexpr TryFromIntError::Kind TryFromIntError::kind()
+_sus_pure constexpr TryFromIntError::Kind TryFromIntError::kind()
     const noexcept {
   return kind_;
 }
 
-sus_pure constexpr bool TryFromIntError::operator==(
+_sus_pure constexpr bool TryFromIntError::operator==(
     TryFromIntError rhs) const noexcept {
   return kind_ == rhs.kind_;
 }
