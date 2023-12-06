@@ -22,7 +22,7 @@
 #define _sus_always_inline \
   sus_if_msvc_else(__forceinline, inline __attribute__((always_inline)))
 
-/// Add `sus_no_inline` to the start of a function declaration to prevent the
+/// Add `_sus_no_inline` to the start of a function declaration to prevent the
 /// compiler from inlining the function.
-#define sus_no_inline \
+#define _sus_no_inline \
   sus_if_msvc_else(__declspec(noinline), __attribute__((noinline)))
