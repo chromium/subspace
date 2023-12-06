@@ -91,22 +91,22 @@ struct NeverValueAccess {
 
   /// Checks if the never-value field is set to the never-value, returning false
   /// if it is.
-  sus_pure constexpr sus_always_inline bool is_constructed() const noexcept
+  sus_pure constexpr _sus_always_inline bool is_constructed() const noexcept
     requires(NeverValueChecker<T>::has_field)
   {
     return t_._sus_Unsafe_NeverValueIsConstructed(::sus::marker::unsafe_fn);
   }
 
   /// Sets the never-value field to the destroy-value.
-  constexpr sus_always_inline void set_destroy_value(
+  constexpr _sus_always_inline void set_destroy_value(
       ::sus::marker::UnsafeFnMarker) noexcept
     requires(NeverValueChecker<T>::has_field)
   {
     t_._sus_Unsafe_NeverValueSetDestroyValue(::sus::marker::unsafe_fn);
   }
 
-  sus_pure constexpr sus_always_inline const T& as_inner() const { return t_; }
-  sus_pure constexpr sus_always_inline T& as_inner_mut() { return t_; }
+  sus_pure constexpr _sus_always_inline const T& as_inner() const { return t_; }
+  sus_pure constexpr _sus_always_inline T& as_inner_mut() { return t_; }
 
  private:
   T t_{NeverValueConstructor()};

@@ -325,13 +325,13 @@ struct StoragePointer {};
 
 template <class T>
 struct [[sus_trivial_abi]] StoragePointer<T&> {
-  explicit constexpr sus_always_inline StoragePointer(T& ref) noexcept
+  explicit constexpr _sus_always_inline StoragePointer(T& ref) noexcept
       : ptr_(::sus::mem::addressof(ref)) {}
 
   template <class U>
     requires(std::convertible_to<U&, T&>)
   //requires(sus::ptr::SameOrSubclassOf<T*, U*>)
-  constexpr sus_always_inline StoragePointer(
+  constexpr _sus_always_inline StoragePointer(
       const StoragePointer<U&>& other) noexcept
       : ptr_(other.ptr_) {}
 
