@@ -18,11 +18,11 @@
 
 // By including math.h (and cmath) and then #undef-ing NAN and INFINITY, we
 // prevent these macros from polluting the symbol namespace, which would
-// conflict with constants in f32 and f64. We provide alternative STD_NAN and
-// STD_INFINITY macros that provide NaN and Infinity float values.
+// conflict with constants in f32 and f64. We provide alternative `SUS_NAN` and
+// `SUS_INFINITY` macros that provide NaN and Infinity float values.
 //
-// A codebase in migration to subspace would use STD_NAN in place of NAN and
-// STD_INFINITY in place of INFINITY, or could move to using the constants in
+// A codebase in migration to subspace would use `SUS_NAN` in place of NAN and
+// `SUS_INFINITY` in place of INFINITY, or could move to using the constants in
 // std::numeric_limits<float>.
 #include <math.h>
 
@@ -33,7 +33,7 @@
 
 #include "sus/num/__private/intrinsics.h"
 
-/// A macro that replaces the NAN macro from <cmath>.
-#define STD_NAN ::sus::num::__private::nan<float>()
-/// A macro that replaces the INFINITY macro from <cmath>.
-#define STD_INFINITY ::sus::num::__private::infinity<float>()
+/// A macro that replaces the `NAN` macro from the `<cmath>` header.
+#define SUS_NAN ::sus::num::__private::nan<float>()
+/// A macro that replaces the `INFINITY` macro from the `<cmath>` header.
+#define SUS_INFINITY ::sus::num::__private::infinity<float>()

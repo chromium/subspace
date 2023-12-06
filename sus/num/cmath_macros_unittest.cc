@@ -20,15 +20,15 @@
 namespace {
 
 TEST(CMathMacros, Nan) {
-  // The NAN macro conflicts with a constant name. So we redefine it as STD_NAN.
-  constexpr auto nan = STD_NAN;  // Must be a constant expression.
+  // The NAN macro conflicts with a constant name. So we redefine it as SUS_NAN.
+  constexpr auto nan = SUS_NAN;  // Must be a constant expression.
   EXPECT_TRUE(std::isnan(nan));  // constexpr in C++23.
 }
 
 TEST(CMathMacros, Inf) {
   // The INFINITY macro conflicts with a constant name. So we redefine it as
-  // STD_INFINITY.
-  constexpr auto inf = STD_INFINITY;  // Must be a constant expression.
+  // SUS_INFINITY.
+  constexpr auto inf = SUS_INFINITY;  // Must be a constant expression.
   EXPECT_TRUE(std::isinf(inf));       // constexpr in C++23.
 }
 
