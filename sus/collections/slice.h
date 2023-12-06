@@ -541,7 +541,7 @@ struct fmt::formatter<::sus::collections::Slice<T>, Char> {
 };
 
 // Stream support.
-sus__format_to_stream(sus::collections, Slice, T);
+_sus_format_to_stream(sus::collections, Slice, T);
 
 // fmt support.
 template <class T, class Char>
@@ -569,7 +569,7 @@ struct fmt::formatter<::sus::collections::SliceMut<T>, Char> {
 };
 
 // Stream support.
-sus__format_to_stream(sus::collections, SliceMut, T);
+_sus_format_to_stream(sus::collections, SliceMut, T);
 
 // Promote Slice into the `sus` namespace.
 namespace sus {

@@ -56,7 +56,7 @@ struct fmt::formatter<::sus::marker::EmptyMarker, Char> {
 };
 
 // Stream support.
-sus__format_to_stream(sus::marker, EmptyMarker);
+_sus_format_to_stream(sus::marker, EmptyMarker);
 
 // Promote `empty` into the `sus` namespace.
 namespace sus {

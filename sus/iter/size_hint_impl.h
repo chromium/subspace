@@ -38,4 +38,4 @@ struct fmt::formatter<::sus::iter::SizeHint, Char> {
 };
 
 // Stream support.
-sus__format_to_stream(sus::iter, SizeHint);
+_sus_format_to_stream(sus::iter, SizeHint);

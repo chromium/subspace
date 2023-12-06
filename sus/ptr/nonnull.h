@@ -205,4 +205,4 @@ struct fmt::formatter<::sus::ptr::NonNull<T>, Char> {
 };
 
 // Stream support.
-sus__format_to_stream(sus::ptr, NonNull, T);
+_sus_format_to_stream(sus::ptr, NonNull, T);

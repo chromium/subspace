@@ -488,7 +488,7 @@ struct fmt::formatter<::sus::ops::Range<T>, Char> {
 };
 
 // Stream support.
-sus__format_to_stream(sus::ops, Range, T);
+_sus_format_to_stream(sus::ops, Range, T);
 
 // fmt support.
 template <class T, class Char>
@@ -513,7 +513,7 @@ struct fmt::formatter<::sus::ops::RangeFrom<T>, Char> {
 };
 
 // Stream support.
-sus__format_to_stream(sus::ops, RangeFrom, T);
+_sus_format_to_stream(sus::ops, RangeFrom, T);
 
 // fmt support.
 template <class T, class Char>
@@ -538,7 +538,7 @@ struct fmt::formatter<::sus::ops::RangeTo<T>, Char> {
 };
 
 // Stream support.
-sus__format_to_stream(sus::ops, RangeTo, T);
+_sus_format_to_stream(sus::ops, RangeTo, T);
 
 // fmt support.
 template <class T, class Char>
@@ -562,4 +562,4 @@ struct fmt::formatter<::sus::ops::RangeFull<T>, Char> {
 };
 
 // Stream support.
-sus__format_to_stream(sus::ops, RangeFull, T);
+_sus_format_to_stream(sus::ops, RangeFull, T);

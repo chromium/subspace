@@ -70,4 +70,4 @@ struct fmt::formatter<::sus::marker::UnsafeFnMarker, Char> {
 };
 
 // Stream support.
-sus__format_to_stream(sus::marker, UnsafeFnMarker);
+_sus_format_to_stream(sus::marker, UnsafeFnMarker);
