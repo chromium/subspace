@@ -17,7 +17,6 @@
 #include <memory>
 #include <utility>
 
-#include "subdoc/lib/parse_comment.h"
 #include "subdoc/lib/visit.h"
 #include "sus/collections/compat_vector.h"
 #include "sus/iter/iterator.h"

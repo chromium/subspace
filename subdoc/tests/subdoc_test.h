@@ -21,7 +21,6 @@
 #include "subdoc/lib/database.h"
 #include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/gen/options.h"
-#include "subdoc/lib/parse_comment.h"
 #include "subdoc/lib/run.h"
 #include "subdoc/tests/cpp_version.h"
 #include "sus/collections/vec.h"
