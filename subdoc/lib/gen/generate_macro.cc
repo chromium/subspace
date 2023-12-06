@@ -136,16 +136,15 @@ sus::Result<void, MarkdownToHtmlError> generate_macro(
           name_anchor.add_class("macro-name");
           name_anchor.write_text(element.name);
         }
-#if 0
-        if (!element.parameters.is_empty()) {
+        if (element.parameters.is_some()) {
           signature_div.write_text("(");
-          for (const auto& [i, p] : element.parameters.iter().enumerate()) {
+          for (const auto& [i, p] :
+               element.parameters.as_value().iter().enumerate()) {
             if (i > 0u) signature_div.write_text(", ");
-            signature_div.write_text(p.parameter_name);
+            signature_div.write_text(p);
           }
           signature_div.write_text(")");
         }
-#endif
       }
     }
   }
