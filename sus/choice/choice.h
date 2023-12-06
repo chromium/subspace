@@ -903,7 +903,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
  private:
   constexpr explicit Choice(IndexType i) noexcept : index_(i) {}
 
-  // TODO: We don't use `[[sus_no_unique_address]]` here as the compiler
+  // TODO: We don't use `[[_sus_no_unique_address]]` here as the compiler
   // overwrites the `index_` when we move-construct into the Storage union.
   // Clang: https://github.com/llvm/llvm-project/issues/60711
   // GCC: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108775

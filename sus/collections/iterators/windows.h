@@ -96,7 +96,7 @@ class [[nodiscard]] [[_sus_trivial_abi]] Windows final
                     /* TODO: NonZeroUsize*/ usize size) noexcept
       : ref_(::sus::move(ref)), v_(values), size_(size) {}
 
-  [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
+  [[_sus_no_unique_address]] ::sus::iter::IterRef ref_;
   Slice<ItemT> v_;
   /* TODO: NonZeroUsize*/ usize size_;
 
@@ -178,7 +178,7 @@ class [[nodiscard]] [[_sus_trivial_abi]] WindowsMut final
                        /* TODO: NonZeroUsize*/ usize size) noexcept
       : ref_(::sus::move(ref)), v_(values), size_(size) {}
 
-  [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
+  [[_sus_no_unique_address]] ::sus::iter::IterRef ref_;
   SliceMut<ItemT> v_;
   /* TODO: NonZeroUsize*/ usize size_;
 

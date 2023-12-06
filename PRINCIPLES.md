@@ -128,7 +128,7 @@ This library is an experiment and not intended for use. See the
          inner type, i.e. a const `ref<T>` can be copied or moved to a non-const
          `ref<T>`.
 1. Class members which have tail padding, or can have based on templates, should
-   be marked as [[sus_no_unique_address]] when there are other fields that can
+   be marked as [[_sus_no_unique_address]] when there are other fields that can
    be packed into the tail padding, if it exists and is usable by the compiler
    implementation.
 1. Bounds are always checked unless you explicitly ask for them to not be.

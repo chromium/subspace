@@ -50,7 +50,7 @@ struct MaybeNoUniqueAddress<T, true> {
   constexpr MaybeNoUniqueAddress(WithE, U&&... v) noexcept
       : v(WITH_E, ::sus::forward<U>(v)...) {}
 
-  [[sus_no_unique_address]] T v;
+  [[_sus_no_unique_address]] T v;
 };
 
 template <class E>

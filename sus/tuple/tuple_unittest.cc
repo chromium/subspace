@@ -105,7 +105,7 @@ TEST(Tuple, TailPadding) {
   // The Tuple type, if it has tail padding, allows types to make use of that
   // tail padding.
   struct WithTuple {
-    [[sus_no_unique_address]] PackedTuple t;
+    [[_sus_no_unique_address]] PackedTuple t;
     char c;  // Is stored in the padding of `t` (except on MSVC).
   };
   static_assert(sizeof(WithTuple) == sizeof(std::declval<WithTuple&>().t) +
@@ -113,7 +113,7 @@ TEST(Tuple, TailPadding) {
 
   // The example from the Tuple docs.
   struct ExampleFromDocs {
-    [[sus_no_unique_address]] Tuple<u32, u64> tuple;  // 16 bytes.
+    [[_sus_no_unique_address]] Tuple<u32, u64> tuple;  // 16 bytes.
     u32 val;                                          // 4 bytes.
   };  // 16 bytes, since `val` is stored inside `tuple`.
   static_assert(sizeof(ExampleFromDocs) == (16 + sus_if_msvc_else(8, 0)));

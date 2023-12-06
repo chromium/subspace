@@ -59,12 +59,12 @@ struct SubNonTrivial : public NonTrivial {
 };
 
 struct HoldNonStandard {
-  [[sus_no_unique_address]] NonStandard x;
+  [[_sus_no_unique_address]] NonStandard x;
   i32 c;
 };
 
 struct HoldNonTrivial {
-  [[sus_no_unique_address]] NonTrivial x;
+  [[_sus_no_unique_address]] NonTrivial x;
   i32 c;
 };
 
@@ -122,12 +122,12 @@ struct NonTrivialFinal final {
 static_assert(!std::is_trivial_v<NonTrivialFinal>);
 
 struct HoldNonStandardFinal {
-  [[sus_no_unique_address]] NonStandard x;
+  [[_sus_no_unique_address]] NonStandard x;
   i32 c;
 };
 
 struct HoldNonTrivialFinal {
-  [[sus_no_unique_address]] NonTrivial x;
+  [[_sus_no_unique_address]] NonTrivial x;
   i32 c;
 };
 

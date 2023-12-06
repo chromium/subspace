@@ -176,7 +176,7 @@ class [[nodiscard]] Split final
                   Pred&& pred) noexcept
       : ref_(::sus::move(ref)), v_(values), pred_(::sus::move(pred)) {}
 
-  [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
+  [[_sus_no_unique_address]] ::sus::iter::IterRef ref_;
   Slice<ItemT> v_;
   Pred pred_;
   bool finished_ = false;
@@ -291,7 +291,7 @@ class [[nodiscard]] SplitMut final
                      Pred&& pred) noexcept
       : ref_(::sus::move(ref)), v_(values), pred_(::sus::move(pred)) {}
 
-  [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
+  [[_sus_no_unique_address]] ::sus::iter::IterRef ref_;
   SliceMut<ItemT> v_;
   Pred pred_;
   bool finished_ = false;
@@ -401,7 +401,7 @@ class [[nodiscard]] SplitInclusive final
         pred_(::sus::move(pred)),
         finished_(v_.is_empty()) {}
 
-  [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
+  [[_sus_no_unique_address]] ::sus::iter::IterRef ref_;
   Slice<ItemT> v_;
   Pred pred_;
   bool finished_;
@@ -513,7 +513,7 @@ class [[nodiscard]] SplitInclusiveMut final
         pred_(::sus::move(pred)),
         finished_(v_.is_empty()) {}
 
-  [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
+  [[_sus_no_unique_address]] ::sus::iter::IterRef ref_;
   SliceMut<ItemT> v_;
   Pred pred_;
   bool finished_;
