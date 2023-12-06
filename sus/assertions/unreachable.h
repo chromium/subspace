@@ -39,7 +39,7 @@
 /// top of [`sus_panic`]($sus_panic).
 /// The Subspace library matches the safer behaviour of Rust to avoid confusion
 /// and security bugs when working across languages. Use
-/// [`unreachable_unchecked`]($sus::assertions::unreachable_unchecked) to
+/// [`sus_unreachable_unchecked`]($sus_unreachable_unchecked) to
 /// indicate to the compiler the code is not reachable.
 #define sus_unreachable() sus_panic_with_message("entered unreachable code")
 
