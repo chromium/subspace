@@ -30,20 +30,148 @@
 
 namespace sus::num {
 
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+_self::overflowing_abs() const& noexcept {
+  if (primitive_value != MIN_PRIMITIVE) [[likely]]
+    return Tuple(abs(), false);
+  else
+    return Tuple(MIN, true);
+}
+
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+_self::overflowing_add(_self rhs) const& noexcept {
+  const auto r =
+      __private::add_with_overflow(primitive_value, rhs.primitive_value);
+  return Tuple(r.value, r.overflow);
+}
+
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+_self::overflowing_add_unsigned(_unsigned rhs) const& noexcept {
+  const auto r = __private::add_with_overflow_unsigned(primitive_value,
+                                                       rhs.primitive_value);
+  return Tuple(r.value, r.overflow);
+}
+
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+_self::overflowing_div(_self rhs) const& noexcept {
+  sus_check_with_message(rhs.primitive_value != _primitive{0},
+                         "attempt to divide by zero");
+  if (__private::div_overflows_nonzero(primitive_value, rhs.primitive_value))
+      [[unlikely]] {
+    return Tuple(MIN, true);
+  } else {
+    return Tuple(__private::unchecked_div(primitive_value, rhs.primitive_value),
+                 false);
+  }
+}
+
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+_self::overflowing_mul(_self rhs) const& noexcept {
+  const auto out =
+      __private::mul_with_overflow(primitive_value, rhs.primitive_value);
+  return Tuple(out.value, out.overflow);
+}
+
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+_self::overflowing_neg() const& noexcept {
+  if (primitive_value != MIN_PRIMITIVE) [[likely]]
+    return Tuple(__private::unchecked_neg(primitive_value), false);
+  else
+    return Tuple(MIN, true);
+}
+
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+_self::overflowing_rem(_self rhs) const& noexcept {
+  sus_check_with_message(
+      rhs.primitive_value != _primitive{0},
+      "attempt to calculate the remainder with a divisor of zero");
+  if (__private::div_overflows_nonzero(primitive_value, rhs.primitive_value))
+      [[unlikely]] {
+    return Tuple(_primitive{0}, true);
+  } else {
+    return Tuple(static_cast<_primitive>(primitive_value % rhs.primitive_value),
+                 false);
+  }
+}
+
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+_self::overflowing_div_euclid(_self rhs) const& noexcept {
+  sus_check_with_message(rhs.primitive_value != _primitive{0},
+                         "attempt to divide by zero");
+  if (__private::div_overflows_nonzero(primitive_value, rhs.primitive_value))
+      [[unlikely]] {
+    return Tuple(MIN, true);
+  } else {
+    return Tuple(__private::div_euclid(::sus::marker::unsafe_fn,
+                                       primitive_value, rhs.primitive_value),
+                 false);
+  }
+}
+
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+_self::overflowing_rem_euclid(_self rhs) const& noexcept {
+  sus_check_with_message(
+      rhs.primitive_value != _primitive{0},
+      "attempt to calculate the remainder with a divisor of zero");
+  if (__private::div_overflows_nonzero(primitive_value, rhs.primitive_value))
+      [[unlikely]] {
+    return Tuple(_primitive{0}, true);
+  } else {
+    return Tuple(__private::rem_euclid(::sus::marker::unsafe_fn,
+                                       primitive_value, rhs.primitive_value),
+                 false);
+  }
+}
+
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+_self::overflowing_shl(u64 rhs) const& noexcept {
+  const auto out =
+      __private::shl_with_overflow(primitive_value, rhs.primitive_value);
+  return Tuple(out.value, out.overflow);
+}
+
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+_self::overflowing_shr(u64 rhs) const& noexcept {
+  const auto out =
+      __private::shr_with_overflow(primitive_value, rhs.primitive_value);
+  return Tuple(out.value, out.overflow);
+}
+
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+_self::overflowing_sub(_self rhs) const& noexcept {
+  const auto out =
+      __private::sub_with_overflow(primitive_value, rhs.primitive_value);
+  return Tuple(out.value, out.overflow);
+}
+
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+_self::overflowing_sub_unsigned(const _unsigned& rhs) const& noexcept {
+  const auto out = __private::sub_with_overflow_unsigned(primitive_value,
+                                                         rhs.primitive_value);
+  return Tuple(out.value, out.overflow);
+}
+
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+_self::overflowing_pow(u32 exp) const& noexcept {
+  const auto out =
+      __private::pow_with_overflow(primitive_value, exp.primitive_value);
+  return Tuple(out.value, out.overflow);
+}
+
 _sus_pure constexpr ::sus::collections::Array<u8,
-                                             ::sus::mem::size_of<_primitive>()>
+                                              ::sus::mem::size_of<_primitive>()>
 _self::to_be_bytes() const& noexcept {
   return to_be().to_ne_bytes();
 }
 
 _sus_pure constexpr ::sus::collections::Array<u8,
-                                             ::sus::mem::size_of<_primitive>()>
+                                              ::sus::mem::size_of<_primitive>()>
 _self::to_le_bytes() const& noexcept {
   return to_le().to_ne_bytes();
 }
 
 _sus_pure constexpr ::sus::collections::Array<u8,
-                                             ::sus::mem::size_of<_primitive>()>
+                                              ::sus::mem::size_of<_primitive>()>
 _self::to_ne_bytes() const& noexcept {
   auto bytes =
       ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>();
@@ -115,7 +243,7 @@ struct std::hash<::sus::num::_self> {
 template <>
 struct std::equal_to<::sus::num::_self> {
   _sus_pure constexpr auto operator()(::sus::num::_self l,
-                                     ::sus::num::_self r) const noexcept {
+                                      ::sus::num::_self r) const noexcept {
     return l == r;
   }
 };
