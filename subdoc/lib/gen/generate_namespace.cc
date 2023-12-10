@@ -525,14 +525,13 @@ sus::Result<void, MarkdownToHtmlError> generate_variable_references(
     header_name.write_text("Variables");
   }
   {
-    auto items_list = section_div.open_ul();
-    items_list.add_class("section-items");
-    items_list.add_class("item-table");
+    auto items_div = section_div.open_div();
+    items_div.add_class("section-items");
 
     for (const SortedVariableByName& sorted_var : variables) {
       const FieldElement& fe = field_element_from_sorted(element, sorted_var);
       if (auto result = generate_field_reference(
-              items_list, fe, /*static_fields=*/false, page_state);
+              items_div, fe, /*static_fields=*/false, page_state);
           result.is_err()) {
         return sus::err(sus::move(result).unwrap_err());
       }
