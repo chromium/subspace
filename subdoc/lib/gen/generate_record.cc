@@ -212,14 +212,13 @@ sus::Result<void, MarkdownToHtmlError> generate_record_fields(
     }
   }
   {
-    auto items_ul = section_div.open_ul();
-    items_ul.add_class("section-items");
-    items_ul.add_class("item-table");
+    auto items_div = section_div.open_div();
+    items_div.add_class("section-items");
 
     for (auto&& [name, sort_key, field_unique_symbol] : fields) {
       const FieldElement& fe = element.fields.at(field_unique_symbol);
       if (auto result =
-              generate_field_reference(items_ul, fe, static_fields, page_state);
+              generate_field_reference(items_div, fe, static_fields, page_state);
           result.is_err()) {
         return sus::err(sus::move(result).unwrap_err());
       }
@@ -587,16 +586,14 @@ sus::Result<void, MarkdownToHtmlError> generate_record_reference(
 }
 
 sus::Result<void, MarkdownToHtmlError> generate_field_reference(
-    HtmlWriter::OpenUl& ul, const FieldElement& element, bool static_fields,
+    HtmlWriter::OpenDiv& div, const FieldElement& element, bool static_fields,
     ParseMarkdownPageState& page_state) noexcept {
-  auto li = ul.open_li();
-  li.add_class("section-item");
+  auto item_div = div.open_div();
+  item_div.add_class("section-item");
 
   {
-    auto name_div = li.open_div(HtmlWriter::SingleLine);
-    name_div.add_class("item-name");
-
-    auto sig_div = name_div.open_div(HtmlWriter::SingleLine);
+    auto sig_div = item_div.open_div(HtmlWriter::SingleLine);
+    sig_div.add_class("item-name");
     sig_div.add_class("member-signature");
 
     {
@@ -632,9 +629,9 @@ sus::Result<void, MarkdownToHtmlError> generate_field_reference(
             })));
   }
   {
-    auto desc_div = li.open_div();
+    auto desc_div = item_div.open_div();
     desc_div.add_class("description");
-    desc_div.add_class("short");
+    desc_div.add_class("long");
     if (auto comment = element.get_comment(); comment.is_some()) {
       if (auto md_html = markdown_to_html(comment.as_value(), page_state);
           md_html.is_err()) {

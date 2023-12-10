@@ -302,7 +302,13 @@ code {
     padding-bottom: 0.2rem;
 }
 
-.record .section-items :is(.type-signature, .function-signature) {
+/* These types have long descriptions inline in the context's page. */
+.record .section-items :is(.type-signature, .function-signature, .member-signature) {
+    background-color: rgba(43, 43, 43, 1.0);
+    padding: 0.5rem;
+    margin-bottom: 0.2rem;
+}
+.namespace .section-items :is(.member-signature) {
     background-color: rgba(43, 43, 43, 1.0);
     padding: 0.5rem;
     margin-bottom: 0.2rem;
