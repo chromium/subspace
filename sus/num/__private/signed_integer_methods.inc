@@ -220,7 +220,7 @@ _sus_pure static constexpr _self from(S s) noexcept {
 /// #[doc.overloads=signed]
 template <Signed S>
 _sus_pure static constexpr ::sus::result::Result<_self,
-                                                ::sus::num::TryFromIntError>
+                                                 ::sus::num::TryFromIntError>
 try_from(S s) noexcept {
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
   if constexpr (MIN_PRIMITIVE > S::MIN_PRIMITIVE) {
@@ -259,7 +259,7 @@ _sus_pure static constexpr _self from(S s) noexcept {
 /// #[doc.overloads=unsigned]
 template <Unsigned U>
 _sus_pure static constexpr ::sus::result::Result<_self,
-                                                ::sus::num::TryFromIntError>
+                                                 ::sus::num::TryFromIntError>
 try_from(U u) noexcept {
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
   constexpr auto umax = __private::into_unsigned(MAX_PRIMITIVE);
@@ -295,7 +295,7 @@ _sus_pure static constexpr _self from(S s) noexcept {
 /// #[doc.overloads=signed.primitive]
 template <SignedPrimitiveInteger S>
 _sus_pure static constexpr ::sus::result::Result<_self,
-                                                ::sus::num::TryFromIntError>
+                                                 ::sus::num::TryFromIntError>
 try_from(S s) noexcept {
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
   if constexpr (MIN_PRIMITIVE > __private::min_value<S>()) {
@@ -336,7 +336,7 @@ _sus_pure static constexpr _self from(S s) noexcept {
 template <class S>
   requires(SignedPrimitiveEnum<S> || SignedPrimitiveEnumClass<S>)
 _sus_pure static constexpr ::sus::result::Result<_self,
-                                                ::sus::num::TryFromIntError>
+                                                 ::sus::num::TryFromIntError>
 try_from(S s) noexcept {
   using D = std::underlying_type_t<S>;
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
@@ -376,7 +376,7 @@ _sus_pure static constexpr _self from(S s) noexcept {
 /// #[doc.overloads=unsigned.primitive]
 template <UnsignedPrimitiveInteger U>
 _sus_pure static constexpr ::sus::result::Result<_self,
-                                                ::sus::num::TryFromIntError>
+                                                 ::sus::num::TryFromIntError>
 try_from(U u) noexcept {
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
   constexpr auto umax = __private::into_unsigned(MAX_PRIMITIVE);
@@ -413,7 +413,7 @@ _sus_pure static constexpr _self from(S s) noexcept {
 template <class U>
   requires(UnsignedPrimitiveEnum<U> || UnsignedPrimitiveEnumClass<U>)
 _sus_pure static constexpr ::sus::result::Result<_self,
-                                                ::sus::num::TryFromIntError>
+                                                 ::sus::num::TryFromIntError>
 try_from(U u) noexcept {
   using D = std::underlying_type_t<U>;
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
@@ -596,7 +596,7 @@ operator<=>(_self l, SignedPrimitiveInteger auto r) noexcept {
 _sus_pure constexpr inline _self operator-() const& noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     sus_check_with_message(primitive_value != MIN_PRIMITIVE,
-                              "attempt to negate with overflow");
+                           "attempt to negate with overflow");
     return __private::unchecked_neg(primitive_value);
   } else {
     return wrapping_neg();
@@ -686,8 +686,7 @@ friend constexpr inline _self operator+(U l, _self r) noexcept = delete;
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
         __private::sub_with_overflow(l.primitive_value, r.primitive_value);
-    sus_check_with_message(!out.overflow,
-                              "attempt to subtract with overflow");
+    sus_check_with_message(!out.overflow, "attempt to subtract with overflow");
     return out.value;
   } else {
     return l.wrapping_sub(r);
@@ -740,8 +739,7 @@ friend constexpr inline _self operator-(U l, _self r) noexcept = delete;
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
         __private::mul_with_overflow(l.primitive_value, r.primitive_value);
-    sus_check_with_message(!out.overflow,
-                              "attempt to multiply with overflow");
+    sus_check_with_message(!out.overflow, "attempt to multiply with overflow");
     return out.value;
   } else {
     return l.wrapping_mul(r);
@@ -788,7 +786,7 @@ friend constexpr inline _self operator*(U l, _self r) noexcept = delete;
 [[nodiscard]] __sus_pure_const friend constexpr inline _self operator/(
     _self l, _self r) noexcept {
   sus_check_with_message(r.primitive_value != _primitive{0},
-                            "attempt to divide by zero");
+                         "attempt to divide by zero");
   sus_check_with_message(
       !__private::div_overflows_nonzero(l.primitive_value, r.primitive_value),
       "attempt to divide with overflow");
@@ -1019,8 +1017,7 @@ constexpr inline void operator-=(_self r) & noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
         __private::sub_with_overflow(primitive_value, r.primitive_value);
-    sus_check_with_message(!out.overflow,
-                              "attempt to subtract with overflow");
+    sus_check_with_message(!out.overflow, "attempt to subtract with overflow");
     primitive_value = out.value;
   } else {
     primitive_value = wrapping_sub(r).primitive_value;
@@ -1041,8 +1038,7 @@ constexpr inline void operator*=(_self r) & noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out =
         __private::mul_with_overflow(primitive_value, r.primitive_value);
-    sus_check_with_message(!out.overflow,
-                              "attempt to multiply with overflow");
+    sus_check_with_message(!out.overflow, "attempt to multiply with overflow");
     primitive_value = out.value;
   } else {
     primitive_value = wrapping_mul(r).primitive_value;
@@ -1057,7 +1053,7 @@ constexpr inline void operator*=(_self r) & noexcept {
 /// overflow.
 constexpr inline void operator/=(_self r) & noexcept {
   sus_check_with_message(r.primitive_value != _primitive{0},
-                            "attempt to divide by zero");
+                         "attempt to divide by zero");
   sus_check_with_message(
       !__private::div_overflows_nonzero(primitive_value, r.primitive_value),
       "attempt to divide with overflow");
@@ -1120,7 +1116,7 @@ constexpr inline void operator<<=(u64 r) & noexcept {
     const auto out =
         __private::shl_with_overflow(primitive_value, r.primitive_value);
     sus_check_with_message(!out.overflow,
-                              "attempt to shift left with overflow");
+                           "attempt to shift left with overflow");
     primitive_value = out.value;
   } else {
     primitive_value = wrapping_shl(r).primitive_value;
@@ -1141,7 +1137,7 @@ constexpr inline void operator>>=(u64 r) & noexcept {
     const auto out =
         __private::shr_with_overflow(primitive_value, r.primitive_value);
     sus_check_with_message(!out.overflow,
-                              "attempt to shift right with overflow");
+                           "attempt to shift right with overflow");
     primitive_value = out.value;
   } else {
     primitive_value = wrapping_shr(r).primitive_value;
@@ -1182,13 +1178,8 @@ _sus_pure constexpr Option<_self> checked_abs() const& noexcept {
 /// indicating whether an overflow happened. If `self` is the minimum value
 /// (i.e. [`@doc.self::MIN`]($sus::num::@doc.self::MIN), then the minimum value
 /// will be returned again and true will be returned for an overflow happening.
-template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
-_sus_pure constexpr Tuple overflowing_abs() const& noexcept {
-  if (primitive_value != MIN_PRIMITIVE) [[likely]]
-    return Tuple(abs(), false);
-  else
-    return Tuple(MIN, true);
-}
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_abs()
+    const& noexcept;
 
 /// Saturating absolute value. Computes [`abs`](
 /// $sus::num::@doc.self::abs), returning [`MAX`](
@@ -1270,25 +1261,16 @@ _sus_pure constexpr Option<_self> checked_add_unsigned(
 /// Returns a tuple of the addition along with a boolean indicating whether
 /// an arithmetic overflow would occur. If an overflow would have occurred
 /// then the wrapped value is returned.
-template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
-_sus_pure constexpr Tuple overflowing_add(_self rhs) const& noexcept {
-  const auto r =
-      __private::add_with_overflow(primitive_value, rhs.primitive_value);
-  return Tuple(r.value, r.overflow);
-}
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_add(
+    _self rhs) const& noexcept;
 
 /// Calculates `self + rhs` with an unsigned `rhs`.
 ///
 /// Returns a tuple of the addition along with a boolean indicating whether
 /// an arithmetic overflow would occur. If an overflow would have occurred
 /// then the wrapped value is returned.
-template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
-_sus_pure constexpr Tuple overflowing_add_unsigned(
-    _unsigned rhs) const& noexcept {
-  const auto r = __private::add_with_overflow_unsigned(primitive_value,
-                                                       rhs.primitive_value);
-  return Tuple(r.value, r.overflow);
-}
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+overflowing_add_unsigned(_unsigned rhs) const& noexcept;
 
 /// Saturating integer addition. Computes `self + rhs`, saturating at the
 /// numeric bounds instead of overflowing.
@@ -1318,7 +1300,7 @@ _sus_pure constexpr _self saturating_add_unsigned(
 /// $sus::num::@doc.self::MIN), i.e. when [`checked_add`](
 /// $sus::num::@doc.self::checked_add) would return `None`.
 _sus_pure inline constexpr _self unchecked_add(::sus::marker::UnsafeFnMarker,
-                                              _self rhs) const& noexcept {
+                                               _self rhs) const& noexcept {
   return __private::unchecked_add(primitive_value, rhs.primitive_value);
 }
 
@@ -1355,18 +1337,8 @@ _sus_pure constexpr Option<_self> checked_div(_self rhs) const& noexcept {
 ///
 /// # Panics
 /// This function will panic if `rhs` is 0.
-template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
-_sus_pure constexpr Tuple overflowing_div(_self rhs) const& noexcept {
-  sus_check_with_message(rhs.primitive_value != _primitive{0},
-                            "attempt to divide by zero");
-  if (__private::div_overflows_nonzero(primitive_value, rhs.primitive_value))
-      [[unlikely]] {
-    return Tuple(MIN, true);
-  } else {
-    return Tuple(__private::unchecked_div(primitive_value, rhs.primitive_value),
-                 false);
-  }
-}
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_div(
+    _self rhs) const& noexcept;
 
 /// Saturating integer division. Computes `self / rhs`, saturating at the
 /// numeric bounds instead of overflowing.
@@ -1375,7 +1347,7 @@ _sus_pure constexpr Tuple overflowing_div(_self rhs) const& noexcept {
 /// This function will panic if `rhs` is 0.
 _sus_pure constexpr _self saturating_div(_self rhs) const& noexcept {
   sus_check_with_message(rhs.primitive_value != _primitive{0},
-                            "attempt to divide by zero");
+                         "attempt to divide by zero");
   if (__private::div_overflows_nonzero(primitive_value, rhs.primitive_value))
       [[unlikely]] {
     // Only overflows in the case of -MIN / -1, which gives MAX + 1,
@@ -1399,7 +1371,7 @@ _sus_pure constexpr _self saturating_div(_self rhs) const& noexcept {
 /// This function will panic if `rhs` is 0.
 _sus_pure constexpr _self wrapping_div(_self rhs) const& noexcept {
   sus_check_with_message(rhs.primitive_value != _primitive{0},
-                            "attempt to divide by zero");
+                         "attempt to divide by zero");
   if (__private::div_overflows_nonzero(primitive_value, rhs.primitive_value))
       [[unlikely]] {
     // Only overflows in the case of -MIN / -1, which gives MAX + 1,
@@ -1426,12 +1398,8 @@ _sus_pure constexpr Option<_self> checked_mul(_self rhs) const& noexcept {
 /// Returns a tuple of the multiplication along with a boolean indicating
 /// whether an arithmetic overflow would occur. If an overflow would have
 /// occurred then the wrapped value is returned.
-template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
-_sus_pure constexpr Tuple overflowing_mul(_self rhs) const& noexcept {
-  const auto out =
-      __private::mul_with_overflow(primitive_value, rhs.primitive_value);
-  return Tuple(out.value, out.overflow);
-}
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_mul(
+    _self rhs) const& noexcept;
 
 /// Saturating integer multiplication. Computes `self * rhs`, saturating at
 /// the numeric bounds instead of overflowing.
@@ -1448,7 +1416,7 @@ _sus_pure constexpr _self saturating_mul(_self rhs) const& noexcept {
 /// $sus::num::@doc.self::MIN), i.e. when [`checked_mul`](
 /// $sus::num::@doc.self::checked_mul) would return `None`.
 _sus_pure constexpr inline _self unchecked_mul(::sus::marker::UnsafeFnMarker,
-                                              _self rhs) const& noexcept {
+                                               _self rhs) const& noexcept {
   return __private::unchecked_mul(primitive_value, rhs.primitive_value);
 }
 
@@ -1473,13 +1441,8 @@ _sus_pure constexpr Option<_self> checked_neg() const& noexcept {
 /// indicating whether an overflow happened. If `self` is the minimum value
 /// (i.e. [`@doc.self::MIN`]($sus::num::@doc.self::MIN), then the minimum value
 /// will be returned again and true will be returned for an overflow happening.
-template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
-_sus_pure constexpr Tuple overflowing_neg() const& noexcept {
-  if (primitive_value != MIN_PRIMITIVE) [[likely]]
-    return Tuple(__private::unchecked_neg(primitive_value), false);
-  else
-    return Tuple(MIN, true);
-}
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_neg()
+    const& noexcept;
 
 /// Saturating integer negation. Computes `-self`, returning [`MAX`](
 /// $sus::num::@doc.self::MAX) if `self == `[`MIN`]($sus::num::@doc.self::MIN)
@@ -1525,19 +1488,8 @@ _sus_pure constexpr Option<_self> checked_rem(_self rhs) const& noexcept {
 ///
 /// # Panics
 /// This function will panic if `rhs` is 0.
-template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
-_sus_pure constexpr Tuple overflowing_rem(_self rhs) const& noexcept {
-  sus_check_with_message(
-      rhs.primitive_value != _primitive{0},
-      "attempt to calculate the remainder with a divisor of zero");
-  if (__private::div_overflows_nonzero(primitive_value, rhs.primitive_value))
-      [[unlikely]] {
-    return Tuple(_primitive{0}, true);
-  } else {
-    return Tuple(static_cast<_primitive>(primitive_value % rhs.primitive_value),
-                 false);
-  }
-}
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_rem(
+    _self rhs) const& noexcept;
 
 /// Wrapping (modular) remainder. Computes `self % rhs`, wrapping around at
 /// the boundary of the type.
@@ -1570,7 +1522,7 @@ _sus_pure constexpr _self wrapping_rem(_self rhs) const& noexcept {
 /// This function will panic if `rhs` is 0 or the division results in overflow.
 _sus_pure constexpr _self div_euclid(_self rhs) const& noexcept {
   sus_check_with_message(rhs.primitive_value != _primitive{0},
-                            "attempt to divide by zero");
+                         "attempt to divide by zero");
   sus_check_with_message(
       !__private::div_overflows_nonzero(primitive_value, rhs.primitive_value),
       "attempt to divide with overflow");
@@ -1581,7 +1533,8 @@ _sus_pure constexpr _self div_euclid(_self rhs) const& noexcept {
 /// Checked Euclidean division. Computes `self.`[`div_euclid`](
 /// $sus::num::@doc.self::div_euclid)`(rhs)`, returning
 /// `None` if `rhs == 0` or the division results in overflow.
-_sus_pure constexpr Option<_self> checked_div_euclid(_self rhs) const& noexcept {
+_sus_pure constexpr Option<_self> checked_div_euclid(
+    _self rhs) const& noexcept {
   if (__private::div_overflows(primitive_value, rhs.primitive_value))
       [[unlikely]] {
     return Option<_self>();
@@ -1600,19 +1553,8 @@ _sus_pure constexpr Option<_self> checked_div_euclid(_self rhs) const& noexcept 
 ///
 /// # Panics
 /// This function will panic if `rhs` is 0.
-template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
-_sus_pure constexpr Tuple overflowing_div_euclid(_self rhs) const& noexcept {
-  sus_check_with_message(rhs.primitive_value != _primitive{0},
-                            "attempt to divide by zero");
-  if (__private::div_overflows_nonzero(primitive_value, rhs.primitive_value))
-      [[unlikely]] {
-    return Tuple(MIN, true);
-  } else {
-    return Tuple(__private::div_euclid(::sus::marker::unsafe_fn,
-                                       primitive_value, rhs.primitive_value),
-                 false);
-  }
-}
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+overflowing_div_euclid(_self rhs) const& noexcept;
 
 /// Wrapping Euclidean division. Computes `self.`[`div_euclid`](
 /// $sus::num::@doc.self::div_euclid)`(rhs)`, wrapping around at the boundary of the
@@ -1627,7 +1569,7 @@ _sus_pure constexpr Tuple overflowing_div_euclid(_self rhs) const& noexcept {
 /// This function will panic if `rhs` is 0.
 _sus_pure constexpr _self wrapping_div_euclid(_self rhs) const& noexcept {
   sus_check_with_message(rhs.primitive_value != _primitive{0},
-                            "attempt to divide by zero");
+                         "attempt to divide by zero");
   if (__private::div_overflows_nonzero(primitive_value, rhs.primitive_value))
       [[unlikely]] {
     return MIN;
@@ -1659,7 +1601,8 @@ _sus_pure constexpr _self rem_euclid(_self rhs) const& noexcept {
 /// Checked Euclidean remainder. Computes `self.`[`rem_euclid`](
 /// $sus::num::@doc.self::rem_euclid)`(rhs)`, returning
 /// `None` if `rhs == 0` or the division results in overflow.
-_sus_pure constexpr Option<_self> checked_rem_euclid(_self rhs) const& noexcept {
+_sus_pure constexpr Option<_self> checked_rem_euclid(
+    _self rhs) const& noexcept {
   if (__private::div_overflows(primitive_value, rhs.primitive_value))
       [[unlikely]] {
     return Option<_self>();
@@ -1678,20 +1621,8 @@ _sus_pure constexpr Option<_self> checked_rem_euclid(_self rhs) const& noexcept 
 ///
 /// # Panics
 /// This function will panic if `rhs` is 0.
-template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
-_sus_pure constexpr Tuple overflowing_rem_euclid(_self rhs) const& noexcept {
-  sus_check_with_message(
-      rhs.primitive_value != _primitive{0},
-      "attempt to calculate the remainder with a divisor of zero");
-  if (__private::div_overflows_nonzero(primitive_value, rhs.primitive_value))
-      [[unlikely]] {
-    return Tuple(_primitive{0}, true);
-  } else {
-    return Tuple(__private::rem_euclid(::sus::marker::unsafe_fn,
-                                       primitive_value, rhs.primitive_value),
-                 false);
-  }
-}
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+overflowing_rem_euclid(_self rhs) const& noexcept;
 
 /// Wrapping Euclidean remainder. Computes `self.`[`rem_euclid`](
 /// $sus::num::@doc.self::rem_euclid)`(rhs)`, wrapping
@@ -1734,12 +1665,8 @@ _sus_pure constexpr Option<_self> checked_shl(u64 rhs) const& noexcept {
 /// of bits. If the shift value is too large, then `value` is masked by `(N-1)`
 /// where `N` is the number of bits, and this value is then used to perform the
 /// shift.
-template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
-_sus_pure constexpr Tuple overflowing_shl(u64 rhs) const& noexcept {
-  const auto out =
-      __private::shl_with_overflow(primitive_value, rhs.primitive_value);
-  return Tuple(out.value, out.overflow);
-}
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_shl(
+    u64 rhs) const& noexcept;
 
 /// Panic-free bitwise shift-left; yields `self << mask(rhs)`, where mask
 /// removes any high-order bits of `rhs` that would cause the shift to exceed
@@ -1774,12 +1701,8 @@ _sus_pure constexpr Option<_self> checked_shr(u64 rhs) const& noexcept {
 /// of bits. If the shift value is too large, then value is masked by `(N-1)`
 /// where `N` is the number of bits, and this value is then used to perform the
 /// shift.
-template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
-_sus_pure constexpr Tuple overflowing_shr(u64 rhs) const& noexcept {
-  const auto out =
-      __private::shr_with_overflow(primitive_value, rhs.primitive_value);
-  return Tuple(out.value, out.overflow);
-}
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_shr(
+    u64 rhs) const& noexcept;
 
 /// Panic-free bitwise shift-right; yields `self >> mask(rhs)`, where mask
 /// removes any high-order bits of `rhs` that would cause the shift to exceed
@@ -1823,25 +1746,16 @@ _sus_pure constexpr Option<_self> checked_sub_unsigned(_unsigned rhs) const& {
 /// Returns a tuple of the subtraction along with a boolean indicating
 /// whether an arithmetic overflow would occur. If an overflow would have
 /// occurred then the wrapped value is returned.
-template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
-_sus_pure constexpr Tuple overflowing_sub(_self rhs) const& noexcept {
-  const auto out =
-      __private::sub_with_overflow(primitive_value, rhs.primitive_value);
-  return Tuple(out.value, out.overflow);
-}
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_sub(
+    _self rhs) const& noexcept;
 
 /// Calculates `self - rhs` with an unsigned `rhs`.
 ///
 /// Returns a tuple of the subtraction along with a boolean indicating
 /// whether an arithmetic overflow would occur. If an overflow would have
 /// occurred then the wrapped value is returned.
-template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
-_sus_pure constexpr Tuple overflowing_sub_unsigned(
-    const _unsigned& rhs) const& noexcept {
-  const auto out = __private::sub_with_overflow_unsigned(primitive_value,
-                                                         rhs.primitive_value);
-  return Tuple(out.value, out.overflow);
-}
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+overflowing_sub_unsigned(const _unsigned& rhs) const& noexcept;
 
 /// Saturating integer subtraction. Computes `self - rhs`, saturating at the
 /// numeric bounds instead of overflowing.
@@ -1870,7 +1784,7 @@ _sus_pure constexpr _self saturating_sub_unsigned(const _unsigned& rhs) const& {
 /// $sus::num::@doc.self::MIN), i.e. when [`checked_sub`](
 /// $sus::num::@doc.self::checked_sub) would return `None`.
 _sus_pure inline constexpr _self unchecked_sub(::sus::marker::UnsafeFnMarker,
-                                              _self rhs) const& {
+                                               _self rhs) const& {
   return static_cast<_primitive>(primitive_value - rhs.primitive_value);
 }
 
@@ -1969,8 +1883,7 @@ _sus_pure constexpr inline _self pow(u32 rhs) const& noexcept {
   const auto out =
       __private::pow_with_overflow(primitive_value, rhs.primitive_value);
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    sus_check_with_message(!out.overflow,
-                              "attempt to multiply with overflow");
+    sus_check_with_message(!out.overflow, "attempt to multiply with overflow");
   }
   return out.value;
 }
@@ -1990,12 +1903,8 @@ _sus_pure constexpr Option<_self> checked_pow(u32 rhs) const& noexcept {
 ///
 /// Returns a tuple of the exponentiation along with a bool indicating
 /// whether an overflow happened.
-template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
-_sus_pure constexpr Tuple overflowing_pow(u32 exp) const& noexcept {
-  const auto out =
-      __private::pow_with_overflow(primitive_value, exp.primitive_value);
-  return Tuple(out.value, out.overflow);
-}
+_sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_pow(
+    u32 exp) const& noexcept;
 
 /// Wrapping (modular) exponentiation. Computes
 /// [`pow`]($sus::num::@doc.self::pow), wrapping around at the boundary of the
@@ -2132,13 +2041,13 @@ _sus_pure constexpr _self to_le() const& noexcept {
 /// Return the memory representation of this integer as a byte array in
 /// big-endian (network) byte order.
 _sus_pure constexpr ::sus::collections::Array<u8,
-                                             ::sus::mem::size_of<_primitive>()>
+                                              ::sus::mem::size_of<_primitive>()>
 to_be_bytes() const& noexcept;
 
 /// Return the memory representation of this integer as a byte array in
 /// little-endian byte order.
 _sus_pure constexpr ::sus::collections::Array<u8,
-                                             ::sus::mem::size_of<_primitive>()>
+                                              ::sus::mem::size_of<_primitive>()>
 to_le_bytes() const& noexcept;
 
 /// Return the memory representation of this integer as a byte array in
@@ -2148,7 +2057,7 @@ to_le_bytes() const& noexcept;
 /// use [`to_be_bytes`]($sus::num::@doc.self::to_be_bytes) or
 /// [`to_le_bytes`]($sus::num::@doc.self::to_le_bytes), as appropriate, instead.
 _sus_pure constexpr ::sus::collections::Array<u8,
-                                             ::sus::mem::size_of<_primitive>()>
+                                              ::sus::mem::size_of<_primitive>()>
 to_ne_bytes() const& noexcept;
 
 /// Create an integer value from its representation as a byte array in big
