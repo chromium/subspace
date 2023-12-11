@@ -268,9 +268,15 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       }
 
       Comment comment = make_db_comment(decl->getASTContext(), raw_comment, "");
+      auto key = MacroId(sus::clone(name));
       auto me = MacroElement(sus::move(comment), sus::move(name),
                              sus::move(params), macro_start);
-      add_macro_to_db(decl, sus::move(me), docs_db_.global.macros);
+      add_macro_to_db(sus::clone(key), sus::move(me), docs_db_.global.macros,
+                      decl->getASTContext());
+      add_source_link_to_db(docs_db_.global.macros.find(key)->second,
+                            SourceLink::DefinitionLocation,
+                            info->getDefinitionLoc(), info->getDefinitionLoc(),
+                            decl->getASTContext());
     }
     return true;
   }
@@ -304,7 +310,16 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             .unwrap();
       }
     }();
-    add_namespace_to_db(decl, sus::move(ne), parent.namespaces);
+    NamespaceId key = key_for_namespace(decl);
+    add_namespace_to_db(sus::clone(key), sus::move(ne), parent.namespaces,
+                        decl->getASTContext());
+    add_source_link_to_db(
+        parent.namespaces.find(key)->second,
+        [&] {
+          if (raw_comment) return SourceLink::CommentLocation;
+          return SourceLink::UnknownLocation;
+        }(),
+        decl->getLocation(), decl->getBeginLoc(), decl->getASTContext());
     return true;
   }
 
@@ -314,14 +329,6 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     if (cxxdecl && cxxdecl->isLocalClass()) return true;  // Inside a function.
     if (should_skip_decl(cx_, decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
-
-    if (cxxdecl) {
-      // It's a C++ class. So it may have a template decl which has the template
-      // parameters. And it may be a specialization.
-      // llvm::errs() << "Visiting CXX class with template, specialization
-      // kind:"
-      //              << cxxdecl->getTemplateSpecializationKind() << "\n";
-    }
 
     RecordType record_type = [&]() {
       if (decl->isStruct()) return RecordType::Struct;
@@ -369,7 +376,13 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
     if (clang::isa<clang::TranslationUnitDecl>(context)) {
       NamespaceElement& parent = docs_db_.find_namespace_mut(nullptr).unwrap();
-      add_record_to_db(decl, sus::move(re), parent.records);
+      auto key = RecordId(*decl);
+      add_record_to_db(sus::clone(key), sus::move(re), parent.records,
+                       decl->getASTContext());
+      add_source_link_to_db(parent.records.find(key)->second,
+                            // Only definitions are visited.
+                            SourceLink::DefinitionLocation, decl->getLocation(),
+                            decl->getBeginLoc(), decl->getASTContext());
     } else if (clang::isa<clang::NamespaceDecl>(context)) {
       auto* namespace_decl = clang::cast<clang::NamespaceDecl>(context);
       // Template specializations can be for classes that are part of a
@@ -386,13 +399,26 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
           docs_db_.find_namespace_mut(namespace_decl)
               .expect(
                   "No parent namespace found in db for NamespaceDecl context");
-      add_record_to_db(decl, sus::move(re), parent.records);
+      auto key = RecordId(*decl);
+      add_record_to_db(sus::clone(key), sus::move(re), parent.records,
+                       decl->getASTContext());
+      add_source_link_to_db(parent.records.find(key)->second,
+                            // Only definitions are visited.
+                            SourceLink::DefinitionLocation, decl->getLocation(),
+                            decl->getBeginLoc(), decl->getASTContext());
     } else {
       sus_check(clang::isa<clang::RecordDecl>(context));
       if (sus::Option<RecordElement&> parent =
               docs_db_.find_record_mut(clang::cast<clang::RecordDecl>(context));
           parent.is_some()) {
-        add_record_to_db(decl, sus::move(re), parent->records);
+        auto key = RecordId(*decl);
+        add_record_to_db(sus::clone(key), sus::move(re), parent->records,
+                         decl->getASTContext());
+        add_source_link_to_db(parent->records.find(key)->second,
+                              // Only definitions are visited.
+                              SourceLink::DefinitionLocation,
+                              decl->getLocation(), decl->getBeginLoc(),
+                              decl->getASTContext());
       }
     }
     return true;
@@ -432,7 +458,15 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     if (sus::Option<RecordElement&> parent =
             docs_db_.find_record_mut(record_decl);
         parent.is_some()) {
-      add_comment_to_db(decl, sus::move(fe), parent->fields);
+      add_field_to_db(unique_from_decl(decl), sus::move(fe), parent->fields,
+                      decl->getASTContext());
+      add_source_link_to_db(
+          parent->fields.find(unique_from_decl(decl))->second,
+          [&] {
+            if (raw_comment) return SourceLink::CommentLocation;
+            return SourceLink::UnknownLocation;
+          }(),
+          decl->getLocation(), decl->getBeginLoc(), decl->getASTContext());
     }
     return true;
   }
@@ -494,21 +528,45 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                      decl->getASTContext().getSourceManager().getFileOffset(
                          decl->getLocation()));
 
+    SourceLink::Quality source_link_quality = [&] {
+      if (decl->getDefinition() == decl) {
+        if (raw_comment) return SourceLink::CommentAndDefinitionLocation;
+        return SourceLink::DefinitionLocation;
+      }
+      if (raw_comment) return SourceLink::CommentLocation;
+      return SourceLink::UnknownLocation;
+    }();
+
     if (clang::isa<clang::RecordDecl>(context)) {
       if (sus::Option<RecordElement&> parent =
               docs_db_.find_record_mut(clang::cast<clang::RecordDecl>(context));
           parent.is_some()) {
-        add_comment_to_db(decl, sus::move(fe), parent->fields);
+        add_field_to_db(unique_from_decl(decl), sus::move(fe), parent->fields,
+                        decl->getASTContext());
+        add_source_link_to_db(
+            parent->fields.find(unique_from_decl(decl))->second,
+            source_link_quality, decl->getLocation(), decl->getBeginLoc(),
+            decl->getASTContext());
       }
     } else if (clang::isa<clang::NamespaceDecl>(context)) {
       if (sus::Option<NamespaceElement&> parent = docs_db_.find_namespace_mut(
               clang::cast<clang::NamespaceDecl>(context));
           parent.is_some()) {
-        add_comment_to_db(decl, sus::move(fe), parent->variables);
+        add_field_to_db(unique_from_decl(decl), sus::move(fe),
+                        parent->variables, decl->getASTContext());
+        add_source_link_to_db(
+            parent->variables.find(unique_from_decl(decl))->second,
+            source_link_quality, decl->getLocation(), decl->getBeginLoc(),
+            decl->getASTContext());
       }
     } else if (clang::isa<clang::TranslationUnitDecl>(context)) {
       NamespaceElement& parent = docs_db_.find_namespace_mut(nullptr).unwrap();
-      add_comment_to_db(decl, sus::move(fe), parent.variables);
+      add_field_to_db(unique_from_decl(decl), sus::move(fe), parent.variables,
+                      decl->getASTContext());
+      add_source_link_to_db(
+          parent.variables.find(unique_from_decl(decl))->second,
+          source_link_quality, decl->getLocation(), decl->getBeginLoc(),
+          decl->getASTContext());
     }
     return true;
   }
@@ -562,25 +620,51 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     if (auto* rec_ctx = clang::dyn_cast<clang::RecordDecl>(context)) {
       if (sus::Option<RecordElement&> parent =
               docs_db_.find_record_mut(rec_ctx);
-          parent.is_some())
-        add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(te),
-                        parent->aliases, decl->getASTContext());
+          parent.is_some()) {
+        auto key = AliasId(decl->getNameAsString());
+        add_alias_to_db(sus::clone(key), sus::move(te), parent->aliases,
+                        decl->getASTContext());
+        add_source_link_to_db(
+            parent->aliases.find(key)->second,
+            [&] {
+              if (raw_comment) return SourceLink::CommentLocation;
+              return SourceLink::UnknownLocation;
+            }(),
+            decl->getLocation(), decl->getBeginLoc(), decl->getASTContext());
+      }
     } else if (auto* ns_ctx = clang::dyn_cast<clang::NamespaceDecl>(context)) {
       if (sus::Option<NamespaceElement&> parent =
               docs_db_.find_namespace_mut(ns_ctx);
-          parent.is_some())
-        add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(te),
-                        parent->aliases, decl->getASTContext());
+          parent.is_some()) {
+        auto key = AliasId(decl->getNameAsString());
+        add_alias_to_db(sus::clone(key), sus::move(te), parent->aliases,
+                        decl->getASTContext());
+        add_source_link_to_db(
+            parent->aliases.find(key)->second,
+            [&] {
+              if (raw_comment) return SourceLink::CommentLocation;
+              return SourceLink::UnknownLocation;
+            }(),
+            decl->getLocation(), decl->getBeginLoc(), decl->getASTContext());
+      }
     } else {
       sus_check(clang::isa<clang::TranslationUnitDecl>(context));
       NamespaceElement& parent = docs_db_.find_namespace_mut(nullptr).unwrap();
-      add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(te),
-                      parent.aliases, decl->getASTContext());
+      auto key = AliasId(decl->getNameAsString());
+      add_alias_to_db(sus::clone(key), sus::move(te), parent.aliases,
+                      decl->getASTContext());
+      add_source_link_to_db(
+          parent.aliases.find(key)->second,
+          [&] {
+            if (raw_comment) return SourceLink::CommentLocation;
+            return SourceLink::UnknownLocation;
+          }(),
+          decl->getLocation(), decl->getBeginLoc(), decl->getASTContext());
     }
     return true;
   }
 
-  bool FthiEnumDecl(clang::UsingEnumDecl* decl) noexcept {
+  bool VisitUsingEnumDecl(clang::UsingEnumDecl* decl) noexcept {
     clang::RawComment* raw_comment = get_raw_comment(decl);
     if (raw_comment) {
       // `using enum` actually brings in each element of the enum, so a comment
@@ -638,8 +722,16 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                 docs_db_)));
         NamespaceElement& parent =
             docs_db_.find_namespace_mut(context).unwrap();
-        add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(te),
-                        parent.aliases, decl->getASTContext());
+        auto key = AliasId(decl->getNameAsString());
+        add_alias_to_db(sus::clone(key), sus::move(te), parent.aliases,
+                        decl->getASTContext());
+        add_source_link_to_db(
+            parent.aliases.find(key)->second,
+            [&] {
+              if (raw_comment) return SourceLink::CommentLocation;
+              return SourceLink::UnknownLocation;
+            }(),
+            decl->getLocation(), decl->getBeginLoc(), decl->getASTContext());
       } else if (auto* classtmpl = clang::dyn_cast<clang::ClassTemplateDecl>(
                      shadow->getTargetDecl())) {
         auto* context =
@@ -670,8 +762,16 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                 docs_db_)));
         NamespaceElement& parent =
             docs_db_.find_namespace_mut(context).unwrap();
-        add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(te),
-                        parent.aliases, decl->getASTContext());
+        auto key = AliasId(decl->getNameAsString());
+        add_alias_to_db(sus::clone(key), sus::move(te), parent.aliases,
+                        decl->getASTContext());
+        add_source_link_to_db(
+            parent.aliases.find(key)->second,
+            [&] {
+              if (raw_comment) return SourceLink::CommentLocation;
+              return SourceLink::UnknownLocation;
+            }(),
+            decl->getLocation(), decl->getBeginLoc(), decl->getASTContext());
       } else if (auto* condecl = clang::dyn_cast<clang::ConceptDecl>(
                      shadow->getTargetDecl())) {
         auto* context =
@@ -700,8 +800,16 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                 target_namespaces, sus::move(target_name), docs_db_)));
         NamespaceElement& parent =
             docs_db_.find_namespace_mut(context).unwrap();
-        add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(te),
-                        parent.aliases, decl->getASTContext());
+        auto key = AliasId(decl->getNameAsString());
+        add_alias_to_db(sus::clone(key), sus::move(te), parent.aliases,
+                        decl->getASTContext());
+        add_source_link_to_db(
+            parent.aliases.find(key)->second,
+            [&] {
+              if (raw_comment) return SourceLink::CommentLocation;
+              return SourceLink::UnknownLocation;
+            }(),
+            decl->getLocation(), decl->getBeginLoc(), decl->getASTContext());
       } else if (auto* ecdecl = clang::dyn_cast<clang::EnumConstantDecl>(
                      shadow->getTargetDecl())) {
         ecdecl->dump();
@@ -739,8 +847,16 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                 target_namespaces, sus::move(target_name), docs_db_)));
         NamespaceElement& parent =
             docs_db_.find_namespace_mut(context).unwrap();
-        add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(te),
-                        parent.aliases, decl->getASTContext());
+        auto key = AliasId(decl->getNameAsString());
+        add_alias_to_db(sus::clone(key), sus::move(te), parent.aliases,
+                        decl->getASTContext());
+        add_source_link_to_db(
+            parent.aliases.find(key)->second,
+            [&] {
+              if (raw_comment) return SourceLink::CommentLocation;
+              return SourceLink::UnknownLocation;
+            }(),
+            decl->getLocation(), decl->getBeginLoc(), decl->getASTContext());
       } else if (auto* method = clang::dyn_cast<clang::CXXMethodDecl>(
                      shadow->getTargetDecl())) {
         auto* context =
@@ -775,8 +891,16 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                     docs_db_),
                 method->getNameAsString()));
         RecordElement& parent = docs_db_.find_record_mut(context).unwrap();
-        add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(te),
-                        parent.aliases, decl->getASTContext());
+        auto key = AliasId(decl->getNameAsString());
+        add_alias_to_db(sus::clone(key), sus::move(te), parent.aliases,
+                        decl->getASTContext());
+        add_source_link_to_db(
+            parent.aliases.find(key)->second,
+            [&] {
+              if (raw_comment) return SourceLink::CommentLocation;
+              return SourceLink::UnknownLocation;
+            }(),
+            decl->getLocation(), decl->getBeginLoc(), decl->getASTContext());
       } else if (auto* funcdecl = clang::dyn_cast<clang::FunctionDecl>(
                      shadow->getTargetDecl())) {
         auto* context =
@@ -806,8 +930,16 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                 docs_db_)));
         NamespaceElement& parent =
             docs_db_.find_namespace_mut(context).unwrap();
-        add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(te),
-                        parent.aliases, decl->getASTContext());
+        auto key = AliasId(decl->getNameAsString());
+        add_alias_to_db(sus::clone(key), sus::move(te), parent.aliases,
+                        decl->getASTContext());
+        add_source_link_to_db(
+            parent.aliases.find(key)->second,
+            [&] {
+              if (raw_comment) return SourceLink::CommentLocation;
+              return SourceLink::UnknownLocation;
+            }(),
+            decl->getLocation(), decl->getBeginLoc(), decl->getASTContext());
       } else if (auto* functmpldecl =
                      clang::dyn_cast<clang::FunctionTemplateDecl>(
                          shadow->getTargetDecl())) {
@@ -838,8 +970,16 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                 docs_db_)));
         NamespaceElement& parent =
             docs_db_.find_namespace_mut(context).unwrap();
-        add_alias_to_db(AliasId(decl->getNameAsString()), sus::move(te),
-                        parent.aliases, decl->getASTContext());
+        auto key = AliasId(decl->getNameAsString());
+        add_alias_to_db(sus::clone(key), sus::move(te), parent.aliases,
+                        decl->getASTContext());
+        add_source_link_to_db(
+            parent.aliases.find(key)->second,
+            [&] {
+              if (raw_comment) return SourceLink::CommentLocation;
+              return SourceLink::UnknownLocation;
+            }(),
+            decl->getLocation(), decl->getBeginLoc(), decl->getASTContext());
       } else {
         fmt::println(stderr, "Unknown shadow target in forwarding using decl");
         decl->dump();
@@ -882,7 +1022,13 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             .unwrap();
       }
     }();
-    add_concept_to_db(decl, sus::move(ce), parent.concepts);
+    ConceptId key = key_for_concept(decl);
+    add_concept_to_db(sus::clone(key), sus::move(ce), parent.concepts,
+                      decl->getASTContext());
+    add_source_link_to_db(parent.concepts.find(key)->second,
+                          // Concepts are always a definition.
+                          SourceLink::DefinitionLocation, decl->getLocation(),
+                          decl->getBeginLoc(), decl->getASTContext());
     return true;
   }
 
@@ -1110,6 +1256,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                          preprocessor_, decl->getBeginLoc()),
         docs_db_);
 
+    FunctionId db_key = key_for_function(decl, overload_set);
     auto fe = FunctionElement(
         iter_namespace_path(decl).collect_vec(), sus::move(comment),
         sus::move(function_name), sus::move(signature),
@@ -1173,19 +1320,29 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         });
       }
     }
-    add_function_overload_to_db(decl, sus::move(fe), map);
+    add_function_overload_to_db(sus::clone(db_key), sus::move(fe), map,
+                                decl->getASTContext());
+    add_source_link_to_db(
+        map.find(db_key)->second,
+        [&] {
+          if (decl->getDefinition() == decl) {
+            if (raw_comment) return SourceLink::CommentAndDefinitionLocation;
+            return SourceLink::DefinitionLocation;
+          }
+          if (raw_comment) return SourceLink::CommentLocation;
+          return SourceLink::UnknownLocation;
+        }(),
+        decl->getLocation(), decl->getBeginLoc(), decl->getASTContext());
   }
 
   template <class MapT>
-  void add_function_overload_to_db(clang::FunctionDecl* decl,
-                                   FunctionElement db_element,
-                                   MapT& db_map) noexcept {
-    FunctionId key =
-        key_for_function(decl, db_element.comment.attrs.overload_set);
+  void add_function_overload_to_db(FunctionId key, FunctionElement db_element,
+                                   MapT& db_map,
+                                   clang::ASTContext& ast_cx) noexcept {
     bool add_overload = true;
     auto it = db_map.find(key);
     if (it == db_map.end()) {
-      db_map.emplace(key, std::move(db_element));
+      db_map.emplace(sus::move(key), std::move(db_element));
       // The overload is added with the `db_element` as a whole.
       add_overload = false;
     } else if (!it->second.has_found_comment() &&
@@ -1203,7 +1360,6 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       // The comment is ambiguous, there's another comment for the same overload
       // set. This is an error.
       add_overload = false;
-      auto& ast_cx = decl->getASTContext();
       const auto& old_comment_element = it->second;
       ast_cx.getDiagnostics()
           .Report(db_element.comment.attrs.location,
@@ -1225,12 +1381,11 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   }
 
   template <class MapT>
-  void add_macro_to_db(clang::Decl* decl, MacroElement db_element,
-                       MapT& db_map) noexcept {
-    auto key = MacroId(sus::clone(db_element.name));
+  void add_macro_to_db(MacroId key, MacroElement db_element, MapT& db_map,
+                       clang::ASTContext& ast_cx) noexcept {
     auto it = db_map.find(key);
     if (it == db_map.end()) {
-      db_map.emplace(key, std::move(db_element));
+      db_map.emplace(sus::move(key), std::move(db_element));
     } else if (!it->second.has_found_comment() &&
                db_element.has_found_comment()) {
       // Steal the comment.
@@ -1240,7 +1395,6 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     } else if (db_element.comment.begin_loc == it->second.comment.begin_loc) {
       // We already visited this thing, from another translation unit.
     } else {
-      auto& ast_cx = decl->getASTContext();
       const MacroElement& old_element = it->second;
       ast_cx.getDiagnostics()
           .Report(db_element.comment.attrs.location,
@@ -1250,12 +1404,11 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   }
 
   template <class MapT>
-  void add_namespace_to_db(clang::NamespaceDecl* decl,
-                           NamespaceElement db_element, MapT& db_map) noexcept {
-    auto key = key_for_namespace(decl);
+  void add_namespace_to_db(NamespaceId key, NamespaceElement db_element,
+                           MapT& db_map, clang::ASTContext& ast_cx) noexcept {
     auto it = db_map.find(key);
     if (it == db_map.end()) {
-      db_map.emplace(key, std::move(db_element));
+      db_map.emplace(sus::move(key), std::move(db_element));
     } else if (!it->second.has_found_comment() &&
                db_element.has_found_comment()) {
       // Steal the comment.
@@ -1265,7 +1418,6 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     } else if (db_element.comment.begin_loc == it->second.comment.begin_loc) {
       // We already visited this thing, from another translation unit.
     } else {
-      auto& ast_cx = decl->getASTContext();
       const NamespaceElement& old_element = it->second;
       ast_cx.getDiagnostics()
           .Report(db_element.comment.attrs.location,
@@ -1275,12 +1427,11 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   }
 
   template <class MapT>
-  void add_concept_to_db(clang::ConceptDecl* decl, ConceptElement db_element,
-                         MapT& db_map) noexcept {
-    auto key = key_for_concept(decl);
+  void add_concept_to_db(ConceptId key, ConceptElement db_element, MapT& db_map,
+                         clang::ASTContext& ast_cx) noexcept {
     auto it = db_map.find(key);
     if (it == db_map.end()) {
-      db_map.emplace(key, std::move(db_element));
+      db_map.emplace(sus::move(key), std::move(db_element));
     } else if (!it->second.has_found_comment() &&
                db_element.has_found_comment()) {
       // Steal the comment.
@@ -1290,7 +1441,6 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     } else if (db_element.comment.begin_loc == it->second.comment.begin_loc) {
       // We already visited this thing, from another translation unit.
     } else {
-      auto& ast_cx = decl->getASTContext();
       const ConceptElement& old_element = it->second;
       ast_cx.getDiagnostics()
           .Report(db_element.comment.attrs.location,
@@ -1301,12 +1451,11 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
   template <class ElementT, class MapT>
     requires ::sus::ptr::SameOrSubclassOf<ElementT*, CommentElement*>
-  void add_record_to_db(clang::RecordDecl* decl, ElementT db_element,
-                        MapT& db_map) noexcept {
-    auto key = RecordId(*decl);
+  void add_record_to_db(RecordId key, ElementT db_element, MapT& db_map,
+                        clang::ASTContext& ast_cx) noexcept {
     auto it = db_map.find(key);
     if (it == db_map.end()) {
-      db_map.emplace(key, std::move(db_element));
+      db_map.emplace(sus::move(key), std::move(db_element));
     } else if (!it->second.has_found_comment() &&
                db_element.has_found_comment()) {
       // Steal the comment.
@@ -1316,7 +1465,6 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     } else if (db_element.comment.begin_loc == it->second.comment.begin_loc) {
       // We already visited this thing, from another translation unit.
     } else {
-      auto& ast_cx = decl->getASTContext();
       const ElementT& old_element = it->second;
       ast_cx.getDiagnostics()
           .Report(db_element.comment.attrs.location,
@@ -1325,15 +1473,15 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     }
   }
   template <class MapT>
-  void add_alias_to_db(AliasId db_key, AliasElement db_element, MapT& db_map,
+  void add_alias_to_db(AliasId key, AliasElement db_element, MapT& db_map,
                        clang::ASTContext& ast_cx) noexcept {
-    auto it = db_map.find(db_key);
+    auto it = db_map.find(key);
     if (it == db_map.end()) {
-      db_map.emplace(db_key, std::move(db_element));
+      db_map.emplace(sus::move(key), std::move(db_element));
     } else if (!it->second.has_found_comment() &&
                db_element.has_found_comment()) {
       // Steal the comment.
-      sus::mem::swap(db_map.at(db_key).comment, db_element.comment);
+      sus::mem::swap(db_map.at(key).comment, db_element.comment);
     } else if (!db_element.has_found_comment()) {
       // Leave the existing comment in place, do nothing.
     } else if (db_element.comment.begin_loc == it->second.comment.begin_loc) {
@@ -1348,9 +1496,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   }
   template <class ElementT, class MapT>
     requires ::sus::ptr::SameOrSubclassOf<ElementT*, CommentElement*>
-  void add_comment_to_db(clang::Decl* decl, ElementT db_element,
-                         MapT& db_map) noexcept {
-    UniqueSymbol uniq = unique_from_decl(decl);
+  void add_field_to_db(UniqueSymbol uniq, ElementT db_element, MapT& db_map,
+                       clang::ASTContext& ast_cx) noexcept {
     auto it = db_map.find(uniq);
     if (it == db_map.end()) {
       db_map.emplace(uniq, std::move(db_element));
@@ -1363,7 +1510,6 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     } else if (db_element.comment.begin_loc == it->second.comment.begin_loc) {
       // We already visited this thing, from another translation unit.
     } else {
-      auto& ast_cx = decl->getASTContext();
       const ElementT& old_element = it->second;
       ast_cx.getDiagnostics()
           .Report(db_element.comment.attrs.location,
@@ -1390,6 +1536,52 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
           .AddString(sus::move(comment_result).unwrap_err().message);
     }
     return Comment();
+  }
+
+  void add_source_link_to_db(CommentElement& e, SourceLink::Quality quality,
+                             clang::SourceLocation loc,
+                             clang::SourceLocation begin_loc,
+                             clang::ASTContext& ast_cx) noexcept {
+    clang::SourceManager& sm = ast_cx.getSourceManager();
+
+    const clang::FileEntry* entry = sm.getFileEntryForID(sm.getFileID(loc));
+    while (loc.isMacroID()) {
+      // If the macro call location is at the start of a line, we believe it's a
+      // call to a macro where the decl is being defined. Then we want the
+      // spelling location which is inside the macro. To find that we need to
+      // get the spelling location from the decl's "*begin* location", which is
+      // different from its "location".
+      //
+      // Otherwise, the macro is defining the name or something, but the decl
+      // itself is at the call site of the macro, and we want the expansion
+      // location at the caller.
+      bool decl_inside_macro = false;
+      clang::SourceLocation macro_call_loc = sm.getExpansionLoc(loc);
+      if (auto buffer_ref = sm.getBufferOrNone(sm.getFileID(macro_call_loc));
+          buffer_ref.has_value()) {
+        const u32 end = sm.getFileOffset(macro_call_loc);
+        llvm::StringRef buffer = buffer_ref->getBuffer();
+        u32 start = end;
+        while (start > 0u && buffer[start - 1u] != '\n') start -= 1u;
+        buffer = buffer.substr(start, end - start);
+        while (buffer.consume_front(" "));
+        if (buffer.empty()) decl_inside_macro = true;
+      }
+      if (decl_inside_macro)
+        loc = sm.getSpellingLoc(begin_loc);
+      else
+        loc = macro_call_loc;
+      entry = sm.getFileEntryForID(sm.getFileID(loc));
+    }
+
+    if (entry) {
+      auto link = sus::Option<SourceLink>(SourceLink{
+          .quality = quality,
+          .file_path = std::string(sm.getFilename(loc)),
+          .line = sm.getLineNumber(sm.getFileID(loc), sm.getFileOffset(loc)),
+      });
+      if (link > e.source_link) e.source_link = sus::move(link);
+    }
   }
 
   VisitCx& cx_;
@@ -1471,12 +1663,11 @@ bool VisitCx::should_include_decl_based_on_file(clang::Decl* decl) noexcept {
 
   clang::SourceLocation loc = decl->getLocation();
   const clang::FileEntry* entry = sm.getFileEntryForID(sm.getFileID(loc));
-  // For a macro, find the place of the macro expansion, which is in an actual
-  // file.
+  // If a macro is defining stuff, we care about including it or not based on
+  // where the macro is used, which is the expansion location.
   while (loc.isMacroID()) {
     loc = sm.getExpansionLoc(loc);
     entry = sm.getFileEntryForID(sm.getFileID(loc));
-    sus_check(entry != nullptr);
   }
 
   // No FileEntry (and not a macro, since we've found the macro expansion

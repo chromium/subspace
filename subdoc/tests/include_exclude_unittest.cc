@@ -18,7 +18,7 @@ TEST_F(SubDocTest, IncludeRegexMissesTest) {
   const auto opts = subdoc::RunOptions()           //
                         .set_show_progress(false)  //
                         .set_include_path_patterns(std::regex("not_test.cc"));
-  auto result = run_code_with_options(opts, R"(
+  auto result = run_code_with_options(opts, "test.cc", R"(
     /// Comment headline
     struct S {};
   )");
@@ -31,7 +31,7 @@ TEST_F(SubDocTest, ExcludeRegexHitsTest) {
   const auto opts = subdoc::RunOptions()           //
                         .set_show_progress(false)  //
                         .set_exclude_path_patterns(std::regex("test.cc"));
-  auto result = run_code_with_options(opts, R"(
+  auto result = run_code_with_options(opts, "test.cc", R"(
     /// Comment headline
     struct S {};
   )");
@@ -44,7 +44,7 @@ TEST_F(SubDocTest, ExcludeRegexMissesTest) {
   const auto opts = subdoc::RunOptions()           //
                         .set_show_progress(false)  //
                         .set_exclude_path_patterns(std::regex("teOOPSst.cc"));
-  auto result = run_code_with_options(opts, R"(
+  auto result = run_code_with_options(opts, "test.cc", R"(
     /// Comment headline
     struct S {};
   )");

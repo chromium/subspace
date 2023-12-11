@@ -98,6 +98,11 @@ TEST_F(SubDocTest, NamespaceComment) {
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_namespace_comment(db, "2:5", "<p>Comment headline</p>"));
+
+  auto& e = db.find_namespace_comment("2:5").unwrap();
+  ASSERT_TRUE(e.source_link.is_some());
+  EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 3u);
 }
 
 TEST_F(SubDocTest, NestedNamespaceComment) {
@@ -110,6 +115,11 @@ TEST_F(SubDocTest, NestedNamespaceComment) {
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_namespace_comment(db, "3:5", "<p>Comment headline</p>"));
+
+  auto& e = db.find_namespace_comment("3:5").unwrap();
+  ASSERT_TRUE(e.source_link.is_some());
+  EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 4u);
 }
 
 TEST_F(SubDocTest, NamespaceDotsComment) {

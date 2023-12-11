@@ -145,6 +145,7 @@ if(${SUBSPACE_BUILD_TESTS})
         "tests/methods_unittest.cc"
         "tests/namespaces_unittest.cc"
         "tests/records_unittest.cc"
+        "tests/source_link_unittest.cc"
         "tests/styles_unittest.cc"
         "tests/type_unittest.cc"
         "tests/self_name_replace_unittest.cc"

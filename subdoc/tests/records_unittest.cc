@@ -22,6 +22,24 @@ TEST_F(SubDocTest, Struct) {
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_record_comment(db, "2:5", "<p>Comment headline</p>"));
+
+  auto& e = db.find_record_comment("2:5").unwrap();
+  ASSERT_TRUE(e.source_link.is_some());
+  EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 3u);
+}
+
+TEST_F(SubDocTest, ForwardStruct) {
+  auto result = run_code(R"(
+    struct S;
+
+    /// Comment headline
+    struct S;
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  // Forward decls are not visited.
+  EXPECT_TRUE(!has_record_comment(db, "4:5", "<p>Comment headline</p>"));
 }
 
 TEST_F(SubDocTest, TemplateStruct) {
@@ -33,6 +51,11 @@ TEST_F(SubDocTest, TemplateStruct) {
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_record_comment(db, "2:5", "<p>Comment headline</p>"));
+
+  auto& e = db.find_record_comment("2:5").unwrap();
+  ASSERT_TRUE(e.source_link.is_some());
+  EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 4u);
 }
 
 TEST_F(SubDocTest, TemplateStructSpecialization) {
@@ -61,6 +84,11 @@ TEST_F(SubDocTest, StructInNamedNamespace) {
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_record_comment(db, "3:5", "<p>Comment headline</p>"));
+
+  auto& e = db.find_record_comment("3:5").unwrap();
+  ASSERT_TRUE(e.source_link.is_some());
+  EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 4u);
 }
 
 TEST_F(SubDocTest, StructInPrivateNamespace) {
@@ -115,6 +143,11 @@ TEST_F(SubDocTest, NestedStruct) {
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_record_comment(db, "2:5", "<p>Comment headline 1</p>"));
   EXPECT_TRUE(has_record_comment(db, "4:7", "<p>Comment headline 2</p>"));
+
+  auto& e = db.find_record_comment("4:7").unwrap();
+  ASSERT_TRUE(e.source_link.is_some());
+  EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 5u);
 }
 
 TEST_F(SubDocTest, PrivateStruct) {
@@ -161,4 +194,16 @@ TEST_F(SubDocTest, AnonStruct) {
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_record_comment(db, "2:5", "<p>Comment headline one</p>"));
   EXPECT_TRUE(has_record_comment(db, "4:5", "<p>Comment headline two</p>"));
+  {
+    auto& e = db.find_record_comment("2:5").unwrap();
+    ASSERT_TRUE(e.source_link.is_some());
+    EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 3u);
+  }
+  {
+    auto& e = db.find_record_comment("4:5").unwrap();
+    ASSERT_TRUE(e.source_link.is_some());
+    EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 5u);
+  }
 }

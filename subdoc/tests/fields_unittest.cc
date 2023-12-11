@@ -24,6 +24,10 @@ TEST_F(SubDocTest, Field) {
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_field_comment(db, "3:7", "<p>Comment headline</p>"));
+  auto& e = db.find_field_comment("3:7").unwrap();
+  ASSERT_TRUE(e.source_link.is_some());
+  EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 4u);
 }
 
 TEST_F(SubDocTest, StaticField) {
@@ -36,6 +40,28 @@ TEST_F(SubDocTest, StaticField) {
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_field_comment(db, "3:7", "<p>Comment headline</p>"));
+  auto& e = db.find_field_comment("3:7").unwrap();
+  ASSERT_TRUE(e.source_link.is_some());
+  EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 4u);
+}
+
+TEST_F(SubDocTest, StaticFieldSplit) {
+  auto result = run_code(R"(
+    struct S {
+      /// Comment headline
+      static int f;
+    };
+
+    int S::f = 1;
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_field_comment(db, "3:7", "<p>Comment headline</p>"));
+  auto& e = db.find_field_comment("3:7").unwrap();
+  ASSERT_TRUE(e.source_link.is_some());
+  EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 7u);
 }
 
 TEST_F(SubDocTest, PrivateField) {
@@ -101,6 +127,18 @@ TEST_F(SubDocTest, Variables) {
   )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_variable_comment(db, "2:5", "<p>Comment headline 1</p>"));
-  EXPECT_TRUE(has_variable_comment(db, "5:7", "<p>Comment headline 2</p>"));
+  ASSERT_TRUE(has_variable_comment(db, "2:5", "<p>Comment headline 1</p>"));
+  ASSERT_TRUE(has_variable_comment(db, "5:7", "<p>Comment headline 2</p>"));
+  {
+    auto& e = db.find_variable_comment("2:5").unwrap();
+    ASSERT_TRUE(e.source_link.is_some());
+    EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 3u);
+  }
+  {
+    auto& e = db.find_variable_comment("5:7").unwrap();
+    ASSERT_TRUE(e.source_link.is_some());
+    EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 6u);
+  }
 }

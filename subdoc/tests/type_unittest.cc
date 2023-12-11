@@ -101,7 +101,7 @@ struct SubDocTypeTest : public SubDocTest {
     auto opts = subdoc::RunOptions()           //
                     .set_show_progress(false)  //
                     .set_on_tu_complete(sus::move_into(body));
-    auto result = run_code_with_options(opts, code);
+    auto result = run_code_with_options(opts, "test.cc", code);
     ASSERT_TRUE(result.is_ok());
   }
 };
