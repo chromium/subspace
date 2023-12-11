@@ -24,7 +24,8 @@
 namespace subdoc {
 
 sus::Result<Database, DiagnosticResults> run_test(
-    std::string content, sus::Slice<std::string> command_line_args,
+    std::string pretend_file_name, std::string content,
+    sus::Slice<std::string> command_line_args,
     const RunOptions& options) noexcept {
   auto join_args = std::string();
   for (const std::string& a : command_line_args) {
@@ -40,9 +41,11 @@ sus::Result<Database, DiagnosticResults> run_test(
   }
 
   auto vfs = llvm::IntrusiveRefCntPtr(new llvm::vfs::InMemoryFileSystem());
-  vfs->addFile("test.cc", 0, llvm::MemoryBuffer::getMemBuffer(content));
+  vfs->addFile(pretend_file_name, 0, llvm::MemoryBuffer::getMemBuffer(content));
 
-  return run_files(*comp_db, sus::Vec<std::string>("test.cc"), std::move(vfs), options);
+  return run_files(*comp_db,
+                   sus::Vec<std::string>(sus::move(pretend_file_name)),
+                   std::move(vfs), options);
 }
 
 struct DiagnosticTracker : public clang::TextDiagnosticPrinter {
@@ -109,8 +112,8 @@ sus::Result<Database, DiagnosticResults> run_files(
   tool.appendArgumentsAdjuster(adj);
 
   auto cx = VisitCx(options);
-  auto docs_db =
-      Database(Comment(sus::clone(options.project_overview_text), "", DocAttributes()));
+  auto docs_db = Database(
+      Comment(sus::clone(options.project_overview_text), "", DocAttributes()));
   auto visitor_factory = VisitorFactory(cx, docs_db, num_files);
 
   i32 run_value = sus::move(tool).run(&visitor_factory);

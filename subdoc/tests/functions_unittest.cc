@@ -22,6 +22,11 @@ TEST_F(SubDocTest, Function) {
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_function_comment(db, "2:5", "<p>Comment headline</p>"));
+
+  auto& e = db.find_function_comment("2:5").unwrap();
+  ASSERT_TRUE(e.source_link.is_some());
+  EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 3u);
 }
 
 TEST_F(SubDocTest, FunctionOverloads) {
@@ -38,6 +43,18 @@ TEST_F(SubDocTest, FunctionOverloads) {
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_function_comment(db, "2:5", "<p>Comment headline 1</p>"));
   EXPECT_TRUE(has_function_comment(db, "7:5", "<p>Comment headline 2</p>"));
+  {
+    auto& e = db.find_function_comment("2:5").unwrap();
+    ASSERT_TRUE(e.source_link.is_some());
+    EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 3u);
+  }
+  {
+    auto& e = db.find_function_comment("7:5").unwrap();
+    ASSERT_TRUE(e.source_link.is_some());
+    EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 8u);
+  }
 }
 
 TEST_F(SubDocTest, FunctionOverloadsNoMerge) {
@@ -59,6 +76,18 @@ TEST_F(SubDocTest, FunctionOverloadsNoMerge) {
                                    "<p>Comment headline 1</p>\n<p>Body 1</p>"));
   EXPECT_TRUE(has_function_comment(db, "7:5",
                                    "<p>Comment headline 2</p>\n<p>Body 2</p>"));
+  {
+    auto& e = db.find_function_comment("2:5").unwrap();
+    ASSERT_TRUE(e.source_link.is_some());
+    EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 6u);
+  }
+  {
+    auto& e = db.find_function_comment("7:5").unwrap();
+    ASSERT_TRUE(e.source_link.is_some());
+    EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 11u);
+  }
 }
 
 TEST_F(SubDocTest, FunctionOverloadsMerge) {
@@ -76,6 +105,18 @@ TEST_F(SubDocTest, FunctionOverloadsMerge) {
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_function_comment(db, "2:5", "<p>Comment headline 1</p>"));
   EXPECT_TRUE(has_function_comment(db, "7:5", "<p>Comment headline 2</p>"));
+  {
+    auto& e = db.find_function_comment("2:5").unwrap();
+    ASSERT_TRUE(e.source_link.is_some());
+    EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 4u);
+  }
+  {
+    auto& e = db.find_function_comment("7:5").unwrap();
+    ASSERT_TRUE(e.source_link.is_some());
+    EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 9u);
+  }
 }
 
 TEST_F(SubDocTest, FunctionOverloadsDuplicate) {
@@ -159,6 +200,12 @@ TEST_F(SubDocTest, ForwardDeclDocumented) {
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_function_comment(db, "2:5", "<p>Comment headline</p>"));
+
+  // For source links: The decl is preferred over the comment on a forward decl.
+  auto& e = db.find_function_comment("2:5").unwrap();
+  ASSERT_TRUE(e.source_link.is_some());
+  EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 4u);
 }
 
 TEST_F(SubDocTest, ForwardDeclUndocumented) {
@@ -170,6 +217,12 @@ TEST_F(SubDocTest, ForwardDeclUndocumented) {
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_function_comment(db, "3:5", "<p>Comment headline</p>"));
+
+  // For source links: The commented decl is preferred above all.
+  auto& e = db.find_function_comment("3:5").unwrap();
+  ASSERT_TRUE(e.source_link.is_some());
+  EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 4u);
 }
 
 TEST_F(SubDocTest, FunctionInNamedNamespace) {
@@ -182,6 +235,11 @@ TEST_F(SubDocTest, FunctionInNamedNamespace) {
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_function_comment(db, "3:5", "<p>Comment headline</p>"));
+
+  auto& e = db.find_function_comment("3:5").unwrap();
+  ASSERT_TRUE(e.source_link.is_some());
+  EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 4u);
 }
 
 TEST_F(SubDocTest, FunctionInAnonymousNamespace) {
@@ -220,6 +278,8 @@ TEST_F(SubDocTest, FunctionFriend) {
       /// Comment c headline
       friend void c();
     };
+    
+    void c() {}
 
     /// Comment b headline
     void b() {}
@@ -227,8 +287,27 @@ TEST_F(SubDocTest, FunctionFriend) {
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_function_comment(db, "3:7", "<p>Comment a headline</p>"));
-  EXPECT_TRUE(has_function_comment(db, "11:5", "<p>Comment b headline</p>"));
+  EXPECT_TRUE(has_function_comment(db, "13:5", "<p>Comment b headline</p>"));
   EXPECT_TRUE(has_function_comment(db, "7:7", "<p>Comment c headline</p>"));
+  // Links go to the definitions.
+  {
+    auto& e = db.find_function_comment("3:7").unwrap();
+    ASSERT_TRUE(e.source_link.is_some());
+    EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 4u);
+  }
+  {
+    auto& e = db.find_function_comment("7:7").unwrap();
+    ASSERT_TRUE(e.source_link.is_some());
+    EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 11u);
+  }
+  {
+    auto& e = db.find_function_comment("13:5").unwrap();
+    ASSERT_TRUE(e.source_link.is_some());
+    EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 14u);
+  }
 }
 
 TEST_F(SubDocTest, FunctionRequiresOverload) {

@@ -31,6 +31,18 @@ TEST_F(SubDocTest, AliasUsingStruct) {
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_alias_comment(db, "7:5", "<p>Alias comment headline</p>"));
   EXPECT_TRUE(has_alias_comment(db, "10:5", "<p>Global comment headline</p>"));
+  {
+    auto& e = db.find_alias_comment("7:5").unwrap();
+    ASSERT_TRUE(e.source_link.is_some());
+    EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 8u);
+  }
+  {
+    auto& e = db.find_alias_comment("10:5").unwrap();
+    ASSERT_TRUE(e.source_link.is_some());
+    EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 11u);
+  }
 }
 
 TEST_F(SubDocTest, AliasUsingConcept) {
@@ -50,6 +62,18 @@ TEST_F(SubDocTest, AliasUsingConcept) {
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_alias_comment(db, "7:5", "<p>Alias comment headline</p>"));
   EXPECT_TRUE(has_alias_comment(db, "10:5", "<p>Global comment headline</p>"));
+  {
+    auto& e = db.find_alias_comment("7:5").unwrap();
+    ASSERT_TRUE(e.source_link.is_some());
+    EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 8u);
+  }
+  {
+    auto& e = db.find_alias_comment("10:5").unwrap();
+    ASSERT_TRUE(e.source_link.is_some());
+    EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 11u);
+  }
 }
 
 TEST_F(SubDocTest, AliasUsingMethod) {
@@ -70,6 +94,11 @@ TEST_F(SubDocTest, AliasUsingMethod) {
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_alias_comment(db, "10:7", "<p>Alias comment headline</p>"));
+
+  auto& e = db.find_alias_comment("10:7").unwrap();
+  ASSERT_TRUE(e.source_link.is_some());
+  EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 11u);
 }
 
 TEST_F(SubDocTest, AliasUsingEnumInNamespace) {
@@ -81,6 +110,11 @@ TEST_F(SubDocTest, AliasUsingEnumInNamespace) {
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_alias_comment(db, "3:5", "<p>Alias comment headline</p>"));
+
+  auto& e = db.find_alias_comment("3:5").unwrap();
+  ASSERT_TRUE(e.source_link.is_some());
+  EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 4u);
 }
 
 TEST_F(SubDocTest, DISABLED_AliasUsingEnum) {
@@ -103,6 +137,18 @@ TEST_F(SubDocTest, DISABLED_AliasUsingEnum) {
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_alias_comment(db, "8:7", "<p>Alias comment headline</p>"));
   EXPECT_TRUE(has_alias_comment(db, "13:5", "<p>Alias comment headline</p>"));
+  {
+    auto& e = db.find_alias_comment("8:7").unwrap();
+    ASSERT_TRUE(e.source_link.is_some());
+    EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 9u);
+  }
+  {
+    auto& e = db.find_alias_comment("13:5").unwrap();
+    ASSERT_TRUE(e.source_link.is_some());
+    EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 14u);
+  }
 }
 
 TEST_F(SubDocTest, DISABLED_AliasCommentOnUsingEnum) {
@@ -135,6 +181,18 @@ TEST_F(SubDocTest, AliasNamedTypeInNamespace) {
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_alias_comment(db, "7:5", "<p>Alias comment headline</p>"));
   EXPECT_TRUE(has_alias_comment(db, "10:5", "<p>Global comment headline</p>"));
+  {
+    auto& e = db.find_alias_comment("7:5").unwrap();
+    ASSERT_TRUE(e.source_link.is_some());
+    EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 8u);
+  }
+  {
+    auto& e = db.find_alias_comment("10:5").unwrap();
+    ASSERT_TRUE(e.source_link.is_some());
+    EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 11u);
+  }
 }
 
 TEST_F(SubDocTest, AliasNamedTypeInRecord) {
@@ -151,6 +209,12 @@ TEST_F(SubDocTest, AliasNamedTypeInRecord) {
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_alias_comment(db, "7:7", "<p>Alias comment headline</p>"));
+  {
+    auto& e = db.find_alias_comment("7:7").unwrap();
+    ASSERT_TRUE(e.source_link.is_some());
+    EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 8u);
+  }
 }
 
 TEST_F(SubDocTest, AliasUsingVariable) {
@@ -165,4 +229,10 @@ TEST_F(SubDocTest, AliasUsingVariable) {
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_alias_comment(db, "6:5", "<p>Using comment</p>"));
+  {
+    auto& e = db.find_alias_comment("6:5").unwrap();
+    ASSERT_TRUE(e.source_link.is_some());
+    EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 7u);
+  }
 }

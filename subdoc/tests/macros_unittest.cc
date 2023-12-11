@@ -31,6 +31,11 @@ TEST_F(SubDocTest, MacroFunction) {
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_function_comment(db, "3:7", "<p>Comment headline</p>"));
+
+  auto& e = db.find_function_comment("3:7").unwrap();
+  ASSERT_TRUE(e.source_link.is_some());
+  EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 4u);
 }
 
 TEST_F(SubDocTest, MacroClass) {
@@ -100,6 +105,11 @@ TEST_F(SubDocTest, MacroNamesField) {
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_field_comment(db, "4:9", "<p>Comment headline</p>"));
+
+  auto& e = db.find_field_comment("4:9").unwrap();
+  ASSERT_TRUE(e.source_link.is_some());
+  EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 5u);
 }
 
 TEST_F(SubDocTest, MacroModName) {
@@ -112,6 +122,11 @@ TEST_F(SubDocTest, MacroModName) {
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_record_comment(db, "4:5", "<p>Comment headline</p>"));
+
+  auto& e = db.find_record_comment("4:5").unwrap();
+  ASSERT_TRUE(e.source_link.is_some());
+  EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 5u);
 }
 
 TEST_F(SubDocTest, MacroMultilineComment) {
@@ -133,7 +148,7 @@ TEST_F(SubDocTest, MacroUsedInExcludedFile) {
   const auto opts = subdoc::RunOptions()           //
                         .set_show_progress(false)  //
                         .set_exclude_path_patterns(std::regex("test.cc"));
-  auto result = run_code_with_options(opts, R"(
+  auto result = run_code_with_options(opts, "test.cc", R"(
     #define M() \
       /** Comment headline */ \
       void f() {}
@@ -151,7 +166,7 @@ TEST_F(SubDocTest, Macro) {
       subdoc::RunOptions()           //
           .set_show_progress(false)  //
           .set_macro_prefixes(sus::Vec<std::string>("one_", "TWO_"));
-  auto result = run_code_with_options(opts, R"(
+  auto result = run_code_with_options(opts, "test.cc", R"(
     /// Comment headline
     #define one_f() 
     /// Comment headline 2
@@ -166,4 +181,9 @@ TEST_F(SubDocTest, Macro) {
   EXPECT_TRUE(has_macro_comment(db, "2:5", "<p>Comment headline</p>"));
   EXPECT_TRUE(has_macro_comment(db, "4:5", "<p>Comment headline 2</p>"));
   EXPECT_TRUE(!has_macro_comment(db, "6:5", "<p>Comment headline 3</p>"));
+
+  auto& e = db.find_macro_comment("2:5").unwrap();
+  ASSERT_TRUE(e.source_link.is_some());
+  EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 3u);
 }

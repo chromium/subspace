@@ -33,16 +33,18 @@
 class SubDocTest : public testing::Test {
  public:
   auto run_code_with_options(const subdoc::RunOptions& options,
+                             std::string file_name,
                              std::string content) noexcept {
     auto args = sus::Vec<std::string>::with_capacity(1u);
     args.push(std::string(subdoc::tests::cpp_version_flag(cpp_version_)));
 
-    return subdoc::run_test(sus::move(content), args.as_slice(), options);
+    return subdoc::run_test(sus::move(file_name), sus::move(content),
+                            args.as_slice(), options);
   }
 
   auto run_code(std::string content) noexcept {
     return run_code_with_options(subdoc::RunOptions().set_show_progress(false),
-                                 sus::move(content));
+                                 "test.cc", sus::move(content));
   }
 
   /// Returns whether a record was found whose comment location ends with
@@ -110,11 +112,20 @@ class SubDocTest : public testing::Test {
                           comment_loc, comment_start);
   }
 
+  /// Returns whether a concept was found whose comment location ends with
+  /// `comment_loc` and whose comment begins with `comment_start`.
+  bool has_concept_comment(const subdoc::Database& db,
+                           std::string_view comment_loc,
+                           std::string_view comment_start) const noexcept {
+    return verify_comment("concept", db, db.find_concept_comment(comment_loc),
+                          comment_loc, comment_start);
+  }
+
   /// Returns whether a variable was found whose comment location ends with
   /// `comment_loc` and whose comment begins with `comment_start`.
   bool has_variable_comment(const subdoc::Database& db,
-                         std::string_view comment_loc,
-                         std::string_view comment_start) const noexcept {
+                            std::string_view comment_loc,
+                            std::string_view comment_start) const noexcept {
     return verify_comment("variable", db, db.find_variable_comment(comment_loc),
                           comment_loc, comment_start);
   }
@@ -122,8 +133,8 @@ class SubDocTest : public testing::Test {
   /// Returns whether an alias was found whose comment location ends with
   /// `comment_loc` and whose comment begins with `comment_start`.
   bool has_alias_comment(const subdoc::Database& db,
-                           std::string_view comment_loc,
-                           std::string_view comment_start) const noexcept {
+                         std::string_view comment_loc,
+                         std::string_view comment_start) const noexcept {
     return verify_comment("alias", db, db.find_alias_comment(comment_loc),
                           comment_loc, comment_start);
   }
@@ -131,8 +142,8 @@ class SubDocTest : public testing::Test {
   /// Returns whether an alias was found whose comment location ends with
   /// `comment_loc` and whose comment begins with `comment_start`.
   bool has_macro_comment(const subdoc::Database& db,
-                           std::string_view comment_loc,
-                           std::string_view comment_start) const noexcept {
+                         std::string_view comment_loc,
+                         std::string_view comment_start) const noexcept {
     return verify_comment("macro", db, db.find_macro_comment(comment_loc),
                           comment_loc, comment_start);
   }

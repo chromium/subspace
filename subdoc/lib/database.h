@@ -60,6 +60,24 @@ using FoundName = sus::Choice<sus_choice_types(
     (FoundNameTag::Field, const FieldElement&),
     (FoundNameTag::Macro, const MacroElement&))>;
 
+struct SourceLink {
+  enum Quality {
+    UnknownLocation,
+    CommentLocation,
+    DefinitionLocation,
+    CommentAndDefinitionLocation,
+  };
+  Quality quality;
+  std::string file_path;
+  u32 line;
+
+  friend std::weak_ordering operator<=>(const SourceLink& lhs,
+                                        const SourceLink& rhs) noexcept {
+    return lhs.quality <=> rhs.quality;
+  }
+};
+static_assert(sus::cmp::Ord<SourceLink>);
+
 struct Comment {
   Comment() = default;
   Comment(std::string text, std::string begin_loc, DocAttributes attrs)
@@ -93,6 +111,7 @@ struct CommentElement {
   Comment comment;
   std::string name;
   u32 sort_key;
+  sus::Option<SourceLink> source_link;
 
   /// Used during visit to determine if a comment has already been found and
   /// applied to the element.
