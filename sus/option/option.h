@@ -1731,7 +1731,8 @@ class Option final {
   friend constexpr inline bool operator==(const Option<T>& l,
                                           const Option<U>& r) = delete;
 
-  /// Compares two options.
+  /// Compares two options. This function requires that `T` is ordered.
+  /// An empty Option always compares less than a non-empty Option.
   ///
   /// * Satisfies [`StrongOrd<Option<T>>`]($sus::cmp::StrongOrd) if
   ///   [`StrongOrd<T>`]($sus::cmp::StrongOrd).
