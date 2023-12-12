@@ -12,7 +12,7 @@ jobs:
     env:
       clang_version: 16
       installed_clang_version: 14
-      source_url: "https://github.com/chromium/subspace/blob/main"
+      source_url: "https://github.com/chromium/subspace/blob/${GITHUB_SHA}"
 
     steps:
       - uses: actions/checkout@v3
