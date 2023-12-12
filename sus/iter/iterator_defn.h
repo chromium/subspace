@@ -689,8 +689,10 @@ class IteratorBase {
   ///
   /// An empty iterator returns the "one" value of the type.
   ///
-  /// `product()` can be used to multiply any type implementing `Product`,
-  /// including `Option` and `Result`.
+  /// `product()` can be used to multiply any type implementing
+  /// [`Product`]($sus::iter::Product),
+  /// including [numerics]($sus::num), [`Option`]($sus::option::Option) and
+  /// [`Result`]($sus::result::Result).
   ///
   /// # Panics
   ////
@@ -921,8 +923,10 @@ class IteratorBase {
   ///
   /// An empty iterator returns the zero value of the type.
   ///
-  /// `sum()` can be used to sum any type implementing `Sum`, including `Option`
-  /// and `Result`.
+  /// `sum()` can be used to multiply any type implementing
+  /// [`Sum`]($sus::iter::Sum),
+  /// including [numerics]($sus::num), [`Option`]($sus::option::Option) and
+  /// [`Result`]($sus::result::Result).
   ///
   /// # Panics
   ////
