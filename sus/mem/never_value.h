@@ -19,12 +19,12 @@
 #include <concepts>
 #include <type_traits>
 
+#include "sus/cmp/eq.h"
 #include "sus/macros/inline.h"
 #include "sus/macros/pure.h"
 #include "sus/marker/unsafe.h"
 #include "sus/mem/forward.h"
 #include "sus/mem/relocate.h"
-#include "sus/cmp/eq.h"
 
 namespace sus::mem {
 
@@ -105,7 +105,9 @@ struct NeverValueAccess {
     t_._sus_Unsafe_NeverValueSetDestroyValue(::sus::marker::unsafe_fn);
   }
 
-  _sus_pure constexpr _sus_always_inline const T& as_inner() const { return t_; }
+  _sus_pure constexpr _sus_always_inline const T& as_inner() const {
+    return t_;
+  }
   _sus_pure constexpr _sus_always_inline T& as_inner_mut() { return t_; }
 
  private:
@@ -138,11 +140,11 @@ concept NeverValueField = __private::NeverValueChecker<T>::has_field;
 /// querying if a class is constructed in a memory location, since the class is
 /// constructed iff the value of the field is not the never-value.
 ///
-/// The `never_value` will be placed in the named field after construction, and
-/// the `destroy_value` will be placed in the named field just prior to
-/// destruction. The latter is meant to help the destructor be a no-op when the
-/// type is in a never-value state, if the never-value would be read in the
-/// destructor.
+/// The named field can be compared to the `never_value` to determine if the
+/// object is constructed. The field must be set to the `destroy_value` just
+/// prior to destruction. The latter is meant to help the destructor be a no-op
+/// when the type is in a never-value state, if the never-value would be read in
+/// the destructor.
 ///
 /// The macro includes `private:` which changes the class definition visibility
 /// to private.
@@ -157,7 +159,7 @@ concept NeverValueField = __private::NeverValueChecker<T>::has_field;
   template <class>                                                             \
   friend struct ::sus::mem::__private::NeverValueChecker;                      \
                                                                                \
-  _sus_pure constexpr bool _sus_Unsafe_NeverValueIsConstructed(                 \
+  _sus_pure constexpr bool _sus_Unsafe_NeverValueIsConstructed(                \
       ::sus::marker::UnsafeFnMarker) const noexcept {                          \
     static_assert(                                                             \
         std::is_assignable_v<decltype(field_name)&, decltype(never_value)>,    \
