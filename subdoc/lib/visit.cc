@@ -1542,6 +1542,9 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                              clang::SourceLocation loc,
                              clang::SourceLocation begin_loc,
                              clang::ASTContext& ast_cx) noexcept {
+    // The user may not have anywhere to store code in order to link to it.
+    if (!cx_.options.generate_source_links) return;
+
     clang::SourceManager& sm = ast_cx.getSourceManager();
 
     const clang::FileEntry* entry = sm.getFileEntryForID(sm.getFileID(loc));

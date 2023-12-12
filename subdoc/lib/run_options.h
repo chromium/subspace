@@ -77,6 +77,8 @@ struct RunOptions {
   /// global namespace/project overview page. This is the raw markdown text, not
   /// parsed to html yet.
   std::string project_overview_text;
+  /// Whether to generate links to source code.
+  bool generate_source_links = true;
   /// A prefix to remove from all paths in source links.
   sus::Option<std::string> remove_path_prefix;
   /// A prefix to add to all paths in source links, after removing the prefix

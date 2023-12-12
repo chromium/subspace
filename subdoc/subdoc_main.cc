@@ -118,6 +118,12 @@ int main(int argc, const char** argv) {
           "specified by `--remove-source-path-prefix` is removed."),
       llvm::cl::cat(option_category));
 
+  llvm::cl::opt<bool> option_no_source_links(
+      "no-source-links",
+      llvm::cl::desc("Avoid generating links to source code."),
+      llvm::cl::init(false),  //
+      llvm::cl::cat(option_category));
+
   llvm::cl::opt<bool> option_ignore_bad_code_links(
       "ignore-bad-code-links",
       llvm::cl::desc("Ignore bad code links, don't generate an error. Useful "
@@ -220,6 +226,7 @@ int main(int argc, const char** argv) {
       sus::iter::from_range(option_include_macro_prefixes)
           .cloned()
           .collect<sus::Vec<std::string>>();
+  run_options.generate_source_links = !option_no_source_links.getValue();
   if (option_remove_path_prefix.getNumOccurrences() > 0) {
     // Canonicalize the path to use `/` instead of `\`.
     std::string canonical_path = option_remove_path_prefix.getValue();
