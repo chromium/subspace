@@ -198,8 +198,8 @@ constexpr inline _self& operator=(P v) noexcept {
   return *this;
 }
 
-/// Constructs a @doc.self from a signed integer type (i8, i16, i32, etc) where
-/// no bits are lost.
+/// Constructs a `@doc.self` from a signed integer type (i8, i16, i32, etc)
+/// where no bits are lost.
 ///
 /// For conversions from types with a larger range use
 /// [`try_from`]($sus::num::@doc.self::try_from!signed). For lossy conversions use the
@@ -236,7 +236,7 @@ try_from(S s) noexcept {
   return R(_self(static_cast<_primitive>(s.primitive_value)));
 }
 
-/// Constructs a @doc.self from an unsigned integer type (unsigned
+/// Constructs a `@doc.self` from an unsigned integer type (unsigned
 /// int, unsigned long, etc) where no bits are lost.
 ///
 /// For conversions from types with a larger range use
@@ -353,7 +353,7 @@ try_from(S s) noexcept {
   return R(_self(static_cast<_primitive>(s)));
 }
 
-/// Constructs a @doc.self from an unsigned primitive integer type (unsigned
+/// Constructs a `@doc.self` from an unsigned primitive integer type (unsigned
 /// int, unsigned long, etc) where no bits are lost.
 ///
 /// For conversions from types with a larger range use
@@ -368,7 +368,7 @@ _sus_pure static constexpr _self from(S s) noexcept {
   return _self(s);
 }
 
-/// Constructs a @doc.self from an unsigned primitive integer type (unsigned
+/// Constructs a `@doc.self` from an unsigned primitive integer type (unsigned
 /// int, unsigned long, etc).
 ///
 /// Returns an error if the source value is outside of the range of @doc.self.
@@ -388,7 +388,7 @@ try_from(U u) noexcept {
   return R(_self(static_cast<_primitive>(u)));
 }
 
-/// Constructs a @doc.self from an unsigned enum type (or enum class) where no
+/// Constructs a `@doc.self` from an unsigned enum type (or enum class) where no
 /// bits are lost.
 ///
 /// For conversions from types with a larger range use
@@ -405,7 +405,7 @@ _sus_pure static constexpr _self from(S s) noexcept {
   return _self(static_cast<std::underlying_type_t<S>>(s));
 }
 
-/// Constructs a @doc.self from an unsigned enum type (or enum class).
+/// Constructs a `@doc.self` from an unsigned enum type (or enum class).
 ///
 /// Returns an error if the source value is outside of the range of @doc.self.
 ///
@@ -426,7 +426,7 @@ try_from(U u) noexcept {
   return R(_self(static_cast<_primitive>(u)));
 }
 
-/// Constructs a @doc.self from an `Iterator` by computing the product of all
+/// Constructs a `@doc.self` from an `Iterator` by computing the product of all
 /// elements in the itertor.
 ///
 /// This method should rarely be called directly, as it is used to satisfy the
@@ -453,7 +453,7 @@ static constexpr _self from_product(
   return p;
 }
 
-/// Constructs a @doc.self from an `Iterator` by computing the sum of all
+/// Constructs a `@doc.self` from an `Iterator` by computing the sum of all
 /// elements in the itertor.
 ///
 /// This method should rarely be called directly, as it is used to satisfy the
