@@ -268,7 +268,7 @@ jobs:
     name: Generate Subdoc
     runs-on: ubuntu-latest
     env:
-      clang_version: 16
+      clang_version: 18
       installed_clang_version: 14
       source_url: "https://github.com/chromium/subspace/blob/main"
 
