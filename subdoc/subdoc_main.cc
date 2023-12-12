@@ -106,6 +106,18 @@ int main(int argc, const char** argv) {
           "multiple times for multiple prefixes."),
       llvm::cl::cat(option_category));
 
+  llvm::cl::opt<std::string> option_remove_path_prefix(
+      "remove-source-path-prefix",
+      llvm::cl::desc("A path prefix to remove from all source code links."),
+      llvm::cl::cat(option_category));
+
+  llvm::cl::opt<std::string> option_add_path_prefix(
+      "add-source-path-prefix",
+      llvm::cl::desc(
+          "A path prefix to add to all source code links, after any prefix "
+          "specified by `--remove-source-path-prefix` is removed."),
+      llvm::cl::cat(option_category));
+
   llvm::cl::opt<bool> option_ignore_bad_code_links(
       "ignore-bad-code-links",
       llvm::cl::desc("Ignore bad code links, don't generate an error. Useful "
@@ -208,6 +220,15 @@ int main(int argc, const char** argv) {
       sus::iter::from_range(option_include_macro_prefixes)
           .cloned()
           .collect<sus::Vec<std::string>>();
+  if (option_remove_path_prefix.getNumOccurrences() > 0) {
+    // Canonicalize the path to use `/` instead of `\`.
+    std::string canonical_path = option_remove_path_prefix.getValue();
+    std::replace(canonical_path.begin(), canonical_path.end(), '\\', '/');
+    run_options.remove_path_prefix = sus::some(sus::move(canonical_path));
+  }
+  if (option_add_path_prefix.getNumOccurrences() > 0) {
+    run_options.add_path_prefix = sus::some(option_add_path_prefix.getValue());
+  }
 
   auto fs = llvm::vfs::getRealFileSystem();
   auto result = subdoc::run_files(comp_db, sus::move(run_against_files),

@@ -1579,6 +1579,20 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       auto canonical_path = std::string(sm.getFilename(loc));
       std::replace(canonical_path.begin(), canonical_path.end(), '\\', '/');
 
+      if (cx_.options.remove_path_prefix.is_some()) {
+        const auto& prefix = cx_.options.remove_path_prefix.as_value();
+        if (canonical_path.starts_with(prefix)) {
+          canonical_path = canonical_path.substr(prefix.size());
+          if (canonical_path.starts_with("/"))
+            canonical_path = canonical_path.substr(1u);
+        }
+      }
+      if (cx_.options.add_path_prefix.is_some()) {
+        const auto& prefix = cx_.options.add_path_prefix.as_value();
+        if (!prefix.ends_with("/")) canonical_path.insert(0u, "/");
+        canonical_path.insert(0u, prefix);
+      }
+
       auto link = sus::Option<SourceLink>(SourceLink{
           .quality = quality,
           .file_path = sus::move(canonical_path),
