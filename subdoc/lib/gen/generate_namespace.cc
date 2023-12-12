@@ -161,7 +161,7 @@ void generate_namespace_overview(HtmlWriter::OpenDiv& namespace_div,
     auto header_div = section_div.open_div();
     header_div.add_class("section-header");
 
-    generate_source_link(header_div, element, options);
+    generate_source_link(header_div, element);
 
     if (element.namespace_name != Namespace::Tag::Global) {
       auto span = header_div.open_span();
@@ -427,7 +427,7 @@ enum GenerateFunctionType {
 sus::Result<void, MarkdownToHtmlError> generate_function_references(
     HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
     sus::Slice<SortedFunctionByName> functions, GenerateFunctionType type,
-    ParseMarkdownPageState& page_state, const Options& options) {
+    ParseMarkdownPageState& page_state) {
   if (functions.is_empty()) return sus::ok();
 
   auto section_div = namespace_div.open_div();
@@ -462,8 +462,7 @@ sus::Result<void, MarkdownToHtmlError> generate_function_references(
     for (const SortedFunctionByName& sorted_fn : functions) {
       const FunctionElement& fe =
           function_element_from_sorted(element, sorted_fn);
-      if (auto result =
-              generate_function_reference(items_list, fe, page_state, options);
+      if (auto result = generate_function_reference(items_list, fe, page_state);
           result.is_err()) {
         return sus::err(sus::move(result).unwrap_err());
       }
@@ -512,7 +511,7 @@ sus::Result<void, MarkdownToHtmlError> generate_macro_references(
 sus::Result<void, MarkdownToHtmlError> generate_variable_references(
     HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
     sus::Slice<SortedVariableByName> variables,
-    ParseMarkdownPageState& page_state, const Options& options) {
+    ParseMarkdownPageState& page_state) {
   if (variables.is_empty()) return sus::ok();
 
   auto section_div = namespace_div.open_div();
@@ -535,7 +534,7 @@ sus::Result<void, MarkdownToHtmlError> generate_variable_references(
     for (const SortedVariableByName& sorted_var : variables) {
       const FieldElement& fe = field_element_from_sorted(element, sorted_var);
       if (auto result = generate_field_reference(
-              items_div, fe, /*static_fields=*/false, page_state, options);
+              items_div, fe, /*static_fields=*/false, page_state);
           result.is_err()) {
         return sus::err(sus::move(result).unwrap_err());
       }
@@ -880,7 +879,7 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
   if (!sorted_functions.is_empty()) {
     if (auto result = generate_function_references(
             namespace_div, element, sorted_functions, GenerateFunctions,
-            page_state, options);
+            page_state);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }
@@ -888,7 +887,7 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
   if (!sorted_operators.is_empty()) {
     if (auto result = generate_function_references(
             namespace_div, element, sorted_operators, GenerateOperators,
-            page_state, options);
+            page_state);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }
@@ -896,7 +895,7 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
 
   if (!sorted_variables.is_empty()) {
     if (auto result = generate_variable_references(
-            namespace_div, element, sorted_variables, page_state, options);
+            namespace_div, element, sorted_variables, page_state);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }

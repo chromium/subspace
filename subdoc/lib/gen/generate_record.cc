@@ -143,7 +143,7 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
     auto type_sig_div = section_div.open_div(HtmlWriter::SingleLine);
     type_sig_div.add_class("type-signature");
 
-    generate_source_link(type_sig_div, element, options);
+    generate_source_link(type_sig_div, element);
 
     if (!element.template_params.is_empty()) {
       auto template_pre = type_sig_div.open_pre();
@@ -193,7 +193,7 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
 sus::Result<void, MarkdownToHtmlError> generate_record_fields(
     HtmlWriter::OpenDiv& record_div, const RecordElement& element,
     bool static_fields, sus::Slice<SortedFieldByName> fields,
-    ParseMarkdownPageState& page_state, const Options& options) {
+    ParseMarkdownPageState& page_state) {
   auto section_div = record_div.open_div();
   section_div.add_class("section");
   section_div.add_class("fields");
@@ -221,7 +221,7 @@ sus::Result<void, MarkdownToHtmlError> generate_record_fields(
     for (auto&& [name, sort_key, field_unique_symbol] : fields) {
       const FieldElement& fe = element.fields.at(field_unique_symbol);
       if (auto result = generate_field_reference(items_div, fe, static_fields,
-                                                 page_state, options);
+                                                 page_state);
           result.is_err()) {
         return sus::err(sus::move(result).unwrap_err());
       }
@@ -234,7 +234,7 @@ sus::Result<void, MarkdownToHtmlError> generate_record_fields(
 sus::Result<void, MarkdownToHtmlError> generate_record_methods(
     HtmlWriter::OpenDiv& record_div, const RecordElement& element,
     MethodType type, sus::Slice<SortedFunctionByName> methods,
-    ParseMarkdownPageState& page_state, const Options& options) {
+    ParseMarkdownPageState& page_state) {
   auto section_div = record_div.open_div();
   section_div.add_class("section");
   section_div.add_class("methods");
@@ -292,7 +292,7 @@ sus::Result<void, MarkdownToHtmlError> generate_record_methods(
           function_element_from_sorted(element, type, sorted_fn);
       if (auto result = generate_function_method_reference(
               items_div, func,
-              /*with constraints=*/true, page_state, options);
+              /*with constraints=*/true, page_state);
           result.is_err()) {
         return sus::err(sus::move(result).unwrap_err());
       }
@@ -484,9 +484,9 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
                            md_html, options);
 
   if (!sorted_static_fields.is_empty()) {
-    if (auto result = generate_record_fields(record_div, element, true,
-                                             sorted_static_fields.as_slice(),
-                                             page_state, options);
+    if (auto result =
+            generate_record_fields(record_div, element, true,
+                                   sorted_static_fields.as_slice(), page_state);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }
@@ -495,7 +495,7 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
   if (!sorted_static_methods.is_empty()) {
     if (auto result = generate_record_methods(
             record_div, element, MethodType::StaticMethods,
-            sorted_static_methods.as_slice(), page_state, options);
+            sorted_static_methods.as_slice(), page_state);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }
@@ -503,7 +503,7 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
   if (!sorted_methods.is_empty()) {
     if (auto result = generate_record_methods(
             record_div, element, MethodType::NonStaticMethods,
-            sorted_methods.as_slice(), page_state, options);
+            sorted_methods.as_slice(), page_state);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }
@@ -511,7 +511,7 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
   if (!sorted_conversions.is_empty()) {
     if (auto result = generate_record_methods(
             record_div, element, MethodType::Conversions,
-            sorted_conversions.as_slice(), page_state, options);
+            sorted_conversions.as_slice(), page_state);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }
@@ -519,16 +519,15 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
   if (!sorted_operators.is_empty()) {
     if (auto result = generate_record_methods(
             record_div, element, MethodType::NonStaticOperators,
-            sorted_operators.as_slice(), page_state, options);
+            sorted_operators.as_slice(), page_state);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }
   }
 
   if (!sorted_fields.is_empty()) {
-    if (auto result = generate_record_fields(record_div, element, false,
-                                             sorted_fields.as_slice(),
-                                             page_state, options);
+    if (auto result = generate_record_fields(
+            record_div, element, false, sorted_fields.as_slice(), page_state);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }
@@ -591,7 +590,7 @@ sus::Result<void, MarkdownToHtmlError> generate_record_reference(
 
 sus::Result<void, MarkdownToHtmlError> generate_field_reference(
     HtmlWriter::OpenDiv& div, const FieldElement& element, bool static_fields,
-    ParseMarkdownPageState& page_state, const Options& options) noexcept {
+    ParseMarkdownPageState& page_state) noexcept {
   auto item_div = div.open_div();
   item_div.add_class("section-item");
 
@@ -600,7 +599,7 @@ sus::Result<void, MarkdownToHtmlError> generate_field_reference(
     sig_div.add_class("item-name");
     sig_div.add_class("member-signature");
 
-    generate_source_link(sig_div, element, options);
+    generate_source_link(sig_div, element);
 
     {
       auto anchor = sig_div.open_a();

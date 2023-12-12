@@ -35,6 +35,6 @@ sus::Result<void, MarkdownToHtmlError> generate_record_reference(
 
 sus::Result<void, MarkdownToHtmlError> generate_field_reference(
     HtmlWriter::OpenDiv& div, const FieldElement& element, bool static_fields,
-    ParseMarkdownPageState& page_state, const Options& options) noexcept;
+    ParseMarkdownPageState& page_state) noexcept;
 
 }  // namespace subdoc::gen

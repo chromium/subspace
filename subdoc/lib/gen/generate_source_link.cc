@@ -17,8 +17,7 @@
 namespace subdoc::gen {
 
 void generate_source_link(HtmlWriter::OpenDiv& div,
-                          const CommentElement& element,
-                          const Options& options) {
+                          const CommentElement& element) {
   if (element.source_link.is_some()) {
     const SourceLink& link = element.source_link.as_value();
 
@@ -29,8 +28,6 @@ void generate_source_link(HtmlWriter::OpenDiv& div,
       auto a = source_link_div.open_a();
       {
         std::ostringstream str;
-        // TODO: URL prefix.
-        (void)options;
         str << link.file_path << "#" << link.line;
         a.add_href(sus::move(str).str());
       }
