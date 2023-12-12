@@ -21,6 +21,7 @@
 #include "subdoc/lib/gen/generate_cpp_path.h"
 #include "subdoc/lib/gen/generate_head.h"
 #include "subdoc/lib/gen/generate_nav.h"
+#include "subdoc/lib/gen/generate_source_link.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/gen/options.h"
@@ -124,6 +125,9 @@ sus::Result<void, MarkdownToHtmlError> generate_macro(
       {
         auto signature_div = overload_div.open_div(HtmlWriter::SingleLine);
         signature_div.add_class("macro-signature");
+
+        generate_source_link(signature_div, element, options);
+
         {
           auto auto_span = signature_div.open_span(HtmlWriter::SingleLine);
           auto_span.add_class("macro-define");

@@ -30,10 +30,11 @@ sus::Result<void, MarkdownToHtmlError> generate_function(
 
 sus::Result<void, MarkdownToHtmlError> generate_function_reference(
     HtmlWriter::OpenUl& items_list, const FunctionElement& e,
-    ParseMarkdownPageState& page_state) noexcept;
+    ParseMarkdownPageState& page_state, const Options& options) noexcept;
 
 sus::Result<void, MarkdownToHtmlError> generate_function_method_reference(
     HtmlWriter::OpenDiv& items_list, const FunctionElement& e,
-    bool with_constraints, ParseMarkdownPageState& page_state) noexcept;
+    bool with_constraints, ParseMarkdownPageState& page_state,
+    const Options& options) noexcept;
 
 }  // namespace subdoc::gen

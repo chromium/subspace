@@ -20,8 +20,9 @@
 #include "subdoc/lib/gen/files.h"
 #include "subdoc/lib/gen/generate_cpp_path.h"
 #include "subdoc/lib/gen/generate_head.h"
-#include "subdoc/lib/gen/generate_requires.h"
 #include "subdoc/lib/gen/generate_nav.h"
+#include "subdoc/lib/gen/generate_requires.h"
+#include "subdoc/lib/gen/generate_source_link.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/gen/options.h"
@@ -84,6 +85,9 @@ void generate_concept_overview(HtmlWriter::OpenDiv& record_div,
   {
     auto type_sig_div = section_div.open_div(HtmlWriter::SingleLine);
     type_sig_div.add_class("type-signature");
+
+    generate_source_link(type_sig_div, element, options);
+
     if (!element.template_params.is_empty()) {
       auto template_pre = type_sig_div.open_pre();
       template_pre.add_class("template");
@@ -161,8 +165,8 @@ sus::Result<void, MarkdownToHtmlError> generate_concept(
 
   auto body = html.open_body();
   generate_nav(body, db, "concept", element.name, "",
-                   // TODO: links to what?
-                   sus::empty, options);
+               // TODO: links to what?
+               sus::empty, options);
 
   auto main = body.open_main();
   auto record_div = main.open_div();
