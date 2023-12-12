@@ -19,16 +19,15 @@
 #include "sus/mem/replace.h"
 #include "sus/num/unsigned_integer.h"
 
-#if !defined(SUS_ITERATOR_INVALIDATION)
-#define SUS_ITERATOR_INVALIDATION 1
-#endif
+#if defined(SUS_ITERATOR_INVALIDATION)
 static_assert(SUS_ITERATOR_INVALIDATION == 0 || SUS_ITERATOR_INVALIDATION == 1);
+#endif
 
 namespace sus::iter {
 
 struct IterRefCounter;
 
-#if SUS_ITERATOR_INVALIDATION
+#if !defined(SUS_ITERATOR_INVALIDATION) || SUS_ITERATOR_INVALIDATION
 
 /// An iterator's refcount on the owning collection, preventig mutation while
 /// the iterator is alive.
@@ -131,7 +130,9 @@ struct [[_sus_trivial_abi]] IterRefCounter final {
 
   union {
     /// The `count` member is active in owning collections like `Vec`.
-    mutable usize count;  // TODO: should be uptr.
+    // TODO: This needs to be atomic: a container can be iterated on multiple
+    // threads.
+    mutable usize count;
     /// The `count_ptr` member is active in view collections like `Slice`. It
     /// points to he owning collection. The presence of a `count_ptr` must also
     /// indicate an increment in the `count` it points to, lest the `count_ptr`

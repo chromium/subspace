@@ -17,6 +17,6 @@
 /// Evaluates and concatenates two macro expressions.
 ///
 /// `x##y` will concatenate without evaluating.
-#define sus_eval_and_concat(x, y) _sus__eval_and_concat_impl(x, y)
+#define _sus_eval_and_concat(x, y) _sus__eval_and_concat_impl(x, y)
 
 #define _sus__eval_and_concat_impl(x, y) x##y
