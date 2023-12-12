@@ -302,6 +302,14 @@ code {
     padding-bottom: 0.2rem;
 }
 
+.src a {
+    text-decoration: none;
+    color: rgb(250, 199, 121);
+}
+.src a:hover {
+    text-decoration: underline;
+}
+
 /* These types have long descriptions inline in the context's page. */
 .record .section-items :is(.type-signature, .function-signature, .member-signature) {
     background-color: rgba(43, 43, 43, 1.0);
@@ -475,4 +483,12 @@ ul.item-table .item-name {
     ul.item-table > li.nested > div.description {
         padding-left: 2rem;
     }
+}
+
+.section-header .src {
+    font-size: 80%;
+}
+.src.rightside {
+    padding-left: 12px;
+    float: right;
 }

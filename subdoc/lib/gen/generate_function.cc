@@ -22,6 +22,7 @@
 #include "subdoc/lib/gen/generate_head.h"
 #include "subdoc/lib/gen/generate_nav.h"
 #include "subdoc/lib/gen/generate_requires.h"
+#include "subdoc/lib/gen/generate_source_link.h"
 #include "subdoc/lib/gen/generate_type.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/markdown_to_html.h"
@@ -94,7 +95,7 @@ void generate_function_extras(HtmlWriter::OpenDiv& div,
 
 void generate_overload_set(HtmlWriter::OpenDiv& div,
                            const FunctionElement& element, Style style,
-                           bool link_to_page) noexcept {
+                           bool link_to_page, const Options& options) noexcept {
   for (const FunctionOverload& overload : element.overloads) {
     auto overload_div = div.open_div();
     overload_div.add_class("overload");
@@ -113,6 +114,9 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
     {
       auto signature_div = overload_div.open_div(HtmlWriter::SingleLine);
       signature_div.add_class("function-signature");
+
+      generate_source_link(signature_div, element, options);
+
       if (!link_to_page) {
         // Only methods are not given their own page, and are just a named
         // anchor on the Record's page.
@@ -296,6 +300,9 @@ sus::Result<void, MarkdownToHtmlError> generate_function(
       {
         auto signature_div = overload_div.open_div(HtmlWriter::SingleLine);
         signature_div.add_class("function-signature");
+
+        generate_source_link(signature_div, element, options);
+
         if (!overload.template_params.is_empty()) {
           auto template_div = signature_div.open_div(HtmlWriter::SingleLine);
           template_div.add_class("template");
@@ -346,7 +353,7 @@ sus::Result<void, MarkdownToHtmlError> generate_function(
 
 sus::Result<void, MarkdownToHtmlError> generate_function_reference(
     HtmlWriter::OpenUl& items_list, const FunctionElement& element,
-    ParseMarkdownPageState& page_state) noexcept {
+    ParseMarkdownPageState& page_state, const Options& options) noexcept {
   auto item_li = items_list.open_li();
   item_li.add_class("section-item");
 
@@ -358,7 +365,7 @@ sus::Result<void, MarkdownToHtmlError> generate_function_reference(
     // Operator overloads can all have different parameters and return types, so
     // we display them in long form.
     generate_overload_set(overload_set_div, element, StyleShort,
-                          /*link_to_page=*/true);
+                          /*link_to_page=*/true, options);
   }
   {
     auto desc_div = item_li.open_div();
@@ -379,15 +386,17 @@ sus::Result<void, MarkdownToHtmlError> generate_function_reference(
 
 sus::Result<void, MarkdownToHtmlError> generate_function_method_reference(
     HtmlWriter::OpenDiv& item_div, const FunctionElement& element,
-    bool with_constraints, ParseMarkdownPageState& page_state) noexcept {
+    bool with_constraints, ParseMarkdownPageState& page_state,
+    const Options& options) noexcept {
   {
     auto overload_set_div = item_div.open_div();
     overload_set_div.add_class("overload-set");
     overload_set_div.add_class("item-name");
+
     generate_overload_set(
         overload_set_div, element,
         with_constraints ? StyleLongWithConstraints : StyleLong,
-        /*link_to_page=*/false);
+        /*link_to_page=*/false, options);
   }
   {
     auto desc_div = item_div.open_div();

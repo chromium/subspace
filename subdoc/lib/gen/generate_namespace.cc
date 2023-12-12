@@ -25,6 +25,7 @@
 #include "subdoc/lib/gen/generate_macro.h"
 #include "subdoc/lib/gen/generate_nav.h"
 #include "subdoc/lib/gen/generate_record.h"
+#include "subdoc/lib/gen/generate_source_link.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/markdown_to_html.h"
 #include "sus/assertions/unreachable.h"
@@ -159,6 +160,9 @@ void generate_namespace_overview(HtmlWriter::OpenDiv& namespace_div,
   {
     auto header_div = section_div.open_div();
     header_div.add_class("section-header");
+
+    generate_source_link(header_div, element, options);
+
     if (element.namespace_name != Namespace::Tag::Global) {
       auto span = header_div.open_span();
       span.write_text("Namespace");
@@ -184,8 +188,7 @@ void generate_namespace_overview(HtmlWriter::OpenDiv& namespace_div,
             case CppPathRecord: return "type-name";
             case CppPathFunction:
               break;  // Function can't be an ancesor of a record.
-            case CppPathMacro:
-              break;  // Macro can't be an ancesor of a record.
+            case CppPathMacro: break;  // Macro can't be an ancesor of a record.
             case CppPathConcept:
               break;  // Concept can't be an ancestor of a namespace.
           }
@@ -424,7 +427,7 @@ enum GenerateFunctionType {
 sus::Result<void, MarkdownToHtmlError> generate_function_references(
     HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
     sus::Slice<SortedFunctionByName> functions, GenerateFunctionType type,
-    ParseMarkdownPageState& page_state) {
+    ParseMarkdownPageState& page_state, const Options& options) {
   if (functions.is_empty()) return sus::ok();
 
   auto section_div = namespace_div.open_div();
@@ -459,7 +462,8 @@ sus::Result<void, MarkdownToHtmlError> generate_function_references(
     for (const SortedFunctionByName& sorted_fn : functions) {
       const FunctionElement& fe =
           function_element_from_sorted(element, sorted_fn);
-      if (auto result = generate_function_reference(items_list, fe, page_state);
+      if (auto result =
+              generate_function_reference(items_list, fe, page_state, options);
           result.is_err()) {
         return sus::err(sus::move(result).unwrap_err());
       }
@@ -508,7 +512,7 @@ sus::Result<void, MarkdownToHtmlError> generate_macro_references(
 sus::Result<void, MarkdownToHtmlError> generate_variable_references(
     HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
     sus::Slice<SortedVariableByName> variables,
-    ParseMarkdownPageState& page_state) {
+    ParseMarkdownPageState& page_state, const Options& options) {
   if (variables.is_empty()) return sus::ok();
 
   auto section_div = namespace_div.open_div();
@@ -531,7 +535,7 @@ sus::Result<void, MarkdownToHtmlError> generate_variable_references(
     for (const SortedVariableByName& sorted_var : variables) {
       const FieldElement& fe = field_element_from_sorted(element, sorted_var);
       if (auto result = generate_field_reference(
-              items_div, fe, /*static_fields=*/false, page_state);
+              items_div, fe, /*static_fields=*/false, page_state, options);
           result.is_err()) {
         return sus::err(sus::move(result).unwrap_err());
       }
@@ -876,7 +880,7 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
   if (!sorted_functions.is_empty()) {
     if (auto result = generate_function_references(
             namespace_div, element, sorted_functions, GenerateFunctions,
-            page_state);
+            page_state, options);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }
@@ -884,7 +888,7 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
   if (!sorted_operators.is_empty()) {
     if (auto result = generate_function_references(
             namespace_div, element, sorted_operators, GenerateOperators,
-            page_state);
+            page_state, options);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }
@@ -892,7 +896,7 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
 
   if (!sorted_variables.is_empty()) {
     if (auto result = generate_variable_references(
-            namespace_div, element, sorted_variables, page_state);
+            namespace_div, element, sorted_variables, page_state, options);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }
