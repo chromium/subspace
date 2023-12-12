@@ -13,4 +13,6 @@ out\subdoc\subdoc -p out --out docs ^
     --project-logo logo.png ^
     --project-name Subspace ^
     --ignore-bad-code-links ^
+    --remove-source-path-prefix %cd% ^
+    --add-source-path-prefix .. ^
     subspace/sus/num/uptr_uni reverse_uni

@@ -15,4 +15,6 @@ out/subdoc/subdoc -p out --out docs \
     --project-logo logo.png \
     --project-name Subspace \
     --ignore-bad-code-links \
+    --remove-source-path-prefix $PWD \
+    --add-source-path-prefix .. \
    i8_unittest $*

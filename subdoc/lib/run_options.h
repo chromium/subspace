@@ -49,6 +49,14 @@ struct RunOptions {
     macro_prefixes = sus::move(prefixes);
     return sus::move(*this);
   }
+  RunOptions set_remove_path_prefix(sus::Option<std::string> prefix) && {
+    remove_path_prefix = sus::move(prefix);
+    return sus::move(*this);
+  }
+  RunOptions set_add_path_prefix(sus::Option<std::string> prefix) && {
+    add_path_prefix = sus::move(prefix);
+    return sus::move(*this);
+  }
 
   /// Whether to print progress while collecting documentation from souce files.
   bool show_progress = true;
@@ -69,6 +77,11 @@ struct RunOptions {
   /// global namespace/project overview page. This is the raw markdown text, not
   /// parsed to html yet.
   std::string project_overview_text;
+  /// A prefix to remove from all paths in source links.
+  sus::Option<std::string> remove_path_prefix;
+  /// A prefix to add to all paths in source links, after removing the prefix
+  /// specified by `remove_path_prefix`.
+  sus::Option<std::string> add_path_prefix;
 };
 
 }  // namespace subdoc
