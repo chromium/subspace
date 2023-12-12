@@ -1575,9 +1575,13 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     }
 
     if (entry) {
+      // Canonicalize the path to use `/` instead of `\`.
+      auto canonical_path = std::string(sm.getFilename(loc));
+      std::replace(canonical_path.begin(), canonical_path.end(), '\\', '/');
+
       auto link = sus::Option<SourceLink>(SourceLink{
           .quality = quality,
-          .file_path = std::string(sm.getFilename(loc)),
+          .file_path = sus::move(canonical_path),
           .line = sm.getLineNumber(sm.getFileID(loc), sm.getFileOffset(loc)),
       });
       if (link > e.source_link) e.source_link = sus::move(link);

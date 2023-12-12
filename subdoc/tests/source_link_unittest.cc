@@ -19,7 +19,7 @@ namespace {
 
 TEST_F(SubDocTest, SourceLinkFilePath) {
 #ifdef _MSC_VER
-  const char PATH[] = "C:/path/to/test.cc";
+  const char PATH[] = "C:\\path\\to\\test.cc";
 #else
   const char PATH[] = "/path/to/test.cc";
 #endif
@@ -34,7 +34,7 @@ TEST_F(SubDocTest, SourceLinkFilePath) {
   auto& e = db.find_variable_comment("2:5").unwrap();
   ASSERT_TRUE(e.source_link.is_some());
 #ifdef _MSC_VER
-  EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "C:\\path\\to\\test.cc");
+  EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "C:/path/to/test.cc");
 #else
   EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "/path/to/test.cc");
 #endif
