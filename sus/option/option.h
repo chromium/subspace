@@ -1680,6 +1680,9 @@ class Option final {
     return ::sus::clone(*this).as_mut();
   }
 
+  /// Produces an [`Iterator`]($sus::iter::Iterator) over the single item in the
+  /// `Option`, or an empty iterator. The iterator will return a const
+  /// reference.
   _sus_pure constexpr OptionIter<const std::remove_reference_t<T>&> iter()
       const& noexcept;
   constexpr OptionIter<const std::remove_reference_t<T>&> iter() && noexcept
@@ -1687,12 +1690,20 @@ class Option final {
   constexpr OptionIter<const std::remove_reference_t<T>&> iter() const& noexcept
     requires(std::is_reference_v<T>);
 
+  /// Produces an [`Iterator`]($sus::iter::Iterator) over the single item in the
+  /// `Option`, or an empty iterator. If the `Option` holds a value, the
+  /// iterator will return a mutable reference to it. If the `Option` holds a
+  /// reference, it will return that reference.
   _sus_pure constexpr OptionIter<T&> iter_mut() & noexcept;
   constexpr OptionIter<T&> iter_mut() && noexcept
     requires(std::is_reference_v<T>);
   constexpr OptionIter<T&> iter_mut() const& noexcept
     requires(std::is_reference_v<T>);
 
+  /// Produces an [`Iterator`]($sus::iter::Iterator) over the single item in the
+  /// `Option`, or an empty iterator. If the Option holds a value, the iterator
+  /// will return ownership of the value. If the `Option` holds a reference, it
+  /// will return that reference.
   constexpr OptionIter<T> into_iter() && noexcept;
   constexpr OptionIter<T> into_iter() const& noexcept
     requires(::sus::mem::CopyOrRef<T>);
