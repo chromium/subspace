@@ -208,50 +208,52 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       const std::map<unsigned, clang::RawComment*>* comments_in_file =
           ast_comments.getCommentsInFile(file);
       if (comments_in_file == nullptr) continue;
-      if (comments_in_file->empty()) continue;
 
       const u32 macro_start = decomposed_loc.second;
-      if (macro_start == 0u) continue;
 
       // Find the nearest comment above the macro definition.
-      auto it = comments_in_file->lower_bound(macro_start);
-      if (it == comments_in_file->begin()) {
-        continue;
-      }
-      --it;
-      clang::RawComment* raw_comment = it->second;
+      clang::RawComment* raw_comment = [&]() -> clang::RawComment* {
+        if (comments_in_file->empty()) return nullptr;
 
-      // The comment should be docs and be above the macro.
-      if (!raw_comment->isDocumentation()) continue;
-      if (raw_comment->isTrailingComment()) continue;
+        auto it = comments_in_file->lower_bound(macro_start);
+        if (it == comments_in_file->begin()) return nullptr;
+        --it;
+        clang::RawComment* raw_comment = it->second;
 
-      // Now we know the offset into the file for the end of the macro and the
-      // start of the comment.
-      const u32 comment_end = ast_comments.getCommentEndOffset(raw_comment);
+        // The comment should be docs and be above the macro.
+        if (!raw_comment->isDocumentation()) return nullptr;
+        if (raw_comment->isTrailingComment()) return nullptr;
 
-      // Make sure the comment is actually against the macro. Read the
-      // original buffer.
-      bool invalid = false;
-      const char* buffer = sm.getBufferData(file, &invalid).data();
-      if (invalid) continue;
-      llvm::StringRef between(buffer + comment_end, macro_start - comment_end);
+        // Now we know the offset into the file for the end of the macro and the
+        // start of the comment.
+        const u32 comment_end = ast_comments.getCommentEndOffset(raw_comment);
 
-      // Drop the #define for this macro.
-      while (between.endswith(" "))
-        between = between.substr(0u, between.size() - 1u);
-      if (between.endswith("define"))
-        between = between.substr(0u, between.size() - strlen("define"));
-      while (between.endswith(" "))
-        between = between.substr(0u, between.size() - 1u);
-      if (between.endswith("#"))
-        between = between.substr(0u, between.size() - strlen("#"));
+        // Make sure the comment is actually against the macro. Read the
+        // original buffer.
+        bool invalid = false;
+        const char* buffer = sm.getBufferData(file, &invalid).data();
+        if (invalid) return nullptr;
+        llvm::StringRef between(buffer + comment_end,
+                                macro_start - comment_end);
 
-      // There should be no other declarations or macros between the comment and
-      // this macro. This pattern is copied from
-      // clang::ASTContext::getRawCommentForDeclNoCacheImpl().
-      if (between.find_last_of(";{}#@") != llvm::StringRef::npos) {
-        continue;
-      }
+        // Drop the #define for this macro.
+        while (between.endswith(" "))
+          between = between.substr(0u, between.size() - 1u);
+        if (between.endswith("define"))
+          between = between.substr(0u, between.size() - strlen("define"));
+        while (between.endswith(" "))
+          between = between.substr(0u, between.size() - 1u);
+        if (between.endswith("#"))
+          between = between.substr(0u, between.size() - strlen("#"));
+
+        // There should be no other declarations or macros between the comment and
+        // this macro. This pattern is copied from
+        // clang::ASTContext::getRawCommentForDeclNoCacheImpl().
+        if (between.find_last_of(";{}#@") != llvm::StringRef::npos) {
+          return nullptr;
+        }
+        return raw_comment;
+      }();
 
       auto params = sus::Option<sus::Vec<std::string>>();
       if (info->isFunctionLike()) {
