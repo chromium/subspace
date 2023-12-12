@@ -86,7 +86,7 @@ void generate_concept_overview(HtmlWriter::OpenDiv& record_div,
     auto type_sig_div = section_div.open_div(HtmlWriter::SingleLine);
     type_sig_div.add_class("type-signature");
 
-    generate_source_link(type_sig_div, element, options);
+    generate_source_link(type_sig_div, element);
 
     if (!element.template_params.is_empty()) {
       auto template_pre = type_sig_div.open_pre();

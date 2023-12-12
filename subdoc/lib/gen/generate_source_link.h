@@ -21,7 +21,6 @@
 namespace subdoc::gen {
 
 void generate_source_link(HtmlWriter::OpenDiv& div,
-                          const CommentElement& element,
-                          const Options& options);
+                          const CommentElement& element);
 
 }  // namespace subdoc::gen

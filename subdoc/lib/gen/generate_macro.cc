@@ -126,7 +126,7 @@ sus::Result<void, MarkdownToHtmlError> generate_macro(
         auto signature_div = overload_div.open_div(HtmlWriter::SingleLine);
         signature_div.add_class("macro-signature");
 
-        generate_source_link(signature_div, element, options);
+        generate_source_link(signature_div, element);
 
         {
           auto auto_span = signature_div.open_span(HtmlWriter::SingleLine);
