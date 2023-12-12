@@ -420,6 +420,7 @@ jobs:
             --project-name Subspace \
             --remove-source-path-prefix $PWD \
             --add-source-path-prefix ${source_url} \
+            --source-path-line-prefix L \
             /home/runner/work/subspace/subspace/sus
 
   bench:

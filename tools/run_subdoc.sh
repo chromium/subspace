@@ -17,4 +17,5 @@ out/subdoc/subdoc -p out --out docs \
     --ignore-bad-code-links \
     --remove-source-path-prefix $PWD \
     --add-source-path-prefix .. \
+    --source-path-line-prefix L \
    i8_unittest $*

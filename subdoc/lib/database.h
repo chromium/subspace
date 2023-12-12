@@ -69,7 +69,7 @@ struct SourceLink {
   };
   Quality quality;
   std::string file_path;
-  u32 line;
+  std::string line;
 
   friend std::weak_ordering operator<=>(const SourceLink& lhs,
                                         const SourceLink& rhs) noexcept {

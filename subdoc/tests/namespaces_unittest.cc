@@ -102,7 +102,7 @@ TEST_F(SubDocTest, NamespaceComment) {
   auto& e = db.find_namespace_comment("2:5").unwrap();
   ASSERT_TRUE(e.source_link.is_some());
   EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 3u);
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, "3");
 }
 
 TEST_F(SubDocTest, NestedNamespaceComment) {
@@ -119,7 +119,7 @@ TEST_F(SubDocTest, NestedNamespaceComment) {
   auto& e = db.find_namespace_comment("3:5").unwrap();
   ASSERT_TRUE(e.source_link.is_some());
   EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 4u);
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, "4");
 }
 
 TEST_F(SubDocTest, NamespaceDotsComment) {

@@ -26,7 +26,7 @@ TEST_F(SubDocTest, Struct) {
   auto& e = db.find_record_comment("2:5").unwrap();
   ASSERT_TRUE(e.source_link.is_some());
   EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 3u);
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, "3");
 }
 
 TEST_F(SubDocTest, ForwardStruct) {
@@ -55,7 +55,7 @@ TEST_F(SubDocTest, TemplateStruct) {
   auto& e = db.find_record_comment("2:5").unwrap();
   ASSERT_TRUE(e.source_link.is_some());
   EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 4u);
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, "4");
 }
 
 TEST_F(SubDocTest, TemplateStructSpecialization) {
@@ -88,7 +88,7 @@ TEST_F(SubDocTest, StructInNamedNamespace) {
   auto& e = db.find_record_comment("3:5").unwrap();
   ASSERT_TRUE(e.source_link.is_some());
   EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 4u);
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, "4");
 }
 
 TEST_F(SubDocTest, StructInPrivateNamespace) {
@@ -147,7 +147,7 @@ TEST_F(SubDocTest, NestedStruct) {
   auto& e = db.find_record_comment("4:7").unwrap();
   ASSERT_TRUE(e.source_link.is_some());
   EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 5u);
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, "5");
 }
 
 TEST_F(SubDocTest, PrivateStruct) {
@@ -198,12 +198,12 @@ TEST_F(SubDocTest, AnonStruct) {
     auto& e = db.find_record_comment("2:5").unwrap();
     ASSERT_TRUE(e.source_link.is_some());
     EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 3u);
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, "3");
   }
   {
     auto& e = db.find_record_comment("4:5").unwrap();
     ASSERT_TRUE(e.source_link.is_some());
     EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 5u);
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, "5");
   }
 }

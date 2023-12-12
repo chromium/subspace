@@ -15,4 +15,5 @@ out\subdoc\subdoc -p out --out docs ^
     --ignore-bad-code-links ^
     --remove-source-path-prefix %cd% ^
     --add-source-path-prefix .. ^
+    --source-path-line-prefix L ^
     subspace/sus/num/uptr_uni reverse_uni

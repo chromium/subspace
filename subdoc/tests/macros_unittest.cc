@@ -35,7 +35,7 @@ TEST_F(SubDocTest, MacroFunction) {
   auto& e = db.find_function_comment("3:7").unwrap();
   ASSERT_TRUE(e.source_link.is_some());
   EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 4u);
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, "4");
 }
 
 TEST_F(SubDocTest, MacroClass) {
@@ -109,7 +109,7 @@ TEST_F(SubDocTest, MacroNamesField) {
   auto& e = db.find_field_comment("4:9").unwrap();
   ASSERT_TRUE(e.source_link.is_some());
   EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 5u);
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, "5");
 }
 
 TEST_F(SubDocTest, MacroModName) {
@@ -126,7 +126,7 @@ TEST_F(SubDocTest, MacroModName) {
   auto& e = db.find_record_comment("4:5").unwrap();
   ASSERT_TRUE(e.source_link.is_some());
   EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 5u);
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, "5");
 }
 
 TEST_F(SubDocTest, MacroMultilineComment) {
@@ -185,5 +185,5 @@ TEST_F(SubDocTest, Macro) {
   auto& e = db.find_macro_comment("2:5").unwrap();
   ASSERT_TRUE(e.source_link.is_some());
   EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 3u);
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, "3");
 }

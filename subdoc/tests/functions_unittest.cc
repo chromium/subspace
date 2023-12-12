@@ -26,7 +26,7 @@ TEST_F(SubDocTest, Function) {
   auto& e = db.find_function_comment("2:5").unwrap();
   ASSERT_TRUE(e.source_link.is_some());
   EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 3u);
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, "3");
 }
 
 TEST_F(SubDocTest, FunctionOverloads) {
@@ -47,13 +47,13 @@ TEST_F(SubDocTest, FunctionOverloads) {
     auto& e = db.find_function_comment("2:5").unwrap();
     ASSERT_TRUE(e.source_link.is_some());
     EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 3u);
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, "3");
   }
   {
     auto& e = db.find_function_comment("7:5").unwrap();
     ASSERT_TRUE(e.source_link.is_some());
     EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 8u);
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, "8");
   }
 }
 
@@ -80,13 +80,13 @@ TEST_F(SubDocTest, FunctionOverloadsNoMerge) {
     auto& e = db.find_function_comment("2:5").unwrap();
     ASSERT_TRUE(e.source_link.is_some());
     EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 6u);
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, "6");
   }
   {
     auto& e = db.find_function_comment("7:5").unwrap();
     ASSERT_TRUE(e.source_link.is_some());
     EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 11u);
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, "11");
   }
 }
 
@@ -109,13 +109,13 @@ TEST_F(SubDocTest, FunctionOverloadsMerge) {
     auto& e = db.find_function_comment("2:5").unwrap();
     ASSERT_TRUE(e.source_link.is_some());
     EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 4u);
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, "4");
   }
   {
     auto& e = db.find_function_comment("7:5").unwrap();
     ASSERT_TRUE(e.source_link.is_some());
     EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 9u);
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, "9");
   }
 }
 
@@ -205,7 +205,7 @@ TEST_F(SubDocTest, ForwardDeclDocumented) {
   auto& e = db.find_function_comment("2:5").unwrap();
   ASSERT_TRUE(e.source_link.is_some());
   EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 4u);
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, "4");
 }
 
 TEST_F(SubDocTest, ForwardDeclUndocumented) {
@@ -222,7 +222,7 @@ TEST_F(SubDocTest, ForwardDeclUndocumented) {
   auto& e = db.find_function_comment("3:5").unwrap();
   ASSERT_TRUE(e.source_link.is_some());
   EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 4u);
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, "4");
 }
 
 TEST_F(SubDocTest, FunctionInNamedNamespace) {
@@ -239,7 +239,7 @@ TEST_F(SubDocTest, FunctionInNamedNamespace) {
   auto& e = db.find_function_comment("3:5").unwrap();
   ASSERT_TRUE(e.source_link.is_some());
   EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 4u);
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, "4");
 }
 
 TEST_F(SubDocTest, FunctionInAnonymousNamespace) {
@@ -294,19 +294,19 @@ TEST_F(SubDocTest, FunctionFriend) {
     auto& e = db.find_function_comment("3:7").unwrap();
     ASSERT_TRUE(e.source_link.is_some());
     EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 4u);
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, "4");
   }
   {
     auto& e = db.find_function_comment("7:7").unwrap();
     ASSERT_TRUE(e.source_link.is_some());
     EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 11u);
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, "11");
   }
   {
     auto& e = db.find_function_comment("13:5").unwrap();
     ASSERT_TRUE(e.source_link.is_some());
     EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 14u);
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, "14");
   }
 }
 

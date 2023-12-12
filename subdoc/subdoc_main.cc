@@ -118,6 +118,12 @@ int main(int argc, const char** argv) {
           "specified by `--remove-source-path-prefix` is removed."),
       llvm::cl::cat(option_category));
 
+  llvm::cl::opt<std::string> option_source_line_prefix(
+      "source-path-line-prefix",
+      llvm::cl::desc("A prefix to add to the line number on all source code "
+                     "links. Github uses an `L` as its prefix."),
+      llvm::cl::cat(option_category));
+
   llvm::cl::opt<bool> option_no_source_links(
       "no-source-links",
       llvm::cl::desc("Avoid generating links to source code."),
@@ -228,13 +234,15 @@ int main(int argc, const char** argv) {
           .collect<sus::Vec<std::string>>();
   run_options.generate_source_links = !option_no_source_links.getValue();
   if (option_remove_path_prefix.getNumOccurrences() > 0) {
-    // Canonicalize the path to use `/` instead of `\`.
-    std::string canonical_path = option_remove_path_prefix.getValue();
-    std::replace(canonical_path.begin(), canonical_path.end(), '\\', '/');
-    run_options.remove_path_prefix = sus::some(sus::move(canonical_path));
+    run_options.remove_path_prefix =
+        sus::some(sus::move(option_remove_path_prefix.getValue()));
   }
   if (option_add_path_prefix.getNumOccurrences() > 0) {
     run_options.add_path_prefix = sus::some(option_add_path_prefix.getValue());
+  }
+  if (option_source_line_prefix.getNumOccurrences() > 0) {
+    run_options.source_line_prefix =
+        sus::some(option_source_line_prefix.getValue());
   }
 
   auto fs = llvm::vfs::getRealFileSystem();

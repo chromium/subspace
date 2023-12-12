@@ -49,12 +49,20 @@ struct RunOptions {
     macro_prefixes = sus::move(prefixes);
     return sus::move(*this);
   }
+  RunOptions set_generate_source_links(bool gen) && {
+    generate_source_links = gen;
+    return sus::move(*this);
+  }
   RunOptions set_remove_path_prefix(sus::Option<std::string> prefix) && {
     remove_path_prefix = sus::move(prefix);
     return sus::move(*this);
   }
   RunOptions set_add_path_prefix(sus::Option<std::string> prefix) && {
     add_path_prefix = sus::move(prefix);
+    return sus::move(*this);
+  }
+  RunOptions set_source_line_prefix(sus::Option<std::string> prefix) && {
+    source_line_prefix = sus::move(prefix);
     return sus::move(*this);
   }
 
@@ -84,6 +92,9 @@ struct RunOptions {
   /// A prefix to add to all paths in source links, after removing the prefix
   /// specified by `remove_path_prefix`.
   sus::Option<std::string> add_path_prefix;
+  /// A prefix to add to the source code line number html fragment. Github uses
+  /// an `L` as its prefix.
+  sus::Option<std::string> source_line_prefix;
 };
 
 }  // namespace subdoc

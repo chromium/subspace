@@ -35,13 +35,13 @@ TEST_F(SubDocTest, AliasUsingStruct) {
     auto& e = db.find_alias_comment("7:5").unwrap();
     ASSERT_TRUE(e.source_link.is_some());
     EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 8u);
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, "8");
   }
   {
     auto& e = db.find_alias_comment("10:5").unwrap();
     ASSERT_TRUE(e.source_link.is_some());
     EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 11u);
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, "11");
   }
 }
 
@@ -66,13 +66,13 @@ TEST_F(SubDocTest, AliasUsingConcept) {
     auto& e = db.find_alias_comment("7:5").unwrap();
     ASSERT_TRUE(e.source_link.is_some());
     EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 8u);
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, "8");
   }
   {
     auto& e = db.find_alias_comment("10:5").unwrap();
     ASSERT_TRUE(e.source_link.is_some());
     EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 11u);
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, "11");
   }
 }
 
@@ -98,7 +98,7 @@ TEST_F(SubDocTest, AliasUsingMethod) {
   auto& e = db.find_alias_comment("10:7").unwrap();
   ASSERT_TRUE(e.source_link.is_some());
   EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 11u);
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, "11");
 }
 
 TEST_F(SubDocTest, AliasUsingEnumInNamespace) {
@@ -114,7 +114,7 @@ TEST_F(SubDocTest, AliasUsingEnumInNamespace) {
   auto& e = db.find_alias_comment("3:5").unwrap();
   ASSERT_TRUE(e.source_link.is_some());
   EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 4u);
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, "4");
 }
 
 TEST_F(SubDocTest, DISABLED_AliasUsingEnum) {
@@ -141,13 +141,13 @@ TEST_F(SubDocTest, DISABLED_AliasUsingEnum) {
     auto& e = db.find_alias_comment("8:7").unwrap();
     ASSERT_TRUE(e.source_link.is_some());
     EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 9u);
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, "9");
   }
   {
     auto& e = db.find_alias_comment("13:5").unwrap();
     ASSERT_TRUE(e.source_link.is_some());
     EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 14u);
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, "14");
   }
 }
 
@@ -185,13 +185,13 @@ TEST_F(SubDocTest, AliasNamedTypeInNamespace) {
     auto& e = db.find_alias_comment("7:5").unwrap();
     ASSERT_TRUE(e.source_link.is_some());
     EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 8u);
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, "8");
   }
   {
     auto& e = db.find_alias_comment("10:5").unwrap();
     ASSERT_TRUE(e.source_link.is_some());
     EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 11u);
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, "11");
   }
 }
 
@@ -213,7 +213,7 @@ TEST_F(SubDocTest, AliasNamedTypeInRecord) {
     auto& e = db.find_alias_comment("7:7").unwrap();
     ASSERT_TRUE(e.source_link.is_some());
     EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 8u);
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, "8");
   }
 }
 
@@ -233,6 +233,6 @@ TEST_F(SubDocTest, AliasUsingVariable) {
     auto& e = db.find_alias_comment("6:5").unwrap();
     ASSERT_TRUE(e.source_link.is_some());
     EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-    EXPECT_EQ(e.source_link.as_ref().unwrap().line, 7u);
+    EXPECT_EQ(e.source_link.as_ref().unwrap().line, "7");
   }
 }

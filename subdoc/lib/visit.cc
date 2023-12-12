@@ -1583,9 +1583,14 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       std::replace(canonical_path.begin(), canonical_path.end(), '\\', '/');
 
       if (cx_.options.remove_path_prefix.is_some()) {
-        const auto& prefix = cx_.options.remove_path_prefix.as_value();
-        if (canonical_path.starts_with(prefix)) {
-          canonical_path = canonical_path.substr(prefix.size());
+        // Canonicalize the path to use `/` instead of `\`.
+        std::string canonical_prefix =
+            sus::clone(cx_.options.remove_path_prefix.as_value());
+        std::replace(canonical_prefix.begin(), canonical_prefix.end(), '\\',
+                     '/');
+
+        if (canonical_path.starts_with(canonical_prefix)) {
+          canonical_path = canonical_path.substr(canonical_prefix.size());
           if (canonical_path.starts_with("/"))
             canonical_path = canonical_path.substr(1u);
         }
@@ -1596,10 +1601,16 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         canonical_path.insert(0u, prefix);
       }
 
+      std::ostringstream line;
+      if (cx_.options.source_line_prefix.is_some()) {
+        line << cx_.options.source_line_prefix.as_value();
+      }
+      line << sm.getLineNumber(sm.getFileID(loc), sm.getFileOffset(loc));
+
       auto link = sus::Option<SourceLink>(SourceLink{
           .quality = quality,
           .file_path = sus::move(canonical_path),
-          .line = sm.getLineNumber(sm.getFileID(loc), sm.getFileOffset(loc)),
+          .line = sus::move(line).str(),
       });
       if (link > e.source_link) e.source_link = sus::move(link);
     }

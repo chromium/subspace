@@ -38,7 +38,34 @@ TEST_F(SubDocTest, SourceLinkFilePath) {
 #else
   EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "/path/to/test.cc");
 #endif
-  EXPECT_EQ(e.source_link.as_ref().unwrap().line, 3u);
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, "3");
+}
+
+TEST_F(SubDocTest, SourceLinkPrefixes) {
+#ifdef _MSC_VER
+  const char PATH[] = "C:\\path\\to\\test.cc";
+  const char REMOVE[] = "C:\\path";
+#else
+  const char PATH[] = "/path/to/test.cc";
+  const char REMOVE[] = "/path";
+#endif
+
+  auto options = subdoc::RunOptions()
+                     .set_show_progress(false)
+                     .set_remove_path_prefix(sus::some(REMOVE))
+                     .set_add_path_prefix(sus::some("/things"))
+                     .set_source_line_prefix(sus::some("L"));
+  auto result = run_code_with_options(options, PATH, R"(
+    /// Comment headline 1
+    int i;
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  ASSERT_TRUE(has_variable_comment(db, "2:5", "<p>Comment headline 1</p>"));
+  auto& e = db.find_variable_comment("2:5").unwrap();
+  ASSERT_TRUE(e.source_link.is_some());
+  EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "/things/to/test.cc");
+  EXPECT_EQ(e.source_link.as_ref().unwrap().line, "L3");
 }
 
 }  // namespace
