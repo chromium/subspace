@@ -28,15 +28,15 @@ class Repeat;
 
 /// Creates a new iterator that endlessly repeats a single element.
 ///
-/// The `repeat()` function repeats a single value over and over again.
-///
-/// Infinite iterators like `repeat()` are often used with adapters like
+/// The `repeat` function repeats a single value over and over again.
+/// Infinite iterators like `repeat` are often used with adapters like
 /// [`Iterator::take()`]($sus::iter::IteratorBase::take), in order to make them
 /// finite.
 ///
-/// If the element type of the iterator you need does not implement `Clone`, or
-/// if you do not want to keep the repeated element in memory, you can instead
-/// use the `repeat_with()` function.
+/// If the element type of the iterator you need does not implement [`Clone`](
+/// $sus::mem::Clone), or if you do not want to keep the repeated element in
+/// memory, you can instead use the [`repeat_with`]($sus::iter::repeat_with)
+/// function.
 ///
 /// # Example
 /// ```
