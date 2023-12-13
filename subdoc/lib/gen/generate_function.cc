@@ -115,9 +115,9 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
       auto signature_div = overload_div.open_div(HtmlWriter::SingleLine);
       signature_div.add_class("function-signature");
 
-      generate_source_link(signature_div, element);
-
       if (!link_to_page) {
+        generate_source_link(signature_div, element);
+
         // Only methods are not given their own page, and are just a named
         // anchor on the Record's page.
         sus_check(overload.method.is_some());
