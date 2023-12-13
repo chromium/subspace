@@ -288,19 +288,15 @@ TEST_F(SubDocTest, FunctionFriend) {
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_function_comment(db, "3:7", "<p>Comment a headline</p>"));
   EXPECT_TRUE(has_function_comment(db, "13:5", "<p>Comment b headline</p>"));
-  EXPECT_TRUE(has_function_comment(db, "7:7", "<p>Comment c headline</p>"));
+  // Friend decls are not visited if they aren't a definition. This prevents
+  // them from showing up separately in the overload set.
+  EXPECT_FALSE(has_function_comment(db, "7:7", "<p>Comment c headline</p>"));
   // Links go to the definitions.
   {
     auto& e = db.find_function_comment("3:7").unwrap();
     ASSERT_TRUE(e.source_link.is_some());
     EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
     EXPECT_EQ(e.source_link.as_ref().unwrap().line, "4");
-  }
-  {
-    auto& e = db.find_function_comment("7:7").unwrap();
-    ASSERT_TRUE(e.source_link.is_some());
-    EXPECT_EQ(e.source_link.as_ref().unwrap().file_path, "test.cc");
-    EXPECT_EQ(e.source_link.as_ref().unwrap().line, "11");
   }
   {
     auto& e = db.find_function_comment("13:5").unwrap();

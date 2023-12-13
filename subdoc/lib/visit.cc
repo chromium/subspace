@@ -1125,6 +1125,10 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     // we visit the FuncionDecl we can't get back to the FriendDecl to find
     // the class. So we handle it directly here instead.
     auto* fdecl = clang::cast<clang::FunctionDecl>(decl->getFriendDecl());
+    // Friend forward declarations are not visited, they would create an
+    // overload which does not actually exist.
+    if (fdecl->getDefinition() != fdecl)
+      return true;
 
     if (should_skip_decl(cx_, fdecl)) return true;
 
