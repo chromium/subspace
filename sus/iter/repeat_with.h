@@ -23,21 +23,21 @@ namespace sus::iter {
 
 using ::sus::option::Option;
 
-template <class ItemT, class GenFn>
+template <class ItemT, class RepeatFn>
 class RepeatWith;
 
 /// Creates a new iterator that repeats elements of type `Item` endlessly by
-/// applying the provided closure, the repeater, `FnMut<Item()>`.
+/// applying the provided closure, the repeater,
+/// [`FnMut<Item()>`]($sus::fn::FnMut).
 ///
-/// The `repeat_with()` function calls the repeater over and over again.
-///
-/// Infinite iterators like `repeat_with()` are often used with adapters like
+/// The `repeat_with` function calls the repeater over and over again.
+/// Infinite iterators like `repeat_with` are often used with adapters like
 /// [`Iterator::take()`]($sus::iter::IteratorBase::take), in order to make them
 /// finite.
 ///
-/// If the element type of the iterator you need implements `Clone`, and it is
-/// OK to keep the source element in memory, you should instead use the
-/// [`repeat()`]($sus::iter::repeat) function.
+/// If the element type of the iterator you need implements [`Clone`](
+/// $sus::mem::Clone), and it is OK to keep the source element in memory, you
+/// should instead use the [`repeat`]($sus::iter::repeat) function.
 ///
 /// # Exampler
 /// ```
@@ -46,15 +46,16 @@ class RepeatWith;
 /// sus_check(r.next().unwrap() == 3_u16);
 /// sus_check(r.next().unwrap() == 3_u16);
 /// ```
-template <class Item, ::sus::fn::FnMut<Item()> GenFn>
-constexpr inline RepeatWith<Item, GenFn> repeat_with(GenFn gen) noexcept {
-  return RepeatWith<Item, GenFn>(::sus::move(gen));
+template <class Item, ::sus::fn::FnMut<Item()> RepeatFn>
+constexpr inline RepeatWith<Item, RepeatFn> repeat_with(
+    RepeatFn repeater) noexcept {
+  return RepeatWith<Item, RepeatFn>(::sus::move(repeater));
 }
 
 /// An Iterator that walks over at most a single Item.
-template <class ItemT, class GenFn>
+template <class ItemT, class RepeatFn>
 class [[nodiscard]] RepeatWith final
-    : public IteratorBase<RepeatWith<ItemT, GenFn>, ItemT> {
+    : public IteratorBase<RepeatWith<ItemT, RepeatFn>, ItemT> {
  public:
   using Item = ItemT;
 
@@ -64,14 +65,14 @@ class [[nodiscard]] RepeatWith final
 
   // sus::mem::Clone trait.
   constexpr RepeatWith clone() const noexcept
-    requires(::sus::mem::Clone<GenFn>)
+    requires(::sus::mem::Clone<RepeatFn>)
   {
-    return RepeatWith(sus::clone(gen_));
+    return RepeatWith(sus::clone(repeater_));
   }
 
   // sus::iter::Iterator trait.
   constexpr Option<Item> next() noexcept {
-    return ::sus::some(::sus::fn::call_mut(gen_));
+    return ::sus::some(::sus::fn::call_mut(repeater_));
   }
   /// sus::iter::Iterator trait.
   constexpr SizeHint size_hint() const noexcept {
@@ -79,19 +80,19 @@ class [[nodiscard]] RepeatWith final
   }
   // sus::iter::DoubleEndedIterator trait.
   constexpr Option<Item> next_back() noexcept {
-    return ::sus::some(::sus::fn::call_mut(gen_));
+    return ::sus::some(::sus::fn::call_mut(repeater_));
   }
 
  private:
-  friend constexpr RepeatWith<Item, GenFn> sus::iter::repeat_with<Item>(
-      GenFn gen) noexcept;
+  friend constexpr RepeatWith<Item, RepeatFn> sus::iter::repeat_with<Item>(
+      RepeatFn repeater) noexcept;
 
-  constexpr RepeatWith(GenFn gen) : gen_(::sus::move(gen)) {}
+  constexpr RepeatWith(RepeatFn repeater) : repeater_(::sus::move(repeater)) {}
 
-  GenFn gen_;
+  RepeatFn repeater_;
 
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
-                                           decltype(gen_));
+                                           decltype(repeater_));
 };
 
 }  // namespace sus::iter
