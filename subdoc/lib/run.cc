@@ -109,6 +109,27 @@ sus::Result<Database, DiagnosticResults> run_files(
       args.push_back("-DSUBDOC");
     }
 
+    // As of CMake version 3.28, the compile_commands.json includes "C++ 20
+    // modules support". Unfortuantely, this means that CMake injects a command-
+    // file into the compile command which is supposed to provide the mapping
+    // from module name to BMI file. However the mapping file does not actually
+    // exist outside of CMake doing compilation, so the compile_commands.json is
+    // a bit of a lie, and running the command contained within it will fail if
+    // subdoc tries to executate it verbatim, due to the mapping file not
+    // existing.
+    //
+    // So we drop the `@foo.modmap` argument from each command line for now to
+    // work around this problem introduced by CMake. Once code actually uses
+    // modules however, the mappings provided by the modmap file will be
+    // required to executate the compilation. And we will need to figure out
+    // some other way to provide them or force CMake to write the modmap files
+    // outside of compilation.
+    //
+    // See https://github.com/chromium/subspace/issues/437.
+    std::erase_if(args, [](const auto& a) {
+      return a.starts_with("@") && a.ends_with(".modmap");
+    });
+
     return std::move(args);
   };
   tool.appendArgumentsAdjuster(adj);
