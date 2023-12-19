@@ -170,6 +170,7 @@ jobs:
             --project-logo logo.png \
             --project-md sus/project.md \
             --project-name Subspace \
+            --project-version 0.0.0 \
             --remove-source-path-prefix $PWD \
             --add-source-path-prefix ${source_url} \
             --source-path-line-prefix L \
