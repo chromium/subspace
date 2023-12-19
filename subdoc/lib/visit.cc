@@ -237,13 +237,13 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                                 macro_start - comment_end);
 
         // Drop the #define for this macro.
-        while (between.endswith(" "))
+        while (between.ends_with(" "))
           between = between.substr(0u, between.size() - 1u);
-        if (between.endswith("define"))
+        if (between.ends_with("define"))
           between = between.substr(0u, between.size() - strlen("define"));
-        while (between.endswith(" "))
+        while (between.ends_with(" "))
           between = between.substr(0u, between.size() - 1u);
-        if (between.endswith("#"))
+        if (between.ends_with("#"))
           between = between.substr(0u, between.size() - strlen("#"));
 
         // There should be no other declarations or macros between the comment and
