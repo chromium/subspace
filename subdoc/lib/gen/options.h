@@ -54,6 +54,9 @@ struct FavIcon {
 struct Options {
   std::string project_name = "PROJECT NAME";
   std::string project_logo = "PROJECT LOGO.png";
+  /// The version string for the project. Typically a semver version such as
+  /// "1.2.3" or "0.2.0-beta-4".
+  sus::Option<std::string> version_text;
   // TODO: sus::PathBuf type would be real nice.
   std::filesystem::path output_root;
   sus::Vec<std::string> stylesheets;

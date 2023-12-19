@@ -838,12 +838,16 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
   }
 
   auto body = html.open_body();
-  if (element.namespace_name == Namespace::Tag::Global)
-    generate_nav(body, db, "", options.project_name, "TODO: version",
+  if (element.namespace_name == Namespace::Tag::Global) {
+    std::ostringstream version;
+    if (options.version_text.is_some())
+      version << "Version " << options.version_text.as_value();
+    generate_nav(body, db, "", options.project_name, sus::move(version).str(),
                  sus::move(sidebar_links), options);
-  else
+  } else {
     generate_nav(body, db, "namespace", element.name, "",
                  sus::move(sidebar_links), options);
+  }
 
   auto main = body.open_main();
   auto namespace_div = main.open_div();
