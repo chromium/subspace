@@ -170,10 +170,10 @@ struct RangeLiteralDeducer {
 
 }  // namespace sus::ops
 
-/// Constructs a literal range that satisfies the
-/// [`RangeBounds<usize>`]($sus::ops::RangeBounds) concept.
+/// Constructs a [`usize`]($sus::num::usize) range from a literal.
 ///
-/// Because `usize` is unsigned, numbers may not be negative.
+/// The constructed range satisfies the [`RangeBounds<usize>`]($sus::ops::RangeBounds)
+/// concept. Because `usize` is unsigned, numbers may not be negative.
 ///
 /// The syntax is:
 /// * `start..end` for a range including start and excluding end. This returns a
@@ -201,10 +201,10 @@ constexpr auto operator""_r() {
     return ::sus::ops::Range<::sus::num::usize>(D.lower, D.upper);
 }
 
-/// Constructs a literal range that satisfies the
-/// [`RangeBounds<isize>`]($sus::ops::RangeBounds) concept.
+/// Constructs an [`isize`]($sus::num::usize) range from a literal.
 ///
-/// Numbers may be positive or negative.
+/// The constructed range satisfies the [`RangeBounds<isize>`]($sus::ops::RangeBounds)
+/// concept. Numbers may be positive or negative.
 ///
 /// The syntax is:
 /// * `start..end` for a range including start and excluding end. This returns a
