@@ -201,7 +201,7 @@ constexpr auto operator""_r() {
     return ::sus::ops::Range<::sus::num::usize>(D.lower, D.upper);
 }
 
-/// Constructs an [`isize`]($sus::num::usize) range from a literal.
+/// Constructs an [`isize`]($sus::num::isize) range from a literal.
 ///
 /// The constructed range satisfies the [`RangeBounds<isize>`]($sus::ops::RangeBounds)
 /// concept. Numbers may be positive or negative.
