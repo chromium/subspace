@@ -176,6 +176,12 @@ Points the logo image to the given `WEB_PATH` in the generated HTML pages.
 This can be the name of a file included in the output with `--copy-file`.
 
 ```
+--project-version VERSION_STRING
+```
+The version of the project, which will be displayed on the generated front
+page. If omitted, no version is shown.
+
+```
 --favicon WEB_PATH
 ```
 The `WEB_PATH` is a path on the server to an icon to act as the favicon and its
