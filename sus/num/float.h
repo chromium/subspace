@@ -82,8 +82,36 @@ struct [[_sus_trivial_abi]] f64 final {
 }  // namespace sus::num
 
 /// For writing [`f32`]($sus::num::f32) literals.
+///
+/// Floating point literals qualified with `f` are also 32 bits large, but the
+/// `_f32` suffix forces a safe numeric type instead of a primitive value when
+/// this is needed (such as for templates or member function access).
+///
+/// Integer values that are not representable by [`f32`]($sus::num::f32) will
+/// converted by the same rules as for [`Cast`]($sus::construct::Cast).
+/// Floating point values out of range for [`f32`]($sus::num::f32) will fail to
+/// compile.
+///
+/// # Examples
+/// ```
+/// auto i = 123_f32 - (5_f32).abs();
+/// sus_check(i == 118_f32);
+/// ```
 _sus__float_literal(f32, ::sus::num::f32);
 /// For writing [`f64`]($sus::num::f64) literals.
+///
+/// Floating point literals without a qualifier are also 64 bits large, but the
+/// `_f64` suffix forces a safe numeric type instead of a primitive value when
+/// this is needed (such as for templates or member function access).
+///
+/// Integer values that are not representable by [`f64`]($sus::num::f64) will
+/// converted by the same rules as for [`Cast`]($sus::construct::Cast).
+///
+/// # Examples
+/// ```
+/// auto i = 123_f64- (5_f64).abs();
+/// sus_check(i == 118_f64);
+/// ```
 _sus__float_literal(f64, ::sus::num::f64);
 
 // Promote floating point types into the `sus` namespace.

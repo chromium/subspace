@@ -417,14 +417,80 @@ constexpr inline isize operator>>(isize l, U r) noexcept = delete;
 }  // namespace sus::num
 
 /// For writing [`i8`]($sus::num::i8) literals.
+///
+/// Un-qualified integer literals are 32 bits large (the size of `int`)
+/// unless a literal suffix modifies them, such as with `_i8` which creates
+/// an 8-bit value.
+///
+/// Values out of range for [`i8`]($sus::num::i8) will fail to compile.
+///
+/// # Examples
+/// ```
+/// auto i = 123_i8 - (5_i8).abs();
+/// sus_check(i == 118_i8);
+/// ```
 _sus__integer_literal(i8, ::sus::num::i8);
 /// For writing [`i16`]($sus::num::i16) literals.
+///
+/// Un-qualified integer literals are 32 bits large (the size of `int`)
+/// unless a literal suffix modifies them, such as with `_i16` which creates
+/// an 16-bit value.
+///
+/// Values out of range for [`i16`]($sus::num::i16) will fail to compile.
+///
+/// # Examples
+/// ```
+/// auto i = 123_i16 - (5_i16).abs();
+/// sus_check(i == 118_i16);
+/// ```
 _sus__integer_literal(i16, ::sus::num::i16);
 /// For writing [`i32`]($sus::num::i32) literals.
+///
+/// Un-qualified integer literals are 32 bits large (the size of `int`), unless
+/// a literal suffix modifies them. The `_i32` suffix creates an 32-bit value
+/// which is the same as not adding a suffix at all, except that it forces a
+/// safe numeric type instead of a primitive value when this is needed (such as
+/// for templates or member function access).
+///
+/// Values out of range for [`i32`]($sus::num::i32) will fail to compile.
+///
+/// # Examples
+/// ```
+/// auto i = 123_i32 - (5_i32).abs();
+/// sus_check(i == 118_i32);
+/// ```
 _sus__integer_literal(i32, ::sus::num::i32);
 /// For writing [`i64`]($sus::num::i64) literals.
+///
+/// Un-qualified integer literals are 32 bits large (the size of `int`), unless
+/// a literal suffix modifies them, such as with `_i64` which creates a 64-bit
+/// value. On Windows, this is the same as the `l` suffix (which makes a
+/// `long`) but is platform agnostic, and forces a safe numeric type instead of
+/// a primitive value when this is needed (such as for templates or member
+/// function access).
+///
+/// Values out of range for [`i64`]($sus::num::i64) will fail to compile.
+///
+/// # Examples
+/// ```
+/// auto i = 123_i64 - (5_i64).abs();
+/// sus_check(i == 118_i64);
+/// ```
 _sus__integer_literal(i64, ::sus::num::i64);
 /// For writing [`isize`]($sus::num::isize) literals.
+///
+/// Un-qualified integer literals are 32 bits large (the size of `int`), unless
+/// a literal suffix modifies them, such as with `_isize` which creates an
+/// address-sized value. This is 32 bits for 32-bit targets and 64 bits for
+/// 64-bit targets.
+///
+/// Values out of range for [`isize`]($sus::num::isize) will fail to compile.
+///
+/// # Examples
+/// ```
+/// auto i = 123_isize - (5_isize).abs();
+/// sus_check(i == 118_isize);
+/// ```
 _sus__integer_literal(isize, ::sus::num::isize);
 
 // Promote signed integer types into the `sus` namespace.

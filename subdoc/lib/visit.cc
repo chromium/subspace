@@ -1127,8 +1127,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     auto* fdecl = clang::cast<clang::FunctionDecl>(decl->getFriendDecl());
     // Friend forward declarations are not visited, they would create an
     // overload which does not actually exist.
-    if (fdecl->getDefinition() != fdecl)
-      return true;
+    if (fdecl->getDefinition() != fdecl) return true;
 
     if (should_skip_decl(cx_, fdecl)) return true;
 
@@ -1193,7 +1192,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       constraints = collect_function_constraints(decl, preprocessor_);
     }
 
-    std::string function_name = [&] {
+    std::string signature_name = [&] {
       if (auto* mdecl = clang::dyn_cast<clang::CXXConstructorDecl>(decl)) {
         return mdecl->getThisType()
             ->getPointeeType()
@@ -1207,6 +1206,14 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         return std::string("operator ") + t.name;
       } else {
         return decl->getNameAsString();
+      }
+    }();
+    std::string function_name = [&] {
+      if (auto* lit = decl->getLiteralIdentifier()) {
+        // User-defined literals are displayed... less literally.
+        return std::string(lit->getName()) + std::string(" literal");
+      } else {
+        return signature_name;
       }
     }();
 
@@ -1265,7 +1272,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     FunctionId db_key = key_for_function(decl, overload_set);
     auto fe = FunctionElement(
         iter_namespace_path(decl).collect_vec(), sus::move(comment),
-        sus::move(function_name), sus::move(signature),
+        sus::move(function_name), sus::move(signature_name),
+        sus::move(signature),
         decl->isOverloadedOperator() || decl->getLiteralIdentifier() != nullptr,
         sus::move(linked_return_type), sus::move(constraints),
         sus::move(template_params), decl->isDeleted(), sus::move(params),
@@ -1379,7 +1387,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
       bool exists = db_map.at(key).overloads.iter().any(
           [&db_element](const FunctionOverload& overload) {
-            return overload.signature == db_element.overloads[0u].signature;
+            return overload.signature_key ==
+                   db_element.overloads[0u].signature_key;
           });
       if (!exists)
         db_map.at(key).overloads.push(sus::move(db_element.overloads[0u]));

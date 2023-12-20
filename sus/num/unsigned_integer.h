@@ -502,14 +502,80 @@ constexpr inline uptr operator>>(uptr l, U r) noexcept = delete;
 }  // namespace sus::num
 
 /// For writing [`u8`]($sus::num::u8) literals.
+///
+/// Un-qualified integer literals are 32 bits large (the size of `int`) and
+/// signed values, unless a literal suffix modifies them, such as with `_u8`
+/// which creates an unsigned 8-bit value.
+///
+/// Values out of range for [`u8`]($sus::num::u8) will fail to compile.
+///
+/// # Examples
+/// ```
+/// auto i = 123_u8 - (5_u8).abs();
+/// sus_check(i == 118_u8);
+/// ```
 _sus__integer_literal(u8, ::sus::num::u8);
 /// For writing [`u16`]($sus::num::u16) literals.
+///
+/// Un-qualified integer literals are 32 bits large (the size of `int`) and
+/// signed values, unless a literal suffix modifies them, such as with `_u16`
+/// which creates an unsigned 16-bit value.
+///
+/// Values out of range for [`u16`]($sus::num::u16) will fail to compile.
+///
+/// # Examples
+/// ```
+/// auto i = 123_u16 - (5_u16).abs();
+/// sus_check(i == 118_u16);
+/// ```
 _sus__integer_literal(u16, ::sus::num::u16);
 /// For writing [`u32`]($sus::num::u32) literals.
+///
+/// Un-qualified integer literals are 32 bits large (the size of `int`) and
+/// signed values, unless a literal suffix modifies them, such as with `_u32`
+/// which creates an unsigned 32-bit value. This is the same as the `u` suffix
+/// except that it forces a safe numeric type instead of a primitive value when
+/// this is needed (such as for templates or member function access).
+///
+/// Values out of range for [`u32`]($sus::num::u32) will fail to compile.
+///
+/// # Examples
+/// ```
+/// auto i = 123_u32 - (5_u32).abs();
+/// sus_check(i == 118_u32);
+/// ```
 _sus__integer_literal(u32, ::sus::num::u32);
 /// For writing [`u64`]($sus::num::u64) literals.
+///
+/// Un-qualified integer literals are 32 bits large (the size of `int`) and
+/// signed values, unless a literal suffix modifies them, such as with `_u64`
+/// which creates an unsigned 64-bit value. On Windows, this is the same as
+/// the `ul` suffix (which makes an `unsigned long`) but is platform agnostic,
+/// and forces a safe numeric type instead of a primitive value when this is
+/// needed (such as for templates or member function access).
+///
+/// Values out of range for [`u64`]($sus::num::u64) will fail to compile.
+///
+/// # Examples
+/// ```
+/// auto i = 123_u64 - (5_u64).abs();
+/// sus_check(i == 118_u64);
+/// ```
 _sus__integer_literal(u64, ::sus::num::u64);
 /// For writing [`usize`]($sus::num::usize) literals.
+///
+/// Un-qualified integer literals are 32 bits large (the size of `int`) and
+/// signed values, unless a literal suffix modifies them, such as with `_usize`
+/// which creates an unsigned address-sized value. This is 32 bits for 32-bit
+/// targets and 64 bits for 64-bit targets.
+///
+/// Values out of range for [`usize`]($sus::num::usize) will fail to compile.
+///
+/// # Examples
+/// ```
+/// auto i = 123_usize - (5_usize).abs();
+/// sus_check(i == 118_usize);
+/// ```
 _sus__integer_literal(usize, ::sus::num::usize);
 
 // Promote unsigned integer types into the `sus` namespace.

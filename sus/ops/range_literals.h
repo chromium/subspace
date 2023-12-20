@@ -175,7 +175,7 @@ struct RangeLiteralDeducer {
 /// The constructed range satisfies the [`RangeBounds<usize>`]($sus::ops::RangeBounds)
 /// concept. Because `usize` is unsigned, numbers may not be negative.
 ///
-/// The syntax is:
+/// The syntax is a string (in double quotes) containing:
 /// * `start..end` for a range including start and excluding end. This returns a
 ///   `sus::ops::Range<usize>`.
 /// * `start..=end` for a range including start and including end. This returns
@@ -188,6 +188,13 @@ struct RangeLiteralDeducer {
 ///   returns a `sus::ops::RangeTo<usize>`.
 /// * `..` for a range that has no bounds at all. Typically for a slicing range
 ///   to indicate the entire slice. This returns a `sus::ops::RangeFull<usize>`.
+///
+/// # Examples
+/// ```
+/// sus_check("1..4"_r).start == 1u);
+/// sus_check(("1..4"_r).finish == 4u);
+/// sus_check(("1..=4"_r).finish == 5u);
+/// ```
 template <::sus::ops::__private::RangeLiteralDeducer<false> D>
 constexpr auto operator""_r() {
   using ::sus::ops::__private::RangeLiteralDeducer;
@@ -206,7 +213,7 @@ constexpr auto operator""_r() {
 /// The constructed range satisfies the [`RangeBounds<isize>`]($sus::ops::RangeBounds)
 /// concept. Numbers may be positive or negative.
 ///
-/// The syntax is:
+/// The syntax is a string (in double quotes) containing:
 /// * `start..end` for a range including start and excluding end. This returns a
 ///   `sus::ops::Range<isize>`.
 /// * `start..=end` for a range including start and including end. This returns
@@ -219,6 +226,13 @@ constexpr auto operator""_r() {
 ///   returns a `sus::ops::RangeTo<isize>`.
 /// * `..` for a range that has no bounds at all. Typically for a slicing range
 ///   to indicate the entire slice. This returns a `sus::ops::RangeFull<isize>`.
+///
+/// # Examples
+/// ```
+/// sus_check("1..4"_rs).start == 1);
+/// sus_check(("1..4"_rs).finish == 4);
+/// sus_check(("1..=4"_rs).finish == 5);
+/// ```
 template <::sus::ops::__private::RangeLiteralDeducer<true> D>
 constexpr auto operator""_rs() {
   using ::sus::ops::__private::RangeLiteralDeducer;

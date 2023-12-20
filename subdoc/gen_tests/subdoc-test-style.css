@@ -268,6 +268,10 @@ pre > code span.punct {
 }
 code {
     color: rgb(124, 216, 204);
+    white-space: nowrap;
+}
+pre code {
+    white-space: pre;
 }
 .description h1, .description h2 {
     font-size: 100%;

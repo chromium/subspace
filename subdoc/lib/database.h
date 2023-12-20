@@ -187,7 +187,7 @@ struct FunctionOverload {
   bool is_deleted = false;
   // Used to look for uniqueness to avoid adding each forward decl and get
   // multiple overloads of the same function.
-  std::string signature;
+  std::string signature_key;
 
   // TODO: `noexcept` stuff from FunctionDecl::getExceptionSpecType().
 };
@@ -253,7 +253,8 @@ struct AliasElement : public TypeElement {
 struct FunctionElement : public CommentElement {
   explicit FunctionElement(sus::Vec<Namespace> containing_namespaces,
                            Comment comment, std::string name,
-                           std::string signature, bool is_operator,
+                           std::string signature_name,
+                           std::string signature_key, bool is_operator,
                            LinkedType return_type,
                            sus::Option<RequiresConstraints> constraints,
                            sus::Vec<std::string> template_params,
@@ -263,6 +264,7 @@ struct FunctionElement : public CommentElement {
                            sus::Vec<std::string> record_path, u32 sort_key)
       : CommentElement(sus::move(containing_namespaces), sus::move(comment),
                        sus::move(name), sort_key),
+        signature_name(sus::move(signature_name)),
         is_operator(is_operator),
         overload_set(sus::move(overload_set)),
         record_path(sus::move(record_path)) {
@@ -273,10 +275,15 @@ struct FunctionElement : public CommentElement {
         .constraints = sus::move(constraints),
         .template_params = sus::move(template_params),
         .is_deleted = is_deleted,
-        .signature = sus::move(signature),
+        .signature_key = sus::move(signature_key),
     });
   }
 
+  /// Typically the same as the function `name`, but whereas the former is used
+  /// in links and titles for the function, this name is used in the
+  /// representation of the function signature. It differs for UDLs, for
+  /// example, which have a more descriptive display name.
+  std::string signature_name;
   bool is_operator;
   sus::Vec<FunctionOverload> overloads;
   sus::Option<std::string> overload_set;

@@ -324,7 +324,7 @@ sus::Result<void, MarkdownToHtmlError> generate_function(
           auto name_anchor = signature_div.open_a();
           name_anchor.add_href("#");
           name_anchor.add_class("function-name");
-          name_anchor.write_text(element.name);
+          name_anchor.write_text(element.signature_name);
         }
         generate_function_params(signature_div, overload);
         // This is generating a function that is not a method, so there's always
