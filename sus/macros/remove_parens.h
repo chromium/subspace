@@ -25,12 +25,12 @@
 /// * `(x, y)` => `x, y`
 ///
 /// Based on: https://stackoverflow.com/a/62984543
-#define sus_remove_parens(x) _sus__remove_inner_rename(_sus__remove_inner x)
+#define _sus_remove_parens(x) _sus__remove_inner_rename(_sus__remove_inner x)
 
-#define sus_remove_parens_and_eval(e, x) \
-  sus_eval_macro(e, sus_remove_parens(x))
+#define _sus_remove_parens_and_eval(e, x) \
+  _sus_eval_macro(e, _sus_remove_parens(x))
 
-// Implementation of sus_remove_parens(x).
+// Implementation of _sus_remove_parens(x).
 
 // Step 1: If the input had brackets, now it no longer does. The result will
 // always be `_sus__remove_inner x` at the end.

@@ -22,7 +22,7 @@
 /// # Example
 /// ```
 /// #define f(s) hello(s)
-/// sus_eval_macro(f, "world")
+/// _sus_eval_macro(f, "world")
 /// // Evaluates to: `hello("world")`
 /// ```
-#define sus_eval_macro(x, ...) x(__VA_ARGS__)
+#define _sus_eval_macro(x, ...) x(__VA_ARGS__)
