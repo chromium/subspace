@@ -273,10 +273,13 @@ code {
 pre code {
     white-space: pre;
 }
-.description h1, .description h2 {
+.description h1, .description h2, .description h3 {
     font-size: 100%;
     font-weight: bold;
     color: rgb(124, 216, 204);
+}
+.description h3 {
+    font-size: 97%;
 }
 .description pre {
     padding: 1em;
