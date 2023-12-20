@@ -18,7 +18,6 @@
 
 #if _MSC_VER
 #  include "sus/assertions/check.h"
-#  include "sus/num/cast.h"
 #endif
 
 #if _MSC_VER && !defined(__clang__)
@@ -70,7 +69,7 @@
       return T(static_cast<decltype(T::primitive_value)>(val));                                          \
     }                                                                                                    \
     T inline constexpr operator""_##Name(unsigned long long val) noexcept {                              \
-      return T(::sus::cast<decltype(T::primitive_value)>(val));                                          \
+      return T(static_cast<decltype(T::primitive_value)>(val));                                          \
     }
 
 #else
@@ -82,6 +81,6 @@
       return T(static_cast<decltype(T::primitive_value)>(val));    \
     }                                                              \
     T inline consteval operator""_##Name(unsigned long long val) { \
-      return T(::sus::cast<decltype(T::primitive_value)>(val));    \
+      return T(static_cast<decltype(T::primitive_value)>(val));    \
     }
 #endif
