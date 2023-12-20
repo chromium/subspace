@@ -44,7 +44,7 @@ sus::Result<Database, DiagnosticResults> run_test(
   vfs->addFile(pretend_file_name, 0, llvm::MemoryBuffer::getMemBuffer(content));
 
   return run_files(*comp_db,
-                   sus::Vec<std::string>(sus::move(pretend_file_name)),
+                   Vec<std::string>(sus::move(pretend_file_name)),
                    std::move(vfs), options);
 }
 
@@ -65,7 +65,7 @@ struct DiagnosticTracker : public clang::TextDiagnosticPrinter {
 
 sus::Result<Database, DiagnosticResults> run_files(
     const clang::tooling::CompilationDatabase& comp_db,
-    sus::Vec<std::string> paths,
+    Vec<std::string> paths,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     const RunOptions& options) noexcept {
   // Clang DiagnoticsConsumer that prints out the full error and context, which

@@ -170,14 +170,14 @@ struct Type {
   /// Namespaces the type is nested in, ordered from closest to furthest. An
   /// empty string indicates an anonymous namespace. The global namespace is not
   /// represented.
-  sus::Vec<std::string> namespace_path;
+  Vec<std::string> namespace_path;
   /// Records the type is nested in, ordered from closest to furthest.
-  sus::Vec<std::string> record_path;
+  Vec<std::string> record_path;
   /// The name of the type. For `category == TemplateVariable` this will be the
   /// the name of the variable.
   std::string name;
   /// For types of the form `A::B::C` the `nested_name` would hold `B` and `C`.
-  sus::Vec<TypeOrValue> nested_names;
+  Vec<TypeOrValue> nested_names;
   /// References can only be applied to the outermost type. While most of the
   /// `Type` structure refers to the innermost type (the deepest pointee, a
   /// non-pointer), this refers to the outermost type (the first pointer in
@@ -192,34 +192,34 @@ struct Type {
   ///
   /// `const T *const<1st *const<2nd *const<3rd`.
   ///
-  sus::Vec<Qualifier> pointers;
+  Vec<Qualifier> pointers;
   /// It's possible to have a pointer to an array of pointers. The `pointers`
   /// represent the root type that the array is of. This represents pointers
   /// to that array.
   ///
   /// This is empty except in the case of pointer-to-an-array.
-  sus::Vec<Qualifier> pointers_to_array;
+  Vec<Qualifier> pointers_to_array;
   /// For a pointer-to-member, this is the type that member is in.
-  sus::Option<sus::Box<Type>> member_pointer_type;
+  Option<sus::Box<Type>> member_pointer_type;
   /// The dimension of each level of an array, if any. An empty string
   /// represents an unsized dimension (like `int a[]`). They are ordered left
   /// to right.
-  sus::Vec<std::string> array_dims;
+  Vec<std::string> array_dims;
   /// Recursive structure, each template param is another type, or value.
-  sus::Vec<TypeOrValue> template_params;
+  Vec<TypeOrValue> template_params;
   /// When true, the type is a parameter pack, and should append `...`.
   bool is_pack;
 
   /// When the `category` is `FunctionProto`, then this contains the function's
   /// return type. Boxed to make a recursive type.
-  sus::Option<sus::Box<Type>> fn_return_type;
+  Option<sus::Box<Type>> fn_return_type;
   /// When the `category` is `FunctionProto`, then this contains the types of
   /// the arguments to the function.
-  sus::Vec<Type> fn_param_types;
+  Vec<Type> fn_param_types;
 };
 static_assert(std::destructible<Type>);
 static_assert(std::destructible<sus::Box<Type>>);
-static_assert(std::destructible<sus::Option<sus::Box<Type>>>);
+static_assert(std::destructible<Option<sus::Box<Type>>>);
 
 enum class TypeOrValueTag {
   Type,
@@ -263,7 +263,7 @@ void type_to_string(
     sus::fn::DynFnMut<void(TypeToStringQuery)>& type_fn,
     sus::fn::DynFnMut<void()>& const_qualifier_fn,
     sus::fn::DynFnMut<void()>& volatile_qualifier_fn,
-    sus::Option<sus::fn::DynFnMut<void()>&> var_name_fn) noexcept;
+    Option<sus::fn::DynFnMut<void()>&> var_name_fn) noexcept;
 
 /// Like `type_to_string` but just walks through the types and does not produce
 /// any output.

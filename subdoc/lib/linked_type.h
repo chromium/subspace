@@ -44,11 +44,11 @@ struct LinkedType {
 
   Type type;
   /// References into the database for every type that makes up `type`.
-  sus::Vec<sus::Option<TypeRef>> type_element_refs;
+  Vec<Option<TypeRef>> type_element_refs;
 
  private:
   enum Construct { CONSTRUCT };
-  LinkedType(Construct, Type t, sus::Vec<sus::Option<TypeRef>> v)
+  LinkedType(Construct, Type t, Vec<Option<TypeRef>> v)
       : type(sus::move(t)), type_element_refs(sus::move(v)) {}
 };
 

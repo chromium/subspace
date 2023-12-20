@@ -25,7 +25,7 @@ struct RequiresConceptConstraint {
   // there.
   std::string concept_name;
   // TODO: These can be types that are in the Database, so they could be linked?
-  sus::Vec<std::string> args;
+  Vec<std::string> args;
 };
 
 enum class RequiresConstraintTag {
@@ -40,7 +40,7 @@ using RequiresConstraint = sus::choice_type::Choice<sus_choice_types(
 // clang-format on
 
 struct RequiresConstraints {
-  sus::Vec<RequiresConstraint> list;
+  Vec<RequiresConstraint> list;
 };
 
 void requires_constraints_add_expr(RequiresConstraints& constraints,

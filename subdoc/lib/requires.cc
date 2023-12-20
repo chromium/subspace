@@ -81,12 +81,12 @@ void requires_constraints_add_expr(RequiresConstraints& constraints,
                                   bin_and->getRHS());
   } else if (auto* c = clang::dyn_cast<clang::ConceptSpecializationExpr>(e);
              c != nullptr && c->getNamedConcept()) {
-    sus::Vec<std::string> args =
+    Vec<std::string> args =
         sus::iter::from_range(c->getTemplateArgsAsWritten()->arguments())
             .map([&](const clang::TemplateArgumentLoc& loc) {
               return template_arg_to_string(loc, context, preprocessor);
             })
-            .collect<sus::Vec<std::string>>();
+            .collect<Vec<std::string>>();
     for (std::string_view s : args) {
       // `Concept auto foo` appears in the function signature, no need to add a
       // constrait for it outside, and there's no type name to refer to in it

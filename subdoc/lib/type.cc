@@ -94,7 +94,7 @@ std::string template_to_string(clang::TemplateName template_name) noexcept {
   clang::TemplateDecl* decl = template_name.getAsTemplateDecl();
   sus_check_with_message(decl != nullptr, "TemplateName without Decl?");
 
-  sus::Vec<clang::NamedDecl*> contexts;
+  Vec<clang::NamedDecl*> contexts;
   clang::DeclContext* context = decl->getDeclContext();
   while (context) {
     if (auto* n = clang::dyn_cast<clang::NamedDecl>(context)) {
@@ -311,7 +311,7 @@ Type build_local_type_internal(
   Qualifier qualifier = qualifier_from_qualtype(qualtype.getNonReferenceType());
   qualtype = unwrap_skipped_types(qualtype.getNonReferenceType());
 
-  sus::Vec<TypeOrValue> nested_names;
+  Vec<TypeOrValue> nested_names;
   if (auto* dep = clang::dyn_cast<clang::DependentNameType>(&*qualtype)) {
     clang::NestedNameSpecifier* spec = dep->getQualifier();
     while (spec) {
@@ -342,9 +342,9 @@ Type build_local_type_internal(
     }
   }
 
-  sus::Vec<std::string> array_dims;
-  sus::Vec<Qualifier> pointers;
-  sus::Vec<Qualifier> pointers_to_array;
+  Vec<std::string> array_dims;
+  Vec<Qualifier> pointers;
+  Vec<Qualifier> pointers_to_array;
 
   // It's possible to have pointers to an array, in which case inside the
   // pointers we find an array. Then we will apply the array to the root type,
@@ -412,7 +412,7 @@ Type build_local_type_internal(
     }
   }
 
-  sus::Option<sus::Box<Type>> member_pointer_type;
+  Option<sus::Box<Type>> member_pointer_type;
   if (auto* member = clang::dyn_cast<clang::MemberPointerType>(&*qualtype)) {
     member_pointer_type = sus::some(sus::Box<Type>(build_local_type_internal(
         clang::QualType(member->getClass(), 0u), template_params_from_context,
@@ -441,7 +441,7 @@ Type build_local_type_internal(
 
   // Arrays and pointers aren't templated, but the inner type can be, so we
   // look for this after stripping off references, arrays, and pointers.
-  sus::Vec<TypeOrValue> template_params;
+  Vec<TypeOrValue> template_params;
   if (auto* ttype =
           clang::dyn_cast<clang::TemplateSpecializationType>(&*qualtype)) {
     for (const clang::TemplateArgument& arg :
@@ -533,8 +533,8 @@ Type build_local_type_internal(
   // Find the context from which to collect the namespace/record paths.
   clang::DeclContext* context = find_context(&*qualtype, loc, sm);
 
-  sus::Vec<std::string> namespace_path;
-  sus::Vec<std::string> record_path;
+  Vec<std::string> namespace_path;
+  Vec<std::string> record_path;
   while (context) {
     if (auto* record = clang::dyn_cast<clang::RecordDecl>(context)) {
       record_path.push(record->getNameAsString());
@@ -545,8 +545,8 @@ Type build_local_type_internal(
     context = context->getParent();
   }
 
-  sus::Option<sus::Box<Type>> fn_return_type;
-  sus::Vec<Type> fn_param_types;
+  Option<sus::Box<Type>> fn_return_type;
+  Vec<Type> fn_param_types;
   if (auto* proto = clang::dyn_cast<clang::FunctionProtoType>(&*qualtype)) {
     fn_return_type = sus::some(sus::Box<Type>(build_local_type_internal(
         proto->getReturnType(), template_params_from_context, sm, preprocessor,
@@ -680,7 +680,7 @@ void type_to_string_internal(
     sus::fn::DynFnMut<void(TypeToStringQuery)>& type_fn,
     sus::fn::DynFnMut<void()>& const_qualifier_fn,
     sus::fn::DynFnMut<void()>& volatile_qualifier_fn,
-    sus::Option<sus::fn::DynFnMut<void()>&> var_name_fn) noexcept {
+    Option<sus::fn::DynFnMut<void()>&> var_name_fn) noexcept {
   if (type.category == TypeCategory::FunctionProto) {
     // For function proto lead with the return type.
     type_to_string_internal(**type.fn_return_type, text_fn, type_fn,
@@ -903,7 +903,7 @@ void type_to_string(
     sus::fn::DynFnMut<void(TypeToStringQuery)>& type_fn,
     sus::fn::DynFnMut<void()>& const_qualifier_fn,
     sus::fn::DynFnMut<void()>& volatile_qualifier_fn,
-    sus::Option<sus::fn::DynFnMut<void()>&> var_name_fn) noexcept {
+    Option<sus::fn::DynFnMut<void()>&> var_name_fn) noexcept {
   return type_to_string_internal(type, text_fn, type_fn, const_qualifier_fn,
                                  volatile_qualifier_fn, sus::move(var_name_fn));
 }

@@ -99,10 +99,10 @@ static clang::RawComment* get_raw_comment(const clang::Decl* decl) noexcept {
   return decl->getASTContext().getRawCommentForDeclNoCache(decl);
 }
 
-static sus::Vec<std::string> collect_template_params(
+static Vec<std::string> collect_template_params(
     const clang::TemplateDecl* tmpl,
     clang::Preprocessor& preprocessor) noexcept {
-  sus::Vec<std::string> template_params;
+  Vec<std::string> template_params;
   if (clang::TemplateParameterList* params = tmpl->getTemplateParameters()) {
     for (clang::NamedDecl* n : *params) {
       // Skip auto vars from the function parameter list, which get added as
@@ -146,10 +146,10 @@ static sus::Vec<std::string> collect_template_params(
   return template_params;
 }
 
-static sus::Option<RequiresConstraints> collect_template_constraints(
+static Option<RequiresConstraints> collect_template_constraints(
     const clang::TemplateDecl* tmpl,
     clang::Preprocessor& preprocessor) noexcept {
-  sus::Option<RequiresConstraints> constraints;
+  Option<RequiresConstraints> constraints;
   llvm::SmallVector<const clang::Expr*> c_exprs;
   tmpl->getAssociatedConstraints(c_exprs);
   for (const clang::Expr* e : c_exprs) {
@@ -159,10 +159,10 @@ static sus::Option<RequiresConstraints> collect_template_constraints(
   return constraints;
 }
 
-static sus::Option<RequiresConstraints> collect_function_constraints(
+static Option<RequiresConstraints> collect_function_constraints(
     const clang::FunctionDecl* decl,
     clang::Preprocessor& preprocessor) noexcept {
-  sus::Option<RequiresConstraints> constraints;
+  Option<RequiresConstraints> constraints;
   llvm::SmallVector<const clang::Expr*> assoc;
   decl->getAssociatedConstraints(assoc);
   for (const clang::Expr* e : assoc) {
@@ -255,7 +255,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         return raw_comment;
       }();
 
-      auto params = sus::Option<sus::Vec<std::string>>();
+      auto params = Option<Vec<std::string>>();
       if (info->isFunctionLike()) {
         params = sus::some(sus::iter::from_range(info->params())
                                .map([](const clang::IdentifierInfo* p) {
@@ -266,7 +266,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                                  else
                                    return std::string(p->getName());
                                })
-                               .collect<sus::Vec<std::string>>());
+                               .collect<Vec<std::string>>());
       }
 
       Comment comment = make_db_comment(decl->getASTContext(), raw_comment, "");
@@ -341,8 +341,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     clang::RecordDecl* parent_record_decl =
         clang::dyn_cast<clang::RecordDecl>(decl->getDeclContext());
 
-    sus::Vec<std::string> template_params;
-    sus::Option<RequiresConstraints> constraints;
+    Vec<std::string> template_params;
+    Option<RequiresConstraints> constraints;
     if (cxxdecl) {
       if (clang::ClassTemplateDecl* tmpl =
               cxxdecl->getDescribedClassTemplate()) {
@@ -410,7 +410,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                             decl->getBeginLoc(), decl->getASTContext());
     } else {
       sus_check(clang::isa<clang::RecordDecl>(context));
-      if (sus::Option<RecordElement&> parent =
+      if (Option<RecordElement&> parent =
               docs_db_.find_record_mut(clang::cast<clang::RecordDecl>(context));
           parent.is_some()) {
         auto key = RecordId(*decl);
@@ -457,7 +457,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         decl->getASTContext().getSourceManager().getFileOffset(
             decl->getLocation()));
 
-    if (sus::Option<RecordElement&> parent =
+    if (Option<RecordElement&> parent =
             docs_db_.find_record_mut(record_decl);
         parent.is_some()) {
       add_field_to_db(unique_from_decl(decl), sus::move(fe), parent->fields,
@@ -492,8 +492,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     Comment comment = make_db_comment(decl->getASTContext(), raw_comment,
                                       sus::move(self_name));
 
-    sus::Vec<std::string> template_params;
-    sus::Option<RequiresConstraints> constraints;
+    Vec<std::string> template_params;
+    Option<RequiresConstraints> constraints;
     if (clang::VarTemplateDecl* tmpl = decl->getDescribedVarTemplate()) {
       template_params = collect_template_params(tmpl, preprocessor_);
       constraints = collect_template_constraints(tmpl, preprocessor_);
@@ -512,7 +512,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                          preprocessor_, decl->getBeginLoc()),
         docs_db_);
 
-    sus::Vec<std::string> record_path;
+    Vec<std::string> record_path;
     if (auto* record_ctx = clang::dyn_cast<clang::RecordDecl>(context)) {
       record_path =
           iter_record_path(record_ctx)
@@ -540,7 +540,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     }();
 
     if (clang::isa<clang::RecordDecl>(context)) {
-      if (sus::Option<RecordElement&> parent =
+      if (Option<RecordElement&> parent =
               docs_db_.find_record_mut(clang::cast<clang::RecordDecl>(context));
           parent.is_some()) {
         add_field_to_db(unique_from_decl(decl), sus::move(fe), parent->fields,
@@ -551,7 +551,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             decl->getASTContext());
       }
     } else if (clang::isa<clang::NamespaceDecl>(context)) {
-      if (sus::Option<NamespaceElement&> parent = docs_db_.find_namespace_mut(
+      if (Option<NamespaceElement&> parent = docs_db_.find_namespace_mut(
               clang::cast<clang::NamespaceDecl>(context));
           parent.is_some()) {
         add_field_to_db(unique_from_decl(decl), sus::move(fe),
@@ -597,7 +597,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     while (clang::isa<clang::LinkageSpecDecl>(context))
       context = context->getParent();
 
-    sus::Option<RequiresConstraints> constraints;
+    Option<RequiresConstraints> constraints;
     if (auto* alias_decl = clang::dyn_cast<clang::TypeAliasDecl>(decl)) {
       if (auto* tmpl = alias_decl->getDescribedAliasTemplate()) {
         constraints = collect_template_constraints(tmpl, preprocessor_);
@@ -620,7 +620,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             docs_db_)));
 
     if (auto* rec_ctx = clang::dyn_cast<clang::RecordDecl>(context)) {
-      if (sus::Option<RecordElement&> parent =
+      if (Option<RecordElement&> parent =
               docs_db_.find_record_mut(rec_ctx);
           parent.is_some()) {
         auto key = AliasId(decl->getNameAsString());
@@ -635,7 +635,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             decl->getLocation(), decl->getBeginLoc(), decl->getASTContext());
       }
     } else if (auto* ns_ctx = clang::dyn_cast<clang::NamespaceDecl>(context)) {
-      if (sus::Option<NamespaceElement&> parent =
+      if (Option<NamespaceElement&> parent =
               docs_db_.find_namespace_mut(ns_ctx);
           parent.is_some()) {
         auto key = AliasId(decl->getNameAsString());
@@ -689,9 +689,9 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     // `using enum` can pull in more than one shadow, it pulls in every constant
     // in the enum.
     for (clang::UsingShadowDecl* shadow : decl->shadows()) {
-      sus::Vec<Namespace> target_namespace_path =
+      Vec<Namespace> target_namespace_path =
           iter_namespace_path(shadow).collect_vec();
-      sus::Vec<std::string> target_record_path =
+      Vec<std::string> target_record_path =
           iter_record_path(shadow->getDeclContext())
               .map([](std::string_view v) { return std::string(v); })
               .collect_vec();
@@ -786,7 +786,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
           sus_unreachable();
         }
 
-        sus::Vec<Namespace> target_namespaces =
+        Vec<Namespace> target_namespaces =
             iter_namespace_path(condecl).collect_vec();
         std::string target_name = condecl->getNameAsString();
 
@@ -833,7 +833,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
           sus_unreachable();
         }
 
-        sus::Vec<Namespace> target_namespaces =
+        Vec<Namespace> target_namespaces =
             iter_namespace_path(vardecl).collect_vec();
         std::string target_name = vardecl->getNameAsString();
 
@@ -915,7 +915,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
           sus_unreachable();
         }
 
-        sus::Vec<Namespace> target_namespaces =
+        Vec<Namespace> target_namespaces =
             iter_namespace_path(funcdecl).collect_vec();
         std::string target_name = funcdecl->getNameAsString();
 
@@ -955,7 +955,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
           sus_unreachable();
         }
 
-        sus::Vec<Namespace> target_namespaces =
+        Vec<Namespace> target_namespaces =
             iter_namespace_path(functmpldecl).collect_vec();
         std::string target_name = functmpldecl->getNameAsString();
 
@@ -1001,7 +1001,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
     Comment comment = make_db_comment(decl->getASTContext(), raw_comment, "");
 
-    sus::Vec<std::string> template_params;
+    Vec<std::string> template_params;
     template_params = collect_template_params(decl, preprocessor_);
 
     RequiresConstraints constraints;
@@ -1049,12 +1049,12 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       context = context->getParent();
 
     auto map_and_self_name = [&]()
-        -> sus::Option<sus::Tuple<
+        -> Option<sus::Tuple<
             std::unordered_map<FunctionId, FunctionElement, FunctionId::Hash>&,
             std::string_view>> {
       if (clang::isa<clang::CXXConstructorDecl>(decl)) {
         sus_check(clang::isa<clang::RecordDecl>(context));
-        if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
+        if (Option<RecordElement&> parent = docs_db_.find_record_mut(
                 clang::cast<clang::RecordDecl>(context));
             parent.is_some()) {
           return sus::some(
@@ -1062,7 +1062,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         }
       } else if (clang::isa<clang::CXXDestructorDecl>(decl)) {
         sus_check(clang::isa<clang::RecordDecl>(context));
-        if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
+        if (Option<RecordElement&> parent = docs_db_.find_record_mut(
                 clang::cast<clang::RecordDecl>(context));
             parent.is_some()) {
           return sus::some(
@@ -1070,7 +1070,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         }
       } else if (clang::isa<clang::CXXConversionDecl>(decl)) {
         sus_check(clang::isa<clang::RecordDecl>(context));
-        if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
+        if (Option<RecordElement&> parent = docs_db_.find_record_mut(
                 clang::cast<clang::RecordDecl>(context));
             parent.is_some()) {
           return sus::some(sus::tuple(parent.as_value_mut().conversions,
@@ -1078,7 +1078,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         }
       } else if (clang::isa<clang::CXXMethodDecl>(decl)) {
         sus_check(clang::isa<clang::RecordDecl>(context));
-        if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
+        if (Option<RecordElement&> parent = docs_db_.find_record_mut(
                 clang::cast<clang::RecordDecl>(context));
             parent.is_some()) {
           return sus::some(sus::tuple(parent.as_value_mut().methods,
@@ -1092,7 +1092,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         // return sus::some(parent->deductions);
       } else {
         // Note: VisitFriendDecl has a copy of this same logic.
-        if (sus::Option<NamespaceElement&> parent =
+        if (Option<NamespaceElement&> parent =
                 docs_db_.find_namespace_mut(find_nearest_namespace(decl));
             parent.is_some()) {
           return sus::some(sus::tuple(parent.as_value_mut().functions, ""));
@@ -1145,7 +1145,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     // ignored.
 
     std::string self_name;
-    if (sus::Option<RecordElement&> record =
+    if (Option<RecordElement&> record =
             docs_db_.find_record_mut(clang::cast<clang::RecordDecl>(context));
         record.is_some()) {
       self_name = record.as_value().name;
@@ -1153,7 +1153,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
     // TODO: Should we store friend functions into the `record` instead of the
     // namespace?
-    if (sus::Option<NamespaceElement&> parent =
+    if (Option<NamespaceElement&> parent =
             docs_db_.find_namespace_mut(find_nearest_namespace(decl));
         parent.is_some()) {
       add_function_with_comment(fdecl, context, parent.as_value_mut().functions,
@@ -1171,7 +1171,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         make_db_comment(decl->getASTContext(), raw_comment, self_name);
 
     auto params =
-        sus::Vec<FunctionParameter>::with_capacity(decl->parameters().size());
+        Vec<FunctionParameter>::with_capacity(decl->parameters().size());
     for (const clang::ParmVarDecl* v : decl->parameters()) {
       auto linked_type = LinkedType::with_type(
           build_local_type(v->getType(), v->getASTContext().getSourceManager(),
@@ -1182,8 +1182,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       );
     }
 
-    sus::Vec<std::string> template_params;
-    sus::Option<RequiresConstraints> constraints;
+    Vec<std::string> template_params;
+    Option<RequiresConstraints> constraints;
     if (clang::FunctionTemplateDecl* tmpl =
             decl->getDescribedFunctionTemplate()) {
       template_params = collect_template_params(tmpl, preprocessor_);
@@ -1218,7 +1218,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     }();
 
     // Make a copy before moving `comment` to the contructor argument.
-    sus::Option<std::string> overload_set =
+    Option<std::string> overload_set =
         sus::clone(comment.attrs.overload_set);
 
     std::string signature = "(";
@@ -1292,7 +1292,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       // in the classes where they are public, so we need to include
       // them in subclasses.
 
-      if (sus::Option<RecordElement&> parent =
+      if (Option<RecordElement&> parent =
               docs_db_.find_record_mut(clang::cast<clang::RecordDecl>(context));
           parent.is_some()) {
         fe.overloads[0u].method = sus::some(MethodSpecific{
@@ -1622,7 +1622,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       }
       line << sm.getLineNumber(sm.getFileID(loc), sm.getFileOffset(loc));
 
-      auto link = sus::Option<SourceLink>(SourceLink{
+      auto link = Option<SourceLink>(SourceLink{
           .quality = quality,
           .file_path = sus::move(canonical_path),
           .line = sus::move(line).str(),

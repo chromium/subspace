@@ -40,12 +40,12 @@ class SubDocGenTest : public testing::Test {
     std::string content =
         read_file(path_to_input(directory, sus::some("test.cc"))).unwrap();
 
-    auto args = sus::Vec<std::string>();
+    auto args = Vec<std::string>();
     args.push(std::string(subdoc::tests::cpp_version_flag(cpp_version_)));
 
     auto run_options =
         subdoc::RunOptions().set_show_progress(false).set_macro_prefixes(
-            sus::Vec<std::string>("sus_"));
+            Vec<std::string>("sus_"));
 
     auto result = subdoc::run_test("test.cc", sus::move(content),
                                    args.as_slice(), sus::move(run_options));
@@ -61,9 +61,9 @@ class SubDocGenTest : public testing::Test {
               test_root.append(directory);
               return test_root;
             }(),
-        .stylesheets = sus::Vec("../subdoc-test-style.css"s),
+        .stylesheets = Vec("../subdoc-test-style.css"s),
         .favicons =
-            sus::Vec(FavIcon::from_string("../icon.svg;image/svg+xml").unwrap(),
+            Vec(FavIcon::from_string("../icon.svg;image/svg+xml").unwrap(),
                      FavIcon::from_string("../icon.png;image/png").unwrap()),
         .copy_files = sus::empty,
         .ignore_bad_code_links = false,
@@ -72,7 +72,7 @@ class SubDocGenTest : public testing::Test {
         subdoc::gen::generate(sus::move(result).unwrap(), options);
     if (r.is_err()) {
       std::string fail = fmt::to_string(r.as_err());
-      for (sus::Option<const sus::error::DynError&> source =
+      for (Option<const sus::error::DynError&> source =
                sus::error::error_source(r.as_err());
            source.is_some();
            source = sus::error::error_source(source.as_value())) {
@@ -89,11 +89,11 @@ class SubDocGenTest : public testing::Test {
       return s;
     };
 
-    sus::Vec<std::filesystem::path> expecteds;
+    Vec<std::filesystem::path> expecteds;
     find_paths(path_to_input(directory, sus::none()), std::filesystem::path(),
                expecteds);
     expecteds.sort();
-    sus::Vec<std::filesystem::path> actuals;
+    Vec<std::filesystem::path> actuals;
     find_paths(path_to_output(directory, sus::none()), std::filesystem::path(),
                actuals);
     actuals.sort();
@@ -113,7 +113,7 @@ class SubDocGenTest : public testing::Test {
  private:
   /// Gives the path to a test input file.
   static std::filesystem::path path_to_input(
-      std::string_view directory, sus::Option<std::string_view> file) noexcept {
+      std::string_view directory, Option<std::string_view> file) noexcept {
     std::filesystem::path path;
     path.append("..");
     path.append("..");
@@ -125,7 +125,7 @@ class SubDocGenTest : public testing::Test {
   }
   /// Gives the path to a test-generated output file.
   static std::filesystem::path path_to_output(
-      std::string_view directory, sus::Option<std::string_view> file) noexcept {
+      std::string_view directory, Option<std::string_view> file) noexcept {
     std::filesystem::path path;
     path.append(output_root);
     path.append(directory);
@@ -133,7 +133,7 @@ class SubDocGenTest : public testing::Test {
     return path;
   }
 
-  static sus::Option<std::string> read_file(
+  static Option<std::string> read_file(
       const std::filesystem::path& path) noexcept {
     std::ifstream file;
     file.open(path.c_str());
@@ -152,7 +152,7 @@ class SubDocGenTest : public testing::Test {
 
   static void find_paths(const std::filesystem::path& base,
                          const std::filesystem::path& relative,
-                         sus::Vec<std::filesystem::path>& collect) noexcept {
+                         Vec<std::filesystem::path>& collect) noexcept {
     std::filesystem::path working = base;
     working /= relative;
 

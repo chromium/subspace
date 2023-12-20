@@ -36,7 +36,7 @@ std::string summarize_html(std::string_view html) noexcept {
 
   bool inside_tag = false;
   i32 tag_depth = 0;
-  sus::Option<size_t> start_non_empty;
+  Option<size_t> start_non_empty;
   for (auto i : sus::ops::range<usize>(0u, html.size())) {
     if (inside_tag) {
       if (html[i] == '>') {
@@ -79,7 +79,7 @@ std::string drop_tags(std::string_view html) noexcept {
   std::ostringstream s;
 
   bool inside_tag = false;
-  sus::Option<usize> text_start;
+  Option<usize> text_start;
   for (auto i : sus::ops::range<usize>(0u, html.size())) {
     if (inside_tag) {
       if (html[i] == '>') {
@@ -125,7 +125,7 @@ void apply_syntax_highlighting(std::string& str) noexcept {
 
   // A set of (position, INSERTS index), which indicate the string at index
   // should be inserted at the position in str.
-  sus::Vec<sus::Tuple<usize, usize>> inserts;
+  Vec<sus::Tuple<usize, usize>> inserts;
 
   usize pos;
   auto view = std::string_view(str);
@@ -317,7 +317,7 @@ sus::Result<MarkdownToHtml, MarkdownToHtmlError> markdown_to_html(
   struct UserData {
     std::ostringstream& parsed;
     ParseMarkdownPageState& page_state;
-    sus::Option<std::string> error_message;
+    Option<std::string> error_message;
   };
   UserData data(parsed, page_state, sus::none());
 
@@ -386,7 +386,7 @@ sus::Result<MarkdownToHtml, MarkdownToHtmlError> markdown_to_html(
       anchor = name.substr(pos);
       name = name.substr(0u, pos);
     }
-    sus::Option<FoundName> found = userdata.page_state.db.find_name(name);
+    Option<FoundName> found = userdata.page_state.db.find_name(name);
     if (found.is_some()) {
       std::string href;
       switch (found.as_value()) {

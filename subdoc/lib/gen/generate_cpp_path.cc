@@ -21,12 +21,12 @@ namespace subdoc::gen {
 
 namespace {
 
-sus::Vec<CppPathElement> generate_with_ancestors(
+Vec<CppPathElement> generate_with_ancestors(
     std::string_view name, CppPathElementType self_type,
     sus::Slice<const NamespaceElement*> ancestors,
     sus::Slice<const RecordElement*> type_ancestors,
     const Options& options) noexcept {
-  sus::Vec<CppPathElement> out;
+  Vec<CppPathElement> out;
   for (const NamespaceElement& ancestor : ancestors.iter().map(
            [](const NamespaceElement* e) -> const NamespaceElement& {
              return *e;
@@ -73,11 +73,11 @@ sus::Vec<CppPathElement> generate_with_ancestors(
 
 }  // namespace
 
-sus::Vec<CppPathElement> generate_cpp_path_for_namespace(
+Vec<CppPathElement> generate_cpp_path_for_namespace(
     const NamespaceElement& element,
     sus::Slice<const NamespaceElement*> ancestors,
     const Options& options) noexcept {
-  sus::Vec<CppPathElement> out;
+  Vec<CppPathElement> out;
   switch (element.namespace_name) {
     case Namespace::Tag::Global:
       out.push(CppPathElement{
@@ -103,7 +103,7 @@ sus::Vec<CppPathElement> generate_cpp_path_for_namespace(
   return out;
 }
 
-sus::Vec<CppPathElement> generate_cpp_path_for_type(
+Vec<CppPathElement> generate_cpp_path_for_type(
     const TypeElement& element,
     sus::Slice<const NamespaceElement*> namespace_ancestors,
     sus::Slice<const RecordElement*> type_ancestors,
@@ -112,7 +112,7 @@ sus::Vec<CppPathElement> generate_cpp_path_for_type(
                                  namespace_ancestors, type_ancestors, options);
 }
 
-sus::Vec<CppPathElement> generate_cpp_path_for_concept(
+Vec<CppPathElement> generate_cpp_path_for_concept(
     const ConceptElement& element,
     sus::Slice<const NamespaceElement*> namespace_ancestors,
     const Options& options) noexcept {
@@ -121,7 +121,7 @@ sus::Vec<CppPathElement> generate_cpp_path_for_concept(
                                  sus::Slice<const RecordElement*>(), options);
 }
 
-sus::Vec<CppPathElement> generate_cpp_path_for_function(
+Vec<CppPathElement> generate_cpp_path_for_function(
     const FunctionElement& element,
     sus::Slice<const NamespaceElement*> namespace_ancestors,
     const Options& options) noexcept {
@@ -130,7 +130,7 @@ sus::Vec<CppPathElement> generate_cpp_path_for_function(
                                  sus::Slice<const RecordElement*>(), options);
 }
 
-sus::Vec<CppPathElement> generate_cpp_path_for_macro(
+Vec<CppPathElement> generate_cpp_path_for_macro(
     const MacroElement& element,
     sus::Slice<const NamespaceElement*> namespace_ancestors,
     const Options& options) noexcept {

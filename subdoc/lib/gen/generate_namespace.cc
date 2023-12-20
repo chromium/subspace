@@ -242,7 +242,7 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace_references(
       }
 
       {
-        sus::Vec<SortedNamespaceByName> sorted;
+        Vec<SortedNamespaceByName> sorted;
         for (const auto& [key, sub_element] : ne.namespaces) {
           if (sub_element.hidden()) continue;
           if (sub_element.is_empty()) continue;
@@ -548,7 +548,7 @@ sus::Result<void, MarkdownToHtmlError> generate_variable_references(
 
 sus::Result<void, MarkdownToHtmlError> generate_namespace(
     const Database& db, const NamespaceElement& element,
-    sus::Vec<const NamespaceElement*> ancestors,
+    Vec<const NamespaceElement*> ancestors,
     const Options& options) noexcept {
   if (element.hidden()) return sus::ok();
 
@@ -569,7 +569,7 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
   generate_head(html, namespace_display_name(element, ancestors, options),
                 md_html.summary_text, options);
 
-  sus::Vec<SortedNamespaceByName> sorted_namespaces;
+  Vec<SortedNamespaceByName> sorted_namespaces;
   for (const auto& [key, sub_element] : element.namespaces) {
     if (sub_element.hidden()) continue;
     if (sub_element.is_empty()) continue;
@@ -579,8 +579,8 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
   }
   sorted_namespaces.sort_unstable_by(cmp_namespaces_by_name);
 
-  sus::Vec<SortedRecordByName> sorted_classes;
-  sus::Vec<SortedRecordByName> sorted_unions;
+  Vec<SortedRecordByName> sorted_classes;
+  Vec<SortedRecordByName> sorted_unions;
   for (const auto& [key, sub_element] : element.records) {
     if (sub_element.hidden()) continue;
 
@@ -599,8 +599,8 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
   sorted_classes.sort_unstable_by(cmp_records_by_name);
   sorted_unions.sort_unstable_by(cmp_records_by_name);
 
-  sus::Vec<SortedFunctionByName> sorted_functions;
-  sus::Vec<SortedFunctionByName> sorted_operators;
+  Vec<SortedFunctionByName> sorted_functions;
+  Vec<SortedFunctionByName> sorted_operators;
   for (const auto& [function_id, sub_element] : element.functions) {
     if (sub_element.hidden()) continue;
 
@@ -615,7 +615,7 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
   sorted_functions.sort_unstable_by(cmp_functions_by_name);
   sorted_operators.sort_unstable_by(cmp_functions_by_name);
 
-  sus::Vec<SortedMacroByName> sorted_macros;
+  Vec<SortedMacroByName> sorted_macros;
   for (const auto& [macro_id, sub_element] : element.macros) {
     if (sub_element.hidden()) continue;
     sorted_macros.push(
@@ -623,7 +623,7 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
   }
   sorted_macros.sort_unstable_by(cmp_macros_by_name);
 
-  sus::Vec<SortedVariableByName> sorted_variables;
+  Vec<SortedVariableByName> sorted_variables;
   for (const auto& [function_id, sub_element] : element.variables) {
     if (sub_element.hidden()) continue;
 
@@ -632,7 +632,7 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
   }
   sorted_variables.sort_unstable_by(cmp_variables_by_name);
 
-  sus::Vec<SortedConceptByName> sorted_concepts;
+  Vec<SortedConceptByName> sorted_concepts;
   for (const auto& [key, sub_element] : element.concepts) {
     if (sub_element.hidden()) continue;
 
@@ -641,10 +641,10 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
   }
   sorted_concepts.sort_unstable_by(cmp_concepts_by_name);
 
-  sus::Vec<SortedAliasByName> sorted_aliases_of_types;
-  sus::Vec<SortedAliasByName> sorted_aliases_of_functions;
-  sus::Vec<SortedAliasByName> sorted_aliases_of_variables;
-  sus::Vec<SortedAliasByName> sorted_aliases_of_concepts;
+  Vec<SortedAliasByName> sorted_aliases_of_types;
+  Vec<SortedAliasByName> sorted_aliases_of_functions;
+  Vec<SortedAliasByName> sorted_aliases_of_variables;
+  Vec<SortedAliasByName> sorted_aliases_of_concepts;
   // TODO: Methods, enum values, variables.
   for (const auto& [key, sub_element] : element.aliases) {
     if (sub_element.hidden()) continue;
@@ -675,7 +675,7 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
   sorted_aliases_of_variables.sort_unstable_by(cmp_aliases_by_name);
   sorted_aliases_of_concepts.sort_unstable_by(cmp_aliases_by_name);
 
-  sus::Vec<SidebarLink> sidebar_links;
+  Vec<SidebarLink> sidebar_links;
   if (!sorted_namespaces.is_empty()) {
     sidebar_links.push(SidebarLink(SidebarLinkStyle::GroupHeader, "Namespaces",
                                    "#namespaces"));
@@ -748,7 +748,7 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
                                    "Type Aliases", "#aliases-types"));
     for (const SortedAliasByName& sorted_alias : sorted_aliases_of_types) {
       const AliasElement& ae = alias_element_from_sorted(element, sorted_alias);
-      if (sus::Option<std::string> url = construct_html_url_for_alias(ae);
+      if (Option<std::string> url = construct_html_url_for_alias(ae);
           url.is_some()) {
         // Link to where the alias links to.
         sidebar_links.push(SidebarLink(SidebarLinkStyle::Item, ae.name,
@@ -769,7 +769,7 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
                                    "Function Aliases", "#aliases-functions"));
     for (const SortedAliasByName& sorted_alias : sorted_aliases_of_functions) {
       const AliasElement& ae = alias_element_from_sorted(element, sorted_alias);
-      if (sus::Option<std::string> url = construct_html_url_for_alias(ae);
+      if (Option<std::string> url = construct_html_url_for_alias(ae);
           url.is_some()) {
         // Link to where the alias links to.
         sidebar_links.push(SidebarLink(SidebarLinkStyle::Item, ae.name,
@@ -790,7 +790,7 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
                                    "Variable Aliases", "#aliases-variables"));
     for (const SortedAliasByName& sorted_alias : sorted_aliases_of_variables) {
       const AliasElement& ae = alias_element_from_sorted(element, sorted_alias);
-      if (sus::Option<std::string> url = construct_html_url_for_alias(ae);
+      if (Option<std::string> url = construct_html_url_for_alias(ae);
           url.is_some()) {
         // Link to where the alias links to.
         sidebar_links.push(SidebarLink(SidebarLinkStyle::Item, ae.name,
@@ -811,7 +811,7 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
                                    "Concept Aliases", "#aliases-concepts"));
     for (const SortedAliasByName& sorted_alias : sorted_aliases_of_concepts) {
       const AliasElement& ae = alias_element_from_sorted(element, sorted_alias);
-      if (sus::Option<std::string> url = construct_html_url_for_alias(ae);
+      if (Option<std::string> url = construct_html_url_for_alias(ae);
           url.is_some()) {
         // Link to where the alias links to.
         sidebar_links.push(SidebarLink(SidebarLinkStyle::Item, ae.name,

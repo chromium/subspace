@@ -25,7 +25,7 @@
 
 namespace subdoc::gen {
 
-inline sus::Option<std::ofstream> open_file_for_writing(
+inline Option<std::ofstream> open_file_for_writing(
     std::filesystem::path path) noexcept {
   std::ofstream file;
   file.open(path, std::ios::binary);
@@ -286,7 +286,7 @@ inline std::string construct_html_url_for_macro(
 
 /// The AliasElement may point to something not in the database, in which case
 /// a link to the alias's definition is produced.
-inline sus::Option<std::string> construct_html_url_for_alias(
+inline Option<std::string> construct_html_url_for_alias(
     const AliasElement& element) noexcept {
   if (element.alias_style == AliasStyle::Forwarding) {
     // Link through to the alias target directly, as the alias doesn't introduce
@@ -295,9 +295,9 @@ inline sus::Option<std::string> construct_html_url_for_alias(
       case AliasTarget::Tag::AliasOfType: {
         const LinkedType& type =
             element.target.as<AliasTarget::Tag::AliasOfType>();
-        sus::Option<const TypeRef&> maybe_ref =
+        Option<const TypeRef&> maybe_ref =
             type.type_element_refs.get(0u)
-                .map([](const sus::Option<TypeRef>& o) { return o.as_ref(); })
+                .map([](const Option<TypeRef>& o) { return o.as_ref(); })
                 .flatten();
         return maybe_ref.map([](const TypeRef& ref) {
           switch (ref) {

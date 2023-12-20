@@ -45,7 +45,7 @@ struct RunOptions {
     on_tu_complete = sus::some(sus::move(fn));
     return sus::move(*this);
   }
-  RunOptions set_macro_prefixes(sus::Vec<std::string> prefixes) && {
+  RunOptions set_macro_prefixes(Vec<std::string> prefixes) && {
     macro_prefixes = sus::move(prefixes);
     return sus::move(*this);
   }
@@ -53,15 +53,15 @@ struct RunOptions {
     generate_source_links = gen;
     return sus::move(*this);
   }
-  RunOptions set_remove_path_prefix(sus::Option<std::string> prefix) && {
+  RunOptions set_remove_path_prefix(Option<std::string> prefix) && {
     remove_path_prefix = sus::move(prefix);
     return sus::move(*this);
   }
-  RunOptions set_add_path_prefix(sus::Option<std::string> prefix) && {
+  RunOptions set_add_path_prefix(Option<std::string> prefix) && {
     add_path_prefix = sus::move(prefix);
     return sus::move(*this);
   }
-  RunOptions set_source_line_prefix(sus::Option<std::string> prefix) && {
+  RunOptions set_source_line_prefix(Option<std::string> prefix) && {
     source_line_prefix = sus::move(prefix);
     return sus::move(*this);
   }
@@ -73,12 +73,12 @@ struct RunOptions {
   /// Defaults to match nothing.
   std::regex exclude_path_patterns;
   /// Prefixes of macros to be included in docs.
-  sus::Vec<std::string> macro_prefixes;
+  Vec<std::string> macro_prefixes;
   /// A closure to run after parsing each translation unit.
   ///
   /// Used for tests to observe the AST and test subdoc methods that act on
   /// things from the AST.
-  sus::Option<
+  Option<
       sus::Box<sus::fn::DynFn<void(clang::ASTContext&, clang::Preprocessor&)>>>
       on_tu_complete;
   /// The overview markdown which will be applied as the doc comment to the
@@ -88,13 +88,13 @@ struct RunOptions {
   /// Whether to generate links to source code.
   bool generate_source_links = true;
   /// A prefix to remove from all paths in source links.
-  sus::Option<std::string> remove_path_prefix;
+  Option<std::string> remove_path_prefix;
   /// A prefix to add to all paths in source links, after removing the prefix
   /// specified by `remove_path_prefix`.
-  sus::Option<std::string> add_path_prefix;
+  Option<std::string> add_path_prefix;
   /// A prefix to add to the source code line number html fragment. Github uses
   /// an `L` as its prefix.
-  sus::Option<std::string> source_line_prefix;
+  Option<std::string> source_line_prefix;
 };
 
 }  // namespace subdoc

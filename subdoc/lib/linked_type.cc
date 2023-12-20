@@ -21,14 +21,14 @@
 namespace subdoc {
 
 LinkedType LinkedType::with_type(Type t, const Database& db) noexcept {
-  sus::Vec<sus::Option<TypeRef>> refs = db.collect_type_element_refs(t);
+  Vec<Option<TypeRef>> refs = db.collect_type_element_refs(t);
   return LinkedType(CONSTRUCT, sus::move(t), sus::move(refs));
 }
 
 LinkedConcept LinkedConcept::with_concept(sus::Slice<Namespace> namespace_path,
                                           std::string name,
                                           const Database& db) noexcept {
-  sus::Option<FoundName> found =
+  Option<FoundName> found =
       db.find_name_in_namespace_path(namespace_path, name);
   if (found.is_some() && *found == FoundName::Tag::Concept) {
     return LinkedConcept{
@@ -50,7 +50,7 @@ LinkedFunction LinkedFunction::with_function(
     const Database& db) noexcept {
   // TODO: The alias has to pick an overload set to link to, which one? Should
   // all function overload sets be on one html page?
-  sus::Option<FoundName> found =
+  Option<FoundName> found =
       db.find_name_in_namespace_path(namespace_path, name);
   if (found.is_some() && *found == FoundName::Tag::Function) {
     return LinkedFunction{
@@ -73,7 +73,7 @@ LinkedVariable LinkedVariable::with_variable(
     const Database& db) noexcept {
   // TODO: The alias has to pick an overload set to link to, which one? Should
   // all function overload sets be on one html page?
-  sus::Option<FoundName> found =
+  Option<FoundName> found =
       db.find_name_in_namespace_path(namespace_path, name);
   if (found.is_some() && *found == FoundName::Tag::Field) {
     return LinkedVariable{
