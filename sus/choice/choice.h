@@ -174,6 +174,16 @@ struct CanConvertToStorage<I, ::sus::tuple_type::Tuple<Ts...>, U> {
 ///   }
 /// }
 /// ```
+/// `Choice` will re-export the tag value type as a nested `Tag` subtype. This
+/// allows access to the Choice's values though `MyChoiceType::Tag::Name`.
+/// ```
+/// enum class Order { First, Second };
+/// using EitherOr = Choice<sus_choice_types(
+///     (Order::First, u64),
+///     (Order::Second, u32)
+/// )>;
+/// auto x = EitherOr::with<EitherOr::Tag::First>(987u);
+/// ```
 template <class... Ts, auto... Tags>
 class Choice<__private::TypeList<Ts...>, Tags...> final {
   static_assert(sizeof...(Ts) > 0,

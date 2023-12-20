@@ -22,9 +22,14 @@
 #include "sus/macros/remove_parens.h"
 #include "sus/tuple/tuple.h"
 
-/// Construct a set of associated value and types pairings. The type of the
+/// A macro used to declare the value-type pairings in a [`Choice`](
+/// $sus::choice_type::Choice). See the [`Choice`](
+/// $sus::choice_type::Choice) type for examples of its use.
+///
+/// Constructs a set of associated value and types pairings. The type of the
 /// values need have no relationship to the specified types.
 ///
+/// # Details
 /// The input takes the format: `(Value1, Type1A, Type1B), (Value2, Type2), ...`
 /// The output is the sequence `TypeList<Tuple<Type1A, Type1B>, Tuple<Type2>,
 /// ...>, Value1, Value2, ...`.
@@ -60,11 +65,11 @@
 // clang-format on
 
 #define _sus__make_union_storage_type(types) \
-  ::sus::choice_type::__private::MakeStorageType<sus_remove_parens(types)>::type
+  ::sus::choice_type::__private::MakeStorageType<_sus_remove_parens(types)>::type
 
 #define _sus__first(a, ...) a
 #define _sus__second_plus(a, ...) __VA_ARGS__
 
 #define _sus__value_types_types(x) \
-  (sus_remove_parens_and_eval(_sus__second_plus, x))
-#define _sus__value_types_value(x) sus_remove_parens_and_eval(_sus__first, x)
+  (_sus_remove_parens_and_eval(_sus__second_plus, x))
+#define _sus__value_types_value(x) _sus_remove_parens_and_eval(_sus__first, x)

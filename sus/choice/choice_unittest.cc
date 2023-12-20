@@ -1026,6 +1026,12 @@ TEST(Choice, Example_Construct) {
       }
     }
   }
+  {
+    enum class Order { First, Second };
+    using EitherOr =
+        Choice<sus_choice_types((Order::First, u64), (Order::Second, u32))>;
+    auto x = EitherOr::with<EitherOr::Tag::First>(987u);
+  }
 }
 
 }  // namespace
