@@ -19,6 +19,12 @@
 #include "fmt/core.h"
 #include "sus/string/__private/format_to_stream.h"
 
+namespace sus {
+/// Marker types, such as for accessing unsafe APIs, for overload resolution,
+/// or type elision.
+namespace marker {}
+}  // namespace sus
+
 namespace sus::marker {
 
 /// A marker that designates a function as unsafe, or containing Undefined
