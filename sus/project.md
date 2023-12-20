@@ -11,7 +11,7 @@ you wrote.
 Find Subspace on Github here:
 [https://github.com/chromium/subspace](https://github.com/chromium/subspace)
 
-# Prelude
+## Prelude
 
 The `sus/prelude.h` header imports the most commonly used types into the
 global namespace. All types in the [`prelude`]($sus::prelude) namespace are
@@ -22,7 +22,7 @@ included:
 * [`f32`]($sus::num::f32) and other floating point types
 * [`unsafe_fn`]($sus::marker::unsafe_fn) marker
 
-## Example
+### Example
 ```
 #include "sus/prelude.h"
 
