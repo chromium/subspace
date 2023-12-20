@@ -35,7 +35,7 @@ class SubDocTest : public testing::Test {
   auto run_code_with_options(const subdoc::RunOptions& options,
                              std::string file_name,
                              std::string content) noexcept {
-    auto args = sus::Vec<std::string>::with_capacity(1u);
+    auto args = Vec<std::string>::with_capacity(1u);
     args.push(std::string(subdoc::tests::cpp_version_flag(cpp_version_)));
 
     return subdoc::run_test(sus::move(file_name), sus::move(content),
@@ -150,7 +150,7 @@ class SubDocTest : public testing::Test {
 
  private:
   bool verify_comment(std::string_view type, const subdoc::Database& db,
-                      sus::Option<const subdoc::CommentElement&> element,
+                      Option<const subdoc::CommentElement&> element,
                       std::string_view comment_loc,
                       std::string_view comment_start) const noexcept {
     if (element.is_none()) {
@@ -188,6 +188,6 @@ class SubDocTest : public testing::Test {
 
   subdoc::tests::SubDocCppVersion cpp_version_ =
       subdoc::tests::SubDocCppVersion::Cpp20;
-  mutable sus::Option<std::unordered_map<std::string, u32>> self_link_counts =
+  mutable Option<std::unordered_map<std::string, u32>> self_link_counts =
       sus::some(std::unordered_map<std::string, u32>());
 };

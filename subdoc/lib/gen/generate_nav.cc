@@ -21,7 +21,7 @@ namespace subdoc::gen {
 
 void generate_nav(HtmlWriter::OpenBody& body, const Database& db,
                   std::string_view pretitle, std::string_view title,
-                  std::string_view subtitle, sus::Vec<SidebarLink> links,
+                  std::string_view subtitle, Vec<SidebarLink> links,
                   const Options& options) noexcept {
   {
     auto nav = body.open_nav();

@@ -65,7 +65,7 @@ class RecordIter final
     }
   }
 
-  sus::Option<std::string_view> next() noexcept {
+  Option<std::string_view> next() noexcept {
     if (next_decl_) {
       clang::RecordDecl* cur_decl = next_decl_;
 
@@ -112,7 +112,7 @@ class NamespaceIter final
   explicit NamespaceIter(clang::Decl* decl) noexcept
       : next_ndecl_(find_nearest_namespace(decl)) {}
 
-  sus::Option<Namespace> next() noexcept {
+  Option<Namespace> next() noexcept {
     if (next_ndecl_) {
       clang::NamespaceDecl* cur_ndecl = next_ndecl_;
       next_ndecl_ =

@@ -34,11 +34,11 @@ std::string make_title_string(TypeToStringQuery q) {
 }  // namespace
 
 void generate_type(HtmlWriter::OpenDiv& div, const LinkedType& linked_type,
-                   sus::Option<sus::fn::DynFnMut<void(HtmlWriter::OpenDiv&)>&>
+                   Option<sus::fn::DynFnMut<void(HtmlWriter::OpenDiv&)>&>
                        var_name_fn) noexcept {
   auto text_fn = [&](std::string_view text) { div.write_text(text); };
   auto type_fn = [&, i_ = 0_usize](TypeToStringQuery q) mutable {
-    const sus::Option<TypeRef>& maybe_ref =
+    const Option<TypeRef>& maybe_ref =
         linked_type.type_element_refs[sus::mem::replace(i_, i_ + 1u)];
     if (maybe_ref.is_none()) {
       for (const std::string& p : q.namespace_path) {
@@ -90,7 +90,7 @@ void generate_type(HtmlWriter::OpenDiv& div, const LinkedType& linked_type,
   // Construct our DynFnMut reference to `var_fn` in case we need it so that
   // it can outlive the Option holding a ref to it.
   auto dyn_fn = sus::dyn<sus::fn::DynFnMut<void()>>(var_fn);
-  auto opt_dyn_fn = sus::Option<sus::fn::DynFnMut<void()>&>(dyn_fn);
+  auto opt_dyn_fn = Option<sus::fn::DynFnMut<void()>&>(dyn_fn);
 
   type_to_string(linked_type.type,
                  sus::dyn<sus::fn::DynFnMut<void(std::string_view)>>(text_fn),

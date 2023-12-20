@@ -34,9 +34,9 @@ using InheritPathElement =
                                  (InheritPathFunction, std::string))>;
 
 struct DocAttributes {
-  sus::Option<std::string> overload_set;
+  Option<std::string> overload_set;
   clang::SourceLocation location;
-  sus::Option<sus::Vec<InheritPathElement>> inherit;
+  Option<Vec<InheritPathElement>> inherit;
   bool hidden = false;
 
   DocAttributes clone() const {

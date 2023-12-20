@@ -81,7 +81,7 @@ void generate_head(HtmlWriter& html, std::string_view title,
       favicon_link.add_type(favicon.mime);
       favicon_link.add_href(favicon.path);
     }
-    if (sus::Option<const FavIcon&> icon = options.favicons.first();
+    if (Option<const FavIcon&> icon = options.favicons.first();
         icon.is_some()) {
       auto meta = head.open_meta();
       meta.add_property("og:image");

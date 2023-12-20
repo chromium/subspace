@@ -307,7 +307,7 @@ sus::Result<void, MarkdownToHtmlError> generate_record_methods(
 sus::Result<void, MarkdownToHtmlError> generate_record(
     const Database& db, const RecordElement& element,
     sus::Slice<const NamespaceElement*> namespaces,
-    sus::Vec<const RecordElement*> type_ancestors,
+    Vec<const RecordElement*> type_ancestors,
     const Options& options) noexcept {
   if (element.hidden()) return sus::ok();
 
@@ -350,8 +350,8 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
     generate_head(html, sus::move(title).str(), md_html.summary_text, options);
   }
 
-  sus::Vec<SortedFieldByName> sorted_static_fields;
-  sus::Vec<SortedFieldByName> sorted_fields;
+  Vec<SortedFieldByName> sorted_static_fields;
+  Vec<SortedFieldByName> sorted_fields;
   for (const auto& [symbol, field_element] : element.fields) {
     if (field_element.hidden()) continue;
 
@@ -369,10 +369,10 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
   sorted_static_fields.sort_unstable_by(cmp_fields_by_name);
   sorted_fields.sort_unstable_by(cmp_fields_by_name);
 
-  sus::Vec<SortedFunctionByName> sorted_static_methods;
-  sus::Vec<SortedFunctionByName> sorted_methods;
-  sus::Vec<SortedFunctionByName> sorted_conversions;
-  sus::Vec<SortedFunctionByName> sorted_operators;
+  Vec<SortedFunctionByName> sorted_static_methods;
+  Vec<SortedFunctionByName> sorted_methods;
+  Vec<SortedFunctionByName> sorted_conversions;
+  Vec<SortedFunctionByName> sorted_operators;
   for (const auto& [method_id, method_element] : element.ctors) {
     if (method_element.hidden()) continue;
 
@@ -406,7 +406,7 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
   sorted_conversions.sort_unstable_by(cmp_functions_by_name);
   sorted_operators.sort_unstable_by(cmp_functions_by_name);
 
-  sus::Vec<SidebarLink> sidebar_links;
+  Vec<SidebarLink> sidebar_links;
   if (!sorted_static_fields.is_empty()) {
     sidebar_links.push(SidebarLink(SidebarLinkStyle::GroupHeader,
                                    "Static Data Members",

@@ -21,6 +21,7 @@
 #include "sus/mem/move.h"
 #include "sus/num/types.h"
 #include "sus/ops/range_literals.h"
+#include "sus/option/option.h"
 
 // Commonly used things that can be pulled into the global top level namespace.
 // This is done by default when including the `sus/prelude.h` header.
@@ -39,3 +40,4 @@ using sus::num::u64;
 using sus::num::u8;
 using sus::num::uptr;
 using sus::num::usize;
+using sus::option::Option;

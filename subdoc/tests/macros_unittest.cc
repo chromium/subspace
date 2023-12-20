@@ -165,7 +165,7 @@ TEST_F(SubDocTest, Macro) {
   const auto opts =
       subdoc::RunOptions()           //
           .set_show_progress(false)  //
-          .set_macro_prefixes(sus::Vec<std::string>("one_", "TWO_"));
+          .set_macro_prefixes(Vec<std::string>("one_", "TWO_"));
   auto result = run_code_with_options(opts, "test.cc", R"(
     /// Comment headline
     #define one_f() 

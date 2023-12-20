@@ -37,28 +37,28 @@ struct CppPathElement {
   CppPathElementType type;
 };
 
-sus::Vec<CppPathElement> generate_cpp_path_for_namespace(
+Vec<CppPathElement> generate_cpp_path_for_namespace(
     const NamespaceElement& element,
     sus::Slice<const NamespaceElement*> ancestors,
     const Options& options) noexcept;
 
-sus::Vec<CppPathElement> generate_cpp_path_for_type(
+Vec<CppPathElement> generate_cpp_path_for_type(
     const TypeElement& element,
     sus::Slice<const NamespaceElement*> namespace_ancestors,
     sus::Slice<const RecordElement*> type_ancestors,
     const Options& options) noexcept;
 
-sus::Vec<CppPathElement> generate_cpp_path_for_concept(
+Vec<CppPathElement> generate_cpp_path_for_concept(
     const ConceptElement& element,
     sus::Slice<const NamespaceElement*> namespace_ancestors,
     const Options& options) noexcept;
 
-sus::Vec<CppPathElement> generate_cpp_path_for_function(
+Vec<CppPathElement> generate_cpp_path_for_function(
     const FunctionElement& element,
     sus::Slice<const NamespaceElement*> namespace_ancestors,
     const Options& options) noexcept;
 
-sus::Vec<CppPathElement> generate_cpp_path_for_macro(
+Vec<CppPathElement> generate_cpp_path_for_macro(
     const MacroElement& element,
     sus::Slice<const NamespaceElement*> namespace_ancestors,
     const Options& options) noexcept;

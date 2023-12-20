@@ -39,7 +39,7 @@ std::string make_string(std::string_view var_name, const subdoc::Type& type) {
   // Construct our DynFnMut reference to `var_fn` in case we need it so that
   // it can outlive the Option holding a ref to it.
   auto dyn_fn = sus::dyn<sus::fn::DynFnMut<void()>>(var_fn);
-  sus::Option<sus::fn::DynFnMut<void()>&> opt_dyn_fn;
+  Option<sus::fn::DynFnMut<void()>&> opt_dyn_fn;
   if (!var_name.empty()) opt_dyn_fn.insert(dyn_fn);
 
   subdoc::type_to_string(
@@ -50,11 +50,11 @@ std::string make_string(std::string_view var_name, const subdoc::Type& type) {
   return sus::move(str).str();
 }
 
-sus::Option<clang::FunctionDecl&> find_function(
+Option<clang::FunctionDecl&> find_function(
     std::string_view name, clang::ASTContext& cx) noexcept {
   class Visitor : public clang::RecursiveASTVisitor<Visitor> {
    public:
-    Visitor(std::string_view name, sus::Option<clang::FunctionDecl&>& option)
+    Visitor(std::string_view name, Option<clang::FunctionDecl&>& option)
         : name(name), option(option) {}
     bool VisitFunctionDecl(clang::FunctionDecl* decl) noexcept {
       if (std::string_view(decl->getName()) == name) option = sus::some(*decl);
@@ -62,16 +62,16 @@ sus::Option<clang::FunctionDecl&> find_function(
     }
 
     std::string_view name;
-    sus::Option<clang::FunctionDecl&>& option;
+    Option<clang::FunctionDecl&>& option;
   };
 
-  sus::Option<clang::FunctionDecl&> option;
+  Option<clang::FunctionDecl&> option;
   auto v = Visitor(name, option);
   v.TraverseAST(cx);
   return option;
 }
 
-sus::Option<sus::Tuple<clang::QualType, clang::SourceLocation>>
+Option<sus::Tuple<clang::QualType, clang::SourceLocation>>
 find_function_return(std::string_view name, clang::ASTContext& cx) noexcept {
   return find_function(name, cx).map([](clang::FunctionDecl& fdecl) {
     return sus::Tuple<clang::QualType, clang::SourceLocation>(
@@ -79,7 +79,7 @@ find_function_return(std::string_view name, clang::ASTContext& cx) noexcept {
   });
 }
 
-sus::Option<sus::Tuple<clang::QualType, clang::SourceLocation>>
+Option<sus::Tuple<clang::QualType, clang::SourceLocation>>
 find_function_parm(std::string_view name, clang::ASTContext& cx,
                    usize index = 0u) noexcept {
   return find_function(name, cx).map(
@@ -317,7 +317,7 @@ TEST_F(SubDocTypeTest, Pointer) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
-    EXPECT_EQ(t.pointers, sus::Vec(Qualifier()));
+    EXPECT_EQ(t.pointers, Vec(Qualifier()));
 
     EXPECT_EQ(make_string("foo", t), "!int!* foo");
   });
@@ -337,7 +337,7 @@ TEST_F(SubDocTypeTest, RefToPointer) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
-    EXPECT_EQ(t.pointers, sus::Vec(Qualifier()));
+    EXPECT_EQ(t.pointers, Vec(Qualifier()));
 
     EXPECT_EQ(make_string("foo", t), "!int!*& foo");
   });
@@ -357,7 +357,7 @@ TEST_F(SubDocTypeTest, ConstRefToPointer) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
-    EXPECT_EQ(t.pointers, sus::Vec(Qualifier::with_const()));
+    EXPECT_EQ(t.pointers, Vec(Qualifier::with_const()));
 
     EXPECT_EQ(make_string("foo", t), "!int! *const& foo");
   });
@@ -377,7 +377,7 @@ TEST_F(SubDocTypeTest, ConstRefToPointerToConst) {
     EXPECT_EQ(t.qualifier.is_const, true);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
-    EXPECT_EQ(t.pointers, sus::Vec(Qualifier::with_const()));
+    EXPECT_EQ(t.pointers, Vec(Qualifier::with_const()));
 
     EXPECT_EQ(make_string("foo", t), "const !int! *const& foo");
   });
@@ -398,7 +398,7 @@ TEST_F(SubDocTypeTest, PointerQualifiers) {
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
     EXPECT_EQ(t.pointers,
-              sus::Vec(Qualifier(), Qualifier::with_cv(), Qualifier(),
+              Vec(Qualifier(), Qualifier::with_cv(), Qualifier(),
                        Qualifier::with_volatile(), Qualifier()));
 
     EXPECT_EQ(make_string("foo", t),
@@ -420,7 +420,7 @@ TEST_F(SubDocTypeTest, SizedArray) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
-    EXPECT_EQ(t.array_dims, sus::Vec(std::string("5")));
+    EXPECT_EQ(t.array_dims, Vec(std::string("5")));
     EXPECT_EQ(t.pointers, sus::empty);
 
     EXPECT_EQ(make_string("foo", t), "!int! foo[5]");
@@ -441,7 +441,7 @@ TEST_F(SubDocTypeTest, QualifiedArray) {
     EXPECT_EQ(t.qualifier.is_const, true);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
-    EXPECT_EQ(t.array_dims, sus::Vec(std::string("5")));
+    EXPECT_EQ(t.array_dims, Vec(std::string("5")));
     EXPECT_EQ(t.pointers, sus::empty);
 
     EXPECT_EQ(make_string("foo", t), "const !int! foo[5]");
@@ -462,7 +462,7 @@ TEST_F(SubDocTypeTest, SizedMultiArray) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
-    EXPECT_EQ(t.array_dims, sus::Vec("5"s, "4"s, "3"s, "2"s, "1"s));
+    EXPECT_EQ(t.array_dims, Vec("5"s, "4"s, "3"s, "2"s, "1"s));
     EXPECT_EQ(t.pointers, sus::empty);
 
     EXPECT_EQ(make_string("foo", t), "!int! foo[5][4][3][2][1]");
@@ -483,7 +483,7 @@ TEST_F(SubDocTypeTest, UnsizedArray) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
-    EXPECT_EQ(t.array_dims, sus::Vec(""s));
+    EXPECT_EQ(t.array_dims, Vec(""s));
     EXPECT_EQ(t.pointers, sus::empty);
 
     EXPECT_EQ(make_string("foo", t), "!int! foo[]");
@@ -504,7 +504,7 @@ TEST_F(SubDocTypeTest, UnsizedAndSizedArray) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
-    EXPECT_EQ(t.array_dims, sus::Vec(""s, "3"s));
+    EXPECT_EQ(t.array_dims, Vec(""s, "3"s));
     EXPECT_EQ(t.pointers, sus::empty);
 
     EXPECT_EQ(make_string("foo", t), "!int! foo[][3]");
@@ -526,7 +526,7 @@ TEST_F(SubDocTypeTest, DependentArray) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
-    EXPECT_EQ(t.array_dims, sus::Vec(""s, "N"s, "3"s));
+    EXPECT_EQ(t.array_dims, Vec(""s, "N"s, "3"s));
     EXPECT_EQ(t.pointers, sus::empty);
 
     EXPECT_EQ(make_string("foo", t), "!int! foo[][N][3]");
@@ -548,7 +548,7 @@ TEST_F(SubDocTypeTest, SizedArrayRef) {
     EXPECT_EQ(t.qualifier.is_const, true);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
-    EXPECT_EQ(t.array_dims, sus::Vec("3"s));
+    EXPECT_EQ(t.array_dims, Vec("3"s));
     EXPECT_EQ(t.pointers, sus::empty);
 
     EXPECT_EQ(make_string("foo", t), "const !int! (&foo)[3]");
@@ -570,7 +570,7 @@ TEST_F(SubDocTypeTest, SizedArrayRvalueRef) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, true);
     EXPECT_EQ(t.refs, subdoc::Refs::RValueRef);
-    EXPECT_EQ(t.array_dims, sus::Vec("3"s));
+    EXPECT_EQ(t.array_dims, Vec("3"s));
     EXPECT_EQ(t.pointers, sus::empty);
 
     EXPECT_EQ(make_string("foo", t), "volatile !int! (&&foo)[3]");
@@ -593,7 +593,7 @@ TEST_F(SubDocTypeTest, NamespaceReference) {
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
     EXPECT_EQ(t.record_path, sus::empty);
-    EXPECT_EQ(t.namespace_path, sus::Vec("a"s, "b"s, "c"s));
+    EXPECT_EQ(t.namespace_path, Vec("a"s, "b"s, "c"s));
 
     EXPECT_EQ(make_string("foo", t), "const !S!& foo");
   });
@@ -613,7 +613,7 @@ TEST_F(SubDocTypeTest, NamespaceTypedefReference) {
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "S2");
     EXPECT_EQ(t.record_path, sus::empty);
-    EXPECT_EQ(t.namespace_path, sus::Vec("a"s, "b"s));
+    EXPECT_EQ(t.namespace_path, Vec("a"s, "b"s));
 
     EXPECT_EQ(make_string("foo", t), "!S2! foo");
   });
@@ -633,7 +633,7 @@ TEST_F(SubDocTypeTest, NamespaceUsingReference) {
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "S2");
     EXPECT_EQ(t.record_path, sus::empty);
-    EXPECT_EQ(t.namespace_path, sus::Vec("a"s, "b"s));
+    EXPECT_EQ(t.namespace_path, Vec("a"s, "b"s));
 
     EXPECT_EQ(make_string("foo", t), "!S2! foo");
   });
@@ -692,7 +692,7 @@ TEST_F(SubDocTypeTest, AutoPointer) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
-    EXPECT_EQ(t.pointers, sus::Vec(Qualifier()));
+    EXPECT_EQ(t.pointers, Vec(Qualifier()));
 
     EXPECT_EQ(make_string("foo", t), "auto* foo");
   });
@@ -713,7 +713,7 @@ TEST_F(SubDocTypeTest, Concept) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
-    EXPECT_EQ(t.namespace_path, sus::Vec("a"s, "b"s));
+    EXPECT_EQ(t.namespace_path, Vec("a"s, "b"s));
 
     auto [qual2, loc2] = find_function_parm("f", cx, 1u).unwrap();
     subdoc::Type t2 = subdoc::build_local_type(qual2, cx.getSourceManager(),
@@ -724,7 +724,7 @@ TEST_F(SubDocTypeTest, Concept) {
     EXPECT_EQ(t2.qualifier.is_const, true);
     EXPECT_EQ(t2.qualifier.is_volatile, false);
     EXPECT_EQ(t2.refs, subdoc::Refs::LValueRef);
-    EXPECT_EQ(t2.namespace_path, sus::Vec("a"s, "b"s));
+    EXPECT_EQ(t2.namespace_path, Vec("a"s, "b"s));
 
     EXPECT_EQ(make_string("foo", t), "!C! auto foo");
     EXPECT_EQ(make_string("foo", t2), "const !C! auto& foo");
@@ -746,7 +746,7 @@ TEST_F(SubDocTypeTest, ConceptReturn) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
-    EXPECT_EQ(t.namespace_path, sus::Vec("a"s, "b"s));
+    EXPECT_EQ(t.namespace_path, Vec("a"s, "b"s));
     const std::string& p1 =
         t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Value>();
     EXPECT_EQ(p1, "1 + 3");
@@ -770,7 +770,7 @@ TEST_F(SubDocTypeTest, ConceptReturnWithBody) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
-    EXPECT_EQ(t.namespace_path, sus::Vec("a"s, "b"s));
+    EXPECT_EQ(t.namespace_path, Vec("a"s, "b"s));
     const std::string& p1 =
         t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Value>();
     EXPECT_EQ(p1, "1 + 3");
@@ -794,7 +794,7 @@ TEST_F(SubDocTypeTest, ConceptWithParam) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
-    EXPECT_EQ(t.namespace_path, sus::Vec("a"s, "b"s));
+    EXPECT_EQ(t.namespace_path, Vec("a"s, "b"s));
     const std::string& p1 =
         t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Value>();
     EXPECT_EQ(p1, "5 + 2");
@@ -819,7 +819,7 @@ TEST_F(SubDocTypeTest, ConceptWithDependentTypeParam) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
-    EXPECT_EQ(t.namespace_path, sus::Vec("a"s, "b"s));
+    EXPECT_EQ(t.namespace_path, Vec("a"s, "b"s));
     const subdoc::Type& p1 =
         t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
     EXPECT_EQ(p1.category, subdoc::TypeCategory::TemplateVariable);
@@ -828,7 +828,7 @@ TEST_F(SubDocTypeTest, ConceptWithDependentTypeParam) {
     EXPECT_EQ(p1.qualifier.is_const, false);
     EXPECT_EQ(p1.qualifier.is_volatile, true);
     EXPECT_EQ(p1.refs, subdoc::Refs::RValueRef);
-    EXPECT_EQ(p1.pointers, sus::Vec<Qualifier>(Qualifier::with_const()));
+    EXPECT_EQ(p1.pointers, Vec<Qualifier>(Qualifier::with_const()));
 
     EXPECT_EQ(make_string("foo", t), "!C!<volatile T *const&&> auto foo");
   });
@@ -850,7 +850,7 @@ TEST_F(SubDocTypeTest, ConceptWithTypeParam) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
-    EXPECT_EQ(t.namespace_path, sus::Vec("a"s, "b"s));
+    EXPECT_EQ(t.namespace_path, Vec("a"s, "b"s));
     const subdoc::Type& p1 =
         t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
     EXPECT_EQ(p1.category, subdoc::TypeCategory::Type);
@@ -859,7 +859,7 @@ TEST_F(SubDocTypeTest, ConceptWithTypeParam) {
     EXPECT_EQ(p1.qualifier.is_const, false);
     EXPECT_EQ(p1.qualifier.is_volatile, true);
     EXPECT_EQ(p1.refs, subdoc::Refs::RValueRef);
-    EXPECT_EQ(p1.pointers, sus::Vec<Qualifier>(Qualifier::with_const()));
+    EXPECT_EQ(p1.pointers, Vec<Qualifier>(Qualifier::with_const()));
 
     EXPECT_EQ(make_string("foo", t), "!C!<volatile !E! *const&&> auto foo");
   });
@@ -881,7 +881,7 @@ TEST_F(SubDocTypeTest, ConceptWithPack) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
-    EXPECT_EQ(t.namespace_path, sus::Vec("a"s, "b"s));
+    EXPECT_EQ(t.namespace_path, Vec("a"s, "b"s));
     EXPECT_EQ(t.is_pack, false);
     const subdoc::Type& p1 =
         t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
@@ -941,8 +941,8 @@ TEST_F(SubDocTypeTest, NestedAliasTemplate) {
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "A");
-    EXPECT_EQ(t.record_path, sus::Vec("S"s));
-    EXPECT_EQ(t.namespace_path, sus::Vec("a"s, "b"s));
+    EXPECT_EQ(t.record_path, Vec("S"s));
+    EXPECT_EQ(t.namespace_path, Vec("a"s, "b"s));
 
     ASSERT_EQ(t.template_params.len(), 1u);
     EXPECT_EQ(t.template_params[0u].choice, subdoc::TypeOrValueTag::Type);
@@ -1030,7 +1030,7 @@ TEST_F(SubDocTypeTest, DependentTypePointer) {
     EXPECT_EQ(p1.qualifier.is_const, false);
     ASSERT_EQ(p1.qualifier.is_volatile, true);
     EXPECT_EQ(p1.refs, subdoc::Refs::None);
-    EXPECT_EQ(p1.pointers, sus::Vec(Qualifier()));
+    EXPECT_EQ(p1.pointers, Vec(Qualifier()));
 
     EXPECT_EQ(make_string("foo", t), "!S!<volatile T*> foo");
   });
@@ -1048,8 +1048,8 @@ TEST_F(SubDocTypeTest, NestedClassMultiple) {
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "C");
-    EXPECT_EQ(t.record_path, sus::Vec("A"s, "B"s));
-    EXPECT_EQ(t.namespace_path, sus::Vec("a"s, "b"s));
+    EXPECT_EQ(t.record_path, Vec("A"s, "B"s));
+    EXPECT_EQ(t.namespace_path, Vec("a"s, "b"s));
 
     EXPECT_EQ(make_string("foo", t), "!C! foo");
   });
@@ -1252,7 +1252,7 @@ TEST_F(SubDocTypeTest, AutoReturnPointer) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
-    EXPECT_EQ(t.pointers, sus::Vec(Qualifier()));
+    EXPECT_EQ(t.pointers, Vec(Qualifier()));
 
     EXPECT_EQ(make_string("foo", t), "auto* foo");
   });
@@ -1370,12 +1370,12 @@ TEST_F(SubDocTypeTest, ConceptReturnWithTypeParam) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
-    EXPECT_EQ(t.namespace_path, sus::Vec("a"s, "b"s));
+    EXPECT_EQ(t.namespace_path, Vec("a"s, "b"s));
     const subdoc::Type& p1 =
         t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
     EXPECT_EQ(p1.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(p1.name, "E");
-    EXPECT_EQ(p1.namespace_path, sus::Vec("c"s, "d"s));
+    EXPECT_EQ(p1.namespace_path, Vec("c"s, "d"s));
 
     EXPECT_EQ(make_string("foo", t), "!C!<!E!> auto foo");
 
@@ -1388,12 +1388,12 @@ TEST_F(SubDocTypeTest, ConceptReturnWithTypeParam) {
     EXPECT_EQ(t2.qualifier.is_const, false);
     EXPECT_EQ(t2.qualifier.is_volatile, false);
     EXPECT_EQ(t2.refs, subdoc::Refs::None);
-    EXPECT_EQ(t2.namespace_path, sus::Vec("a"s, "b"s));
+    EXPECT_EQ(t2.namespace_path, Vec("a"s, "b"s));
     const subdoc::Type& p21 =
         t2.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
     EXPECT_EQ(p21.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(p21.name, "E");
-    EXPECT_EQ(p21.namespace_path, sus::Vec("c"s, "d"s));
+    EXPECT_EQ(p21.namespace_path, Vec("c"s, "d"s));
 
     EXPECT_EQ(make_string("foo", t2), "!C!<!E!> auto foo");
   });
@@ -1418,7 +1418,7 @@ TEST_F(SubDocTypeTest, ConceptReturnWithTemplate) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
-    EXPECT_EQ(t.namespace_path, sus::Vec("a"s, "b"s));
+    EXPECT_EQ(t.namespace_path, Vec("a"s, "b"s));
     const std::string& p1 =
         t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Value>();
     EXPECT_EQ(p1, "c::d::E");
@@ -1443,7 +1443,7 @@ TEST_F(SubDocTypeTest, ConceptReturnWithTemplateTemplate) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
-    EXPECT_EQ(t.namespace_path, sus::Vec("a"s, "b"s));
+    EXPECT_EQ(t.namespace_path, Vec("a"s, "b"s));
     const std::string& p1 =
         t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Value>();
     EXPECT_EQ(p1, "T");
@@ -1468,7 +1468,7 @@ TEST_F(SubDocTypeTest, ConceptReturnWithPack) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
-    EXPECT_EQ(t.namespace_path, sus::Vec("a"s, "b"s));
+    EXPECT_EQ(t.namespace_path, Vec("a"s, "b"s));
     EXPECT_EQ(t.is_pack, false);
     const subdoc::Type& p1 =
         t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
@@ -1497,7 +1497,7 @@ TEST_F(SubDocTypeTest, UsingType) {
     EXPECT_EQ(t.qualifier.is_const, true);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
-    EXPECT_EQ(t.namespace_path, sus::Vec("c"s, "d"s));
+    EXPECT_EQ(t.namespace_path, Vec("c"s, "d"s));
 
     EXPECT_EQ(make_string("foo", t), "const !S!& foo");
   });
@@ -1519,7 +1519,7 @@ TEST_F(SubDocTypeTest, ConceptWithFunctionProto) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
-    EXPECT_EQ(t.namespace_path, sus::Vec("a"s, "b"s));
+    EXPECT_EQ(t.namespace_path, Vec("a"s, "b"s));
     const subdoc::Type& p =
         t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
     EXPECT_EQ(p.category, subdoc::TypeCategory::FunctionProto);
@@ -1553,7 +1553,7 @@ TEST_F(SubDocTypeTest, StructWithFunctionProto) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
-    EXPECT_EQ(t.namespace_path, sus::Vec("a"s, "b"s));
+    EXPECT_EQ(t.namespace_path, Vec("a"s, "b"s));
     const subdoc::Type& p =
         t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
     const subdoc::Type& pr = **p.fn_return_type;
@@ -1587,7 +1587,7 @@ TEST_F(SubDocTypeTest, StructWithDependentFunctionProto) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
-    EXPECT_EQ(t.namespace_path, sus::Vec("a"s, "b"s));
+    EXPECT_EQ(t.namespace_path, Vec("a"s, "b"s));
     const subdoc::Type& p =
         t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
     const subdoc::Type& pr = **p.fn_return_type;
@@ -1618,7 +1618,7 @@ TEST_F(SubDocTypeTest, StructWithVariadicFunctionProto) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::None);
-    EXPECT_EQ(t.namespace_path, sus::Vec("a"s, "b"s));
+    EXPECT_EQ(t.namespace_path, Vec("a"s, "b"s));
     const subdoc::Type& p =
         t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
     const subdoc::Type& pr = **p.fn_return_type;
@@ -1654,17 +1654,17 @@ TEST_F(SubDocTypeTest, PartialSpecializationMethod) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
-    EXPECT_EQ(t.namespace_path, sus::Vec("a"s, "b"s));
+    EXPECT_EQ(t.namespace_path, Vec("a"s, "b"s));
     const subdoc::Type& p1 =
         t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
     EXPECT_EQ(p1.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(p1.name, "S");
-    EXPECT_EQ(p1.namespace_path, sus::Vec("c"s, "d"s));
+    EXPECT_EQ(p1.namespace_path, Vec("c"s, "d"s));
     const subdoc::Type& p21 =
         p1.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
     EXPECT_EQ(p21.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(p21.name, "G");
-    EXPECT_EQ(p21.namespace_path, sus::Vec("e"s, "f"s));
+    EXPECT_EQ(p21.namespace_path, Vec("e"s, "f"s));
 
     EXPECT_EQ(make_string("foo", t), "!F!<!S!<!G!>>& foo");
   });
@@ -1691,12 +1691,12 @@ TEST_F(SubDocTypeTest, PartialSpecializationMethodInjectedClassName) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
-    EXPECT_EQ(t.namespace_path, sus::Vec("a"s, "b"s));
+    EXPECT_EQ(t.namespace_path, Vec("a"s, "b"s));
     const subdoc::Type& p1 =
         t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
     EXPECT_EQ(p1.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(p1.name, "S");
-    EXPECT_EQ(p1.namespace_path, sus::Vec("c"s, "d"s));
+    EXPECT_EQ(p1.namespace_path, Vec("c"s, "d"s));
     const subdoc::Type& p21 =
         p1.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
     EXPECT_EQ(p21.category, subdoc::TypeCategory::TemplateVariable);
@@ -1734,12 +1734,12 @@ TEST_F(SubDocTypeTest, PartialSpecializationMethodInNestedTemplateClass) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
-    EXPECT_EQ(t.namespace_path, sus::Vec("a"s, "b"s));
+    EXPECT_EQ(t.namespace_path, Vec("a"s, "b"s));
     const subdoc::Type& p1 =
         t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
     EXPECT_EQ(p1.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(p1.name, "S");
-    EXPECT_EQ(p1.namespace_path, sus::Vec("c"s, "d"s));
+    EXPECT_EQ(p1.namespace_path, Vec("c"s, "d"s));
     const subdoc::Type& p21 =
         p1.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
     EXPECT_EQ(p21.category, subdoc::TypeCategory::TemplateVariable);
@@ -1760,7 +1760,7 @@ TEST_F(SubDocTypeTest, PartialSpecializationMethodInNestedTemplateClass) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
-    EXPECT_EQ(t.namespace_path, sus::Vec("a"s, "b"s));
+    EXPECT_EQ(t.namespace_path, Vec("a"s, "b"s));
     const subdoc::Type& p1 =
         t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
     EXPECT_EQ(p1.category, subdoc::TypeCategory::TemplateVariable);
@@ -1794,7 +1794,7 @@ TEST_F(SubDocTypeTest,
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
-    EXPECT_EQ(t.namespace_path, sus::Vec("a"s, "b"s));
+    EXPECT_EQ(t.namespace_path, Vec("a"s, "b"s));
 
     const subdoc::Type& p1 =
         t.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
@@ -1816,7 +1816,7 @@ TEST_F(SubDocTypeTest,
     EXPECT_EQ(parm1.qualifier.is_volatile, false);
     EXPECT_EQ(parm1.refs, subdoc::Refs::RValueRef);
     EXPECT_EQ(parm1.pointers,
-              sus::Vec(Qualifier::with_volatile(), Qualifier::with_const()));
+              Vec(Qualifier::with_volatile(), Qualifier::with_const()));
     EXPECT_EQ(parm1.is_pack, true);
 
     EXPECT_EQ(make_string("foo", t),
@@ -1839,9 +1839,9 @@ TEST_F(SubDocTypeTest, VariadicConcept) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.refs, subdoc::Refs::RValueRef);
-    EXPECT_EQ(t.namespace_path, sus::Vec("a"s, "b"s));
+    EXPECT_EQ(t.namespace_path, Vec("a"s, "b"s));
     EXPECT_EQ(t.pointers,
-              sus::Vec(Qualifier::with_volatile(), Qualifier::with_const()));
+              Vec(Qualifier::with_volatile(), Qualifier::with_const()));
     EXPECT_EQ(t.is_pack, true);
 
     EXPECT_EQ(make_string("foo", t), "!C! auto *volatile *const&&... foo");
@@ -1867,12 +1867,12 @@ TEST_F(SubDocTypeTest, DependentNameType) {
         t.nested_names[0u].choice.as<subdoc::TypeOrValueTag::Type>();
     EXPECT_EQ(n1.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(n1.name, "R");
-    EXPECT_EQ(n1.namespace_path, sus::Vec("a"s));
+    EXPECT_EQ(n1.namespace_path, Vec("a"s));
     const subdoc::Type& n1p1 =
         n1.template_params[0u].choice.as<subdoc::TypeOrValueTag::Type>();
     EXPECT_EQ(n1p1.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(n1p1.name, "S");
-    EXPECT_EQ(n1p1.namespace_path, sus::Vec("b"s));
+    EXPECT_EQ(n1p1.namespace_path, Vec("b"s));
     const std::string& n2 =
         t.nested_names[1u].choice.as<subdoc::TypeOrValueTag::Value>();
     EXPECT_EQ(n2, "RType");
@@ -1915,7 +1915,7 @@ TEST_F(SubDocTypeTest, NullAttributePointer) {
     EXPECT_EQ(t.name, "int");
     EXPECT_EQ(t.qualifier, Qualifier::with_const());
     EXPECT_EQ(t.pointers,
-              sus::Vec(Qualifier::with_const().set_nullness(Nullness::Allowed),
+              Vec(Qualifier::with_const().set_nullness(Nullness::Allowed),
                        Qualifier().set_nullness(Nullness::Disallowed)));
 
     EXPECT_EQ(make_string("foo", t), "const !int! *const * foo");
@@ -2073,7 +2073,7 @@ TEST_F(SubDocTypeTest, MemberDataPointer) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.qualifier.nullness, Nullness::Unknown);
-    EXPECT_EQ(t.pointers, sus::Vec(Qualifier::with_const(), Qualifier()));
+    EXPECT_EQ(t.pointers, Vec(Qualifier::with_const(), Qualifier()));
     EXPECT_EQ(t.member_pointer_type.as_value()->name, "S");
 
     EXPECT_EQ(make_string("foo", t), "!int! !S!::*const * foo");
@@ -2096,7 +2096,7 @@ TEST_F(SubDocTypeTest, MemberFunctionPointer) {
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.qualifier.nullness, Nullness::Unknown);
-    EXPECT_EQ(t.pointers, sus::Vec(Qualifier::with_const(), Qualifier()));
+    EXPECT_EQ(t.pointers, Vec(Qualifier::with_const(), Qualifier()));
     EXPECT_EQ(t.member_pointer_type.as_value()->name, "S");
 
     const subdoc::Type& tr = **t.fn_return_type;
@@ -2143,7 +2143,7 @@ TEST_F(SubDocTypeTest, NamespaceAlias) {
 
     EXPECT_EQ(t.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t.name, "S");
-    EXPECT_EQ(t.namespace_path, sus::Vec("a"s));
+    EXPECT_EQ(t.namespace_path, Vec("a"s));
     EXPECT_EQ(t.refs, subdoc::Refs::LValueRef);
     EXPECT_EQ(t.qualifier.is_const, false);
     EXPECT_EQ(t.qualifier.is_volatile, false);
@@ -2169,7 +2169,7 @@ TEST_F(SubDocTypeTest, ArrayOfPointers) {
     EXPECT_EQ(t.qualifier.is_volatile, false);
     EXPECT_EQ(t.array_dims.len(), 1u);
     EXPECT_EQ(t.array_dims[0u], "3");
-    EXPECT_EQ(t.pointers, sus::Vec(Qualifier::with_const()));
+    EXPECT_EQ(t.pointers, Vec(Qualifier::with_const()));
 
     EXPECT_EQ(make_string("foo", t), "!S! *const foo[3]");
   });
@@ -2262,7 +2262,7 @@ TEST_F(SubDocTypeTest, EnableIfReturn) {
         t.nested_names[0u].choice.as<subdoc::TypeOrValueTag::Type>();
     EXPECT_EQ(t1.category, subdoc::TypeCategory::Type);
     EXPECT_EQ(t1.name, "enable_if");
-    EXPECT_EQ(t1.namespace_path, sus::Vec("std"s));
+    EXPECT_EQ(t1.namespace_path, Vec("std"s));
     EXPECT_EQ(t1.nested_names.len(), 0u);
 
     EXPECT_EQ(make_string("foo", t), "!enable_if!<C<T, S>::value>::type foo");

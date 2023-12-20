@@ -75,7 +75,7 @@ sus::Result<ParsedComment, ParseCommentError> parse_comment(
             attrs.hidden = true;
           } else if (v.starts_with("inherit=")) {
             std::string_view name = v.substr(strlen("inherit="));
-            auto vec = sus::Vec<InheritPathElement>();
+            auto vec = Vec<InheritPathElement>();
             while (name != "") {
               auto [element, remainder] = llvm::StringRef(name).split("::");
               name = remainder;

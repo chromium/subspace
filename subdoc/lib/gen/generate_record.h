@@ -26,7 +26,7 @@ namespace subdoc::gen {
 sus::Result<void, MarkdownToHtmlError> generate_record(
     const Database& db, const RecordElement& element,
     sus::Slice<const NamespaceElement*> namespaces,
-    sus::Vec<const RecordElement*> type_ancestors,
+    Vec<const RecordElement*> type_ancestors,
     const Options& options) noexcept;
 
 sus::Result<void, MarkdownToHtmlError> generate_record_reference(

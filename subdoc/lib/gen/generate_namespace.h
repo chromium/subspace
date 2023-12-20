@@ -25,7 +25,7 @@ namespace subdoc::gen {
 
 sus::Result<void, MarkdownToHtmlError> generate_namespace(
     const Database& db, const NamespaceElement& element,
-    sus::Vec<const NamespaceElement*> ancestors,
+    Vec<const NamespaceElement*> ancestors,
     const Options& options) noexcept;
 
 sus::Result<void, MarkdownToHtmlError> generate_namespace_reference(

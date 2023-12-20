@@ -72,7 +72,7 @@ struct sus::error::ErrorImpl<subdoc::gen::GenerateError> {
     }
     sus_unreachable();
   }
-  static sus::Option<const sus::error::DynError&> source(
+  static Option<const sus::error::DynError&> source(
       const GenerateError& e) noexcept {
     switch (e) {
       case GenerateError::Tag::CopyFileError: {

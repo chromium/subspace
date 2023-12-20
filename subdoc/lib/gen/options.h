@@ -56,12 +56,12 @@ struct Options {
   std::string project_logo = "PROJECT LOGO.png";
   /// The version string for the project. Typically a semver version such as
   /// "1.2.3" or "0.2.0-beta-4".
-  sus::Option<std::string> version_text;
+  Option<std::string> version_text;
   // TODO: sus::PathBuf type would be real nice.
   std::filesystem::path output_root;
-  sus::Vec<std::string> stylesheets;
-  sus::Vec<FavIcon> favicons;
-  sus::Vec<std::string> copy_files;
+  Vec<std::string> stylesheets;
+  Vec<FavIcon> favicons;
+  Vec<std::string> copy_files;
   bool ignore_bad_code_links = false;
 };
 static_assert(sus::mem::Move<Options>);

@@ -19,7 +19,7 @@
 #include "sus/prelude.h"
 
 namespace {
-sus::Vec<std::string_view>* args;
+Vec<std::string_view>* args;
 }
 
 sus::Slice<std::string_view> test_main_command_line_args() { return *args; }
@@ -29,10 +29,10 @@ int main(int argc, char** argv) {
 
   auto slice = sus::SliceMut<char*>::from_raw_parts_mut(
       unsafe_fn, argv, usize::try_from(argc).unwrap());
-  args = new sus::Vec<std::string_view>(
+  args = new Vec<std::string_view>(
       slice.iter()
           .map([](char* arg) { return std::string_view(arg); })
-          .collect<sus::Vec<std::string_view>>());
+          .collect<Vec<std::string_view>>());
 
   return RUN_ALL_TESTS();
 }

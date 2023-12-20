@@ -61,7 +61,7 @@ sus::Result<void, MarkdownToHtmlError> generate_alias_reference(
       anchor.add_name(construct_html_url_anchor_for_alias(element));
     }
     if (!element.hidden()) {
-      if (sus::Option<std::string> url = construct_html_url_for_alias(element);
+      if (Option<std::string> url = construct_html_url_for_alias(element);
           url.is_some()) {
         auto anchor = type_sig_div.open_a();
         anchor.add_class("type-name");
@@ -85,15 +85,15 @@ sus::Result<void, MarkdownToHtmlError> generate_alias_reference(
     auto desc_div = item_li.open_div();
     desc_div.add_class("description");
     desc_div.add_class("short");
-    sus::Option<const Comment&> comment;
+    Option<const Comment&> comment;
     if (element.alias_style == AliasStyle::Forwarding) {
       switch (element.target) {
         case AliasTarget::Tag::AliasOfType: {
           const LinkedType& type =
               element.target.as<AliasTarget::Tag::AliasOfType>();
-          sus::Option<const TypeRef&> maybe_ref =
+          Option<const TypeRef&> maybe_ref =
               type.type_element_refs.get(0u)
-                  .map([](const sus::Option<TypeRef>& o) { return o.as_ref(); })
+                  .map([](const Option<TypeRef>& o) { return o.as_ref(); })
                   .flatten();
           if (maybe_ref.is_some()) {
             comment = maybe_ref->get<TypeRef::Tag::Record>().map(

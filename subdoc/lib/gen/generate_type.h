@@ -23,7 +23,7 @@
 namespace subdoc::gen {
 
 void generate_type(HtmlWriter::OpenDiv& div, const LinkedType& linked_type,
-                   sus::Option<sus::fn::DynFnMut<void(HtmlWriter::OpenDiv&)>&>
+                   Option<sus::fn::DynFnMut<void(HtmlWriter::OpenDiv&)>&>
                        var_name_fn) noexcept;
 
 }  // namespace subdoc::gen

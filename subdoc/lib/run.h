@@ -27,7 +27,7 @@
 namespace subdoc {
 
 struct DiagnosticResults {
-  sus::Vec<std::string> locations;
+  Vec<std::string> locations;
 };
 static_assert(sus::mem::Move<DiagnosticResults>);
 
@@ -38,7 +38,7 @@ sus::Result<Database, DiagnosticResults> run_test(
 
 sus::Result<Database, DiagnosticResults> run_files(
     const clang::tooling::CompilationDatabase& compdb,
-    sus::Vec<std::string> paths,
+    Vec<std::string> paths,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     const RunOptions& options) noexcept;
 

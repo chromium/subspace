@@ -91,8 +91,8 @@ class HtmlWriter {
     virtual void write_open() = 0;
 
     HtmlWriter& writer_;
-    sus::Vec<std::string> classes_;
-    sus::Vec<HtmlAttribute> attributes_;
+    Vec<std::string> classes_;
+    Vec<HtmlAttribute> attributes_;
     bool wrote_open_ = false;
     bool has_newlines_ = true;
     bool inside_has_newlines_ = true;
@@ -542,7 +542,7 @@ class HtmlWriter {
       }
     }
 
-    sus::Vec<HtmlAttribute> attributes_;
+    Vec<HtmlAttribute> attributes_;
   };
 
   class [[nodiscard]] OpenHead : public Html {
@@ -640,7 +640,7 @@ class HtmlWriter {
   }
 
   // Quote any <>.
-  static sus::Option<std::string> quote_angle_brackets(std::string_view text) {
+  static Option<std::string> quote_angle_brackets(std::string_view text) {
     size_t pos = text.find_first_of("<>");
     if (pos == std::string::npos) {
       return sus::none();
@@ -661,7 +661,7 @@ class HtmlWriter {
     if (!text.empty()) {
       if (has_newlines) write_indent();
 
-      sus::Option<std::string> quoted = quote_angle_brackets(text);
+      Option<std::string> quoted = quote_angle_brackets(text);
       switch (quoted) {
         case sus::Some: stream_ << *quoted; break;
         case sus::None: stream_ << text; break;
@@ -683,7 +683,7 @@ class HtmlWriter {
                   bool inside_has_newlines, bool has_newlines) noexcept {
     if (inside_has_newlines) write_indent();
     stream_ << "<" << type;
-    if (sus::Option<const std::string&> first_class = classes_iter.next();
+    if (Option<const std::string&> first_class = classes_iter.next();
         first_class.is_some()) {
       stream_ << " class=\"" << sus::move(first_class).unwrap();
       for (const std::string& c : classes_iter) {
@@ -693,7 +693,7 @@ class HtmlWriter {
     }
     for (const HtmlAttribute& attr : attr_iter) {
       stream_ << " " << attr.name << "=\"";
-      sus::Option<std::string> quoted = quote_angle_brackets(attr.value);
+      Option<std::string> quoted = quote_angle_brackets(attr.value);
       switch (quoted) {
         case sus::Some: stream_ << *quoted; break;
         case sus::None: stream_ << attr.value; break;

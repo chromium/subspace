@@ -164,7 +164,7 @@ int main(int argc, const char** argv) {
   std::vector<std::string> comp_db_files = comp_db.getAllFiles();
   // These are the files we choose to run the tool against. We use fuzzy
   // matching on the input arguments to pick them.
-  sus::Vec<std::string> run_against_files;
+  Vec<std::string> run_against_files;
 
   for (const std::string& input_path : paths) {
     bool found = false;
@@ -237,7 +237,7 @@ int main(int argc, const char** argv) {
   run_options.macro_prefixes =
       sus::iter::from_range(option_include_macro_prefixes)
           .cloned()
-          .collect<sus::Vec<std::string>>();
+          .collect<Vec<std::string>>();
   run_options.generate_source_links = !option_no_source_links.getValue();
   if (option_remove_path_prefix.getNumOccurrences() > 0) {
     run_options.remove_path_prefix =
@@ -303,7 +303,7 @@ int main(int argc, const char** argv) {
       subdoc::gen::generate(docs_db, sus::move(gen_options));
   if (r.is_err()) {
     fmt::println(stderr, "ERROR: {}", r.as_err());
-    for (sus::Option<const sus::error::DynError&> source =
+    for (Option<const sus::error::DynError&> source =
              sus::error::error_source(r.as_err());
          source.is_some();
          source = sus::error::error_source(source.as_value())) {
