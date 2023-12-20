@@ -23,8 +23,25 @@
 #include "sus/ops/range_literals.h"
 #include "sus/option/option.h"
 
-// Commonly used things that can be pulled into the global top level namespace.
-// This is done by default when including the `sus/prelude.h` header.
+namespace sus {
+
+/// Commonly used things that can be pulled into the global top level namespace.
+/// This is done by default when including the `sus/prelude.h` header.
+///
+/// If `SUS_PRELUDE_NO_IMPORT` is defined to be `true` the prelude will not be
+/// imported into the global top level namespace. Then the prelude can be
+/// manually brought into scope with `using namespace sus::prelude;`.
+///
+/// ## Examples
+/// ```
+/// #include "sus/prelude.h"
+/// 
+/// int main() {
+///     auto v = Vec<i32>(1, 2, 3, 4, 5);
+///     return sus::move(v).into_iter().sum();
+/// }
+/// ```
+namespace prelude {
 using sus::collections::Vec;
 using sus::marker::unsafe_fn;
 using sus::num::f32;
@@ -41,3 +58,25 @@ using sus::num::u8;
 using sus::num::uptr;
 using sus::num::usize;
 using sus::option::Option;
+}  // namespace prelude
+
+}  // namespace sus
+
+#if !defined(SUS_PRELUDE_NO_IMPORT) || SUS_PRELUDE_NO_IMPORT
+using sus::prelude::Vec;
+using sus::prelude::unsafe_fn;
+using sus::prelude::f32;
+using sus::prelude::f64;
+using sus::prelude::i16;
+using sus::prelude::i32;
+using sus::prelude::i64;
+using sus::prelude::i8;
+using sus::prelude::isize;
+using sus::prelude::u16;
+using sus::prelude::u32;
+using sus::prelude::u64;
+using sus::prelude::u8;
+using sus::prelude::uptr;
+using sus::prelude::usize;
+using sus::prelude::Option;
+#endif
