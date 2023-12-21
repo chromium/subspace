@@ -14,9 +14,11 @@
 
 #include "subdoc/lib/run.h"
 
+#include <filesystem>
 #include <memory>
 #include <utility>
 
+#include "subdoc/lib/clang_resource_dir.h"
 #include "subdoc/lib/visit.h"
 #include "sus/collections/compat_vector.h"
 #include "sus/iter/iterator.h"
@@ -43,8 +45,7 @@ sus::Result<Database, DiagnosticResults> run_test(
   auto vfs = llvm::IntrusiveRefCntPtr(new llvm::vfs::InMemoryFileSystem());
   vfs->addFile(pretend_file_name, 0, llvm::MemoryBuffer::getMemBuffer(content));
 
-  return run_files(*comp_db,
-                   Vec<std::string>(sus::move(pretend_file_name)),
+  return run_files(*comp_db, Vec<std::string>(sus::move(pretend_file_name)),
                    std::move(vfs), options);
 }
 
@@ -64,8 +65,7 @@ struct DiagnosticTracker : public clang::TextDiagnosticPrinter {
 };
 
 sus::Result<Database, DiagnosticResults> run_files(
-    const clang::tooling::CompilationDatabase& comp_db,
-    Vec<std::string> paths,
+    const clang::tooling::CompilationDatabase& comp_db, Vec<std::string> paths,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     const RunOptions& options) noexcept {
   // Clang DiagnoticsConsumer that prints out the full error and context, which
@@ -80,13 +80,15 @@ sus::Result<Database, DiagnosticResults> run_files(
       std::make_shared<clang::PCHContainerOperations>(), std::move(fs));
   tool.setDiagnosticConsumer(&*diags);
 
-  auto adj = [](clang::tooling::CommandLineArguments args, llvm::StringRef) {
+  ClangResourceDir resource_dir;
+
+  auto adj = [&resource_dir](clang::tooling::CommandLineArguments args,
+                             llvm::StringRef) {
     // Clang-cl doesn't understand this argument, but it may appear in the
     // command-line for MSVC in C++20 codebases (like subspace).
     std::erase(args, "/Zc:preprocessor");
 
-    const std::string& tool = args[0];
-    if (tool.find("cl.exe") != std::string::npos) {
+    if (std::filesystem::path(args[0]).filename().string() == "cl.exe") {
       // TODO: https://github.com/llvm/llvm-project/issues/59689 clang-cl
       // requires this define in order to use offsetof() from constant
       // expressions, which subspace uses for the never-value optimization.
@@ -129,6 +131,12 @@ sus::Result<Database, DiagnosticResults> run_files(
     std::erase_if(args, [](const auto& a) {
       return a.starts_with("@") && a.ends_with(".modmap");
     });
+
+    if (Option<std::string> dir = resource_dir.find_resource_dir(args[0]);
+        dir.is_some()) {
+      args.push_back("-resource-dir");
+      args.push_back(dir.as_value());
+    }
 
     return std::move(args);
   };
