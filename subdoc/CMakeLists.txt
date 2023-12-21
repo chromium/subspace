@@ -45,6 +45,8 @@ target_sources(subdoc_lib PUBLIC
     "lib/gen/markdown_to_html.cc"
     "lib/gen/markdown_to_html.h"
     "lib/gen/options.h"
+    "lib/clang_resource_dir.cc"
+    "lib/clang_resource_dir.h"
     "lib/database.h"
     "lib/friendly_names.h"
     "lib/linked_type.cc"
