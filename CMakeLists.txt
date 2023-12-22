@@ -15,11 +15,8 @@
 cmake_minimum_required(VERSION 3.16)
 project(subspace)
 
+# compile_commands.json is needed for Subdoc's documentation generation.
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-# For subdoc: Add system includes to compile_commands.json so that subdoc can
-# find them. This hasn't shown to be needed on Windows for whatever reason but
-# it is needed on Linux.
-set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES})
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
