@@ -26,9 +26,12 @@ namespace subdoc::gen {
 
 void generate_search_header(HtmlWriter::OpenMain& main) noexcept;
 
-void generate_search_title(
+std::string generate_search_db(
     HtmlWriter::OpenDiv& div,
     sus::iter::IntoIterator<CppPathElement> auto ii) noexcept {
+  
+
+
   auto search_title = div.open_h(1u, HtmlWriter::SingleLine);
   search_title.add_search_weight(2_f32);
   search_title.add_class("search-title");

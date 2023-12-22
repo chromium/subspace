@@ -16,6 +16,7 @@
 
 #include "subdoc/lib/database.h"
 #include "subdoc/lib/gen/html_writer.h"
+#include "subdoc/lib/gen/json_writer.h"
 #include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/gen/options.h"
 #include "sus/prelude.h"
@@ -27,7 +28,7 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
     const Database& db, const RecordElement& element,
     sus::Slice<const NamespaceElement*> namespaces,
     Vec<const RecordElement*> type_ancestors,
-    const Options& options) noexcept;
+    JsonWriter::JsonArray& search_documents, const Options& options) noexcept;
 
 sus::Result<void, MarkdownToHtmlError> generate_record_reference(
     HtmlWriter::OpenUl& items_list, const RecordElement& element,

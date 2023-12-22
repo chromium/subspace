@@ -29,6 +29,7 @@
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/gen/options.h"
+#include "subdoc/lib/gen/search.h"
 #include "sus/assertions/unreachable.h"
 #include "sus/prelude.h"
 
@@ -100,9 +101,6 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
   section_div.add_class("section");
   section_div.add_class("overview");
 
-  generate_search_title(
-      section_div,
-      generate_cpp_path_for_type(element, namespaces, type_ancestors, options));
   {
     auto header_div = section_div.open_div();
     header_div.add_class("section-header");
@@ -312,8 +310,31 @@ sus::Result<void, MarkdownToHtmlError> generate_record_methods(
 sus::Result<void, MarkdownToHtmlError> generate_record(
     const Database& db, const RecordElement& element,
     sus::Slice<const NamespaceElement*> namespaces,
-    Vec<const RecordElement*> type_ancestors, const Options& options) noexcept {
+    Vec<const RecordElement*> type_ancestors,
+    JsonWriter::JsonArray& search_documents, const Options& options) noexcept {
   if (element.hidden()) return sus::ok();
+
+  {
+    i32 index = search_documents.len();
+    auto json = search_documents.open_object();
+    json.add_int("index", index);
+    json.add_string("type",
+                    friendly_record_type_name(element.record_type, false));
+    json.add_string("url", construct_html_url_for_type(element));
+    json.add_string("name", element.name);
+
+    std::string full_name;
+    for (CppPathElement e : generate_cpp_path_for_type(element, namespaces,
+                                                       type_ancestors, options)
+                                .into_iter()) {
+      if (e.type != CppPathProject) {
+        if (full_name.size() > 0u) full_name += std::string_view("::");
+        full_name += e.name;
+      }
+    }
+    json.add_string("full_name", full_name);
+    json.add_string("split_name", split_for_search(full_name));
+  }
 
   ParseMarkdownPageState page_state(db, options);
 
@@ -328,7 +349,6 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
   const std::filesystem::path path = construct_html_file_path(
       options.output_root, element.namespace_path.as_slice(),
       element.record_path.as_slice(), element.name);
-  std::filesystem::create_directories(path.parent_path());
   auto html = HtmlWriter(open_file_for_writing(path).unwrap());
 
   {
@@ -540,7 +560,8 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
   type_ancestors.push(&element);
   for (const auto& [key, subrecord] : element.records) {
     if (auto result = generate_record(db, subrecord, namespaces,
-                                      sus::clone(type_ancestors), options);
+                                      sus::clone(type_ancestors),
+                                      search_documents, options);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }

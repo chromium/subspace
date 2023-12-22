@@ -28,7 +28,9 @@
 #include "subdoc/lib/gen/generate_search.h"
 #include "subdoc/lib/gen/generate_source_link.h"
 #include "subdoc/lib/gen/html_writer.h"
+#include "subdoc/lib/gen/json_writer.h"
 #include "subdoc/lib/gen/markdown_to_html.h"
+#include "subdoc/lib/gen/search.h"
 #include "sus/assertions/unreachable.h"
 #include "sus/collections/slice.h"
 #include "sus/prelude.h"
@@ -158,8 +160,6 @@ void generate_namespace_overview(HtmlWriter::OpenDiv& namespace_div,
   section_div.add_class("section");
   section_div.add_class("overview");
 
-  generate_search_title(section_div, generate_cpp_path_for_namespace(
-                                         element, ancestors, options));
   {
     auto header_div = section_div.open_div();
     header_div.add_class("section-header");
@@ -552,8 +552,45 @@ sus::Result<void, MarkdownToHtmlError> generate_variable_references(
 
 sus::Result<void, MarkdownToHtmlError> generate_namespace(
     const Database& db, const NamespaceElement& element,
-    Vec<const NamespaceElement*> ancestors, const Options& options) noexcept {
+    Vec<const NamespaceElement*> ancestors,
+    JsonWriter::JsonArray& search_documents, const Options& options) noexcept {
   if (element.hidden()) return sus::ok();
+
+  {
+    i32 index = search_documents.len();
+    auto json = search_documents.open_object();
+    switch (element.namespace_name) {
+      case Namespace::Tag::Global: {
+        json.add_int("index", index);
+        json.add_string("type", "project");
+        json.add_string("url", construct_html_url_for_namespace(element));
+        json.add_string("name", options.project_name);
+        json.add_string("full_name", options.project_name);
+        break;
+      }
+      case Namespace::Tag::Anonymous: sus_unreachable();
+      case Namespace::Tag::Named: {
+        json.add_int("index", index);
+        json.add_string("type", "namespace");
+        json.add_string("url", construct_html_url_for_namespace(element));
+        json.add_string("weight", "0.75");
+        json.add_string("name", element.name);
+
+        std::string full_name;
+        for (CppPathElement e :
+             generate_cpp_path_for_namespace(element, ancestors, options)
+                 .into_iter()) {
+          if (e.type != CppPathProject) {
+            if (full_name.size() > 0u) full_name += std::string_view("::");
+            full_name += e.name;
+          }
+        }
+        json.add_string("full_name", full_name);
+        json.add_string("split_name", split_for_search(full_name));
+        break;
+      }
+    }
+  }
 
   ParseMarkdownPageState page_state(db, options);
 
@@ -567,7 +604,6 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
 
   const std::filesystem::path path =
       construct_html_file_path_for_namespace(options.output_root, element);
-  std::filesystem::create_directories(path.parent_path());
   auto html = HtmlWriter(open_file_for_writing(path).unwrap());
   generate_head(html, namespace_display_name(element, ancestors, options),
                 md_html.summary_text, options);
@@ -966,37 +1002,40 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
   ancestors.push(&element);
   for (const auto& [u, sub_element] : element.namespaces) {
     if (sub_element.hidden()) continue;
-    if (auto result =
-            generate_namespace(db, sub_element, sus::clone(ancestors), options);
+    if (auto result = generate_namespace(db, sub_element, sus::clone(ancestors),
+                                         search_documents, options);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }
   }
   for (const auto& [u, sub_element] : element.concepts) {
     if (sub_element.hidden()) continue;
-    if (auto result = generate_concept(db, sub_element, ancestors, options);
+    if (auto result = generate_concept(db, sub_element, ancestors,
+                                       search_documents, options);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }
   }
   for (const auto& [u, sub_element] : element.records) {
     if (sub_element.hidden()) continue;
-    if (auto result =
-            generate_record(db, sub_element, ancestors, sus::empty, options);
+    if (auto result = generate_record(db, sub_element, ancestors, sus::empty,
+                                      search_documents, options);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }
   }
   for (const auto& [u, sub_element] : element.functions) {
     if (sub_element.hidden()) continue;
-    if (auto result = generate_function(db, sub_element, ancestors, options);
+    if (auto result = generate_function(db, sub_element, ancestors,
+                                        search_documents, options);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }
   }
   for (const auto& [u, sub_element] : element.macros) {
     if (sub_element.hidden()) continue;
-    if (auto result = generate_macro(db, sub_element, ancestors, options);
+    if (auto result = generate_macro(db, sub_element, ancestors,
+                                     search_documents, options);
         result.is_err()) {
       return sus::err(sus::move(result).unwrap_err());
     }

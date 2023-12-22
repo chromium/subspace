@@ -68,27 +68,51 @@ void generate_head(HtmlWriter& html, std::string_view title,
       meta.add_content(description);
     }
 
-    // Searching via https://pagefind.app.
-    //
-    // The CSS comes before the site-defined CSS in order for the site to
-    // override things.
-    {
-      auto css = head.open_link();
-      css.add_href("pagefind/pagefind-ui.css");
-      css.add_rel("stylesheet");
-    }
+    // Searching via https://lunrjs.com.
     {
       auto script = head.open_script(HtmlWriter::SingleLine);
-      script.add_src("pagefind/pagefind-ui.js");
+      script.add_src("https://unpkg.com/lunr/lunr.js");
     }
     {
       auto script = head.open_script();
-      script.write_html(
-          "window.addEventListener('DOMContentLoaded', (event) => {");
-      script.write_html(
-          "  new PagefindUI({element: '#search', showSubResults: true});");
-      script.write_html(  //
-          "});");
+      script.write_html(R"#(
+          const load_search = import('./search.json', {
+            assert: {type: 'json'}
+          });
+
+          var idx;
+          var documents;
+          load_search.then(s => {
+            documents = s.default;
+            idx = lunr(function () {
+              this.ref('index');
+              this.field('name', {
+                'boost': 2
+              });
+              this.field('full_name', {
+                'boost': 2
+              });
+              this.field('split_name', {
+               'boost': 0.5
+              });
+              this.field('summary', {
+                'boost': 1
+              });
+              this.field('full_description', {
+                'boost': 0.75
+              });
+
+              // No stemming?
+              // this.pipeline = new lunr.Pipeline();
+
+              documents.forEach(doc => {
+                this.add(doc, {
+                  'boost': doc.weight
+                })
+              }, this);
+            });
+          });
+          )#");
     }
 
     for (const std::string& path : options.stylesheets) {

@@ -678,6 +678,13 @@ class HtmlWriter {
       });
     }
 
+    void add_type(std::string_view type) {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("type"),
+          .value = std::string(type),
+      });
+    }
+
    private:
     friend HtmlWriter;
     OpenScript(HtmlWriter& writer, bool inside_has_newlines,

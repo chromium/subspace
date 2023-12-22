@@ -16,6 +16,7 @@
 
 #include "subdoc/lib/database.h"
 #include "subdoc/lib/gen/html_writer.h"
+#include "subdoc/lib/gen/json_writer.h"
 #include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/gen/options.h"
 #include "sus/prelude.h"
@@ -26,7 +27,7 @@ namespace subdoc::gen {
 sus::Result<void, MarkdownToHtmlError> generate_macro(
     const Database& db, const MacroElement& e,
     sus::Slice<const NamespaceElement*> namespaces,
-    const Options& options) noexcept;
+    JsonWriter::JsonArray& search_documents, const Options& options) noexcept;
 
 sus::Result<void, MarkdownToHtmlError> generate_macro_reference(
     HtmlWriter::OpenUl& items_list, const MacroElement& e,
