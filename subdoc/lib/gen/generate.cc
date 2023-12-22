@@ -21,38 +21,56 @@
 
 namespace subdoc::gen {
 
-sus::result::Result<void, sus::Box<sus::error::DynError>> generate(
-    const Database& db, const Options& options) {
-  if (std::filesystem::exists(options.output_root)) {
-    if (std::filesystem::is_directory(options.output_root)) {
-      for (auto it = std::filesystem::directory_iterator(options.output_root);
-           it != std::filesystem::directory_iterator(); ++it) {
-        if (!(it->is_directory() &&
-              it->path().filename().string().starts_with("."))) {
-          std::error_code ec;
-          std::filesystem::remove(*it, ec);
-          if (ec) {
-            return sus::err(sus::into(
-                GenerateError::with<GenerateError::Tag::DeleteFileError>(
-                    GenerateFileError{
-                        .path = it->path().filename().string(),
-                        .source = sus::move_into(ec),
-                    })));
-          }
-        }
+namespace {
+
+sus::result::Result<void, GenerateError> delete_tree(
+    const std::filesystem::path& path) {
+  if (std::filesystem::is_directory(path)) {
+    for (auto it = std::filesystem::directory_iterator(path);
+         it != std::filesystem::directory_iterator(); ++it) {
+      auto name = it->path().filename().string();
+      if (name == "." || name == "..") continue;
+
+      if (it->is_directory()) {
+        auto result = delete_tree(it->path());
+        if (result.is_err())
+          return sus::err(sus::into(sus::move(result).unwrap_err()));
       }
-    } else {
+
       std::error_code ec;
-      std::filesystem::remove(options.output_root, ec);
+      std::filesystem::remove(*it, ec);
       if (ec) {
         return sus::err(
             sus::into(GenerateError::with<GenerateError::Tag::DeleteFileError>(
                 GenerateFileError{
-                    .path = options.output_root.string(),
+                    .path = it->path().string(),
                     .source = sus::move_into(ec),
                 })));
       }
     }
+  } else {
+    std::error_code ec;
+    std::filesystem::remove(path, ec);
+    if (ec) {
+      return sus::err(
+          sus::into(GenerateError::with<GenerateError::Tag::DeleteFileError>(
+              GenerateFileError{
+                  .path = path.string(),
+                  .source = sus::move_into(ec),
+              })));
+    }
+  }
+  return sus::ok();
+}
+
+}  // namespace
+
+sus::result::Result<void, sus::Box<sus::error::DynError>> generate(
+    const Database& db, const Options& options) {
+  if (std::filesystem::exists(options.output_root)) {
+    auto result = delete_tree(options.output_root);
+    if (result.is_err())
+      return sus::err(sus::into(sus::move(result).unwrap_err()));
   }
   if (auto result = generate_namespace(db, db.global, sus::empty, options);
       result.is_err()) {

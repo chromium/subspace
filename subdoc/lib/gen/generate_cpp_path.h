@@ -35,6 +35,7 @@ struct CppPathElement {
   std::string name;
   std::string link_href;
   CppPathElementType type;
+  f32 search_weight;
 };
 
 Vec<CppPathElement> generate_cpp_path_for_namespace(

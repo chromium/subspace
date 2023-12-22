@@ -23,6 +23,7 @@
 #include "subdoc/lib/gen/generate_head.h"
 #include "subdoc/lib/gen/generate_nav.h"
 #include "subdoc/lib/gen/generate_requires.h"
+#include "subdoc/lib/gen/generate_search.h"
 #include "subdoc/lib/gen/generate_source_link.h"
 #include "subdoc/lib/gen/generate_type.h"
 #include "subdoc/lib/gen/html_writer.h"
@@ -99,6 +100,9 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
   section_div.add_class("section");
   section_div.add_class("overview");
 
+  generate_search_title(
+      section_div,
+      generate_cpp_path_for_type(element, namespaces, type_ancestors, options));
   {
     auto header_div = section_div.open_div();
     header_div.add_class("section-header");
@@ -121,6 +125,7 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
           span.write_text("::");
         }
         auto ancestor_anchor = header_div.open_a();
+        ancestor_anchor.add_search_weight(e.search_weight);
         ancestor_anchor.add_class([&e]() {
           switch (e.type) {
             case CppPathProject: return "project-name";
@@ -307,8 +312,7 @@ sus::Result<void, MarkdownToHtmlError> generate_record_methods(
 sus::Result<void, MarkdownToHtmlError> generate_record(
     const Database& db, const RecordElement& element,
     sus::Slice<const NamespaceElement*> namespaces,
-    Vec<const RecordElement*> type_ancestors,
-    const Options& options) noexcept {
+    Vec<const RecordElement*> type_ancestors, const Options& options) noexcept {
   if (element.hidden()) return sus::ok();
 
   ParseMarkdownPageState page_state(db, options);

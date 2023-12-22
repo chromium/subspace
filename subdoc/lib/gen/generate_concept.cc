@@ -22,6 +22,7 @@
 #include "subdoc/lib/gen/generate_head.h"
 #include "subdoc/lib/gen/generate_nav.h"
 #include "subdoc/lib/gen/generate_requires.h"
+#include "subdoc/lib/gen/generate_search.h"
 #include "subdoc/lib/gen/generate_source_link.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/markdown_to_html.h"
@@ -42,6 +43,8 @@ void generate_concept_overview(HtmlWriter::OpenDiv& record_div,
   section_div.add_class("section");
   section_div.add_class("overview");
 
+  generate_search_title(
+      section_div, generate_cpp_path_for_concept(element, namespaces, options));
   {
     auto header_div = section_div.open_div();
     header_div.add_class("section-header");
@@ -54,7 +57,7 @@ void generate_concept_overview(HtmlWriter::OpenDiv& record_div,
              .into_iter()
              .enumerate()) {
       if (e.link_href.empty()) {
-        auto span = header_div.open_span();
+        auto span = header_div.open_span(HtmlWriter::SingleLine);
         span.write_text(e.name);
       } else {
         if (i > 0u) {
@@ -63,6 +66,7 @@ void generate_concept_overview(HtmlWriter::OpenDiv& record_div,
           span.write_text("::");
         }
         auto ancestor_anchor = header_div.open_a();
+        ancestor_anchor.add_search_weight(e.search_weight);
         ancestor_anchor.add_class([&e]() {
           switch (e.type) {
             case CppPathProject: return "project-name";

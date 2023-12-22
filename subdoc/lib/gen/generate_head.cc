@@ -67,6 +67,30 @@ void generate_head(HtmlWriter& html, std::string_view title,
       meta.add_property("og:description");
       meta.add_content(description);
     }
+
+    // Searching via https://pagefind.app.
+    //
+    // The CSS comes before the site-defined CSS in order for the site to
+    // override things.
+    {
+      auto css = head.open_link();
+      css.add_href("pagefind/pagefind-ui.css");
+      css.add_rel("stylesheet");
+    }
+    {
+      auto script = head.open_script(HtmlWriter::SingleLine);
+      script.add_src("pagefind/pagefind-ui.js");
+    }
+    {
+      auto script = head.open_script();
+      script.write_html(
+          "window.addEventListener('DOMContentLoaded', (event) => {");
+      script.write_html(
+          "  new PagefindUI({element: '#search', showSubResults: true});");
+      script.write_html(  //
+          "});");
+    }
+
     for (const std::string& path : options.stylesheets) {
       auto stylesheet_link = head.open_link();
       stylesheet_link.add_rel("stylesheet");
