@@ -115,6 +115,18 @@ void generate_head(HtmlWriter& html, std::string_view title,
           )#");
     }
 
+    // The search box's dynamic behaviour.
+    {
+      auto script = head.open_script();
+      script.write_html(R"#(
+        document.addEventListener("keyup", event => {
+          if (event.key === 's') {
+            document.querySelector('.search-input').focus();
+          }
+        });
+      )#");
+    }
+
     for (const std::string& path : options.stylesheets) {
       auto stylesheet_link = head.open_link();
       stylesheet_link.add_rel("stylesheet");
