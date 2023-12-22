@@ -68,6 +68,10 @@ class HtmlWriter {
       write_open();
       return writer_.open_div(has_newlines_, newlines);
     }
+    auto open_form(NewlineStrategy newlines = MultiLine) noexcept {
+      write_open();
+      return writer_.open_form(has_newlines_, newlines);
+    }
     auto open_h(u32 level, NewlineStrategy newlines = MultiLine) noexcept {
       write_open();
       return writer_.open_h(level, has_newlines_, newlines);
@@ -303,6 +307,36 @@ class HtmlWriter {
     }
   };
 
+  class [[nodiscard]] OpenForm : public Html {
+   public:
+    ~OpenForm() noexcept {
+      write_open();
+      writer_.write_close("form", inside_has_newlines_, has_newlines_);
+    }
+
+    auto open_input(NewlineStrategy newlines = MultiLine) noexcept {
+      write_open();
+      return writer_.open_input(has_newlines_, newlines);
+    }
+
+   private:
+    friend HtmlWriter;
+    OpenForm(HtmlWriter& writer, bool inside_has_newlines,
+            NewlineStrategy newlines) noexcept
+        : Html(writer) {
+      has_newlines_ = newlines == MultiLine;
+      inside_has_newlines_ = inside_has_newlines;
+    }
+
+    void write_open() noexcept override {
+      if (!wrote_open_) {
+        writer_.write_open("form", classes_.iter(), attributes_.iter(),
+                           inside_has_newlines_, has_newlines_);
+        wrote_open_ = true;
+      }
+    }
+  };
+
   class [[nodiscard]] OpenH : public Html {
    public:
     ~OpenH() noexcept {
@@ -423,6 +457,62 @@ class HtmlWriter {
     void write_open() noexcept override {
       if (!wrote_open_) {
         writer_.write_open("span", classes_.iter(), attributes_.iter(),
+                           inside_has_newlines_, has_newlines_);
+        wrote_open_ = true;
+      }
+    }
+  };
+
+  class [[nodiscard]] OpenInput : public Html {
+   public:
+    ~OpenInput() noexcept {
+      write_open();
+      writer_.write_close("input", inside_has_newlines_, has_newlines_);
+    }
+
+    void add_type(std::string_view type) {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("type"),
+          .value = std::string(type),
+      });
+    }
+    void add_name(std::string_view name) {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("name"),
+          .value = std::string(name),
+      });
+    }
+    void add_autocomplete(std::string_view autocomplete) {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("autocomplete"),
+          .value = std::string(autocomplete),
+      });
+    }
+    void add_spellcheck(std::string_view spellcheck) {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("spellcheck"),
+          .value = std::string(spellcheck),
+      });
+    }
+    void add_placeholder(std::string_view placeholder) {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("placeholder"),
+          .value = std::string(placeholder),
+      });
+    }
+
+   private:
+    friend HtmlWriter;
+    OpenInput(HtmlWriter& writer, bool inside_has_newlines,
+             NewlineStrategy newlines) noexcept
+        : Html(writer) {
+      has_newlines_ = newlines == MultiLine;
+      inside_has_newlines_ = inside_has_newlines;
+    }
+
+    void write_open() noexcept override {
+      if (!wrote_open_) {
+        writer_.write_open("input", classes_.iter(), attributes_.iter(),
                            inside_has_newlines_, has_newlines_);
         wrote_open_ = true;
       }
@@ -733,6 +823,10 @@ class HtmlWriter {
                    NewlineStrategy newlines) noexcept {
     return OpenDiv(*this, inside_has_newlines, newlines);
   }
+  OpenForm open_form(bool inside_has_newlines,
+                   NewlineStrategy newlines) noexcept {
+    return OpenForm(*this, inside_has_newlines, newlines);
+  }
   OpenH open_h(u32 level, bool inside_has_newlines,
                NewlineStrategy newlines) noexcept {
     return OpenH(*this, level, inside_has_newlines, newlines);
@@ -748,6 +842,10 @@ class HtmlWriter {
   OpenSpan open_span(bool inside_has_newlines,
                      NewlineStrategy newlines) noexcept {
     return OpenSpan(*this, inside_has_newlines, newlines);
+  }
+  OpenInput open_input(bool inside_has_newlines,
+                     NewlineStrategy newlines) noexcept {
+    return OpenInput(*this, inside_has_newlines, newlines);
   }
   OpenButton open_button(bool inside_has_newlines) noexcept {
     return OpenButton(*this, inside_has_newlines);

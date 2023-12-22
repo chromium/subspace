@@ -503,12 +503,16 @@ ul.item-table .item-name {
     float: right;
 }
 
-#search a {
-    color: white;
+.search-form {
+    display: flex;
+    flex-direction: row;
 }
-#search p {
+.search-form .search-input {
+    flex-grow: 100;
+    outline: none;
+    background: none;
     color: white;
-}
-.search-title {
-    display: none;
+    border: 1px solid white;
+    padding: 0.3rem;
+    font-size: 100%;
 }
