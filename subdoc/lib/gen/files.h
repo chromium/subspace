@@ -27,6 +27,8 @@ namespace subdoc::gen {
 
 inline Option<std::ofstream> open_file_for_writing(
     std::filesystem::path path) noexcept {
+  std::filesystem::create_directories(path.parent_path());
+
   std::ofstream file;
   file.open(path, std::ios::binary);
   if (file.is_open()) {

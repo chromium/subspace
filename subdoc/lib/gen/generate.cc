@@ -16,6 +16,7 @@
 
 #include <filesystem>
 
+#include "subdoc/lib/gen/files.h"
 #include "subdoc/lib/gen/generate_namespace.h"
 #include "sus/error/compat_error.h"
 
@@ -72,11 +73,21 @@ sus::result::Result<void, sus::Box<sus::error::DynError>> generate(
     if (result.is_err())
       return sus::err(sus::into(sus::move(result).unwrap_err()));
   }
-  if (auto result = generate_namespace(db, db.global, sus::empty, options);
-      result.is_err()) {
-    return sus::err(
-        sus::into(GenerateError::with<GenerateError::Tag::MarkdownError>(
-            sus::into(sus::move(result).unwrap_err()))));
+
+  {
+    std::filesystem::path search_json_path = options.output_root;
+    search_json_path.append("search.json");
+    auto json_writer =
+        JsonWriter(open_file_for_writing(search_json_path).unwrap());
+    auto search_documents = json_writer.open_array();
+
+    if (auto result = generate_namespace(db, db.global, sus::empty,
+                                         search_documents, options);
+        result.is_err()) {
+      return sus::err(
+          sus::into(GenerateError::with<GenerateError::Tag::MarkdownError>(
+              sus::into(sus::move(result).unwrap_err()))));
+    }
   }
 
   for (const std::string& s : options.copy_files) {

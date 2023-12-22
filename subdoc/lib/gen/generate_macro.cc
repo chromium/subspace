@@ -26,6 +26,7 @@
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/gen/options.h"
+#include "subdoc/lib/gen/search.h"
 #include "sus/prelude.h"
 
 namespace subdoc::gen {
@@ -33,8 +34,29 @@ namespace subdoc::gen {
 sus::Result<void, MarkdownToHtmlError> generate_macro(
     const Database& db, const MacroElement& element,
     sus::Slice<const NamespaceElement*> namespaces,
-    const Options& options) noexcept {
+    JsonWriter::JsonArray& search_documents, const Options& options) noexcept {
   if (element.hidden()) return sus::ok();
+
+  {
+    i32 index = search_documents.len();
+    auto json = search_documents.open_object();
+    json.add_int("index", index);
+    json.add_string("type", "macro");
+    json.add_string("url", construct_html_url_for_macro(element));
+    json.add_string("name", element.name);
+
+    std::string full_name;
+    for (CppPathElement e :
+         generate_cpp_path_for_macro(element, namespaces, options)
+             .into_iter()) {
+      if (e.type != CppPathProject) {
+        if (full_name.size() > 0u) full_name += std::string_view("::");
+        full_name += e.name;
+      }
+    }
+    json.add_string("full_name", full_name);
+    json.add_string("split_name", split_for_search(full_name));
+  }
 
   ParseMarkdownPageState page_state(db, options);
 
@@ -48,7 +70,6 @@ sus::Result<void, MarkdownToHtmlError> generate_macro(
 
   const std::filesystem::path path =
       construct_html_file_path_for_macro(options.output_root, element);
-  std::filesystem::create_directories(path.parent_path());
   auto html = HtmlWriter(open_file_for_writing(path).unwrap());
 
   {
@@ -83,8 +104,6 @@ sus::Result<void, MarkdownToHtmlError> generate_macro(
   section_div.add_class("section");
   section_div.add_class("overview");
 
-  generate_search_title(
-      section_div, generate_cpp_path_for_macro(element, namespaces, options));
   {
     auto header_div = section_div.open_div();
     header_div.add_class("section-header");
