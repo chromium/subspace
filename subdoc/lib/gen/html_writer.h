@@ -500,6 +500,18 @@ class HtmlWriter {
           .value = std::string(placeholder),
       });
     }
+    void add_onfocus(std::string_view onfocus) {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("onfocus"),
+          .value = std::string(onfocus),
+      });
+    }
+    void add_onblur(std::string_view onblur) {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("onblur"),
+          .value = std::string(onblur),
+      });
+    }
 
    private:
     friend HtmlWriter;
