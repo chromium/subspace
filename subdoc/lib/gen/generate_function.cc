@@ -266,6 +266,8 @@ sus::Result<void, MarkdownToHtmlError> generate_function(
                sus::empty, options);
 
   auto main = body.open_main();
+  generate_search_header(main);
+
   auto function_div = main.open_div();
   function_div.add_class("function");
 

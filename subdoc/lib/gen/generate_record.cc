@@ -500,6 +500,8 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
                element.name, "", sus::move(sidebar_links), options);
 
   auto main = body.open_main();
+  generate_search_header(main);
+
   auto record_div = main.open_div();
   record_div.add_class("type");
   record_div.add_class("record");

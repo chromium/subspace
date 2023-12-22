@@ -24,8 +24,17 @@ void generate_search_header(HtmlWriter::OpenMain& main) noexcept {
 
   {
     auto search_div = main.open_search();
-    // The "#search" id matches what the script in `generate_head()` looks for.
-    search_div.add_id("search");
+    {
+      auto search_form = search_div.open_form();
+      search_form.add_class("search-form");
+
+      auto search_input = search_form.open_input();
+      search_input.add_class("search-input");
+      search_input.add_placeholder("Click or press 'S' to search...");
+      search_input.add_name("search");
+      search_input.add_autocomplete("off");
+      search_input.add_spellcheck("false");
+    }
   }
 }
 

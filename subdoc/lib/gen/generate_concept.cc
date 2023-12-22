@@ -192,6 +192,8 @@ sus::Result<void, MarkdownToHtmlError> generate_concept(
                sus::empty, options);
 
   auto main = body.open_main();
+  generate_search_header(main);
+
   auto record_div = main.open_div();
   record_div.add_class("concept");
   generate_concept_overview(record_div, element, namespaces, md_html, options);
