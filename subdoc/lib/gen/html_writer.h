@@ -38,6 +38,18 @@ class HtmlWriter {
     void add_class(std::string_view c) noexcept {
       classes_.push(std::string(c));
     }
+    void add_id(std::string_view id) noexcept {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("id"),
+          .value = std::string(id),
+      });
+    }
+    void add_search_weight(f32 weight) noexcept {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("data-pagefind-weight"),
+          .value = fmt::to_string(weight),
+      });
+    }
 
     void write_text(std::string_view text) noexcept {
       write_open();
@@ -55,6 +67,14 @@ class HtmlWriter {
     auto open_div(NewlineStrategy newlines = MultiLine) noexcept {
       write_open();
       return writer_.open_div(has_newlines_, newlines);
+    }
+    auto open_h(u32 level, NewlineStrategy newlines = MultiLine) noexcept {
+      write_open();
+      return writer_.open_h(level, has_newlines_, newlines);
+    }
+    auto open_search(NewlineStrategy newlines = MultiLine) noexcept {
+      write_open();
+      return writer_.open_search(has_newlines_, newlines);
     }
     auto open_nav(NewlineStrategy newlines = MultiLine) noexcept {
       write_open();
@@ -277,6 +297,68 @@ class HtmlWriter {
     void write_open() noexcept override {
       if (!wrote_open_) {
         writer_.write_open("div", classes_.iter(), attributes_.iter(),
+                           inside_has_newlines_, has_newlines_);
+        wrote_open_ = true;
+      }
+    }
+  };
+
+  class [[nodiscard]] OpenH : public Html {
+   public:
+    ~OpenH() noexcept {
+      write_open();
+      writer_.write_close(fmt::format("h{}", level_), inside_has_newlines_,
+                          has_newlines_);
+    }
+
+    void add_title(std::string_view title) {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("title"),
+          .value = std::string(title),
+      });
+    }
+
+   private:
+    friend HtmlWriter;
+    OpenH(HtmlWriter& writer, u32 level, bool inside_has_newlines,
+          NewlineStrategy newlines) noexcept
+        : Html(writer), level_(level) {
+      sus_check(level_ <= 7u);
+      has_newlines_ = newlines == MultiLine;
+      inside_has_newlines_ = inside_has_newlines;
+    }
+
+    void write_open() noexcept override {
+      if (!wrote_open_) {
+        writer_.write_open(fmt::format("h{}", level_), classes_.iter(),
+                           attributes_.iter(), inside_has_newlines_,
+                           has_newlines_);
+        wrote_open_ = true;
+      }
+    }
+
+    u32 level_;
+  };
+
+  class [[nodiscard]] OpenSearch : public Html {
+   public:
+    ~OpenSearch() noexcept {
+      write_open();
+      writer_.write_close("search", inside_has_newlines_, has_newlines_);
+    }
+
+   private:
+    friend HtmlWriter;
+    OpenSearch(HtmlWriter& writer, bool inside_has_newlines,
+               NewlineStrategy newlines) noexcept
+        : Html(writer) {
+      has_newlines_ = newlines == MultiLine;
+      inside_has_newlines_ = inside_has_newlines;
+    }
+
+    void write_open() noexcept override {
+      if (!wrote_open_) {
+        writer_.write_open("search", classes_.iter(), attributes_.iter(),
                            inside_has_newlines_, has_newlines_);
         wrote_open_ = true;
       }
@@ -564,6 +646,10 @@ class HtmlWriter {
       write_open();
       return writer_.open_meta(has_newlines_);
     }
+    auto open_script(NewlineStrategy newlines = MultiLine) noexcept {
+      write_open();
+      return writer_.open_script(has_newlines_, newlines);
+    }
 
    private:
     friend HtmlWriter;
@@ -578,11 +664,48 @@ class HtmlWriter {
     }
   };
 
+  class [[nodiscard]] OpenScript : public Html {
+   public:
+    ~OpenScript() noexcept {
+      write_open();
+      writer_.write_close("script", inside_has_newlines_, has_newlines_);
+    }
+
+    void add_src(std::string_view src) {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("src"),
+          .value = std::string(src),
+      });
+    }
+
+   private:
+    friend HtmlWriter;
+    OpenScript(HtmlWriter& writer, bool inside_has_newlines,
+               NewlineStrategy newlines) noexcept
+        : Html(writer) {
+      has_newlines_ = newlines == MultiLine;
+      inside_has_newlines_ = inside_has_newlines;
+    }
+
+    void write_open() noexcept override {
+      if (!wrote_open_) {
+        writer_.write_open("script", classes_.iter(), attributes_.iter(),
+                           inside_has_newlines_, has_newlines_);
+        wrote_open_ = true;
+      }
+    }
+  };
+
   explicit HtmlWriter(std::ofstream stream) noexcept
       : stream_(sus::move(stream)) {
-    stream_ << "<!DOCTYPE html>\n\n";
+    stream_ << "<!DOCTYPE html>\n";
+    write_open("html", sus::iter::empty<const std::string&>(),
+               sus::iter::empty<const HtmlAttribute&>(), true, true);
   }
-  ~HtmlWriter() noexcept { stream_.close(); }
+  ~HtmlWriter() noexcept {
+    write_close("html", true, true);
+    stream_.close();
+  }
 
   OpenBody open_body() noexcept { return OpenBody(*this); }
   OpenHead open_head() noexcept { return OpenHead(*this); }
@@ -602,6 +725,14 @@ class HtmlWriter {
   OpenDiv open_div(bool inside_has_newlines,
                    NewlineStrategy newlines) noexcept {
     return OpenDiv(*this, inside_has_newlines, newlines);
+  }
+  OpenH open_h(u32 level, bool inside_has_newlines,
+               NewlineStrategy newlines) noexcept {
+    return OpenH(*this, level, inside_has_newlines, newlines);
+  }
+  OpenSearch open_search(bool inside_has_newlines,
+                         NewlineStrategy newlines) noexcept {
+    return OpenSearch(*this, inside_has_newlines, newlines);
   }
   OpenNav open_nav(bool inside_has_newlines,
                    NewlineStrategy newlines) noexcept {
@@ -637,6 +768,10 @@ class HtmlWriter {
   }
   OpenMeta open_meta(bool inside_has_newlines) noexcept {
     return OpenMeta(*this, inside_has_newlines);
+  }
+  OpenScript open_script(bool inside_has_newlines,
+                         NewlineStrategy newlines) noexcept {
+    return OpenScript(*this, inside_has_newlines, newlines);
   }
 
   // Quote any <>.

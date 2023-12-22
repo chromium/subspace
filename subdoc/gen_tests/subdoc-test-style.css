@@ -263,6 +263,9 @@ pre > code span.punct {
 .overview .description :is(h1, h2, h3, h4, h5, h6) {
     border-bottom: 1px solid rgb(184, 184, 184);
 }
+.overview > h1 {
+    font-size: 100%;
+}
 .overview .description h1 {
     font-size: 120%;
 }
@@ -498,4 +501,14 @@ ul.item-table .item-name {
 .src.rightside {
     padding-left: 12px;
     float: right;
+}
+
+#search a {
+    color: white;
+}
+#search p {
+    color: white;
+}
+.search-title {
+    display: none;
 }

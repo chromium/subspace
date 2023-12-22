@@ -53,6 +53,7 @@ Vec<CppPathElement> generate_with_ancestors(
               }
               sus_unreachable();
             }(),
+        .search_weight = 1_f32,
     });
   }
   for (const RecordElement& ancestor : type_ancestors.iter().map(
@@ -61,12 +62,21 @@ Vec<CppPathElement> generate_with_ancestors(
         .name = sus::clone(ancestor.name),
         .link_href = construct_html_url_for_type(ancestor),
         .type = CppPathRecord,
+        .search_weight = 1_f32,
     });
   }
   out.push(CppPathElement{
       .name = std::string(name),
       .link_href = "#",
       .type = self_type,
+      .search_weight =
+          [&]() {
+            switch (self_type) {
+              case CppPathProject: return 3_f32;
+              case CppPathNamespace: return 10_f32;
+              default: return 20_f32;
+            }
+          }(),
   });
   return out;
 }
