@@ -159,13 +159,11 @@ void generate_head(HtmlWriter& html, std::string_view title,
             const summmary = item.summary ? item.summary : "";
             
             content += `\
-              <div class="search-results-item">\n\
+              <a class="search-results-link" href="${url}">
                 <span class="search-results-type">${type}</span>\
-                <span class="search-results-name">\
-                  <a href="${url}">${full_name}</a>\
-                </span>\
+                <span class="search-results-name">${full_name}</span>\
                 <span class="search-results-summary">${summmary}</span>\
-              </div>\n\
+              </a>\
               `
           }
 
