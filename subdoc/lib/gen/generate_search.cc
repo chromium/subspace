@@ -33,9 +33,6 @@ void generate_search_header(HtmlWriter::OpenMain& main) noexcept {
       search_input.add_autocomplete("off");
       search_input.add_spellcheck("false");
       search_input.add_placeholder("Click or press 'S' to search...");
-      search_input.add_onblur(
-          "this.placeholder = 'Click or press \\'S\\' to search...'");
-      search_input.add_onfocus("this.placeholder = 'Type your search here.'");
     }
   }
 

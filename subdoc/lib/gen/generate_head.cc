@@ -120,8 +120,15 @@ void generate_head(HtmlWriter& html, std::string_view title,
               e.preventDefault();
             }
           };
+          var searchPlaceholder;
           document.querySelector(".search-input").onfocus = (e) => {
+            searchPlaceholder = e.target.placeholder;
+            e.target.placeholder = "Type your search here.";
             navigateToSearch(e.target.value);
+          };
+          document.querySelector(".search-input").onblur = (e) => {
+            e.target.placeholder = searchPlaceholder;
+            searchPlaceholder = null;
           };
         });
 
