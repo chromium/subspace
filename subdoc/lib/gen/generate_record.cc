@@ -102,10 +102,10 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
   section_div.add_class("overview");
 
   {
-    auto header_div = section_div.open_div();
-    header_div.add_class("section-header");
+    auto header = section_div.open_h(1u);
+    header.add_class("section-header");
     {
-      auto record_type_span = header_div.open_span();
+      auto record_type_span = header.open_span();
       record_type_span.write_text(
           friendly_record_type_name(element.record_type, true));
     }
@@ -114,15 +114,15 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
                            .into_iter()
                            .enumerate()) {
       if (e.link_href.empty()) {
-        auto span = header_div.open_span();
+        auto span = header.open_span();
         span.write_text(e.name);
       } else {
         if (i > 0u) {
-          auto span = header_div.open_span(HtmlWriter::SingleLine);
+          auto span = header.open_span(HtmlWriter::SingleLine);
           span.add_class("namespace-dots");
           span.write_text("::");
         }
-        auto ancestor_anchor = header_div.open_a();
+        auto ancestor_anchor = header.open_a();
         ancestor_anchor.add_search_weight(e.search_weight);
         ancestor_anchor.add_class([&e]() {
           switch (e.type) {
@@ -203,15 +203,15 @@ sus::Result<void, MarkdownToHtmlError> generate_record_fields(
   section_div.add_class(static_fields ? "static" : "nonstatic");
 
   {
-    auto fields_header_div = section_div.open_div();
-    fields_header_div.add_class("section-header");
+    auto header = section_div.open_h(1u);
+    header.add_class("section-header");
     if (static_fields) {
-      auto header_name = fields_header_div.open_a();
+      auto header_name = header.open_a();
       header_name.add_name("static-data-members");
       header_name.add_href("#static-data-members");
       header_name.write_text("Static Data Members");
     } else {
-      auto header_name = fields_header_div.open_a();
+      auto header_name = header.open_a();
       header_name.add_name("data-members");
       header_name.add_href("#data-members");
       header_name.write_text("Data Members");
@@ -253,32 +253,32 @@ sus::Result<void, MarkdownToHtmlError> generate_record_methods(
   }
 
   {
-    auto methods_header_div = section_div.open_div();
-    methods_header_div.add_class("section-header");
+    auto header = section_div.open_h(1u);
+    header.add_class("section-header");
     switch (type) {
       case MethodType::StaticMethods: {
-        auto header_name = methods_header_div.open_a();
+        auto header_name = header.open_a();
         header_name.add_name("static-methods");
         header_name.add_href("#static-methods");
         header_name.write_text("Static Methods");
         break;
       }
       case MethodType::NonStaticMethods: {
-        auto header_name = methods_header_div.open_a();
+        auto header_name = header.open_a();
         header_name.add_name("methods");
         header_name.add_href("#methods");
         header_name.write_text("Methods");
         break;
       }
       case MethodType::Conversions: {
-        auto header_name = methods_header_div.open_a();
+        auto header_name = header.open_a();
         header_name.add_name("conversions");
         header_name.add_href("#conversions");
         header_name.write_text("Conversions");
         break;
       }
       case MethodType::NonStaticOperators: {
-        auto header_name = methods_header_div.open_a();
+        auto header_name = header.open_a();
         header_name.add_name("operators");
         header_name.add_href("#operators");
         header_name.write_text("Operators");
@@ -501,8 +501,11 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
 
   auto main = body.open_main();
   generate_search_header(main);
+  auto main_content = main.open_section();
+  main_content.add_class("main-content");
+  generate_search_result_loading(main_content);
 
-  auto record_div = main.open_div();
+  auto record_div = main_content.open_div();
   record_div.add_class("type");
   record_div.add_class("record");
   record_div.add_class(friendly_record_type_name(element.record_type, false));

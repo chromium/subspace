@@ -68,23 +68,133 @@ void generate_head(HtmlWriter& html, std::string_view title,
       meta.add_content(description);
     }
 
-    // Searching via https://lunrjs.com.
+    // TODO: Package this into the Subdoc output to avoid an external
+    // dependency.
     {
       auto script = head.open_script(HtmlWriter::SingleLine);
       script.add_src("https://unpkg.com/lunr/lunr.js");
     }
+
+    // Script for showing search results.
     {
       auto script = head.open_script();
       script.write_html(R"#(
-          const load_search = import('./search.json', {
-            assert: {type: 'json'}
-          });
+        // Delayed loading of whatever was in the search box.
+        var searchDelayLoad;
 
-          var idx;
-          var documents;
-          load_search.then(s => {
-            documents = s.default;
-            idx = lunr(function () {
+        // The search box's dynamic behaviour.
+        document.addEventListener("keyup", e => {
+          if (e.key === 's') {
+            document.querySelector('.search-input').focus();
+          }
+          if (e.key === 'Escape') {
+            document.querySelector('.search-input').blur();
+            navigateToSearch(null);
+            e.preventDefault();
+          }
+        });
+        function navigateToSearch(query) {
+          window.clearTimeout(searchDelayLoad);
+          searchDelayLoad = null;
+
+          let without_search =
+              window.location.href.replace(window.location.search, '');
+          if (query) {
+            window.history.replaceState(null, "",
+              without_search + "?" + `search=${query}`);
+          } else {
+            window.history.replaceState(null, "", without_search);
+          }
+          maybeShowSearchResults();
+        }
+        addEventListener("load", event => {
+          document.querySelector(".search-input").oninput = (e) => {
+            window.clearTimeout(searchDelayLoad);
+            searchDelayLoad = window.setTimeout(() => {
+              navigateToSearch(e.target.value);
+            }, 1000);
+          };
+          document.querySelector(".search-input").onkeypress = (e) => {
+            if (e.key == "Enter") {
+              navigateToSearch(e.target.value);
+              e.preventDefault();
+            }
+          };
+          document.querySelector(".search-input").onfocus = (e) => {
+            navigateToSearch(e.target.value);
+          };
+        });
+
+        // Show or hide any DOM element.
+        function showHide(selector, show) {
+          if (show)
+            document.querySelector(selector).classList.remove("hidden");
+          else
+            document.querySelector(selector).classList.add("hidden");
+        }
+
+        function searchQuery() {
+          const params = new Proxy(
+            new URLSearchParams(window.location.search), {
+              get: (searchParams, prop) => searchParams.get(prop),
+            }
+          );
+          return params.search;
+        }
+
+        // Showing search results.
+        async function populateSearchResults(loaded) {
+          const search_db = loaded.search_db;
+          const idx = loaded.idx;
+
+          const results = idx.search(searchQuery());
+          let content = '';
+          for (r of results) {
+            const item = search_db[r.ref];
+            
+            const type = item.type;
+            const url = item.url;
+            const name = item.name;
+            const full_name = item.full_name;
+            const summmary = item.summary ? item.summary : "";
+            
+            content += `\
+              <div class="search-results-item">\n\
+                <span class="search-results-type">${type}</span>\
+                <span class="search-results-name">\
+                  <a href="${url}">${full_name}</a>\
+                </span>\
+                <span class="search-results-summary">${summmary}</span>\
+              </div>\n\
+              `
+          }
+
+          let content_elem = document.querySelector(".search-results-content");
+          content_elem.innerHTML = content;
+
+          let header_elem = document.querySelector(".search-results-header");
+          header_elem.innerText = "Search results";
+        }
+
+        var cache_idx;
+
+        // Searching via https://lunrjs.com.
+        //
+        // Load the JSON search database, which will be turned into a search
+        // index. Returns an object with two fields:
+        // - search_db: the contents of the search.json file.
+        // - idx: the lunr search index.
+        //   Documented at https://lunrjs.com/docs/lunr.Index.html.
+        async function loadSearchIndex() {
+          async function load_search_db() {
+            let x = await import('./search.json', {
+              assert: {type: 'json'}
+            });
+            return x.default;
+          }
+
+          async function load_idx(search_db) {
+            let idx = lunr(function () {
               this.ref('index');
               this.field('name', {
                 'boost': 2
@@ -93,7 +203,7 @@ void generate_head(HtmlWriter& html, std::string_view title,
                 'boost': 2
               });
               this.field('split_name', {
-               'boost': 0.5
+                'boost': 0.5
               });
               this.field('summary', {
                 'boost': 1
@@ -105,26 +215,51 @@ void generate_head(HtmlWriter& html, std::string_view title,
               // No stemming?
               // this.pipeline = new lunr.Pipeline();
 
-              documents.forEach(doc => {
-                this.add(doc, {
-                  'boost': doc.weight
+              search_db.forEach(item => {
+                this.add(item, {
+                  'boost': item.weight
                 })
               }, this);
             });
-          });
-          )#");
-    }
+            let out = {};
+            out.search_db = search_db;
+            out.idx = idx;
+            return out;
+          };
 
-    // The search box's dynamic behaviour.
-    {
-      auto script = head.open_script();
-      script.write_html(R"#(
-        document.addEventListener("keyup", event => {
-          if (event.key === 's') {
-            document.querySelector('.search-input').focus();
+          if (!cache_idx) {
+            cache_idx = await load_search_db().then(load_idx);
           }
-        });
-      )#");
+          return cache_idx;
+        }
+
+        // If there's a search query, hide the other content and asynchronously
+        // show the search results. Otherwise, hide search content and show the
+        // rest immediately.
+        function maybeShowSearchResults() {
+          const query = searchQuery();
+          if (query) {
+            showHide(".main-content", false);
+
+            let input = document.querySelector(".search-input");
+            input.value = query;
+
+            let header_elem = document.querySelector(".search-results-header");
+            header_elem.innerText = "Loading search results...";
+
+            loadSearchIndex().then(populateSearchResults)
+          } else {
+            showHide(".main-content", true);
+
+            let header_elem = document.querySelector(".search-results-header");
+            header_elem.innerText = "";
+
+            let content_elem = document.querySelector(".search-results-content");
+            content_elem.innerText = "";
+          }
+        }
+
+        )#");
     }
 
     for (const std::string& path : options.stylesheets) {

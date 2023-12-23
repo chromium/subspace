@@ -19,15 +19,14 @@
 namespace subdoc::gen {
 
 void generate_search_header(HtmlWriter::OpenMain& main) noexcept {
-  auto search_header_div = main.open_div();
-  search_header_div.add_class("search-header");
-
   {
-    auto search_div = main.open_search();
-    {
-      auto search_form = search_div.open_form();
-      search_form.add_class("search-form");
+    auto search_nav = main.open_nav();
+    search_nav.add_class("search-nav");
 
+    auto search_form = search_nav.open_form();
+    search_form.add_class("search-form");
+
+    {
       auto search_input = search_form.open_input();
       search_input.add_class("search-input");
       search_input.add_name("search");
@@ -39,6 +38,25 @@ void generate_search_header(HtmlWriter::OpenMain& main) noexcept {
       search_input.add_onfocus("this.placeholder = 'Type your search here.'");
     }
   }
+
+  {
+    auto search_results = main.open_section();
+    search_results.add_class("search-results");
+
+    {
+      auto header = search_results.open_h(1u);
+      header.add_class("search-results-header");
+    }
+    {
+      auto div = search_results.open_div();
+      div.add_class("search-results-content");
+    }
+  }
+}
+
+void generate_search_result_loading(
+    HtmlWriter::OpenSection& main_content) noexcept {
+  main_content.write_html("<script>maybeShowSearchResults()</script>");
 }
 
 }  // namespace subdoc::gen
