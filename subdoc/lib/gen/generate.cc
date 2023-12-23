@@ -30,7 +30,8 @@ sus::result::Result<void, GenerateError> delete_tree(
     for (auto it = std::filesystem::directory_iterator(path);
          it != std::filesystem::directory_iterator(); ++it) {
       auto name = it->path().filename().string();
-      if (name == "." || name == "..") continue;
+      // Don't delete `.git` or `.` and `..`.
+      if (name.starts_with(".")) continue;
 
       if (it->is_directory()) {
         auto result = delete_tree(it->path());
