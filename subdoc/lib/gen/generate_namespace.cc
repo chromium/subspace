@@ -161,9 +161,10 @@ void generate_namespace_overview(HtmlWriter::OpenDiv& namespace_div,
   section_div.add_class("overview");
 
   {
-    auto header_div = section_div.open_div();
-    header_div.add_class("section-header");
-
+    auto header = section_div.open_h(1u);
+    header.add_class("section-header");
+    
+    auto header_div = header.open_div();
     generate_source_link(header_div, element);
 
     if (element.namespace_name != Namespace::Tag::Global) {
@@ -220,9 +221,9 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace_references(
   section_div.add_class("namespaces");
 
   {
-    auto header_div = section_div.open_div();
-    header_div.add_class("section-header");
-    auto header_name = header_div.open_a();
+    auto header = section_div.open_h(1u);
+    header.add_class("section-header");
+    auto header_name = header.open_a();
     header_name.add_name("namespaces");
     header_name.add_href("#namespaces");
     header_name.write_text("Namespaces");
@@ -285,9 +286,9 @@ sus::Result<void, MarkdownToHtmlError> generate_concept_references(
   section_div.add_class("concepts");
 
   {
-    auto header_div = section_div.open_div();
-    header_div.add_class("section-header");
-    auto header_name = header_div.open_a();
+    auto header = section_div.open_h(1u);
+    header.add_class("section-header");
+    auto header_name = header.open_a();
     header_name.add_name("concepts");
     header_name.add_href("#concepts");
     header_name.write_text("Concepts");
@@ -329,9 +330,9 @@ sus::Result<void, MarkdownToHtmlError> generate_alias_references(
   }
 
   {
-    auto header_div = section_div.open_div();
-    header_div.add_class("section-header");
-    auto header_name = header_div.open_a();
+    auto header = section_div.open_h(1u);
+    header.add_class("section-header");
+    auto header_name = header.open_a();
     switch (aliases_of) {
       case AliasesOf::Types:
         header_name.add_name("aliases-types");
@@ -386,19 +387,19 @@ sus::Result<void, MarkdownToHtmlError> generate_record_references(
   }
 
   {
-    auto header_div = section_div.open_div();
-    header_div.add_class("section-header");
+    auto header = section_div.open_h(1u);
+    header.add_class("section-header");
     switch (record_type) {
       case RecordType::Class: [[fallthrough]];
       case RecordType::Struct: {
-        auto header_name = header_div.open_a();
+        auto header_name = header.open_a();
         header_name.add_name("classes");
         header_name.add_href("#classes");
         header_name.write_text("Classes");
         break;
       }
       case RecordType::Union: {
-        auto header_name = header_div.open_a();
+        auto header_name = header.open_a();
         header_name.add_name("unions");
         header_name.add_href("#unions");
         header_name.write_text("Unions");
@@ -439,18 +440,18 @@ sus::Result<void, MarkdownToHtmlError> generate_function_references(
   section_div.add_class("functions");
 
   {
-    auto header_div = section_div.open_div();
-    header_div.add_class("section-header");
+    auto header = section_div.open_h(1u);
+    header.add_class("section-header");
     switch (type) {
       case GenerateFunctions: {
-        auto header_name = header_div.open_a();
+        auto header_name = header.open_a();
         header_name.add_name("functions");
         header_name.add_href("#functions");
         header_name.write_text("Functions");
         break;
       }
       case GenerateOperators: {
-        auto header_name = header_div.open_a();
+        auto header_name = header.open_a();
         header_name.add_name("operators");
         header_name.add_href("#operators");
         header_name.write_text("Operators");
@@ -486,10 +487,10 @@ sus::Result<void, MarkdownToHtmlError> generate_macro_references(
   section_div.add_class("macros");
 
   {
-    auto header_div = section_div.open_div();
-    header_div.add_class("section-header");
+    auto header = section_div.open_h(1u);
+    header.add_class("section-header");
     {
-      auto header_name = header_div.open_a();
+      auto header_name = header.open_a();
       header_name.add_name("macros");
       header_name.add_href("#macros");
       header_name.write_text("Macros");
@@ -523,10 +524,10 @@ sus::Result<void, MarkdownToHtmlError> generate_variable_references(
   section_div.add_class("variables");
 
   {
-    auto header_div = section_div.open_div();
-    header_div.add_class("section-header");
+    auto header = section_div.open_h(1u);
+    header.add_class("section-header");
 
-    auto header_name = header_div.open_a();
+    auto header_name = header.open_a();
     header_name.add_name("variables");
     header_name.add_href("#variables");
     header_name.write_text("Variables");
@@ -890,8 +891,11 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
 
   auto main = body.open_main();
   generate_search_header(main);
+  auto main_content = main.open_section();
+  main_content.add_class("main-content");
+  generate_search_result_loading(main_content);
 
-  auto namespace_div = main.open_div();
+  auto namespace_div = main_content.open_div();
   namespace_div.add_class("namespace");
   generate_namespace_overview(namespace_div, element, ancestors, md_html,
                               options);

@@ -64,6 +64,10 @@ class HtmlWriter {
       write_open();
       return writer_.open_main(has_newlines_, newlines);
     }
+    auto open_section(NewlineStrategy newlines = MultiLine) noexcept {
+      write_open();
+      return writer_.open_section(has_newlines_, newlines);
+    }
     auto open_div(NewlineStrategy newlines = MultiLine) noexcept {
       write_open();
       return writer_.open_div(has_newlines_, newlines);
@@ -275,18 +279,36 @@ class HtmlWriter {
     }
   };
 
+  class [[nodiscard]] OpenSection : public Html {
+   public:
+    ~OpenSection() noexcept {
+      write_open();
+      writer_.write_close("section", inside_has_newlines_, has_newlines_);
+    }
+
+   private:
+    friend HtmlWriter;
+    OpenSection(HtmlWriter& writer, bool inside_has_newlines,
+            NewlineStrategy newlines) noexcept
+        : Html(writer) {
+      has_newlines_ = newlines == MultiLine;
+      inside_has_newlines_ = inside_has_newlines;
+    }
+
+    void write_open() noexcept override {
+      if (!wrote_open_) {
+        writer_.write_open("section", classes_.iter(), attributes_.iter(),
+                           inside_has_newlines_, has_newlines_);
+        wrote_open_ = true;
+      }
+    }
+  };
+
   class [[nodiscard]] OpenDiv : public Html {
    public:
     ~OpenDiv() noexcept {
       write_open();
       writer_.write_close("div", inside_has_newlines_, has_newlines_);
-    }
-
-    void add_title(std::string_view title) {
-      attributes_.push(HtmlAttribute{
-          .name = std::string("title"),
-          .value = std::string(title),
-      });
     }
 
    private:
@@ -312,6 +334,13 @@ class HtmlWriter {
     ~OpenForm() noexcept {
       write_open();
       writer_.write_close("form", inside_has_newlines_, has_newlines_);
+    }
+
+    void add_action(std::string_view action) {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("action"),
+          .value = std::string(action),
+      });
     }
 
     auto open_input(NewlineStrategy newlines = MultiLine) noexcept {
@@ -830,6 +859,10 @@ class HtmlWriter {
   OpenMain open_main(bool inside_has_newlines,
                      NewlineStrategy newlines) noexcept {
     return OpenMain(*this, inside_has_newlines, newlines);
+  }
+  OpenSection open_section(bool inside_has_newlines,
+                   NewlineStrategy newlines) noexcept {
+    return OpenSection(*this, inside_has_newlines, newlines);
   }
   OpenDiv open_div(bool inside_has_newlines,
                    NewlineStrategy newlines) noexcept {

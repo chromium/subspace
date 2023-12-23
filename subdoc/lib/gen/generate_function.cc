@@ -267,8 +267,11 @@ sus::Result<void, MarkdownToHtmlError> generate_function(
 
   auto main = body.open_main();
   generate_search_header(main);
+  auto main_content = main.open_section();
+  main_content.add_class("main-content");
+  generate_search_result_loading(main_content);
 
-  auto function_div = main.open_div();
+  auto function_div = main_content.open_div();
   function_div.add_class("function");
 
   auto section_div = function_div.open_div();
@@ -276,10 +279,10 @@ sus::Result<void, MarkdownToHtmlError> generate_function(
   section_div.add_class("overview");
 
   {
-    auto header_div = section_div.open_div();
-    header_div.add_class("section-header");
+    auto header = section_div.open_h(1u);
+    header.add_class("section-header");
     {
-      auto function_type_span = header_div.open_span();
+      auto function_type_span = header.open_span();
       function_type_span.write_text("Function");
     }
     for (auto [i, e] :
@@ -287,15 +290,15 @@ sus::Result<void, MarkdownToHtmlError> generate_function(
              .into_iter()
              .enumerate()) {
       if (e.link_href.empty()) {
-        auto span = header_div.open_span();
+        auto span = header.open_span();
         span.write_text(e.name);
       } else {
         if (i > 0u) {
-          auto span = header_div.open_span(HtmlWriter::SingleLine);
+          auto span = header.open_span(HtmlWriter::SingleLine);
           span.add_class("namespace-dots");
           span.write_text("::");
         }
-        auto ancestor_anchor = header_div.open_a();
+        auto ancestor_anchor = header.open_a();
         ancestor_anchor.add_search_weight(e.search_weight);
         ancestor_anchor.add_class([&e]() {
           switch (e.type) {

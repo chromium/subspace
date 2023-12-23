@@ -45,10 +45,10 @@ void generate_concept_overview(HtmlWriter::OpenDiv& record_div,
   section_div.add_class("overview");
 
   {
-    auto header_div = section_div.open_div();
-    header_div.add_class("section-header");
+    auto header = section_div.open_h(1u);
+    header.add_class("section-header");
     {
-      auto record_type_span = header_div.open_span();
+      auto record_type_span = header.open_span();
       record_type_span.write_text("Concept");
     }
     for (auto [i, e] :
@@ -56,15 +56,15 @@ void generate_concept_overview(HtmlWriter::OpenDiv& record_div,
              .into_iter()
              .enumerate()) {
       if (e.link_href.empty()) {
-        auto span = header_div.open_span(HtmlWriter::SingleLine);
+        auto span = header.open_span(HtmlWriter::SingleLine);
         span.write_text(e.name);
       } else {
         if (i > 0u) {
-          auto span = header_div.open_span(HtmlWriter::SingleLine);
+          auto span = header.open_span(HtmlWriter::SingleLine);
           span.add_class("namespace-dots");
           span.write_text("::");
         }
-        auto ancestor_anchor = header_div.open_a();
+        auto ancestor_anchor = header.open_a();
         ancestor_anchor.add_search_weight(e.search_weight);
         ancestor_anchor.add_class([&e]() {
           switch (e.type) {
@@ -193,8 +193,11 @@ sus::Result<void, MarkdownToHtmlError> generate_concept(
 
   auto main = body.open_main();
   generate_search_header(main);
+  auto main_content = main.open_section();
+  main_content.add_class("main-content");
+  generate_search_result_loading(main_content);
 
-  auto record_div = main.open_div();
+  auto record_div = main_content.open_div();
   record_div.add_class("concept");
   generate_concept_overview(record_div, element, namespaces, md_html, options);
   return sus::ok();

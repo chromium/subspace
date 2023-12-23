@@ -26,23 +26,10 @@ namespace subdoc::gen {
 
 void generate_search_header(HtmlWriter::OpenMain& main) noexcept;
 
-std::string generate_search_db(
-    HtmlWriter::OpenDiv& div,
-    sus::iter::IntoIterator<CppPathElement> auto ii) noexcept {
-  
-
-
-  auto search_title = div.open_h(1u, HtmlWriter::SingleLine);
-  search_title.add_search_weight(2_f32);
-  search_title.add_class("search-title");
-
-  auto s = std::string();
-  for (CppPathElement e : sus::move(ii).into_iter()) {
-    if (e.type == CppPathProject) continue;
-    if (s.size() > 0u) s += std::string_view("::");
-    s += std::string_view(e.name);
-  }
-  search_title.write_text(s);
-}
+// Synchronously show search results, replacing the main content of the
+// page, if a search is being done. Must be after the main-content section
+// is created, since it refers to it. So that is the expected parameter here.
+void generate_search_result_loading(
+    HtmlWriter::OpenSection& main_content) noexcept;
 
 }  // namespace subdoc::gen

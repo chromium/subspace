@@ -235,10 +235,6 @@ pre > code span.punct {
     padding-bottom: 0.2em;
     border-bottom: 1px solid;
 }
-:is(.fields, .functions, .macros, .methods, .records, .concepts, .namespaces, .aliases, .variables) .section-header > a {
-    text-decoration: none;
-    color: inherit;
-}
 
 
 .description.short {
@@ -260,15 +256,6 @@ pre > code span.punct {
         margin-left: 0.5rem;
     }
 }
-.overview .description :is(h1, h2, h3, h4, h5, h6) {
-    border-bottom: 1px solid rgb(184, 184, 184);
-}
-.overview > h1 {
-    font-size: 100%;
-}
-.overview .description h1 {
-    font-size: 120%;
-}
 code {
     color: rgb(124, 216, 204);
     white-space: nowrap;
@@ -276,14 +263,35 @@ code {
 pre code {
     white-space: pre;
 }
-.description h1, .description h2, .description h3 {
+
+/* Description for the top level thing in the page. */
+.overview .description :is(h1, h2, h3, h4, h5, h6) {
+    border-bottom: 1px solid rgb(184, 184, 184);
+}
+.overview .description h1 {
+    font-size: 120%;
+}
+/* Description for other things in the page like methods in a class. */
+.description :is(h1, h2) {
     font-size: 100%;
     font-weight: bold;
     color: rgb(124, 216, 204);
 }
-.description h3 {
+.description :is(h3, h4, h5, h6) {
     font-size: 97%;
+    font-weight: bold;
+    color: rgb(124, 216, 204);
 }
+
+/* Section header links ("fields", "classes", etc.) */
+.section-header a {
+    text-decoration: none;
+    color: inherit;
+}
+.section-header a:hover {
+    text-decoration: underline;
+}
+
 .description pre {
     padding: 1em;
 }
@@ -291,14 +299,12 @@ pre code {
     text-decoration: none;
     color: rgb(250, 199, 121);
 }
-.description a code {
-    color: rgb(250, 199, 121);
-}
-.description :is(h1, h2) a {
-    color: rgb(250, 199, 121);
-}
 .description a:hover {
     text-decoration: underline;
+}
+.description a code {
+    /* <code> is coloured elsewhere, but links stay link-coloured. */
+    color: inherit;
 }
 .description table {
     border: 1px solid;
@@ -515,4 +521,11 @@ ul.item-table .item-name {
     border: 1px solid white;
     padding: 0.3rem;
     font-size: 100%;
+}
+
+.hidden {
+    visibility: hidden;
+    width: 0;
+    height: 0;
+    overflow: clip;
 }
