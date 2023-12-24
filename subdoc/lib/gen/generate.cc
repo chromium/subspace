@@ -77,9 +77,10 @@ sus::result::Result<void, sus::Box<sus::error::DynError>> generate(
 
   {
     std::filesystem::path search_json_path = options.output_root;
-    search_json_path.append("search.json");
+    search_json_path.append("search_db.js");
     auto json_writer =
-        JsonWriter(open_file_for_writing(search_json_path).unwrap());
+        JsonWriter(sus::some("g_search_db"),
+                   open_file_for_writing(search_json_path).unwrap());
     auto search_documents = json_writer.open_array();
 
     if (auto result = generate_namespace(db, db.global, sus::empty,

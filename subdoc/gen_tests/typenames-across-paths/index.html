@@ -10,6 +10,7 @@
     <meta name="description" content=""></meta>
     <meta property="og:description" content=""></meta>
     <script src="https://unpkg.com/lunr/lunr.js"></script>
+    <script src="./search_db.js"></script>
     <script>
       
         // Delayed loading of whatever was in the search box.
@@ -31,7 +32,7 @@
           searchDelayLoad = null;
 
           let without_search =
-              window.location.href.replace(window.location.search, '');
+              window.location.origin + window.location.pathname;
           if (query) {
             window.history.replaceState(null, "",
               without_search + "?" + `search=${query}`);
@@ -53,8 +54,15 @@
               e.preventDefault();
             }
           };
+          var searchPlaceholder;
           document.querySelector(".search-input").onfocus = (e) => {
+            searchPlaceholder = e.target.placeholder;
+            e.target.placeholder = "Type your search here.";
             navigateToSearch(e.target.value);
+          };
+          document.querySelector(".search-input").onblur = (e) => {
+            e.target.placeholder = searchPlaceholder;
+            searchPlaceholder = null;
           };
         });
 
@@ -80,24 +88,32 @@
           const search_db = loaded.search_db;
           const idx = loaded.idx;
 
-          const results = idx.search(searchQuery());
+          // lunrjs treats `:` specially and `::` breaks the query syntax, so
+          // just split into two words.
+          const query = searchQuery().split("::").join(" ");
           let content = '';
-          for (r of results) {
-            const item = search_db[r.ref];
-            
-            const type = item.type;
-            const url = item.url;
-            const name = item.name;
-            const full_name = item.full_name;
-            const summmary = item.summary ? item.summary : "";
-            
-            content += `\
-              <a class="search-results-link" href="${url}">
-                <span class="search-results-type">${type}</span>\
-                <span class="search-results-name">${full_name}</span>\
-                <span class="search-results-summary">${summmary}</span>\
-              </a>\
-              `
+          try {
+            const results = idx.search(query);
+            for (r of results) {
+              const item = search_db[r.ref];
+
+              const type = item.type;
+              const url = item.url;
+              const name = item.name;
+              const full_name = item.full_name;
+              const summmary = item.summary ? item.summary : "";
+
+              content += `\
+                <a class="search-results-link" href="${url}">
+                  <span class="search-results-type">${type}</span>\
+                  <span class="search-results-name">${full_name}</span>\
+                  <span class="search-results-summary">${summmary}</span>\
+                </a>\
+                `
+            }
+          } catch (err) {
+            content +=
+                `<div class="search-error">Search error: ${err.message}</div>`;
           }
 
           let content_elem = document.querySelector(".search-results-content");
@@ -117,12 +133,14 @@
         // - idx: the lunr search index.
         //   Documented at https://lunrjs.com/docs/lunr.Index.html.
         async function loadSearchIndex() {
-          async function load_search_db() {
-            let x = await import('./search.json', {
-              assert: {type: 'json'}
-            });
-            return x.default;
-          }
+          // This is not widely supported yet (not on Safari), so instead we
+          // turned the json file into a js file that sets a global variable. :|
+          //async function load_search_db() {
+          //  let x = await import('./search.json', {
+          //    with: {type: 'json'}
+          //  });
+          //  return x.default;
+          //}
 
           async function load_idx(search_db) {
             let idx = lunr(function () {
@@ -146,6 +164,16 @@
               // No stemming?
               // this.pipeline = new lunr.Pipeline();
 
+              this.use(builder => {
+                function splitColons(token) {
+                  return token.toString().split("::").map(str => {
+                    return token.clone().update(() => { return str })
+                  })
+                }
+                lunr.Pipeline.registerFunction(splitColons, 'splitColons')
+                builder.searchPipeline.before(lunr.stemmer, splitColons)
+              });
+
               search_db.forEach(item => {
                 this.add(item, {
                   'boost': item.weight
@@ -159,7 +187,7 @@
           };
 
           if (!cache_idx) {
-            cache_idx = await load_search_db().then(load_idx);
+            cache_idx = await load_idx(g_search_db);
           }
           return cache_idx;
         }
@@ -178,6 +206,9 @@
             let header_elem = document.querySelector(".search-results-header");
             header_elem.innerText = "Loading search results...";
 
+            let content_ele = document.querySelector(".search-results-content");
+            content_ele.innerText = "";
+
             loadSearchIndex().then(populateSearchResults)
           } else {
             showHide(".main-content", true);
@@ -185,8 +216,8 @@
             let header_elem = document.querySelector(".search-results-header");
             header_elem.innerText = "";
 
-            let content_elem = document.querySelector(".search-results-content");
-            content_elem.innerText = "";
+            let content_ele = document.querySelector(".search-results-content");
+            content_ele.innerText = "";
           }
         }
 
@@ -241,7 +272,7 @@
     <main>
       <nav class="search-nav">
         <form class="search-form">
-          <input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press 'S' to search..." onblur="this.placeholder = 'Click or press \'S\' to search...'" onfocus="this.placeholder = 'Type your search here.'">
+          <input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press 'S' to search...">
           </input>
         </form>
       </nav>
@@ -257,7 +288,7 @@
           <div class="section overview">
             <h1 class="section-header">
               <div>
-                <a class="project-name" data-pagefind-weight="0" href="#">PROJECT NAME</a>
+                <a class="project-name" href="#">PROJECT NAME</a>
               </div>
             </h1>
             <div class="description long">
