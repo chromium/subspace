@@ -123,7 +123,6 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
           span.write_text("::");
         }
         auto ancestor_anchor = header.open_a();
-        ancestor_anchor.add_search_weight(e.search_weight);
         ancestor_anchor.add_class([&e]() {
           switch (e.type) {
             case CppPathProject: return "project-name";
@@ -334,6 +333,139 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
     }
     json.add_string("full_name", full_name);
     json.add_string("split_name", split_for_search(full_name));
+  }
+  {
+    std::string type_cpp_path;
+    for (CppPathElement e : generate_cpp_path_for_type(element, namespaces,
+                                                       type_ancestors, options)
+                                .into_iter()) {
+      if (e.type != CppPathProject) {
+        if (type_cpp_path.size() > 0u) type_cpp_path += std::string_view("::");
+        type_cpp_path += e.name;
+      }
+    }
+    for (const auto& [id, sub_element] : element.fields) {
+      if (sub_element.hidden()) continue;
+
+      i32 index = search_documents.len();
+      auto json = search_documents.open_object();
+      json.add_int("index", index);
+      json.add_string("type", "field");
+      json.add_string("url", construct_html_url_for_field(sub_element));
+      json.add_string("weight", "0.9");
+      json.add_string("name", sub_element.name);
+      std::string full_name =
+          type_cpp_path + std::string("::") + sub_element.name;
+      json.add_string("full_name", full_name);
+      json.add_string("split_name", split_for_search(full_name));
+    }
+    for (const auto& [id, sub_element] : element.deductions) {
+      if (sub_element.hidden()) continue;
+
+      i32 index = search_documents.len();
+      auto json = search_documents.open_object();
+      json.add_int("index", index);
+      json.add_string("type", "deduction guide");
+      json.add_string("url", construct_html_url_for_function(sub_element));
+      json.add_string("name", sub_element.name);
+      std::string full_name =
+          type_cpp_path + std::string("::") + sub_element.name;
+      json.add_string("full_name", full_name);
+      json.add_string("split_name", split_for_search(full_name));
+    }
+    for (const auto& [id, sub_element] : element.ctors) {
+      if (sub_element.hidden()) continue;
+
+      i32 index = search_documents.len();
+      auto json = search_documents.open_object();
+      json.add_int("index", index);
+      json.add_string("type", "constructor");
+      json.add_string("url", construct_html_url_for_function(sub_element));
+      json.add_string("name", sub_element.name);
+      std::string full_name =
+          type_cpp_path + std::string("::") + sub_element.name;
+      json.add_string("full_name", full_name);
+      json.add_string("split_name", split_for_search(full_name));
+    }
+    for (const auto& [id, sub_element] : element.dtors) {
+      if (sub_element.hidden()) continue;
+
+      i32 index = search_documents.len();
+      auto json = search_documents.open_object();
+      json.add_int("index", index);
+      json.add_string("type", "destructor");
+      json.add_string("url", construct_html_url_for_function(sub_element));
+      json.add_string("name", sub_element.name);
+      std::string full_name =
+          type_cpp_path + std::string("::") + sub_element.name;
+      json.add_string("full_name", full_name);
+      json.add_string("split_name", split_for_search(full_name));
+    }
+    for (const auto& [id, sub_element] : element.conversions) {
+      if (sub_element.hidden()) continue;
+
+      i32 index = search_documents.len();
+      auto json = search_documents.open_object();
+      json.add_int("index", index);
+      json.add_string("type", "conversion");
+      json.add_string("url", construct_html_url_for_function(sub_element));
+      json.add_string("name", sub_element.name);
+      std::string full_name =
+          type_cpp_path + std::string("::") + sub_element.name;
+      json.add_string("full_name", full_name);
+      json.add_string("split_name", split_for_search(full_name));
+    }
+    for (const auto& [id, sub_element] : element.methods) {
+      if (sub_element.hidden()) continue;
+
+      i32 index = search_documents.len();
+      auto json = search_documents.open_object();
+      json.add_int("index", index);
+      json.add_string("type", "method");
+      json.add_string("url", construct_html_url_for_function(sub_element));
+      json.add_string("name", sub_element.name);
+      std::string full_name =
+          type_cpp_path + std::string("::") + sub_element.name;
+      json.add_string("full_name", full_name);
+      json.add_string("split_name", split_for_search(full_name));
+    }
+    for (const auto& [id, sub_element] : element.aliases) {
+      if (sub_element.hidden()) continue;
+
+      if (Option<std::string> url = construct_html_url_for_alias(sub_element);
+          url.is_some()) {
+        i32 index = search_documents.len();
+        auto json = search_documents.open_object();
+        json.add_int("index", index);
+        switch (sub_element.target) {
+          case AliasTarget::Tag::AliasOfType:
+            json.add_string("type", "type alias");
+            break;
+          case AliasTarget::Tag::AliasOfConcept:
+            json.add_string("type", "concept alias");
+            break;
+          case AliasTarget::Tag::AliasOfFunction:
+            json.add_string("type", "function alias");
+            break;
+          case AliasTarget::Tag::AliasOfMethod:
+            json.add_string("type", "method alias");
+            break;
+          case AliasTarget::Tag::AliasOfEnumConstant:
+            json.add_string("type", "enum value alias");
+            break;
+          case AliasTarget::Tag::AliasOfVariable:
+            json.add_string("type", "variable alias");
+            break;
+        }
+        json.add_string("url", url.as_value());
+        json.add_string("weight", "0.8");
+        json.add_string("name", sub_element.name);
+        std::string full_name =
+            type_cpp_path + std::string("::") + sub_element.name;
+        json.add_string("full_name", full_name);
+        json.add_string("split_name", split_for_search(full_name));
+      }
+    }
   }
 
   ParseMarkdownPageState page_state(db, options);

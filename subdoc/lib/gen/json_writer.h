@@ -131,8 +131,13 @@ class JsonWriter {
     JsonWriter* writer_;
   };
 
-  explicit JsonWriter(std::ofstream stream) noexcept
-      : stream_(sus::move(stream)) {}
+  explicit JsonWriter(Option<std::string> varname,
+                      std::ofstream stream) noexcept
+      : stream_(sus::move(stream)) {
+    if (varname.is_some()) {
+      stream_ << "const " << varname.as_value() << " = ";
+    }
+  }
   ~JsonWriter() noexcept = default;
 
   JsonArray open_array() noexcept {

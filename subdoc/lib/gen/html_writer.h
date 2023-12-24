@@ -44,12 +44,6 @@ class HtmlWriter {
           .value = std::string(id),
       });
     }
-    void add_search_weight(f32 weight) noexcept {
-      attributes_.push(HtmlAttribute{
-          .name = std::string("data-pagefind-weight"),
-          .value = fmt::to_string(weight),
-      });
-    }
 
     void write_text(std::string_view text) noexcept {
       write_open();

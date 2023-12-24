@@ -77,6 +77,10 @@ void generate_head(HtmlWriter& html, std::string_view title,
 
     // Script for showing search results.
     {
+      auto script = head.open_script(HtmlWriter::SingleLine);
+      script.add_src("./search_db.js");
+    }
+    {
       auto script = head.open_script();
       script.write_html(R"#(
         // Delayed loading of whatever was in the search box.
@@ -98,7 +102,7 @@ void generate_head(HtmlWriter& html, std::string_view title,
           searchDelayLoad = null;
 
           let without_search =
-              window.location.href.replace(window.location.search, '');
+              window.location.origin + window.location.pathname;
           if (query) {
             window.history.replaceState(null, "",
               without_search + "?" + `search=${query}`);
@@ -154,24 +158,32 @@ void generate_head(HtmlWriter& html, std::string_view title,
           const search_db = loaded.search_db;
           const idx = loaded.idx;
 
-          const results = idx.search(searchQuery());
+          // lunrjs treats `:` specially and `::` breaks the query syntax, so
+          // just split into two words.
+          const query = searchQuery().split("::").join(" ");
           let content = '';
-          for (r of results) {
-            const item = search_db[r.ref];
-            
-            const type = item.type;
-            const url = item.url;
-            const name = item.name;
-            const full_name = item.full_name;
-            const summmary = item.summary ? item.summary : "";
-            
-            content += `\
-              <a class="search-results-link" href="${url}">
-                <span class="search-results-type">${type}</span>\
-                <span class="search-results-name">${full_name}</span>\
-                <span class="search-results-summary">${summmary}</span>\
-              </a>\
-              `
+          try {
+            const results = idx.search(query);
+            for (r of results) {
+              const item = search_db[r.ref];
+
+              const type = item.type;
+              const url = item.url;
+              const name = item.name;
+              const full_name = item.full_name;
+              const summmary = item.summary ? item.summary : "";
+
+              content += `\
+                <a class="search-results-link" href="${url}">
+                  <span class="search-results-type">${type}</span>\
+                  <span class="search-results-name">${full_name}</span>\
+                  <span class="search-results-summary">${summmary}</span>\
+                </a>\
+                `
+            }
+          } catch (err) {
+            content +=
+                `<div class="search-error">Search error: ${err.message}</div>`;
           }
 
           let content_elem = document.querySelector(".search-results-content");
@@ -191,12 +203,14 @@ void generate_head(HtmlWriter& html, std::string_view title,
         // - idx: the lunr search index.
         //   Documented at https://lunrjs.com/docs/lunr.Index.html.
         async function loadSearchIndex() {
-          async function load_search_db() {
-            let x = await import('./search.json', {
-              assert: {type: 'json'}
-            });
-            return x.default;
-          }
+          // This is not widely supported yet (not on Safari), so instead we
+          // turned the json file into a js file that sets a global variable. :|
+          //async function load_search_db() {
+          //  let x = await import('./search.json', {
+          //    with: {type: 'json'}
+          //  });
+          //  return x.default;
+          //}
 
           async function load_idx(search_db) {
             let idx = lunr(function () {
@@ -220,6 +234,16 @@ void generate_head(HtmlWriter& html, std::string_view title,
               // No stemming?
               // this.pipeline = new lunr.Pipeline();
 
+              this.use(builder => {
+                function splitColons(token) {
+                  return token.toString().split("::").map(str => {
+                    return token.clone().update(() => { return str })
+                  })
+                }
+                lunr.Pipeline.registerFunction(splitColons, 'splitColons')
+                builder.searchPipeline.before(lunr.stemmer, splitColons)
+              });
+
               search_db.forEach(item => {
                 this.add(item, {
                   'boost': item.weight
@@ -233,7 +257,7 @@ void generate_head(HtmlWriter& html, std::string_view title,
           };
 
           if (!cache_idx) {
-            cache_idx = await load_search_db().then(load_idx);
+            cache_idx = await load_idx(g_search_db);
           }
           return cache_idx;
         }
@@ -252,6 +276,9 @@ void generate_head(HtmlWriter& html, std::string_view title,
             let header_elem = document.querySelector(".search-results-header");
             header_elem.innerText = "Loading search results...";
 
+            let content_ele = document.querySelector(".search-results-content");
+            content_ele.innerText = "";
+
             loadSearchIndex().then(populateSearchResults)
           } else {
             showHide(".main-content", true);
@@ -259,8 +286,8 @@ void generate_head(HtmlWriter& html, std::string_view title,
             let header_elem = document.querySelector(".search-results-header");
             header_elem.innerText = "";
 
-            let content_elem = document.querySelector(".search-results-content");
-            content_elem.innerText = "";
+            let content_ele = document.querySelector(".search-results-content");
+            content_ele.innerText = "";
           }
         }
 

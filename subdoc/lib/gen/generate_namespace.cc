@@ -163,7 +163,7 @@ void generate_namespace_overview(HtmlWriter::OpenDiv& namespace_div,
   {
     auto header = section_div.open_h(1u);
     header.add_class("section-header");
-    
+
     auto header_div = header.open_div();
     generate_source_link(header_div, element);
 
@@ -185,7 +185,6 @@ void generate_namespace_overview(HtmlWriter::OpenDiv& namespace_div,
           span.write_text("::");
         }
         auto ancestor_anchor = header_div.open_a();
-        ancestor_anchor.add_search_weight(e.search_weight);
         ancestor_anchor.add_class([&e]() {
           switch (e.type) {
             case CppPathProject: return "project-name";
@@ -558,37 +557,80 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
   if (element.hidden()) return sus::ok();
 
   {
-    i32 index = search_documents.len();
-    auto json = search_documents.open_object();
-    switch (element.namespace_name) {
-      case Namespace::Tag::Global: {
-        json.add_int("index", index);
-        json.add_string("type", "project");
-        json.add_string("url", construct_html_url_for_namespace(element));
-        json.add_string("name", options.project_name);
-        json.add_string("full_name", options.project_name);
-        break;
+    std::string namespace_cpp_path;
+    for (CppPathElement e :
+         generate_cpp_path_for_namespace(element, ancestors, options)
+             .into_iter()) {
+      if (e.type != CppPathProject) {
+        if (namespace_cpp_path.size() > 0u)
+          namespace_cpp_path += std::string_view("::");
+        namespace_cpp_path += e.name;
       }
-      case Namespace::Tag::Anonymous: sus_unreachable();
-      case Namespace::Tag::Named: {
-        json.add_int("index", index);
-        json.add_string("type", "namespace");
-        json.add_string("url", construct_html_url_for_namespace(element));
-        json.add_string("weight", "0.75");
-        json.add_string("name", element.name);
+    }
 
-        std::string full_name;
-        for (CppPathElement e :
-             generate_cpp_path_for_namespace(element, ancestors, options)
-                 .into_iter()) {
-          if (e.type != CppPathProject) {
-            if (full_name.size() > 0u) full_name += std::string_view("::");
-            full_name += e.name;
-          }
+    {
+      i32 index = search_documents.len();
+      auto json = search_documents.open_object();
+      switch (element.namespace_name) {
+        case Namespace::Tag::Global: {
+          json.add_int("index", index);
+          json.add_string("type", "project");
+          json.add_string("url", construct_html_url_for_namespace(element));
+          json.add_string("name", options.project_name);
+          json.add_string("full_name", options.project_name);
+          break;
         }
+        case Namespace::Tag::Anonymous: sus_unreachable();
+        case Namespace::Tag::Named: {
+          json.add_int("index", index);
+          json.add_string("type", "namespace");
+          json.add_string("url", construct_html_url_for_namespace(element));
+          json.add_string("weight", "0.75");
+          json.add_string("name", element.name);
+
+          std::string full_name = namespace_cpp_path;
+          json.add_string("full_name", namespace_cpp_path);
+          json.add_string("split_name", split_for_search(full_name));
+          break;
+        }
+      }
+    }
+    for (const auto& [alias_id, sub_element] : element.aliases) {
+      if (sub_element.hidden()) continue;
+
+      if (Option<std::string> url = construct_html_url_for_alias(sub_element);
+          url.is_some()) {
+        i32 index = search_documents.len();
+        auto json = search_documents.open_object();
+        json.add_int("index", index);
+        switch (sub_element.target) {
+          case AliasTarget::Tag::AliasOfType:
+            json.add_string("type", "type alias");
+            break;
+          case AliasTarget::Tag::AliasOfConcept:
+            json.add_string("type", "concept alias");
+            break;
+          case AliasTarget::Tag::AliasOfFunction:
+            json.add_string("type", "function alias");
+            break;
+          case AliasTarget::Tag::AliasOfMethod:
+            json.add_string("type", "method alias");
+            break;
+          case AliasTarget::Tag::AliasOfEnumConstant:
+            json.add_string("type", "enum value alias");
+            break;
+          case AliasTarget::Tag::AliasOfVariable:
+            json.add_string("type", "variable alias");
+            break;
+        }
+        json.add_string("url", url.as_value());
+        json.add_string("weight", "0.8");
+        json.add_string("name", sub_element.name);
+        std::string full_name = namespace_cpp_path;
+        full_name += std::string_view("::");
+        full_name += sub_element.name;
         json.add_string("full_name", full_name);
         json.add_string("split_name", split_for_search(full_name));
-        break;
       }
     }
   }
@@ -1004,6 +1046,7 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
 
   // Recurse into namespaces, concepts, records and functions.
   ancestors.push(&element);
+
   for (const auto& [u, sub_element] : element.namespaces) {
     if (sub_element.hidden()) continue;
     if (auto result = generate_namespace(db, sub_element, sus::clone(ancestors),

@@ -59,6 +59,11 @@ Vec<CppPathElement> generate_cpp_path_for_function(
     sus::Slice<const NamespaceElement*> namespace_ancestors,
     const Options& options) noexcept;
 
+Vec<CppPathElement> generate_cpp_path_for_alias(
+    const AliasElement& element,
+    sus::Slice<const NamespaceElement*> namespace_ancestors,
+    const Options& options) noexcept;
+
 Vec<CppPathElement> generate_cpp_path_for_macro(
     const MacroElement& element,
     sus::Slice<const NamespaceElement*> namespace_ancestors,

@@ -65,7 +65,6 @@ void generate_concept_overview(HtmlWriter::OpenDiv& record_div,
           span.write_text("::");
         }
         auto ancestor_anchor = header.open_a();
-        ancestor_anchor.add_search_weight(e.search_weight);
         ancestor_anchor.add_class([&e]() {
           switch (e.type) {
             case CppPathProject: return "project-name";
