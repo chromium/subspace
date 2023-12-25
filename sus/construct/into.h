@@ -108,6 +108,29 @@ concept Into =
 /// If the argument to `into` is [`Copy`]($sus::mem::Copy) then it will be
 /// copied if it is an lvalue or const. If the argument to `into` is an rvalue,
 /// it will be moved when constructing the `ToType`.
+///
+/// # Examples
+/// The `into` function deduces the target type while performing an *explicit*
+/// conversion via the [`From`]($sus::construct::From) concept (and thus a
+/// static `from` method on the target type).
+/// ```
+/// auto f = [](Option<i32> i) { return i.unwrap_or(-1); };
+/// auto num = 3_i32;
+/// // Option<T> can be converted into from its inner type T.
+/// sus_check(f(sus::into(num)) == 3);
+/// ```
+///
+/// The [`Into`]($sus::construct::Into) concept allows generic code to accept
+/// any input type that can be explicitly converted into the target type. The
+/// body of the function can use the [`into`]($sus::construct::into) function to
+/// perform the conversion.
+/// ```
+/// // f() accepts anything that can be converted to Option<i32> via into().
+/// auto f = [](Into<Option<i32>> auto in) { return Option<i32>(sus::into(in)); };
+/// auto num = 3_i32;
+/// // num will be passed to Option<i32>::from() inside f().
+/// sus_check(f(num).unwrap_or(-1) == 3);
+/// ```
 template <class FromType>
 constexpr inline auto into(FromType&& from sus_lifetimebound) noexcept {
   return __private::IntoRef<FromType&&>(::sus::forward<FromType>(from));
@@ -156,7 +179,7 @@ concept TryInto = ::sus::construct::TryFrom<ToType, FromType> ||
 /// [`Result`]($sus::result::Result). That [`Result`]($sus::result::Result)
 /// will be the return type of this function.
 ///
-/// # Example
+/// # Examples
 /// ```
 /// auto valid = sus::try_into<u8>(123_i32).unwrap_or_default();
 /// sus_check(valid == 123);

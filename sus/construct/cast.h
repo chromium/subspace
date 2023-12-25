@@ -127,30 +127,20 @@ concept Cast = requires(const From& from) {
 };
 
 /// An infallible conversion (cast) that may lose the original
-/// value in the process. If the input can not be represented in the output,
+/// value in the process.
+///
+/// See the [namespace level documentation]($sus::option) for more about
+/// converting types.
+///
+/// If the input can not be represented in the output,
 /// some other value will be produced, which may lead to application bugs and
 /// memory unsafety if used incorrectly. This behaves like `static_cast<To>()`
-/// but without Undefined Behaviour.
+/// but does not cause Undefined Behaviour for any input
+/// and output type. without Undefined Behaviour.
 ///
 /// The [`cast`]($sus::construct::cast) operation is supported for types
 /// `To` and `From` that satisfy [`Cast<To, From>`](
 /// $sus::construct::Cast).
-///
-/// Usually prefer to convert between types with the value-preserving methods
-/// of [`From`]($sus::construct::From) and
-/// [`Into`]($sus::construct::Into) and [`TryInto`]($sus::construct::TryInto)
-/// when possible. [`Cast`]($sus::construct::Cast) is required for converting
-/// from floating point to integer values, and from larger integer types to
-/// floating point, as these are lossy conversions.
-///
-/// | Concept | Usage | Infallible | Preserves values |
-/// | ------- | ----- | ---------- | ---------------- |
-/// | [`From`]($sus::construct::From) / [`Into`]($sus::construct::Into) | `T::from(x)` / [`sus::into(x)`]($sus::construct::into) | ✅ | ✅ |
-/// | [`TryFrom`]($sus::construct::TryFrom) / [`TryInto`]($sus::construct::TryInto) | `T::try_from(x)` / [`sus::try_into<T>(x)`]($sus::construct::try_into) | ❌ | ✅ |
-/// | [`Cast`]($sus::construct::Cast) | `sus::cast<T>(x)` | ✅ | ❌ |
-///
-/// See [`Cast`]($sus::construct::Cast) for how numeric and
-/// primitive values are converted.
 ///
 /// It is best practice to place a `// SAFETY:` comment on use of [`sus::cast`](
 /// $sus::construct::cast) in order to explain why the code intends to change
@@ -158,8 +148,8 @@ concept Cast = requires(const From& from) {
 ///
 /// # Examples
 ///
-/// This converts `-1_i64` into a `u32`, which both changes its meaning,
-/// becoming a large positive number, and truncates the high 32 bits, losing the
+/// This converts `-1` as an `i64` into a `u32`, which both changes its meaning,
+/// becoming a large positive number, and truncates the high 32 bits losing the
 /// original bits.
 /// ```cpp
 /// // SAFETY: We're intending to convert negative numbers into large positive

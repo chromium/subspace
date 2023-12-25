@@ -18,19 +18,44 @@ namespace sus {
 
 /// Concepts and functions for constructing and converting between types.
 ///
-/// The [`cast`]($sus::construct::cast) function is built on the
-/// [`Cast`]($sus::construct::Cast) concept to convert between numeric and
-/// primitive types in a safer way than `static_cast`.
+/// # Type conversions
 ///
-/// The [`From`]($sus::construct::From) and [`Into`]($sus::construct::Into)
-/// concepts allow converting in a lossless and infallible way between types,
-/// and accepting generics that can convert to a desired type. The
-/// [`into`]($sus::construct::into) function allows explicit conversion while
-/// deducing the target type, such as for converting function arguments or
-/// return values.
+/// This namespace provides tools for three general methods of converting
+/// between types:
+/// * Infallible conversions which preserve values:
+///   [`From`]($sus::construct::From) / [`Into`]($sus::construct::Into)
+/// * Fallible conversions which preserve values or fail explicitly:
+///   [`TryFrom`]($sus::construct::TryFrom) /
+///   [`TryInto`]($sus::construct::TryInto)
+/// * Infallib;e conversions which can change values or lose data:
+///   [`Cast`]($sus::construct::Cast)
+///
+/// Usually prefer to convert between types with the value-preserving methods
+/// of [`From`]($sus::construct::From) and
+/// [`Into`]($sus::construct::Into) and [`TryInto`]($sus::construct::TryInto)
+/// when possible. [`Cast`]($sus::construct::Cast) is required for converting
+/// from floating point to integer values, and from larger integer types to
+/// floating point, as these are lossy conversions.
+///
+/// The [`into`]($sus::construct::into) function allows explicit conversion
+/// while deducing the target type, such as for converting function arguments
+/// or return values.
+///
+/// | Concept | Usage | Infallible | Preserves values |
+/// | ------- | ----- | ---------- | ---------------- |
+/// | [`From`]($sus::construct::From) / [`Into`]($sus::construct::Into) | `T::from(x)` / [`sus::into(x)`]($sus::construct::into) | ✅ | ✅ |
+/// | [`TryFrom`]($sus::construct::TryFrom) / [`TryInto`]($sus::construct::TryInto) | `T::try_from(x)` / [`sus::try_into<T>(x)`]($sus::construct::try_into) | ❌ | ✅ |
+/// | [`Cast`]($sus::construct::Cast) | [`sus::cast<T>(x)`]($sus::construct::cast) | ✅ | ❌ |
+///
+/// See [`Cast`]($sus::construct::Cast) for how numeric and
+/// primitive values are converted with [`cast`]($sus::construct::cast).
+///
+/// # Default construction
 ///
 /// The [`Default`]($sus::construct::Default) concept matches types which can be
 /// default constructed, allowing their use in generic code.
+///
+/// # Constructing from and holding references
 ///
 /// The [`SafelyConstructibleFromReference`](
 /// $sus::construct::SafelyConstructibleFromReference) concept pairs with the

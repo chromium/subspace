@@ -150,4 +150,19 @@ TEST(Into, Ref) {
   EXPECT_EQ(&c.as_value(), &s);
 }
 
+TEST(Into, Into_Example) {
+  auto f = [](Option<i32> i) { return i.unwrap_or(-1); };
+  auto num = 3_i32;
+  // Option<T> can be converted into from its inner type T.
+  sus_check(f(sus::into(num)) == 3);
+}
+
+TEST(Into, IntoConcept_Example) {
+  // f() accepts anything that can be converted to Option<i32> via into().
+  auto f = [](Into<Option<i32>> auto in) { return Option<i32>(sus::into(in)); };
+  auto num = 3_i32;
+  // num will be passed to Option<i32>::from() inside f().
+  sus_check(f(num).unwrap_or(-1) == 3);
+}
+
 }  // namespace
