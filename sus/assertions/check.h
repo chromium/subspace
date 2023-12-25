@@ -25,7 +25,7 @@
 /// The displayed output can be controlled by overriding the behaviour of
 /// [`sus_panic`]($sus_panic) as described there.
 #define sus_check(...)               \
-  if (!(__VA_ARGS__)) [[unlikely]] { \
+  if (![](bool x) { return x; }(__VA_ARGS__)) [[unlikely]] { \
     sus_panic();                     \
   }                                  \
   static_assert(true)
