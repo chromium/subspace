@@ -180,9 +180,9 @@ void generate_head(HtmlWriter& html, std::string_view title,
 
               content += `\
                 <a class="search-results-link" href="${url}">
-                  <span class="search-results-type"><span>${type}</span></span>\
-                  <span class="search-results-name"><span>${full_name}</span></span>\
-                  <span class="search-results-summary"><span>${summmary}</span></span>\
+                  <span class="search-results-type"><div>${type}</div></span>\
+                  <span class="search-results-name"><div>${full_name}</div></span>\
+                  <span class="search-results-summary"><div>${summmary}</div></span>\
                 </a>\
                 `
             }
