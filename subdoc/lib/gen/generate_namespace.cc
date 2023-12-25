@@ -585,7 +585,7 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
           json.add_int("index", index);
           json.add_string("type", "namespace");
           json.add_string("url", construct_html_url_for_namespace(element));
-          json.add_string("weight", "0.75");
+          json.add_string("weight", "1.2");
           json.add_string("name", element.name);
 
           std::string full_name = namespace_cpp_path;
@@ -624,10 +624,10 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
             break;
         }
         json.add_string("url", url.as_value());
-        json.add_string("weight", "0.8");
+        json.add_string("weight", "0.5");
         json.add_string("name", sub_element.name);
         std::string full_name = namespace_cpp_path;
-        full_name += std::string_view("::");
+        if (full_name.size() > 0u) full_name += std::string("::");
         full_name += sub_element.name;
         json.add_string("full_name", full_name);
         json.add_string("split_name", split_for_search(full_name));

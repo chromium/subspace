@@ -320,6 +320,7 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
     json.add_string("type",
                     friendly_record_type_name(element.record_type, false));
     json.add_string("url", construct_html_url_for_type(element));
+    json.add_string("weight", "2");
     json.add_string("name", element.name);
 
     std::string full_name;
@@ -354,8 +355,9 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
       json.add_string("url", construct_html_url_for_field(sub_element));
       json.add_string("weight", "0.9");
       json.add_string("name", sub_element.name);
-      std::string full_name =
-          type_cpp_path + std::string("::") + sub_element.name;
+      std::string full_name = type_cpp_path;
+      if (full_name.size() > 0u) full_name += std::string("::");
+      full_name += sub_element.name;
       json.add_string("full_name", full_name);
       json.add_string("split_name", split_for_search(full_name));
     }
@@ -382,8 +384,9 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
       json.add_string("type", "constructor");
       json.add_string("url", construct_html_url_for_function(sub_element));
       json.add_string("name", sub_element.name);
-      std::string full_name =
-          type_cpp_path + std::string("::") + sub_element.name;
+      std::string full_name = type_cpp_path;
+      if (full_name.size() > 0u) full_name += std::string("::");
+      full_name += sub_element.name;
       json.add_string("full_name", full_name);
       json.add_string("split_name", split_for_search(full_name));
     }
@@ -396,8 +399,9 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
       json.add_string("type", "destructor");
       json.add_string("url", construct_html_url_for_function(sub_element));
       json.add_string("name", sub_element.name);
-      std::string full_name =
-          type_cpp_path + std::string("::") + sub_element.name;
+      std::string full_name = type_cpp_path;
+      if (full_name.size() > 0u) full_name += std::string("::");
+      full_name += sub_element.name;
       json.add_string("full_name", full_name);
       json.add_string("split_name", split_for_search(full_name));
     }
@@ -409,9 +413,11 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
       json.add_int("index", index);
       json.add_string("type", "conversion");
       json.add_string("url", construct_html_url_for_function(sub_element));
+      json.add_string("weight", "0.5");
       json.add_string("name", sub_element.name);
-      std::string full_name =
-          type_cpp_path + std::string("::") + sub_element.name;
+      std::string full_name = type_cpp_path;
+      if (full_name.size() > 0u) full_name += std::string("::");
+      full_name += sub_element.name;
       json.add_string("full_name", full_name);
       json.add_string("split_name", split_for_search(full_name));
     }
@@ -424,8 +430,9 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
       json.add_string("type", "method");
       json.add_string("url", construct_html_url_for_function(sub_element));
       json.add_string("name", sub_element.name);
-      std::string full_name =
-          type_cpp_path + std::string("::") + sub_element.name;
+      std::string full_name = type_cpp_path;
+      if (full_name.size() > 0u) full_name += std::string("::");
+      full_name += sub_element.name;
       json.add_string("full_name", full_name);
       json.add_string("split_name", split_for_search(full_name));
     }
@@ -458,10 +465,11 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
             break;
         }
         json.add_string("url", url.as_value());
-        json.add_string("weight", "0.8");
+        json.add_string("weight", "0.5");
         json.add_string("name", sub_element.name);
-        std::string full_name =
-            type_cpp_path + std::string("::") + sub_element.name;
+        std::string full_name = type_cpp_path;
+        if (full_name.size() > 0u) full_name += std::string("::");
+        full_name += sub_element.name;
         json.add_string("full_name", full_name);
         json.add_string("split_name", split_for_search(full_name));
       }

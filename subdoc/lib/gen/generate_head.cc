@@ -246,7 +246,7 @@ void generate_head(HtmlWriter& html, std::string_view title,
 
               search_db.forEach(item => {
                 this.add(item, {
-                  'boost': item.weight
+                  'boost': item.weight ? Number(item.weight) : 1
                 })
               }, this);
             });
