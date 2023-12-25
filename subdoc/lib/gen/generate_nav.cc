@@ -114,6 +114,10 @@ void generate_nav(HtmlWriter::OpenBody& body, const Database& db,
             a.add_class("sidebar-header");
             break;
           case SidebarLinkStyle::Item: a.add_class("sidebar-item"); break;
+          case SidebarLinkStyle::NestedItem:
+            a.add_class("sidebar-item");
+            a.add_class("nested");
+            break;
         }
         a.add_href(link.href);
         a.write_text(link.text);

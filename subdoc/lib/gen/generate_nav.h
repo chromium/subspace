@@ -26,6 +26,7 @@ enum class SidebarLinkStyle {
   Parent,
   GroupHeader,
   Item,
+  NestedItem,
 };
 
 struct SidebarLink {

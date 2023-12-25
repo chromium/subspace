@@ -166,6 +166,9 @@ nav.sidebar .sidebar-links li > a.sidebar-item {
     color: rgb(250, 199, 121);
     font-size: 1.0em;
 }
+nav.sidebar .sidebar-item.nested {
+    margin-left: 0.75rem;
+}
 @media (max-width: 700px) {
     nav.sidebar {
         display: none;

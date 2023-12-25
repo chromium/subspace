@@ -766,6 +766,23 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
           namespace_element_from_sorted(element, sorted_ns);
       sidebar_links.push(SidebarLink(SidebarLinkStyle::Item, ne.name,
                                      construct_html_url_for_namespace(ne)));
+
+      Vec<SortedNamespaceByName> sorted;
+      for (const auto& [key, sub_element] : ne.namespaces) {
+        if (sub_element.hidden()) continue;
+        if (sub_element.is_empty()) continue;
+
+        sorted.push(sus::tuple(sub_element.name, sub_element.sort_key, key));
+      }
+      sorted.sort_unstable_by(cmp_namespaces_by_name);
+
+      for (const SortedNamespaceByName& sub_sorted_ns : sorted) {
+        const NamespaceElement& sub_ne =
+            namespace_element_from_sorted(ne, sub_sorted_ns);
+        sidebar_links.push(
+            SidebarLink(SidebarLinkStyle::NestedItem, sub_ne.name,
+                        construct_html_url_for_namespace(sub_ne)));
+      }
     }
   }
   if (!sorted_classes.is_empty()) {
