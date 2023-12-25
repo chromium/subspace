@@ -41,6 +41,7 @@ target_sources(subspace PUBLIC
     "cmp/ord.h"
     "cmp/reverse.h"
     "construct/__private/into_ref.h"
+    "construct/construct.h"
     "construct/from.h"
     "construct/into.h"
     "construct/default.h"

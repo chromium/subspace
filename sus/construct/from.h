@@ -16,6 +16,7 @@
 
 #include <concepts>
 
+#include "sus/construct/construct.h"
 #include "sus/mem/forward.h"
 #include "sus/result/__private/is_result_type.h"
 
