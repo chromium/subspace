@@ -20,14 +20,15 @@
 
 namespace sus::ops {
 
-/// Specializations of this struct are used to implement the Try concept.
+/// Specializations of this struct are used to implement the
+/// [`Try`]($sus::ops::Try) concept.
 template <class T>
 struct TryImpl;
 
 /// A concept for types that can indicate success and failure.
 ///
-/// The Try concept is implemented by specializing `TryImpl` for a type `T`
-/// with:
+/// The `Try` concept is implemented by specializing
+/// [`TryImpl`]($sus::ops::TryImpl) for a type `T` with:
 /// * A type `Output` that is the unwrapped success value type.
 /// * A member `static bool is_success(const T& t)` that reports if the
 ///   given `t` is a success or failure value.
@@ -37,9 +38,11 @@ struct TryImpl;
 ///   from a success value.
 ///
 /// Note that when the `Output` type is `void` then `from_output()` will not be
-/// useable. To support `void`, the `TryDefault` concept can be used instead of
-/// `Try`. The `TryDefault` concept allows construction of the `Try` type with a
-/// default success value which can be `void`.
+/// useable. To support `void`, the [`TryDefault`]($sus::ops::TryDefault)
+/// concept can be used instead of [`Try`]($sus::ops::Try). The
+/// [`TryDefault`]($sus::ops::TryDefault) concept allows construction of the
+/// [`Try`]($sus::ops::Try) type with a default success value which can be
+/// `void`.
 template <class T>
 concept Try =
     requires {
@@ -79,11 +82,13 @@ concept Try =
        } -> std::same_as<T>;
      });
 
-/// Identifies Try types which can be constructed with a default success value.
+/// Identifies [`Try`]($sus::ops::Try) types which can be constructed with a
+/// default success value.
 ///
-/// This takes the place of the void type in Rust types, such as `Option<()>`
-/// and `Result<(), E>` as `void` is not a constructible type in C++. But by
-/// satisfying `TryDefault`, `Result<void, E>` can be constructed with a default
+/// This takes the place of the unit (void) type in Rust types, such as
+/// `Option<()>` and `Result<(), E>` since `void` is not a constructible type
+/// in C++. But by satisfying `TryDefault`,
+/// [`Result<void, E>`]($sus::result::Result) can be constructed with a default
 /// success value of nothing.
 template <class T>
 concept TryDefault = Try<T> && requires {
@@ -92,11 +97,13 @@ concept TryDefault = Try<T> && requires {
   { TryImpl<std::remove_const_t<T>>::from_default() } -> std::same_as<T>;
 };
 
-/// Can be used to further constrain the relationship between two `Try` types
+/// Can be used to further constrain the relationship between two
+/// [`Try`]($sus::ops::Try) types
 /// such that an error in one can be used to construct the other type.
 ///
 /// This allows `Try<A, E>` to be returned from a function working with
-/// `Try<B, E>` in the case of an error, as `sus::ops::try_preserve_error<A>()`
+/// `Try<B, E>` in the case of an error, as
+/// `sus::ops::`[`try_preserve_error<A>`]($sus::ops::try_preserve_error)`()`
 /// can be used to construct the error return type.
 template <class From, class To>
 concept TryErrorConvertibleTo =
@@ -110,32 +117,36 @@ concept TryErrorConvertibleTo =
       } -> std::same_as<To>;
     };
 
-/// A helper to get the `Output` type for a type `T` that satisfies `Try`.
+/// A helper to get the `Output` type for a type `T` that satisfies
+/// [`Try`]($sus::ops::Try).
 template <Try T>
 using TryOutputType = typename TryImpl<std::remove_const_t<T>>::Output;
 
-/// A helper to get the `RemapOutput` type for a type `T` that satisfies `Try`.
+/// A helper to get the `RemapOutput` type for a type `T` that satisfies
+/// [`Try`]($sus::ops::Try).
 template <Try T, class U>
 using TryRemapOutputType =
     typename TryImpl<std::remove_const_t<T>>::template RemapOutput<U>;
 
-/// Determines if a type `T` that satisfies `Try` represents success in its
-/// current state.
+/// Determines if a type `T` that satisfies [`Try`]($sus::ops::Try) represents
+/// success in its current state.
 template <Try T>
 constexpr inline bool try_is_success(const T& t) noexcept {
   return TryImpl<std::remove_cvref_t<T>>::is_success(t);
 }
 
-/// Unwraps from the Try type that is currently in its success state
-/// (`is_success()` would return true) to produce its success value.
+/// Unwraps from the [`Try`]($sus::ops::Try) type that is currently in its
+/// success state ([`try_is_success`]($sus::ops::try_is_success) would return
+/// true) to produce its success value.
 ///
-/// For instance, this unwraps an `Result<T, E>` which can represent success or
-/// failure into `T` which represents only success in the type system.
+/// For instance, this unwraps an [`Result<T, E>`]($sus::result::Result) which
+/// can represent success or failure into `T` which represents only success in
+/// the type system.
 ///
 /// # Panics
 ///
-/// If the input is not in a success state (`is_success()` would return true)
-/// the function will panic.
+/// If the input is not in a success state ([`try_is_success`](
+/// $sus::ops::try_is_success) would return true) the function will panic.
 template <Try T>
 constexpr inline TryImpl<std::remove_cvref_t<T>>::Output try_into_output(
     T&& t) noexcept
@@ -145,20 +156,23 @@ constexpr inline TryImpl<std::remove_cvref_t<T>>::Output try_into_output(
   return TryImpl<std::remove_cvref_t<T>>::into_output(::sus::move(t));
 }
 
-/// Constructs an object of type `T` that satisfies `Try` from a value that
-/// represents success for `T`.
+/// Constructs an object of type `T` that satisfies [`Try`]($sus::ops::Try) 
+/// from a value that represents success for `T`.
 ///
-/// For instance, this constructs a `Result<T, E>` from a `T` since `Result`
-/// satisfies `Try` and `T` is the type that represents its success values.
+/// For instance, this constructs a [`Result<T, E>`]($sus::result::Result) from
+/// a `T` since [`Result`]($sus::result::Result) satisfies
+/// [`Try`]($sus::ops::Try) and `T` is the type that represents its success
+/// values.
 ///
 /// The template variable `T` must be specified as it can not be deduced here.
 /// For example: `sus::ops::try_from_output<Result<T, E>>(T())`.
 ///
 /// # Void success values
 ///
-/// The `Output` type of `Try<T>` can not be void. To construct a type that has
-/// an output of `void`, require `T` to be `TryDefault` and use
-/// `try_from_default()`.
+/// The `Output` type of [`Try<T>`]($sus::ops::Try) can not be void. To
+/// construct a type that has an output of `void`, require `T` to be
+/// [`TryDefault`]($sus::ops::TryDefault) and use
+/// [`try_from_default`]($sus::ops::try_from_default).
 template <Try T>
   requires(!std::is_const_v<T> &&      //
            !std::is_reference_v<T> &&  //
@@ -168,7 +182,8 @@ constexpr inline T try_from_output(typename TryImpl<T>::Output&& t) noexcept {
       ::sus::forward<typename TryImpl<T>::Output>(t));
 }
 
-/// Constructs an object of type `T` that satisfies `TryDefault` (and `Try`)
+/// Constructs an object of type `T` that satisfies
+/// [`TryDefault`]($sus::ops::TryDefault) (and [`Try`]($sus::ops::Try))
 /// with its default success value.
 ///
 /// The template variable `T` must be specified as it can not be deduced here.
@@ -176,7 +191,7 @@ constexpr inline T try_from_output(typename TryImpl<T>::Output&& t) noexcept {
 ///
 /// The default success value is specified by the type, but is typically the
 /// success state containing the default constructed value of the inner type,
-/// such as `Some(0_i32)` for `Option<i32>`.
+/// such as `Some(0_i32)` for [`Option<i32>`]($sus::option::Option).
 template <TryDefault T>
   requires(!std::is_const_v<T> &&  //
            !std::is_reference_v<T>)
@@ -184,13 +199,15 @@ constexpr inline T try_from_default() noexcept {
   return TryImpl<T>::from_default();
 }
 
-/// Converts from a `Try` type `T` to another `Try` type `U` with a compatible
+/// Converts from a [`Try`]($sus::ops::Try) type `T` to another
+/// [`Try`]($sus::ops::Try) type `U` with a compatible
 /// error state. The input must be in an error state, and the output will be as
 /// well.
 ///
 /// # Panics
 ///
-/// If the input is not in an error state (`is_success()` would return false)
+/// If the input is not in an error state
+/// ([`try_is_success`]($sus::ops::try_is_success) would return false)
 /// the function will panic.
 template <class U, TryErrorConvertibleTo<U> T>
   requires(!std::is_const_v<U> &&  //
