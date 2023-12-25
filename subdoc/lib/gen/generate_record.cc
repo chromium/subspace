@@ -18,6 +18,7 @@
 
 #include "subdoc/lib/database.h"
 #include "subdoc/lib/gen/files.h"
+#include "subdoc/lib/gen/generate_alias.h"
 #include "subdoc/lib/gen/generate_cpp_path.h"
 #include "subdoc/lib/gen/generate_function.h"
 #include "subdoc/lib/gen/generate_head.h"
@@ -304,6 +305,71 @@ sus::Result<void, MarkdownToHtmlError> generate_record_methods(
   return sus::ok();
 }
 
+sus::Result<void, MarkdownToHtmlError> generate_field_json(
+    const Database& db, JsonWriter::JsonArray& search_documents,
+    std::string_view parent_full_name, const FieldElement& element,
+    const Options& options) noexcept {
+  if (element.hidden()) return sus::ok();
+
+  i32 index = search_documents.len();
+  auto json = search_documents.open_object();
+  json.add_int("index", index);
+  json.add_string("type", "field");
+  json.add_string("url", construct_html_url_for_field(element));
+  json.add_string("weight", "0.9");
+  json.add_string("name", element.name);
+  auto full_name = std::string(parent_full_name);
+  if (full_name.size() > 0u) full_name += std::string("::");
+  full_name += element.name;
+  json.add_string("full_name", full_name);
+  json.add_string("split_name", split_for_search(full_name));
+
+  if (auto comment = element.get_comment(); comment.is_some()) {
+    ParseMarkdownPageState page_state(db, options);
+    if (auto md_html = markdown_to_html(comment.as_value(), page_state);
+        md_html.is_err()) {
+      return sus::err(sus::move(md_html).unwrap_err());
+    } else {
+      json.add_string("summary", sus::move(md_html).unwrap().summary_text);
+    }
+  }
+
+  return sus::ok();
+}
+
+sus::Result<void, MarkdownToHtmlError> generate_method_json(
+    const Database& db, JsonWriter::JsonArray& search_documents,
+    std::string_view parent_full_name, std::string_view type,
+    std::string_view weight, const FunctionElement& element,
+    const Options& options) noexcept {
+  if (element.hidden()) return sus::ok();
+
+  i32 index = search_documents.len();
+  auto json = search_documents.open_object();
+  json.add_int("index", index);
+  json.add_string("type", type);
+  json.add_string("url", construct_html_url_for_function(element));
+  json.add_string("name", element.name);
+  json.add_string("weight", weight);
+  auto full_name = std::string(parent_full_name);
+  if (full_name.size() > 0u) full_name += std::string("::");
+  full_name += element.name;
+  json.add_string("full_name", full_name);
+  json.add_string("split_name", split_for_search(full_name));
+
+  if (auto comment = element.get_comment(); comment.is_some()) {
+    ParseMarkdownPageState page_state(db, options);
+    if (auto md_html = markdown_to_html(comment.as_value(), page_state);
+        md_html.is_err()) {
+      return sus::err(sus::move(md_html).unwrap_err());
+    } else {
+      json.add_string("summary", sus::move(md_html).unwrap().summary_text);
+    }
+  }
+
+  return sus::ok();
+}
+
 }  // namespace
 
 sus::Result<void, MarkdownToHtmlError> generate_record(
@@ -314,28 +380,6 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
   if (element.hidden()) return sus::ok();
 
   {
-    i32 index = search_documents.len();
-    auto json = search_documents.open_object();
-    json.add_int("index", index);
-    json.add_string("type",
-                    friendly_record_type_name(element.record_type, false));
-    json.add_string("url", construct_html_url_for_type(element));
-    json.add_string("weight", "2");
-    json.add_string("name", element.name);
-
-    std::string full_name;
-    for (CppPathElement e : generate_cpp_path_for_type(element, namespaces,
-                                                       type_ancestors, options)
-                                .into_iter()) {
-      if (e.type != CppPathProject) {
-        if (full_name.size() > 0u) full_name += std::string_view("::");
-        full_name += e.name;
-      }
-    }
-    json.add_string("full_name", full_name);
-    json.add_string("split_name", split_for_search(full_name));
-  }
-  {
     std::string type_cpp_path;
     for (CppPathElement e : generate_cpp_path_for_type(element, namespaces,
                                                        type_ancestors, options)
@@ -345,133 +389,64 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
         type_cpp_path += e.name;
       }
     }
-    for (const auto& [id, sub_element] : element.fields) {
-      if (sub_element.hidden()) continue;
 
+    {
       i32 index = search_documents.len();
       auto json = search_documents.open_object();
       json.add_int("index", index);
-      json.add_string("type", "field");
-      json.add_string("url", construct_html_url_for_field(sub_element));
-      json.add_string("weight", "0.9");
-      json.add_string("name", sub_element.name);
-      std::string full_name = type_cpp_path;
-      if (full_name.size() > 0u) full_name += std::string("::");
-      full_name += sub_element.name;
-      json.add_string("full_name", full_name);
-      json.add_string("split_name", split_for_search(full_name));
+      json.add_string("type",
+                      friendly_record_type_name(element.record_type, false));
+      json.add_string("url", construct_html_url_for_type(element));
+      json.add_string("weight", "2");
+      json.add_string("name", element.name);
+      json.add_string("full_name", type_cpp_path);
+      json.add_string("split_name", split_for_search(type_cpp_path));
+
+      if (auto comment = element.get_comment(); comment.is_some()) {
+        ParseMarkdownPageState page_state(db, options);
+        if (auto md_html = markdown_to_html(comment.as_value(), page_state);
+            md_html.is_err()) {
+          return sus::err(sus::move(md_html).unwrap_err());
+        } else {
+          json.add_string("summary", sus::move(md_html).unwrap().summary_text);
+        }
+      }
     }
-    for (const auto& [id, sub_element] : element.deductions) {
-      if (sub_element.hidden()) continue;
-
-      i32 index = search_documents.len();
-      auto json = search_documents.open_object();
-      json.add_int("index", index);
-      json.add_string("type", "deduction guide");
-      json.add_string("url", construct_html_url_for_function(sub_element));
-      json.add_string("name", sub_element.name);
-      std::string full_name =
-          type_cpp_path + std::string("::") + sub_element.name;
-      json.add_string("full_name", full_name);
-      json.add_string("split_name", split_for_search(full_name));
+    for (const auto& [id, sub_element] : element.fields) {
+      if (auto r = generate_field_json(db, search_documents, type_cpp_path,
+                                       sub_element, options);
+          r.is_err()) {
+        return sus::err(sus::into(sus::move(r).unwrap_err()));
+      }
     }
     for (const auto& [id, sub_element] : element.ctors) {
-      if (sub_element.hidden()) continue;
-
-      i32 index = search_documents.len();
-      auto json = search_documents.open_object();
-      json.add_int("index", index);
-      json.add_string("type", "constructor");
-      json.add_string("url", construct_html_url_for_function(sub_element));
-      json.add_string("name", sub_element.name);
-      std::string full_name = type_cpp_path;
-      if (full_name.size() > 0u) full_name += std::string("::");
-      full_name += sub_element.name;
-      json.add_string("full_name", full_name);
-      json.add_string("split_name", split_for_search(full_name));
-    }
-    for (const auto& [id, sub_element] : element.dtors) {
-      if (sub_element.hidden()) continue;
-
-      i32 index = search_documents.len();
-      auto json = search_documents.open_object();
-      json.add_int("index", index);
-      json.add_string("type", "destructor");
-      json.add_string("url", construct_html_url_for_function(sub_element));
-      json.add_string("name", sub_element.name);
-      std::string full_name = type_cpp_path;
-      if (full_name.size() > 0u) full_name += std::string("::");
-      full_name += sub_element.name;
-      json.add_string("full_name", full_name);
-      json.add_string("split_name", split_for_search(full_name));
+      if (auto r =
+              generate_method_json(db, search_documents, type_cpp_path,
+                                   "constructor", "1", sub_element, options);
+          r.is_err()) {
+        return sus::err(sus::into(sus::move(r).unwrap_err()));
+      }
     }
     for (const auto& [id, sub_element] : element.conversions) {
-      if (sub_element.hidden()) continue;
-
-      i32 index = search_documents.len();
-      auto json = search_documents.open_object();
-      json.add_int("index", index);
-      json.add_string("type", "conversion");
-      json.add_string("url", construct_html_url_for_function(sub_element));
-      json.add_string("weight", "0.5");
-      json.add_string("name", sub_element.name);
-      std::string full_name = type_cpp_path;
-      if (full_name.size() > 0u) full_name += std::string("::");
-      full_name += sub_element.name;
-      json.add_string("full_name", full_name);
-      json.add_string("split_name", split_for_search(full_name));
+      if (auto r =
+              generate_method_json(db, search_documents, type_cpp_path,
+                                   "conversion", "0.5", sub_element, options);
+          r.is_err()) {
+        return sus::err(sus::into(sus::move(r).unwrap_err()));
+      }
     }
     for (const auto& [id, sub_element] : element.methods) {
-      if (sub_element.hidden()) continue;
-
-      i32 index = search_documents.len();
-      auto json = search_documents.open_object();
-      json.add_int("index", index);
-      json.add_string("type", "method");
-      json.add_string("url", construct_html_url_for_function(sub_element));
-      json.add_string("name", sub_element.name);
-      std::string full_name = type_cpp_path;
-      if (full_name.size() > 0u) full_name += std::string("::");
-      full_name += sub_element.name;
-      json.add_string("full_name", full_name);
-      json.add_string("split_name", split_for_search(full_name));
+      if (auto r = generate_method_json(db, search_documents, type_cpp_path,
+                                        "method", "1", sub_element, options);
+          r.is_err()) {
+        return sus::err(sus::into(sus::move(r).unwrap_err()));
+      }
     }
     for (const auto& [id, sub_element] : element.aliases) {
-      if (sub_element.hidden()) continue;
-
-      if (Option<std::string> url = construct_html_url_for_alias(sub_element);
-          url.is_some()) {
-        i32 index = search_documents.len();
-        auto json = search_documents.open_object();
-        json.add_int("index", index);
-        switch (sub_element.target) {
-          case AliasTarget::Tag::AliasOfType:
-            json.add_string("type", "type alias");
-            break;
-          case AliasTarget::Tag::AliasOfConcept:
-            json.add_string("type", "concept alias");
-            break;
-          case AliasTarget::Tag::AliasOfFunction:
-            json.add_string("type", "function alias");
-            break;
-          case AliasTarget::Tag::AliasOfMethod:
-            json.add_string("type", "method alias");
-            break;
-          case AliasTarget::Tag::AliasOfEnumConstant:
-            json.add_string("type", "enum value alias");
-            break;
-          case AliasTarget::Tag::AliasOfVariable:
-            json.add_string("type", "variable alias");
-            break;
-        }
-        json.add_string("url", url.as_value());
-        json.add_string("weight", "0.5");
-        json.add_string("name", sub_element.name);
-        std::string full_name = type_cpp_path;
-        if (full_name.size() > 0u) full_name += std::string("::");
-        full_name += sub_element.name;
-        json.add_string("full_name", full_name);
-        json.add_string("split_name", split_for_search(full_name));
+      if (auto r = generate_alias_json(db, search_documents, type_cpp_path,
+                                       sub_element, options);
+          r.is_err()) {
+        return sus::err(sus::into(sus::move(r).unwrap_err()));
       }
     }
   }

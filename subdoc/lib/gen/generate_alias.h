@@ -16,6 +16,7 @@
 
 #include "subdoc/lib/database.h"
 #include "subdoc/lib/gen/html_writer.h"
+#include "subdoc/lib/gen/json_writer.h"
 #include "subdoc/lib/gen/markdown_to_html.h"
 #include "sus/prelude.h"
 #include "sus/result/result.h"
@@ -25,5 +26,10 @@ namespace subdoc::gen {
 sus::Result<void, MarkdownToHtmlError> generate_alias_reference(
     HtmlWriter::OpenUl& items_list, const AliasElement& element,
     ParseMarkdownPageState& page_state) noexcept;
+
+sus::Result<void, MarkdownToHtmlError> generate_alias_json(
+    const Database& db, JsonWriter::JsonArray& search_documents,
+    std::string_view parent_full_name, const AliasElement& element,
+    const Options& options) noexcept;
 
 }  // namespace subdoc::gen

@@ -175,9 +175,9 @@ void generate_head(HtmlWriter& html, std::string_view title,
 
               content += `\
                 <a class="search-results-link" href="${url}">
-                  <span class="search-results-type">${type}</span>\
-                  <span class="search-results-name">${full_name}</span>\
-                  <span class="search-results-summary">${summmary}</span>\
+                  <span class="search-results-type"><span>${type}</span></span>\
+                  <span class="search-results-name"><span>${full_name}</span></span>\
+                  <span class="search-results-summary"><span>${summmary}</span></span>\
                 </a>\
                 `
             }
