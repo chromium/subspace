@@ -221,37 +221,64 @@ void generate_head(HtmlWriter& html, std::string_view title,
             let idx = lunr(function () {
               this.ref('index');
               this.field('name', {
-                'boost': 2
+                'boost': 2,
+                editDistance: 0
               });
               this.field('full_name', {
-                'boost': 2
+                'boost': 2,
+                editDistance: 2
               });
               this.field('split_name', {
-                'boost': 0.5
-              });
-              this.field('summary', {
-                'boost': 1
-              });
-              this.field('full_description', {
-                'boost': 0.75
+                'boost': 0.5,
+                editDistance: 2
               });
 
-              // No stemming?
-              // this.pipeline = new lunr.Pipeline();
+              // No stemming and no stopwords (like `into` and `from`).
+              this.pipeline = new lunr.Pipeline();
+              this.searchPipeline = new lunr.Pipeline();
 
+              // Queries are split by these tokens.
+              const splitBy = /(\s+|_+|(::)+)/
               this.use(builder => {
-                function splitColons(token) {
-                  return token.toString().split("::").map(str => {
+                function splitTokens(token) {
+                  return token.toString().split(splitBy).map(str => {
                     return token.clone().update(() => { return str })
                   })
                 }
-                lunr.Pipeline.registerFunction(splitColons, 'splitColons')
-                builder.searchPipeline.before(lunr.stemmer, splitColons)
+                lunr.Pipeline.registerFunction(splitTokens, 'splitTokens')
+                builder.searchPipeline.add(splitTokens)
               });
 
               search_db.forEach(item => {
+                const weights = {
+                  "concept": 3,
+                  "class": 2,
+                  "struct": 2,
+                  "union": 2,
+                  "function": 1.75,
+                  "variable": 1.75,
+                  "namespace": 1.2,
+                  "method": 1,
+                  "constructor": 1,
+                  "macro": 1,
+                  "project": 1,
+                  "field": 0.9,
+                  "conversion": 0.5,
+                  "type alias": 0.5,
+                  "concept alias": 0.5,
+                  "function alias": 0.5,
+                  "method alias": 0.5,
+                  "enum value alias": 0.5,
+                  "variable alias": 0.5,
+                }
+                let weight = weights[item.type];
+                if (!weight) {
+                  console.log(`WARNING: search item type ${item.type} ` +
+                              `has no weight defined`);
+                  weight = 1;
+                }
                 this.add(item, {
-                  'boost': item.weight ? Number(item.weight) : 1
+                  'boost': weight
                 })
               }, this);
             });

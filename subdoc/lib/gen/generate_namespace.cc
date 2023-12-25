@@ -565,7 +565,6 @@ sus::Result<void, MarkdownToHtmlError> generate_variable_json(
   json.add_int("index", index);
   json.add_string("type", "variable");
   json.add_string("url", construct_html_url_for_field(element));
-  json.add_string("weight", "0.5");
   json.add_string("name", element.name);
   json.add_string("full_name", full_name);
   json.add_string("split_name", split_for_search(full_name));
@@ -611,7 +610,6 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
       switch (element.namespace_name) {
         case Namespace::Tag::Global: {
           json.add_string("type", "project");
-          json.add_string("weight", "1");
           json.add_string("name", options.project_name);
           json.add_string("full_name", options.project_name);
           json.add_string("split_name", split_for_search(options.project_name));
@@ -620,7 +618,6 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
         case Namespace::Tag::Anonymous: sus_unreachable();
         case Namespace::Tag::Named: {
           json.add_string("type", "namespace");
-          json.add_string("weight", "1.2");
           json.add_string("name", element.name);
           json.add_string("full_name", namespace_cpp_path);
           json.add_string("split_name", split_for_search(namespace_cpp_path));

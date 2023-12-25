@@ -150,6 +150,16 @@ sus::Result<void, MarkdownToHtmlError> generate_concept(
     }
     json.add_string("full_name", full_name);
     json.add_string("split_name", split_for_search(full_name));
+
+    if (auto comment = element.get_comment(); comment.is_some()) {
+      ParseMarkdownPageState page_state(db, options);
+      if (auto md_html = markdown_to_html(comment.as_value(), page_state);
+          md_html.is_err()) {
+        return sus::err(sus::move(md_html).unwrap_err());
+      } else {
+        json.add_string("summary", sus::move(md_html).unwrap().summary_text);
+      }
+    }
   }
 
   ParseMarkdownPageState page_state(db, options);

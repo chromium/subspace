@@ -216,7 +216,6 @@ sus::Result<void, MarkdownToHtmlError> generate_alias_json(
         break;
     }
     json.add_string("url", url.as_value());
-    json.add_string("weight", "0.5");
     json.add_string("name", element.name);
     json.add_string("full_name", full_name);
     json.add_string("split_name", split_for_search(full_name));

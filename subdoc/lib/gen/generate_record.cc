@@ -316,7 +316,6 @@ sus::Result<void, MarkdownToHtmlError> generate_field_json(
   json.add_int("index", index);
   json.add_string("type", "field");
   json.add_string("url", construct_html_url_for_field(element));
-  json.add_string("weight", "0.9");
   json.add_string("name", element.name);
   auto full_name = std::string(parent_full_name);
   if (full_name.size() > 0u) full_name += std::string("::");
@@ -340,8 +339,7 @@ sus::Result<void, MarkdownToHtmlError> generate_field_json(
 sus::Result<void, MarkdownToHtmlError> generate_method_json(
     const Database& db, JsonWriter::JsonArray& search_documents,
     std::string_view parent_full_name, std::string_view type,
-    std::string_view weight, const FunctionElement& element,
-    const Options& options) noexcept {
+    const FunctionElement& element, const Options& options) noexcept {
   if (element.hidden()) return sus::ok();
 
   i32 index = search_documents.len();
@@ -350,7 +348,6 @@ sus::Result<void, MarkdownToHtmlError> generate_method_json(
   json.add_string("type", type);
   json.add_string("url", construct_html_url_for_function(element));
   json.add_string("name", element.name);
-  json.add_string("weight", weight);
   auto full_name = std::string(parent_full_name);
   if (full_name.size() > 0u) full_name += std::string("::");
   full_name += element.name;
@@ -397,7 +394,6 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
       json.add_string("type",
                       friendly_record_type_name(element.record_type, false));
       json.add_string("url", construct_html_url_for_type(element));
-      json.add_string("weight", "2");
       json.add_string("name", element.name);
       json.add_string("full_name", type_cpp_path);
       json.add_string("split_name", split_for_search(type_cpp_path));
@@ -420,24 +416,22 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
       }
     }
     for (const auto& [id, sub_element] : element.ctors) {
-      if (auto r =
-              generate_method_json(db, search_documents, type_cpp_path,
-                                   "constructor", "1", sub_element, options);
+      if (auto r = generate_method_json(db, search_documents, type_cpp_path,
+                                        "constructor", sub_element, options);
           r.is_err()) {
         return sus::err(sus::into(sus::move(r).unwrap_err()));
       }
     }
     for (const auto& [id, sub_element] : element.conversions) {
-      if (auto r =
-              generate_method_json(db, search_documents, type_cpp_path,
-                                   "conversion", "0.5", sub_element, options);
+      if (auto r = generate_method_json(db, search_documents, type_cpp_path,
+                                        "conversion", sub_element, options);
           r.is_err()) {
         return sus::err(sus::into(sus::move(r).unwrap_err()));
       }
     }
     for (const auto& [id, sub_element] : element.methods) {
       if (auto r = generate_method_json(db, search_documents, type_cpp_path,
-                                        "method", "1", sub_element, options);
+                                        "method", sub_element, options);
           r.is_err()) {
         return sus::err(sus::into(sus::move(r).unwrap_err()));
       }
