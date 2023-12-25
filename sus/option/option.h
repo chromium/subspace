@@ -280,9 +280,9 @@ namespace sus {
 ///   the provided function when empty.
 ///
 /// # Copying
-/// Most methods of Option act on an rvalue and consume the Option to transform
-/// it into a new Option with a new value. This ensures that the value inside an
-/// Option is moved while transforming it.
+/// Most methods of `Option` act on an rvalue and consume the `Option` to
+/// transform it into a new `Option` with a new value. This ensures that the
+/// value inside an `Option` is moved while transforming it.
 ///
 /// However, if [`Option`]($sus::option::Option) is
 /// [`Copy`]($sus::mem::Copy), then the majority of methods offer an
@@ -339,7 +339,7 @@ namespace sus {
 ///   of evaluating the provided fallback function if the
 ///   [`Option`]($sus::option::Option) is `None`.
 ///
-/// These methods combine the Some variants of two Option values:
+/// These methods combine the Some variants of two `Option` values:
 ///
 /// * [`zip`]($sus::option::Option::zip) returns `Some(Tuple<S, O>(s, o)))` if the
 ///   [`Option`]($sus::option::Option) is `Some(s)`
@@ -632,7 +632,7 @@ class Option final {
   ///
   /// If `T` can be trivially move-constructed, then `Option<T>` can also be
   /// trivially move-constructed. When trivially-moved, the option is copied on
-  /// move, and the moved-from Option is unchanged but should still not be used
+  /// move, and the moved-from `Option` is unchanged but should still not be used
   /// thereafter without reinitializing it. Use `take()` instead to move the
   /// value out of the option when the option may be used again afterward.
   ///
@@ -796,7 +796,7 @@ class Option final {
     return ::sus::clone(*this).unwrap_or(::sus::move(default_result));
   }
 
-  /// Returns the contained value inside the Option, if there is one.
+  /// Returns the contained value inside the option, if there is one.
   /// Otherwise, returns the result of the given function.
   constexpr T unwrap_or_else(::sus::fn::FnOnce<T()> auto f) && noexcept {
     if (t_.state() == Some) {
@@ -877,9 +877,9 @@ class Option final {
   ///
   /// # Implementation Notes
   ///
-  /// Implementation note: We only allow calling this on an rvalue Option if the
-  /// contained value is a reference, otherwise we are returning a reference to
-  /// a short-lived object which leads to common C++ memory bugs.
+  /// Implementation note: We only allow calling this on an rvalue `Option` if
+  /// the contained value is a reference, otherwise we are returning a reference
+  /// to a short-lived object which leads to common C++ memory bugs.
   _sus_pure constexpr const std::remove_reference_t<T>& as_value()
       const& noexcept {
     sus_check(t_.state() == Some);
@@ -905,9 +905,9 @@ class Option final {
   ///
   /// # Implementation Notes
   ///
-  /// Implementation note: We only allow calling this on an rvalue Option if the
-  /// contained value is a reference, otherwise we are returning a reference to
-  /// a short-lived object which leads to common C++ memory bugs.
+  /// Implementation note: We only allow calling this on an rvalue `Option` if
+  /// the contained value is a reference, otherwise we are returning a reference
+  /// to a short-lived object which leads to common C++ memory bugs.
   _sus_pure constexpr std::remove_reference_t<T>& as_value_mut() & noexcept {
     sus_check(t_.state() == Some);
     return t_.val_mut();
@@ -936,9 +936,9 @@ class Option final {
   ///
   /// # Implementation Notes
   ///
-  /// Implementation note: We only allow calling this on an rvalue Option if the
-  /// contained value is a reference, otherwise we are returning a reference to
-  /// a short-lived object which leads to common C++ memory bugs.
+  /// Implementation note: We only allow calling this on an rvalue `Option` if
+  /// the contained value is a reference, otherwise we are returning a reference
+  /// to a short-lived object which leads to common C++ memory bugs.
   _sus_pure constexpr const std::remove_reference_t<T>& as_value_unchecked(
       ::sus::marker::UnsafeFnMarker) const& noexcept {
     return t_.val();
@@ -961,9 +961,9 @@ class Option final {
   ///
   /// # Implementation Notes
   ///
-  /// Implementation note: We only allow calling this on an rvalue Option if the
-  /// contained value is a reference, otherwise we are returning a reference to
-  /// a short-lived object which leads to common C++ memory bugs.
+  /// Implementation note: We only allow calling this on an rvalue `Option` if
+  /// the contained value is a reference, otherwise we are returning a reference
+  /// to a short-lived object which leads to common C++ memory bugs.
   _sus_pure constexpr std::remove_reference_t<T>& as_value_unchecked_mut(
       ::sus::marker::UnsafeFnMarker) & noexcept {
     return t_.val_mut();
@@ -983,7 +983,10 @@ class Option final {
 
   /// Returns a reference to the contained value inside the option.
   ///
-  /// The reference is const if the option is const, and is mutable otherwise.
+  /// A shorthand for [`as_value`]($sus::option::Option::as_value) and
+  /// [`as_value_mut`]($sus::option::Option::as_value_mut) that is less explicit
+  /// about const. The returned reference is const if the option is accessed as
+  /// const, and is mutable otherwise.
   /// This method allows calling methods directly on the type inside the option
   /// without unwrapping.
   ///
@@ -1111,8 +1114,8 @@ class Option final {
     return t_.val_mut();
   }
 
-  /// If the Option holds a value, returns a mutable reference to it. Otherwise,
-  /// stores `value` inside the Option and returns a mutable reference to it.
+  /// If the option holds a value, returns a mutable reference to it. Otherwise,
+  /// stores `value` inside the option and returns a mutable reference to it.
   ///
   /// If it is non-trivial to construct `T`, the
   /// [`Option::get_or_insert_with`]($sus::option::Option::get_or_insert_with)
@@ -1137,7 +1140,7 @@ class Option final {
     return t_.val_mut();
   }
 
-  /// If the Option holds a value, returns a mutable reference to it. Otherwise,
+  /// If the option holds a value, returns a mutable reference to it. Otherwise,
   /// constructs a default value `T`, stores it inside the option and returns a
   /// mutable reference to the new value.
   ///
@@ -1159,7 +1162,7 @@ class Option final {
     return t_.val_mut();
   }
 
-  /// If the Option holds a value, returns a mutable reference to it. Otherwise,
+  /// If the option holds a value, returns a mutable reference to it. Otherwise,
   /// constructs a `T` by calling `f`, stores it inside the option and returns a
   /// mutable reference to the new value.
   ///
@@ -1265,8 +1268,7 @@ class Option final {
 
   /// Consumes the option and applies a predicate function to the value
   /// contained in the option. Returns a new option with the same value if the
-  /// predicate returns true, otherwise returns an Option with its state set to
-  /// `None`.
+  /// predicate returns true, otherwise returns an empty `Option`.
   ///
   /// The predicate function must be able to receive `const T&` and return a
   /// value that converts to`bool`.
@@ -1371,7 +1373,7 @@ class Option final {
 
   /// Consumes this option and returns an option holding the value from either
   /// this option or `that` option if exactly one of them holds a value,
-  /// otherwise returns an Option that holds `None`.
+  /// otherwise returns an empty `Option`.
   constexpr Option<T> xor_that(Option<T> that) && noexcept {
     if (t_.state() == Some) {
       // If `this` holds Some, we change `this` to hold None. If `that` is None,
@@ -1547,8 +1549,8 @@ class Option final {
     return ::sus::clone(*this).unzip();
   }
 
-  /// Replaces whatever the Option is currently holding with `value` and returns
-  /// an Option holding what was there previously, which may be empty.
+  /// Replaces whatever the option is currently holding with `value` and returns
+  /// an `Option` holding what was there previously, which may be empty.
   constexpr Option replace(T value) & noexcept
     requires(!std::is_reference_v<T> &&  //
              sus::mem::Move<T>)
@@ -1701,8 +1703,8 @@ class Option final {
     requires(std::is_reference_v<T>);
 
   /// Produces an [`Iterator`]($sus::iter::Iterator) over the single item in the
-  /// `Option`, or an empty iterator. If the Option holds a value, the iterator
-  /// will return ownership of the value. If the `Option` holds a reference, it
+  /// `Option`, or an empty iterator. If the option holds a value, the iterator
+  /// will return ownership of the value. If the option holds a reference, it
   /// will return that reference.
   constexpr OptionIter<T> into_iter() && noexcept;
   constexpr OptionIter<T> into_iter() const& noexcept
@@ -1711,7 +1713,7 @@ class Option final {
   /// Satisfies the [`Eq<Option<U>>`]($sus::cmp::Eq) concept.
   ///
   /// The non-template overload allows some/none marker types to convert to
-  /// Option for comparison.
+  /// `Option` for comparison.
   friend constexpr inline bool operator==(const Option& l,
                                           const Option& r) noexcept
     requires(::sus::cmp::Eq<T>)
@@ -1743,7 +1745,7 @@ class Option final {
                                           const Option<U>& r) = delete;
 
   /// Compares two options. This function requires that `T` is ordered.
-  /// An empty Option always compares less than a non-empty Option.
+  /// An empty option always compares less than a non-empty option.
   ///
   /// * Satisfies [`StrongOrd<Option<T>>`]($sus::cmp::StrongOrd) if
   ///   [`StrongOrd<T>`]($sus::cmp::StrongOrd).
