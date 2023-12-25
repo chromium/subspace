@@ -23,6 +23,11 @@ void generate_head(HtmlWriter& html, std::string_view title,
     auto head = html.open_head();
     {
       auto meta = head.open_meta();
+      meta.add_content("text/html;charset=utf-8");
+      meta.add_http_equiv("Content-Type");
+    }
+    {
+      auto meta = head.open_meta();
       meta.add_name("generator");
       meta.add_content("subdoc");
     }

@@ -217,6 +217,13 @@ class HtmlWriter {
       });
     }
 
+    void add_http_equiv(std::string_view value) {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("http-equiv"),
+          .value = std::string(value),
+      });
+    }
+
     void add_name(std::string_view value) {
       attributes_.push(HtmlAttribute{
           .name = std::string("name"),
