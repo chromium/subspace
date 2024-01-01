@@ -236,7 +236,7 @@ int main(int argc, const char** argv) {
   }
   run_options.macro_prefixes =
       sus::iter::from_range(option_include_macro_prefixes)
-          .cloned()
+          .map(|s| s.to_owned())
           .collect<Vec<std::string>>();
   run_options.generate_source_links = !option_no_source_links.getValue();
   if (option_remove_path_prefix.getNumOccurrences() > 0) {
