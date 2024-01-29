@@ -1872,6 +1872,21 @@ TEST(u32, ToBeBytes) {
   }
 }
 
+TEST(u32, FromBeBytes) {
+  constexpr auto bytes = sus::Array<u8, 4>(0x12_u8, 0x34_u8, 0x56_u8, 0x78_u8);
+  if constexpr (std::endian::native == std::endian::little) {
+    EXPECT_EQ(u32::from_be_bytes(bytes), 0x12'34'56'78u);
+  } else {
+    EXPECT_EQ(u32::from_be_bytes(bytes), 0x78'56'34'12u);
+  }
+  static_assert(std::same_as<u32, decltype(u32::from_be_bytes(bytes))>);
+
+  static_assert(std::endian::native != std::endian::little ||
+                u32::from_be_bytes(bytes) == 0x12'34'56'78u);
+  static_assert(std::endian::native != std::endian::big ||
+                u32::from_be_bytes(bytes) == 0x78'56'34'12u);
+}
+
 TEST(u32, ToLeBytes) {
   {
     constexpr auto a = (0x12345678_u32).to_le_bytes();
