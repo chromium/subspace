@@ -734,10 +734,10 @@ _sus_pure constexpr _self _self::from_ne_bytes(
   _self val;
   if (std::is_constant_evaluated()) {
     val = _primitive{0};
-    for (usize i; i < ::sus::mem::size_of<_primitive>(); i += 1u) {
-      // size_of<_primitive>() is < u32::MAX so the cast<u32>() is not lossy.
-      val |= bytes[i] << ::sus::cast<u32>(::sus::mem::size_of<_primitive>() -
-                                          1u - i);
+    // size_of<_primitive>() < u32::MAX` so casting to u32 is not lossy.
+    for (u32 i; i < ::sus::cast<u32>(::sus::mem::size_of<_primitive>());
+         i += 1u) {
+      val |= _primitive{bytes[i]} << (i * 8u);
     }
   } else {
     ::sus::ptr::copy_nonoverlapping(

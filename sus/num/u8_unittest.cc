@@ -15,14 +15,14 @@
 #include <type_traits>
 
 #include "googletest/include/gtest/gtest.h"
+#include "sus/cmp/eq.h"
+#include "sus/cmp/ord.h"
 #include "sus/collections/array.h"
 #include "sus/construct/into.h"
 #include "sus/iter/__private/step.h"
 #include "sus/num/num_concepts.h"
 #include "sus/num/signed_integer.h"
 #include "sus/num/unsigned_integer.h"
-#include "sus/cmp/eq.h"
-#include "sus/cmp/ord.h"
 #include "sus/prelude.h"
 #include "sus/tuple/tuple.h"
 
@@ -737,6 +737,137 @@ TEST(u8, fmt) {
   static_assert(fmt::is_formattable<u8, char>::value);
   EXPECT_EQ(fmt::format("{}", 123_u8), "123");
   EXPECT_EQ(fmt::format("{:#x}", 123_u8), "0x7b");
+}
+
+TEST(u8, ToBe) {
+  if constexpr (std::endian::native == std::endian::little) {
+    constexpr auto a = (0x12_u8).to_be();
+    EXPECT_EQ(a, 0x12_u8);
+
+    EXPECT_EQ((0x12_u8).to_be(), 0x12_u8);
+    EXPECT_EQ((0_u8).to_be(), 0_u8);
+    EXPECT_EQ((1_u8 << 7_u32).to_be(), (1_u8 << 7_u32));
+  } else {
+    constexpr auto a = (0x12_u8).to_be();
+    EXPECT_EQ(a, 0x12_u8);
+
+    EXPECT_EQ((0x12_u8).to_be(), 0x12_u8);
+    EXPECT_EQ((0_u8).to_be(), 0_u8);
+    EXPECT_EQ((1_u8 << 7_u32).to_be(), (1_u8 << 7_u32));
+  }
+}
+
+TEST(u8, FromBe) {
+  if constexpr (std::endian::native == std::endian::little) {
+    constexpr auto a = u8::from_be(0x12_u8);
+    EXPECT_EQ(a, 0x12_u8);
+
+    EXPECT_EQ(u8::from_be(0x12_u8), 0x12_u8);
+    EXPECT_EQ(u8::from_be(0_u8), 0_u8);
+    EXPECT_EQ(u8::from_be(1_u8 << 7_u32), 1_u8 << 7_u32);
+  } else {
+    constexpr auto a = u8::from_be(0x12_u8);
+    EXPECT_EQ(a, 0x12_u8);
+
+    EXPECT_EQ(u8::from_be(0x12_u8), 0x12_u8);
+    EXPECT_EQ(u8::from_be(0_u8), 0_u8);
+    EXPECT_EQ(u8::from_be(1_u8 << 7_u32), 1_u8 << 7_u32);
+  }
+}
+
+TEST(u8, ToLe) {
+  if constexpr (std::endian::native == std::endian::big) {
+    constexpr auto a = (0x12_u8).to_le();
+    EXPECT_EQ(a, 0x12_u8);
+
+    EXPECT_EQ((0x12_u8).to_le(), 0x12_u8);
+    EXPECT_EQ((0_u8).to_le(), 0_u8);
+    EXPECT_EQ(u8::MIN.to_le(), 0x80_u8);
+  } else {
+    constexpr auto a = (0x12_u8).to_le();
+    EXPECT_EQ(a, 0x12_u8);
+
+    EXPECT_EQ((0x12_u8).to_le(), 0x12_u8);
+    EXPECT_EQ((0_u8).to_le(), 0_u8);
+    EXPECT_EQ(u8::MIN.to_le(), u8::MIN);
+  }
+}
+
+TEST(u8, FromLe) {
+  if constexpr (std::endian::native == std::endian::big) {
+    constexpr auto a = u8::from_le(0x12_u8);
+    EXPECT_EQ(a, 0x12_u8);
+
+    EXPECT_EQ(u8::from_le(0x12_u8), 0x12_u8);
+    EXPECT_EQ(u8::from_le(0_u8), 0_u8);
+    EXPECT_EQ(u8::from_le(u8::MIN), 0x80_u8);
+  } else {
+    constexpr auto a = u8::from_le(0x12_u8);
+    EXPECT_EQ(a, 0x12_u8);
+
+    EXPECT_EQ(u8::from_le(0x12_u8), 0x12_u8);
+    EXPECT_EQ(u8::from_le(0_u8), 0_u8);
+    EXPECT_EQ(u8::from_le(u8::MIN), u8::MIN);
+  }
+}
+
+TEST(u8, ToBeBytes) {
+  {
+    constexpr auto a = (0x12_u8).to_be_bytes();
+    EXPECT_EQ(a, (sus::Array<u8, 1>(0x12_u8)));
+  }
+  {
+    auto a = (0x12_u8).to_be_bytes();
+    EXPECT_EQ(a, (sus::Array<u8, 1>(0x12_u8)));
+  }
+}
+
+TEST(u8, FromBeBytes) {
+  constexpr auto bytes = sus::Array<u8, 1>(0x12_u8);
+  if constexpr (std::endian::native == std::endian::little) {
+    EXPECT_EQ(u8::from_be_bytes(bytes), 0x12u);
+  } else {
+    EXPECT_EQ(u8::from_be_bytes(bytes), 0x12u);
+  }
+  static_assert(std::same_as<u8, decltype(u8::from_be_bytes(bytes))>);
+
+  static_assert(std::endian::native != std::endian::little ||
+                u8::from_be_bytes(bytes) == 0x12u);
+  static_assert(std::endian::native != std::endian::big ||
+                u8::from_be_bytes(bytes) == 0x12u);
+}
+
+TEST(u8, ToLeBytes) {
+  {
+    constexpr auto a = (0x12_u8).to_le_bytes();
+    EXPECT_EQ(a, (sus::Array<u8, 1>(0x12_u8)));
+  }
+  {
+    auto a = (0x12_u8).to_le_bytes();
+    EXPECT_EQ(a, (sus::Array<u8, 1>(0x12_u8)));
+  }
+}
+
+TEST(u8, ToNeBytes) {
+  if constexpr (std::endian::native == std::endian::big) {
+    {
+      constexpr auto a = (0x12_u8).to_ne_bytes();
+      EXPECT_EQ(a, (sus::Array<u8, 1>(0x12_u8)));
+    }
+    {
+      auto a = (0x12_u8).to_ne_bytes();
+      EXPECT_EQ(a, (sus::Array<u8, 1>(0x12_u8)));
+    }
+  } else {
+    {
+      constexpr auto a = (0x12_u8).to_ne_bytes();
+      EXPECT_EQ(a, (sus::Array<u8, 1>(0x12_u8)));
+    }
+    {
+      auto a = (0x12_u8).to_ne_bytes();
+      EXPECT_EQ(a, (sus::Array<u8, 1>(0x12_u8)));
+    }
+  }
 }
 
 }  // namespace

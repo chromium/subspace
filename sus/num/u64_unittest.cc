@@ -15,14 +15,14 @@
 #include <type_traits>
 
 #include "googletest/include/gtest/gtest.h"
+#include "sus/cmp/eq.h"
+#include "sus/cmp/ord.h"
 #include "sus/collections/array.h"
 #include "sus/construct/into.h"
 #include "sus/iter/__private/step.h"
 #include "sus/num/num_concepts.h"
 #include "sus/num/signed_integer.h"
 #include "sus/num/unsigned_integer.h"
-#include "sus/cmp/eq.h"
-#include "sus/cmp/ord.h"
 #include "sus/prelude.h"
 #include "sus/tuple/tuple.h"
 
@@ -759,6 +759,146 @@ TEST(u64, fmt) {
   static_assert(fmt::is_formattable<u64, char>::value);
   EXPECT_EQ(fmt::format("{}", 123456789_u64), "123456789");
   EXPECT_EQ(fmt::format("{:#x}", 123456789_u64), "0x75bcd15");
+}
+
+TEST(u64, ToBe) {
+  if constexpr (std::endian::native == std::endian::little) {
+    constexpr auto a = (0x12345678'90123456_u64).to_be();
+    EXPECT_EQ(a, 0x56341290'78563412_u64);
+
+    EXPECT_EQ((0x12345678'90123456_u64).to_be(), 0x56341290'78563412_u64);
+    EXPECT_EQ((0_u64).to_be(), 0_u32);
+    EXPECT_EQ((1_u64 << 63_u32).to_be(), (1_u64 << 7_u32));
+  } else {
+    constexpr auto a = (0x12345678'90123456_u64).to_be();
+    EXPECT_EQ(a, 0x12345678'90123456_u64);
+
+    EXPECT_EQ((0x12345678'90123456_u64).to_be(), 0x12345678'90123456_u64);
+    EXPECT_EQ((0_u64).to_be(), 0_u32);
+    EXPECT_EQ((1_u64 << 63_u32).to_be(), (1_u64 << 63_u32));
+  }
+}
+
+TEST(u64, FromBe) {
+  if constexpr (std::endian::native == std::endian::little) {
+    constexpr auto a = u64::from_be(0x12345678'90123456_u64);
+    EXPECT_EQ(a, 0x56341290'78563412_u64);
+
+    EXPECT_EQ(u64::from_be(0x12345678'90123456_u64), 0x56341290'78563412_u64);
+    EXPECT_EQ(u64::from_be(0_u64), 0_u64);
+    EXPECT_EQ(u64::from_be(1_u64 << 63_u32), 1_u64 << 7_u32);
+  } else {
+    constexpr auto a = u64::from_be(0x12345678'90123456_u64);
+    EXPECT_EQ(a, 0x12345678'90123456_u64);
+
+    EXPECT_EQ(u64::from_be(0x12345678'90123456_u64), 0x12345678'90123456_u64);
+    EXPECT_EQ(u64::from_be(0_u32), 0_u32);
+    EXPECT_EQ(u64::from_be(1_u64 << 63_u32), 1_u64 << 63_u32);
+  }
+}
+
+TEST(u64, ToLe) {
+  if constexpr (std::endian::native == std::endian::big) {
+    constexpr auto a = (0x12345678'90123456_u64).to_le();
+    EXPECT_EQ(a, 0x56341290'78563412_u64);
+
+    EXPECT_EQ((0x12345678'90123456_u64).to_le(), 0x56341290'78563412_u64);
+    EXPECT_EQ((0_u64).to_le(), 0_u64);
+    EXPECT_EQ(u64::MIN.to_le(), 0x80_u32);
+  } else {
+    constexpr auto a = (0x12345678'90123456_u64).to_le();
+    EXPECT_EQ(a, 0x12345678'90123456_u64);
+
+    EXPECT_EQ((0x12345678'90123456_u64).to_le(), 0x12345678'90123456_u64);
+    EXPECT_EQ((0_u64).to_le(), 0_u64);
+    EXPECT_EQ(u64::MIN.to_le(), u64::MIN);
+  }
+}
+
+TEST(u64, FromLe) {
+  if constexpr (std::endian::native == std::endian::big) {
+    constexpr auto a = u64::from_le(0x12345678'90123456_u64);
+    EXPECT_EQ(a, 0x56341290'78563412_u64);
+
+    EXPECT_EQ(u64::from_le(0x12345678'90123456_u64), 0x56341290'78563412_u64);
+    EXPECT_EQ(u64::from_le(0_u64), 0_u64);
+    EXPECT_EQ(u64::from_le(u64::MIN), 0x80_u64);
+  } else {
+    constexpr auto a = u64::from_le(0x12345678'90123456_u64);
+    EXPECT_EQ(a, 0x12345678'90123456_u64);
+
+    EXPECT_EQ(u64::from_le(0x12345678'90123456_u64), 0x12345678'90123456_u64);
+    EXPECT_EQ(u64::from_le(0_u64), 0_u64);
+    EXPECT_EQ(u64::from_le(u64::MIN), u64::MIN);
+  }
+}
+
+TEST(u64, ToBeBytes) {
+  {
+    constexpr auto a = (0x12345678'90123456_u64).to_be_bytes();
+    EXPECT_EQ(a, (sus::Array<u8, 8>(0x12_u8, 0x34_u8, 0x56_u8, 0x78_u8, 0x90_u8,
+                                    0x12_u8, 0x34_u8, 0x56_u8)));
+  }
+  {
+    auto a = (0x12345678'90123456_u64).to_be_bytes();
+    EXPECT_EQ(a, (sus::Array<u8, 8>(0x12_u8, 0x34_u8, 0x56_u8, 0x78_u8, 0x90_u8,
+                                    0x12_u8, 0x34_u8, 0x56_u8)));
+  }
+}
+
+TEST(u64, FromBeBytes) {
+  constexpr auto bytes = sus::Array<u8, 8>(0x12_u8, 0x34_u8, 0x56_u8, 0x78_u8,
+                                           0x90_u8, 0x12_u8, 0x34_u8, 0x56_u8);
+  if constexpr (std::endian::native == std::endian::little) {
+    EXPECT_EQ(u64::from_be_bytes(bytes), 0x12'34'56'78'90'12'34'56u);
+  } else {
+    EXPECT_EQ(u64::from_be_bytes(bytes), 0x56'34'12'90'78'56'34'12u);
+  }
+  static_assert(std::same_as<u64, decltype(u64::from_be_bytes(bytes))>);
+
+  static_assert(std::endian::native != std::endian::little ||
+                u64::from_be_bytes(bytes) == 0x12'34'56'78'90'12'34'56u);
+  static_assert(std::endian::native != std::endian::big ||
+                u64::from_be_bytes(bytes) == 0x56'34'12'90'78'56'34'12u);
+}
+
+TEST(u64, ToLeBytes) {
+  {
+    constexpr auto a = (0x12345678'90123456_u64).to_le_bytes();
+    EXPECT_EQ(a, (sus::Array<u8, 8>(0x56_u8, 0x34_u8, 0x12_u8, 0x90_u8, 0x78_u8,
+                                    0x56_u8, 0x34_u8, 0x12_u8)));
+  }
+  {
+    auto a = (0x12345678'90123456_u64).to_le_bytes();
+    EXPECT_EQ(a, (sus::Array<u8, 8>(0x56_u8, 0x34_u8, 0x12_u8, 0x90_u8, 0x78_u8,
+                                    0x56_u8, 0x34_u8, 0x12_u8)));
+  }
+}
+
+TEST(u64, ToNeBytes) {
+  if constexpr (std::endian::native == std::endian::big) {
+    {
+      constexpr auto a = (0x12345678'90123456_u64).to_ne_bytes();
+      EXPECT_EQ(a, (sus::Array<u8, 8>(0x12_u8, 0x34_u8, 0x56_u8, 0x78_u8,
+                                      0x90_u8, 0x12_u8, 0x34_u8, 0x56_u8)));
+    }
+    {
+      auto a = (0x12345678'90123456_u64).to_ne_bytes();
+      EXPECT_EQ(a, (sus::Array<u8, 8>(0x12_u8, 0x34_u8, 0x56_u8, 0x78_u8,
+                                      0x90_u8, 0x12_u8, 0x34_u8, 0x56_u8)));
+    }
+  } else {
+    {
+      constexpr auto a = (0x12345678'90123456_u64).to_ne_bytes();
+      EXPECT_EQ(a, (sus::Array<u8, 8>(0x56_u8, 0x34_u8, 0x12_u8, 0x90_u8,
+                                      0x78_u8, 0x56_u8, 0x34_u8, 0x12_u8)));
+    }
+    {
+      auto a = (0x12345678'90123456_u64).to_ne_bytes();
+      EXPECT_EQ(a, (sus::Array<u8, 8>(0x56_u8, 0x34_u8, 0x12_u8, 0x90_u8,
+                                      0x78_u8, 0x56_u8, 0x34_u8, 0x12_u8)));
+    }
+  }
 }
 
 }  // namespace

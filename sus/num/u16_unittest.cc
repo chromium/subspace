@@ -745,4 +745,135 @@ TEST(u16, fmt) {
   EXPECT_EQ(fmt::format("{:#x}", 12345_u16), "0x3039");
 }
 
+TEST(u16, ToBe) {
+  if constexpr (std::endian::native == std::endian::little) {
+    constexpr auto a = (0x1234_u16).to_be();
+    EXPECT_EQ(a, 0x3412_u16);
+
+    EXPECT_EQ((0x1234_u16).to_be(), 0x3412_u16);
+    EXPECT_EQ((0_u16).to_be(), 0_u16);
+    EXPECT_EQ((1_u16 << 15_u32).to_be(), (1_u16 << 7_u32));
+  } else {
+    constexpr auto a = (0x1234_u16).to_be();
+    EXPECT_EQ(a, 0x1234_u16);
+
+    EXPECT_EQ((0x1234_u16).to_be(), 0x1234_u16);
+    EXPECT_EQ((0_u16).to_be(), 0_u16);
+    EXPECT_EQ((1_u16 << 15_u32).to_be(), (1_u16 << 15_u32));
+  }
+}
+
+TEST(u16, FromBe) {
+  if constexpr (std::endian::native == std::endian::little) {
+    constexpr auto a = u16::from_be(0x1234_u16);
+    EXPECT_EQ(a, 0x3412_u16);
+
+    EXPECT_EQ(u16::from_be(0x1234_u16), 0x3412_u16);
+    EXPECT_EQ(u16::from_be(0_u16), 0_u16);
+    EXPECT_EQ(u16::from_be(1_u16 << 15_u32), 1_u16 << 7_u32);
+  } else {
+    constexpr auto a = u16::from_be(0x1234_u16);
+    EXPECT_EQ(a, 0x1234_u16);
+
+    EXPECT_EQ(u16::from_be(0x1234_u16), 0x1234_u16);
+    EXPECT_EQ(u16::from_be(0_u16), 0_u16);
+    EXPECT_EQ(u16::from_be(1_u16 << 15_u32), 1_u16 << 15_u32);
+  }
+}
+
+TEST(u16, ToLe) {
+  if constexpr (std::endian::native == std::endian::big) {
+    constexpr auto a = (0x1234_u16).to_le();
+    EXPECT_EQ(a, 0x3412_u16);
+
+    EXPECT_EQ((0x1234_u16).to_le(), 0x3412_u16);
+    EXPECT_EQ((0_u16).to_le(), 0_u16);
+    EXPECT_EQ(u16::MIN.to_le(), 0x80_u16);
+  } else {
+    constexpr auto a = (0x1234_u16).to_le();
+    EXPECT_EQ(a, 0x1234_u16);
+
+    EXPECT_EQ((0x1234_u16).to_le(), 0x1234_u16);
+    EXPECT_EQ((0_u16).to_le(), 0_u16);
+    EXPECT_EQ(u16::MIN.to_le(), u16::MIN);
+  }
+}
+
+TEST(u16, FromLe) {
+  if constexpr (std::endian::native == std::endian::big) {
+    constexpr auto a = u16::from_le(0x1234_u16);
+    EXPECT_EQ(a, 0x3412_u16);
+
+    EXPECT_EQ(u16::from_le(0x1234_u16), 0x3412_u16);
+    EXPECT_EQ(u16::from_le(0_u16), 0_u16);
+    EXPECT_EQ(u16::from_le(u16::MIN), 0x80_u16);
+  } else {
+    constexpr auto a = u16::from_le(0x1234_u16);
+    EXPECT_EQ(a, 0x1234_u16);
+
+    EXPECT_EQ(u16::from_le(0x1234_u16), 0x1234_u16);
+    EXPECT_EQ(u16::from_le(0_u16), 0_u16);
+    EXPECT_EQ(u16::from_le(u16::MIN), u16::MIN);
+  }
+}
+
+TEST(u16, ToBeBytes) {
+  {
+    constexpr auto a = (0x1234_u16).to_be_bytes();
+    EXPECT_EQ(a, (sus::Array<u8, 2>(0x12_u8, 0x34_u8)));
+  }
+  {
+    auto a = (0x1234_u16).to_be_bytes();
+    EXPECT_EQ(a, (sus::Array<u8, 2>(0x12_u8, 0x34_u8)));
+  }
+}
+
+TEST(u16, FromBeBytes) {
+  constexpr auto bytes = sus::Array<u8, 2>(0x12_u8, 0x34_u8);
+  if constexpr (std::endian::native == std::endian::little) {
+    EXPECT_EQ(u16::from_be_bytes(bytes), 0x12'34u);
+  } else {
+    EXPECT_EQ(u16::from_be_bytes(bytes), 0x34'12u);
+  }
+  static_assert(std::same_as<u16, decltype(u16::from_be_bytes(bytes))>);
+
+  static_assert(std::endian::native != std::endian::little ||
+                u16::from_be_bytes(bytes) == 0x12'34u);
+  static_assert(std::endian::native != std::endian::big ||
+                u16::from_be_bytes(bytes) == 0x34'12u);
+}
+
+TEST(u16, ToLeBytes) {
+  {
+    constexpr auto a = (0x1234_u16).to_le_bytes();
+    EXPECT_EQ(a, (sus::Array<u8, 2>(0x34_u8, 0x12_u8)));
+  }
+  {
+    auto a = (0x1234_u16).to_le_bytes();
+    EXPECT_EQ(a, (sus::Array<u8, 2>(0x34_u8, 0x12_u8)));
+  }
+}
+
+TEST(u16, ToNeBytes) {
+  if constexpr (std::endian::native == std::endian::big) {
+    {
+      constexpr auto a = (0x1234_u16).to_ne_bytes();
+      EXPECT_EQ(a, (sus::Array<u8, 2>(0x12_u8, 0x34_u8)));
+    }
+    {
+      auto a = (0x1234_u16).to_ne_bytes();
+      EXPECT_EQ(a, (sus::Array<u8, 2>(0x12_u8, 0x34_u8)));
+    }
+  } else {
+    {
+      constexpr auto a = (0x1234_u16).to_ne_bytes();
+      EXPECT_EQ(a, (sus::Array<u8, 2>(0x34_u8, 0x12_u8)));
+    }
+    {
+      auto a = (0x1234_u16).to_ne_bytes();
+      EXPECT_EQ(a, (sus::Array<u8, 2>(0x34_u8, 0x12_u8)));
+    }
+  }
+}
+
 }  // namespace
