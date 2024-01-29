@@ -60,22 +60,32 @@ jobs:
           }
 
         - {
-            name: "Ubuntu Clang-17 Sanitizer",
-            os: ubuntu-latest,
-            build_type: "Release",
-            cc: "clang-17",
-            cxx: "clang++-17",
-            clang_version: 17,
-            installed_clang_version: 14
-          }
-
-        - {
             name: "Ubuntu Clang-18 Debug",
             os: ubuntu-latest,
             build_type: "Debug",
             cc: "clang-18",
             cxx: "clang++-18",
             clang_version: 18,
+            installed_clang_version: 14
+          }
+        - {
+            name: "Ubuntu Clang-18 Sanitizer",
+            os: ubuntu-latest,
+            build_type: "Release",
+            cc: "clang-18",
+            cxx: "clang++-18",
+            clang_version: 18,
+            installed_clang_version: 14
+          }
+
+
+        - {
+            name: "Ubuntu Clang-19 Debug",
+            os: ubuntu-latest,
+            build_type: "Debug",
+            cc: "clang-19",
+            cxx: "clang++-19",
+            clang_version: 19,
             installed_clang_version: 14
           }
 
