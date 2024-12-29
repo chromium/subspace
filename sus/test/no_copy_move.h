@@ -43,6 +43,6 @@ static_assert(NoCopyMove() != NoCopyMove());
 static_assert([]() {
   NoCopyMove n;
   return n == n;
-});
+}());
 
 }  // namespace sus::test

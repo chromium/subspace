@@ -25,10 +25,12 @@ namespace test::box {
 struct MyError {};
 
 struct SuperType {
-  virtual std::string name() { return "SuperType"; }
+  constexpr virtual ~SuperType() = default;
+  constexpr virtual std::string name() { return "SuperType"; }
 };
 struct SubType : public SuperType {
-  std::string name() override { return "SubType"; }
+  ~SubType() override = default;
+  constexpr std::string name() override { return "SubType"; }
 };
 
 }  // namespace test::box
@@ -80,11 +82,11 @@ TEST(Box, Construct) {
   static_assert([] {
     auto b = Box<i32>(3_i32);
     return *b == 3;
-  });
+  }());
   static_assert([] {
     auto b = Box<SuperType>(SubType());
     return b->name() == "SubType";
-  });
+  }());
 }
 
 TEST(Box, Default) {
@@ -94,12 +96,12 @@ TEST(Box, Default) {
   static_assert([] {
     auto b = Box<i32>::with_default();
     return *b == 0;
-  });
+  }());
 }
 
 TEST(Box, WithArgs) {
   struct NoMove {
-    NoMove(i32 i) : i(i) {}
+    constexpr NoMove(i32 i) : i(i) {}
 
     NoMove(NoMove&&) = delete;
     NoMove& operator=(NoMove&&) = delete;
@@ -118,7 +120,7 @@ TEST(Box, WithArgs) {
     auto b = Box<NoMove>::with_args(3);
     auto b2 = sus::move(b);
     return b2->i == 3;
-  });
+  }());
 }
 
 TEST(Box, FromT) {
@@ -143,27 +145,47 @@ TEST(Box, FromT) {
   static_assert([] {
     auto b = Box<i32>::from(3_i32);
     return *b == 3;
-  });
+  }());
   static_assert([] {
     auto b = Box<SuperType>::from(SubType());
     return b->name() == "SubType";
-  });
+  }());
 }
 
 TEST(Box, Clone) {
   static i32 cloned;
   struct Cloneable {
-    constexpr explicit Cloneable(i32 i) : i(i) {}
-    Cloneable(Cloneable&&) = default;
+    explicit Cloneable(i32 i) : i(i) { }
+    Cloneable(Cloneable&& r) = default;
     Cloneable& operator=(Cloneable&&) = default;
 
-    constexpr Cloneable clone() const noexcept {
+    Cloneable clone() const noexcept {
       cloned += 1;
       return Cloneable(i);
+    }
+    void clone_from(const Cloneable& r) noexcept {
+      cloned += 1;
+      i = r.i;
     }
 
     i32 i;
   };
+  static_assert(sus::mem::Clone<Cloneable>);
+  static_assert(sus::mem::CloneFrom<Cloneable>);
+  struct ConstCloneable {
+    constexpr explicit ConstCloneable(i32 i) : i(i) {}
+    constexpr ConstCloneable(ConstCloneable&& r) = default;
+    ConstCloneable& operator=(ConstCloneable&&) = default;
+
+    constexpr ConstCloneable clone() const noexcept {
+      return ConstCloneable(i);
+    }
+    constexpr void clone_from(const ConstCloneable& r) noexcept { i = r.i; }
+
+    i32 i;
+  };
+  static_assert(sus::mem::Clone<ConstCloneable>);
+  static_assert(sus::mem::CloneFrom<ConstCloneable>);
 
   {
     auto b = Box<Cloneable>(Cloneable(2));
@@ -175,25 +197,25 @@ TEST(Box, Clone) {
   EXPECT_EQ(cloned, 1);
 
   static_assert([] {
-    auto b = Box<Cloneable>(Cloneable(2));
+    auto b = Box<ConstCloneable>(ConstCloneable(2));
     auto c = sus::clone(b);
-    return c->i == 2 && cloned == 1;
-  });
+    return c->i == 2;
+  }());
 }
 
 TEST(Box, CloneInto) {
   static i32 cloned;
   static i32 alloced;
   struct Cloneable {
-    constexpr explicit Cloneable(i32 i) : i(i) { alloced += 1; }
-    constexpr Cloneable(Cloneable&& r) : i(r.i) { alloced += 1; }
+    explicit Cloneable(i32 i) : i(i) { alloced += 1; }
+    Cloneable(Cloneable&& r) : i(r.i) { alloced += 1; }
     Cloneable& operator=(Cloneable&&) = default;
 
-    constexpr Cloneable clone() const noexcept {
+    Cloneable clone() const noexcept {
       cloned += 1;
       return Cloneable(i);
     }
-    constexpr void clone_from(const Cloneable& r) noexcept {
+    void clone_from(const Cloneable& r) noexcept {
       cloned += 1;
       i = r.i;
     }
@@ -202,6 +224,20 @@ TEST(Box, CloneInto) {
   };
   static_assert(sus::mem::Clone<Cloneable>);
   static_assert(sus::mem::CloneFrom<Cloneable>);
+  struct ConstCloneable {
+    constexpr explicit ConstCloneable(i32 i) : i(i) {}
+    constexpr ConstCloneable(ConstCloneable&& r) = default;
+    ConstCloneable& operator=(ConstCloneable&&) = default;
+
+    constexpr ConstCloneable clone() const noexcept {
+      return ConstCloneable(i);
+    }
+    constexpr void clone_from(const ConstCloneable& r) noexcept { i = r.i; }
+
+    i32 i;
+  };
+  static_assert(sus::mem::Clone<ConstCloneable>);
+  static_assert(sus::mem::CloneFrom<ConstCloneable>);
 
   {
     auto b = Box<Cloneable>(Cloneable(2));
@@ -216,22 +252,30 @@ TEST(Box, CloneInto) {
   EXPECT_EQ(cloned, 1);
 
   static_assert([] {
-    auto b = Box<Cloneable>(Cloneable(2));
-    auto c = Box<Cloneable>(Cloneable(3));
+    auto b = Box<ConstCloneable>(ConstCloneable(2));
+    auto c = Box<ConstCloneable>(ConstCloneable(3));
     sus::clone_into(b, c);
-    return b->i == 3 && cloned == 1;
-  });
+    return b->i == 3;
+  }());
 }
 
 TEST(Box, MoveConstruct) {
   static i32 moved;
   static i32 destroyed;
   struct Moveable {
-    constexpr ~Moveable() { destroyed += 1; }
-    constexpr explicit Moveable(i32 i) : i(i) {}
-    constexpr Moveable(Moveable&& r) : i(r.i) { moved += 1; }
-    constexpr Moveable& operator=(Moveable&& r) {
-      return i = r.i, moved += 1, *this;
+    ~Moveable() { destroyed += 1; }
+    explicit Moveable(i32 i) : i(i) {}
+    Moveable(Moveable&& r) : i(r.i) { moved += 1; }
+    Moveable& operator=(Moveable&& r) { return i = r.i, moved += 1, *this; }
+
+    i32 i;
+  };
+  struct ConstMoveable {
+    constexpr ~ConstMoveable() = default;
+    constexpr explicit ConstMoveable(i32 i) : i(i) {}
+    constexpr ConstMoveable(ConstMoveable&& r) = default;
+    constexpr ConstMoveable& operator=(ConstMoveable&& r) {
+      return i = r.i, *this;
     }
 
     i32 i;
@@ -266,27 +310,35 @@ TEST(Box, MoveConstruct) {
   }
 
   static_assert([] {
-    auto b = Box<Moveable>(Moveable(2));
+    auto b = Box<ConstMoveable>(ConstMoveable(2));
     auto c = sus::move(b);
     return c->i == 2;
-  });
+  }());
 
   static_assert([] {
     auto b = Box<SubType>(SubType());
     auto c = Box<SuperType>(sus::move(b));
     return c->name() == "SubType";
-  });
+  }());
 }
 
 TEST(Box, MoveAssign) {
   static i32 moved;
   static i32 destroyed;
   struct Moveable {
-    constexpr ~Moveable() { destroyed += 1; }
-    constexpr explicit Moveable(i32 i) : i(i) {}
-    constexpr Moveable(Moveable&& r) : i(r.i) { moved += 1; }
-    constexpr Moveable& operator=(Moveable&& r) {
-      return i = r.i, moved += 1, *this;
+    ~Moveable() { destroyed += 1; }
+    explicit Moveable(i32 i) : i(i) {}
+    Moveable(Moveable&& r) : i(r.i) { moved += 1; }
+    Moveable& operator=(Moveable&& r) { return i = r.i, moved += 1, *this; }
+
+    i32 i;
+  };
+  struct ConstMoveable {
+    constexpr ~ConstMoveable() = default;
+    constexpr explicit ConstMoveable(i32 i) : i(i) {}
+    constexpr ConstMoveable(ConstMoveable&& r) = default;
+    constexpr ConstMoveable& operator=(ConstMoveable&& r) {
+      return i = r.i, *this;
     }
 
     i32 i;
@@ -323,19 +375,18 @@ TEST(Box, MoveAssign) {
   }
 
   static_assert([] {
-    auto b = Box<Moveable>(Moveable(2));
-    auto c = Box<Moveable>(Moveable(3));
+    auto b = Box<ConstMoveable>(ConstMoveable(2));
+    auto c = Box<ConstMoveable>(ConstMoveable(3));
     c = sus::move(b);
-    // The stack objects are destroyed and the heap object in `c` was destroyed.
-    return c->i == 2 && destroyed == 3;
-  });
+    return c->i == 2;
+  }());
 
   static_assert([] {
     auto b = Box<SubType>(SubType());
     auto c = Box<SuperType>(SuperType());
     c = sus::move(b);
     return c->name() == "SubType";
-  });
+  }());
 }
 
 // === AsRef
@@ -346,7 +397,7 @@ static_assert([] {
   auto&& j = b.as_ref();
   static_assert(std::same_as<decltype(j), const i32&>);
   return i == &j;
-});
+}());
 
 // === AsMut
 
@@ -356,7 +407,7 @@ static_assert([] {
   auto&& j = b.as_mut();
   static_assert(std::same_as<decltype(j), i32&>);
   return i == &j;
-});
+}());
 
 TEST(Box, IntoRaw) {
   static i32 deleted = 0;
