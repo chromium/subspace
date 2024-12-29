@@ -113,7 +113,7 @@ concept TryErrorConvertibleTo =
       // preserve_error() constructs a Try type from another related type while
       // passing the error state along.
       {
-        TryImpl<To>::template preserve_error(::sus::move(f))
+        TryImpl<To>::preserve_error(::sus::move(f))
       } -> std::same_as<To>;
     };
 
