@@ -141,6 +141,28 @@ jobs:
           chmod +x llvm.sh
           sudo ./llvm.sh ${{matrix.config.clang_version}} all
 
+      - name: Install System LLVM+Clang
+        if: startsWith(matrix.config.os, 'ubuntu-') && matrix.config.clang_version == matrix.config.installed_clang_version
+        run: |
+          sudo apt-get install clang-${{matrix.config.installed_clang_version}} \
+            lldb-${{matrix.config.installed_clang_version}} \
+            lld-${{matrix.config.installed_clang_version}} \
+            clangd-${{matrix.config.installed_clang_version}} \
+            clang-tidy-${{matrix.config.installed_clang_version}} \
+            clang-format-${{matrix.config.installed_clang_version}} \
+            clang-tools-${{matrix.config.installed_clang_version}} \
+            llvm-${{matrix.config.installed_clang_version}}-dev \
+            lld-${{matrix.config.installed_clang_version}} \
+            lldb-${{matrix.config.installed_clang_version}} \
+            llvm-${{matrix.config.installed_clang_version}}-tools \
+            libomp-${{matrix.config.installed_clang_version}}-dev \
+            libc++-${{matrix.config.installed_clang_version}}-dev \
+            libc++abi-${{matrix.config.installed_clang_version}}-dev \
+            libclang-common-${{matrix.config.installed_clang_version}}-dev \
+            libclang-${{matrix.config.installed_clang_version}}-dev \
+            libclang-cpp${{matrix.config.installed_clang_version}}-dev \
+            libunwind-${{matrix.config.installed_clang_version}}-dev
+
       - name: Install GCC 13
         if: matrix.config.name == 'Ubuntu GCC'
         run: |
@@ -148,7 +170,7 @@ jobs:
           sudo apt update
           sudo apt-get install g++-13
           echo "CXXFLAGS=$CXXFLAGS" >> $GITHUB_ENV
-  
+
       # vptr is incompatible with no-rtti. We turn off rtti to match the LLVM libraries.
       - name: Set Sanitizer Flags
         if: endsWith(matrix.config.name, 'Sanitizer')
@@ -195,13 +217,13 @@ jobs:
           set(ENV{CXX} ${{ matrix.config.cxx }})
 
           set(HAS_LLVM ON)
-          if (NOT "${{ runner.os }}" STREQUAL "Windows")
+          if ("${{ runner.os }}" STREQUAL "Windows")
+            # We don't have a copy of LLVM+Clang on the Windows bot.
+            set(HAS_LLVM OFF)
+          else()
             # Path to LLVM+Clang nightly that we have installed.
             set(ENV{LLVM_DIR} "/usr/lib/llvm-${{matrix.config.clang_version}}/lib/cmake/llvm")
             set(ENV{Clang_DIR} "/usr/lib/llvm-${{matrix.config.clang_version}}/lib/cmake/clang")
-          else()
-            # We don't have a copy of LLVM+Clang on the Windows bot.
-            set(HAS_LLVM OFF)
           endif()
 
           if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
@@ -309,6 +331,28 @@ jobs:
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
           sudo ./llvm.sh ${clang_version} all
+
+      - name: Install System LLVM+Clang
+        if: env.clang_version == env.installed_clang_version
+        run: |
+          sudo apt-get install clang-${{env.installed_clang_version}} \
+            lldb-${{env.installed_clang_version}} \
+            lld-${{env.installed_clang_version}} \
+            clangd-${{env.installed_clang_version}} \
+            clang-tidy-${{env.installed_clang_version}} \
+            clang-format-${{env.installed_clang_version}} \
+            clang-tools-${{env.installed_clang_version}} \
+            llvm-${{env.installed_clang_version}}-dev \
+            lld-${{env.installed_clang_version}} \
+            lldb-${{env.installed_clang_version}} \
+            llvm-${{env.installed_clang_version}}-tools \
+            libomp-${{env.installed_clang_version}}-dev \
+            libc++-${{env.installed_clang_version}}-dev \
+            libc++abi-${{env.installed_clang_version}}-dev \
+            libclang-common-${{env.installed_clang_version}}-dev \
+            libclang-${{env.installed_clang_version}}-dev \
+            libclang-cpp${{env.installed_clang_version}}-dev \
+            libunwind-${{env.installed_clang_version}}-dev
 
       - name: Download Ninja
         id: ninja
@@ -469,6 +513,28 @@ jobs:
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
           sudo ./llvm.sh ${clang_version} all
+
+      - name: Install System LLVM+Clang
+        if: env.clang_version == env.installed_clang_version
+        run: |
+          sudo apt-get install clang-${{env.installed_clang_version}} \
+            lldb-${{env.installed_clang_version}} \
+            lld-${{env.installed_clang_version}} \
+            clangd-${{env.installed_clang_version}} \
+            clang-tidy-${{env.installed_clang_version}} \
+            clang-format-${{env.installed_clang_version}} \
+            clang-tools-${{env.installed_clang_version}} \
+            llvm-${{env.installed_clang_version}}-dev \
+            lld-${{env.installed_clang_version}} \
+            lldb-${{env.installed_clang_version}} \
+            llvm-${{env.installed_clang_version}}-tools \
+            libomp-${{env.installed_clang_version}}-dev \
+            libc++-${{env.installed_clang_version}}-dev \
+            libc++abi-${{env.installed_clang_version}}-dev \
+            libclang-common-${{env.installed_clang_version}}-dev \
+            libclang-${{env.installed_clang_version}}-dev \
+            libclang-cpp${{env.installed_clang_version}}-dev \
+            libunwind-${{env.installed_clang_version}}-dev
 
       - name: Download Ninja
         id: ninja
