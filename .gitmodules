@@ -13,3 +13,6 @@
 [submodule "third_party/md4c"]
 	path = third_party/md4c
 	url = https://github.com/danakj/md4c
+[submodule "logos"]
+	path = web/logos
+	url = https://github.com/subspace-cpp/logos.git
