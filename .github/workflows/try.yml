@@ -140,6 +140,9 @@ jobs:
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
           sudo ./llvm.sh ${{matrix.config.clang_version}} all
+          # The libc++abi headers conflict with the system headers:
+          # https://github.com/llvm/llvm-project/issues/121300
+          sudo apt-get remove libc++abi-${{matrix.config.clang_version}}-dev
 
       - name: Install System LLVM+Clang
         if: startsWith(matrix.config.os, 'ubuntu-') && matrix.config.clang_version == matrix.config.installed_clang_version
