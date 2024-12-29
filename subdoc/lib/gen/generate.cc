@@ -92,12 +92,18 @@ sus::result::Result<void, sus::Box<sus::error::DynError>> generate(
     }
   }
 
-  for (const std::string& s : options.copy_files) {
+  for (const auto& [s, dest] : options.copy_files) {
     if (!std::filesystem::exists(s)) {
       llvm::errs() << "Skipping copy of '" << s << "'. File not found.\n";
     } else {
       std::error_code ec;
-      std::filesystem::copy(s, options.output_root, ec);
+      if (dest.is_some()) {
+        std::filesystem::path out = options.output_root;
+        out.append(dest.as_value());
+        std::filesystem::copy(s, out, ec);
+      } else {
+        std::filesystem::copy(s, options.output_root, ec);
+      }
       if (ec) {
         return sus::err(
             sus::into(GenerateError::with<GenerateError::Tag::CopyFileError>(

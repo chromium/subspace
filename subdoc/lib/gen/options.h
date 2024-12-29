@@ -61,7 +61,7 @@ struct Options {
   std::filesystem::path output_root;
   Vec<std::string> stylesheets;
   Vec<FavIcon> favicons;
-  Vec<std::string> copy_files;
+  Vec<sus::Tuple<std::string, Option<std::string>>> copy_files;
   bool ignore_bad_code_links = false;
 };
 static_assert(sus::mem::Move<Options>);

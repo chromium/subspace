@@ -85,7 +85,9 @@ int main(int argc, const char** argv) {
   llvm::cl::list<std::string> option_copy_files(
       "copy-file",
       llvm::cl::desc("A file to be copied into the output directory. May be "
-                     "specified multiple times for multiple files."),
+                     "specified multiple times for multiple files. A "
+                     "semi-colon may be used to specify the destination file "
+                     "name after it."),
       llvm::cl::cat(option_category));
 
   llvm::cl::list<std::string> option_include_paths(
@@ -281,13 +283,24 @@ int main(int argc, const char** argv) {
   if (option_css.empty() && option_copy_files.empty()) {
     // Defaults to pull the test stylesheet, assuming subdoc is being run from
     // the source root directory.
-    gen_options.copy_files.push("subdoc/gen_tests/subdoc-test-style.css");
+    gen_options.copy_files.push(sus::tuple("subdoc/gen_tests/subdoc-test-style.css", sus::none()));
     gen_options.stylesheets.push("subdoc-test-style.css");
   } else {
     for (std::string s : sus::move(option_css))
       gen_options.stylesheets.push(sus::move(s));
-    for (std::string s : sus::move(option_copy_files))
-      gen_options.copy_files.push(sus::move(s));
+    for (std::string s : sus::move(option_copy_files)) {
+      Option<std::string> dest;
+      if (size_t semi = s.find(';'); semi != std::string::npos) {
+        dest = sus::some(s.substr(semi + 1u));
+        if (dest->empty()) {
+          fmt::println(stderr,
+                       "ERROR: --copy-file given an empty destination name");
+          return 1;
+        }
+        s = s.substr(0u, semi);
+      }
+      gen_options.copy_files.push(sus::tuple(sus::move(s), sus::move(dest)));
+    }
   }
   for (std::string s : sus::move(option_favicon)) {
     auto favicon_result = subdoc::gen::FavIcon::from_string(s);
