@@ -30,6 +30,28 @@ jobs:
           chmod +x llvm.sh
           sudo ./llvm.sh ${clang_version} all
 
+      - name: Install System LLVM+Clang
+        if: env.clang_version == env.installed_clang_version
+        run: |
+          sudo apt-get install clang-${{env.installed_clang_version}} \
+            lldb-${{env.installed_clang_version}} \
+            lld-${{env.installed_clang_version}} \
+            clangd-${{env.installed_clang_version}} \
+            clang-tidy-${{env.installed_clang_version}} \
+            clang-format-${{env.installed_clang_version}} \
+            clang-tools-${{env.installed_clang_version}} \
+            llvm-${{env.installed_clang_version}}-dev \
+            lld-${{env.installed_clang_version}} \
+            lldb-${{env.installed_clang_version}} \
+            llvm-${{env.installed_clang_version}}-tools \
+            libomp-${{env.installed_clang_version}}-dev \
+            libc++-${{env.installed_clang_version}}-dev \
+            libc++abi-${{env.installed_clang_version}}-dev \
+            libclang-common-${{env.installed_clang_version}}-dev \
+            libclang-${{env.installed_clang_version}}-dev \
+            libclang-cpp${{env.installed_clang_version}}-dev \
+            libunwind-${{env.installed_clang_version}}-dev
+
       - name: Configure
         run: |
           # Path to LLVM+Clang nightly that we have installed.
