@@ -1,5 +1,7 @@
 # Subdoc
 
+<img src="https://github.com/subspace-cpp/logos/blob/main/logo-512px/subdocs unpadded.png?raw=true" width=100 alt="logo" class="logo"  align="right"></img>
+
 [Subdoc](subdoc/) is a documentation generator from inline C++ documentation
 in the spirit of
 [Rustdoc](https://doc.rust-lang.org/rustdoc/what-is-rustdoc.html).
