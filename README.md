@@ -8,6 +8,8 @@
 -->
 # Subspace Library
 
+<img src="https://github.com/subspace-cpp/logos/blob/main/logo-512px/subspace unpadded.png?raw=true" width=100 alt="logo" class="logo"  align="right"></img>
+
 An [experimental take](https://danakj.github.io/2022/12/31/why-subspace.html)
 on a safer, simpler C++ standard library.
 
