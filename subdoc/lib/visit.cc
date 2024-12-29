@@ -116,7 +116,14 @@ static Vec<std::string> collect_template_params(
         if (parm->isParameterPack()) s << "...";
         s << " ";
         s << parm->getNameAsString();
-        if (clang::TypeSourceInfo* def = parm->getDefaultArgumentInfo()) {
+        auto get_default_arg_info = [](clang::TemplateTypeParmDecl* parm) {
+#if CLANG_VERSION_MAJOR >= 19
+          return parm->getDefaultArgument().getTypeSourceInfo();
+#else
+          return parm->getDefaultArgumentInfo();
+#endif
+        };
+        if (clang::TypeSourceInfo* def = get_default_arg_info(parm)) {
           s << " = ";
           s << def->getType().getAsString();
         }
@@ -128,7 +135,16 @@ static Vec<std::string> collect_template_params(
         if (val->isParameterPack()) s << "...";
         s << " ";
         s << val->getNameAsString();
-        if (clang::Expr* e = val->getDefaultArgument()) {
+        auto get_default_arg_expr = [](clang::NonTypeTemplateParmDecl* val) {
+#if CLANG_VERSION_MAJOR >= 19
+          const clang::TemplateArgument& arg =
+              val->getDefaultArgument().getArgument();
+          return !arg.isNull() ? arg.getAsExpr() : nullptr;
+#else
+          return val->getDefaultArgument();
+#endif
+        };
+        if (clang::Expr* e = get_default_arg_expr(val)) {
           s << " = ";
           // TODO: There can be types in here that need to be resolved,
           // and can be linked to database entries.
@@ -438,7 +454,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
     auto linked_type = LinkedType::with_type(
         build_local_type(decl->getType(),
-                         decl->getASTContext().getSourceManager(),
+                         decl->getASTContext(),
                          preprocessor_, decl->getBeginLoc()),
         docs_db_);
 
@@ -457,8 +473,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         decl->getASTContext().getSourceManager().getFileOffset(
             decl->getLocation()));
 
-    if (Option<RecordElement&> parent =
-            docs_db_.find_record_mut(record_decl);
+    if (Option<RecordElement&> parent = docs_db_.find_record_mut(record_decl);
         parent.is_some()) {
       add_field_to_db(unique_from_decl(decl), sus::move(fe), parent->fields,
                       decl->getASTContext());
@@ -508,7 +523,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     }
 
     auto linked_type = LinkedType::with_type(
-        build_local_type(type, decl->getASTContext().getSourceManager(),
+        build_local_type(type, decl->getASTContext(),
                          preprocessor_, decl->getBeginLoc()),
         docs_db_);
 
@@ -615,13 +630,12 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         AliasStyle::NewType, sus::move(constraints),
         AliasTarget::with<AliasOfType>(LinkedType::with_type(
             build_local_type(decl->getUnderlyingType(),
-                             decl->getASTContext().getSourceManager(),
+                             decl->getASTContext(),
                              preprocessor_, decl->getBeginLoc()),
             docs_db_)));
 
     if (auto* rec_ctx = clang::dyn_cast<clang::RecordDecl>(context)) {
-      if (Option<RecordElement&> parent =
-              docs_db_.find_record_mut(rec_ctx);
+      if (Option<RecordElement&> parent = docs_db_.find_record_mut(rec_ctx);
           parent.is_some()) {
         auto key = AliasId(decl->getNameAsString());
         add_alias_to_db(sus::clone(key), sus::move(te), parent->aliases,
@@ -719,7 +733,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             sus::none(),  // No constraints.
             AliasTarget::with<AliasOfType>(LinkedType::with_type(
                 build_local_type(clang::QualType(tag->getTypeForDecl(), 0u),
-                                 tag->getASTContext().getSourceManager(),
+                                 tag->getASTContext(),
                                  preprocessor_, tag->getBeginLoc()),
                 docs_db_)));
         NamespaceElement& parent =
@@ -759,7 +773,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                 build_local_type(
                     clang::QualType(
                         classtmpl->getTemplatedDecl()->getTypeForDecl(), 0u),
-                    classtmpl->getASTContext().getSourceManager(),
+                    classtmpl->getASTContext(),
                     preprocessor_, classtmpl->getBeginLoc()),
                 docs_db_)));
         NamespaceElement& parent =
@@ -888,7 +902,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                 LinkedType::with_type(
                     build_local_type(
                         clang::QualType(context->getTypeForDecl(), 0u),
-                        context->getASTContext().getSourceManager(),
+                        context->getASTContext(),
                         preprocessor_, context->getBeginLoc()),
                     docs_db_),
                 method->getNameAsString()));
@@ -1174,7 +1188,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         Vec<FunctionParameter>::with_capacity(decl->parameters().size());
     for (const clang::ParmVarDecl* v : decl->parameters()) {
       auto linked_type = LinkedType::with_type(
-          build_local_type(v->getType(), v->getASTContext().getSourceManager(),
+          build_local_type(v->getType(), v->getASTContext(),
                            preprocessor_, v->getBeginLoc()),
           docs_db_);
       params.emplace(sus::move(linked_type), v->getNameAsString(),
@@ -1201,7 +1215,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       } else if (auto* convdecl =
                      clang::dyn_cast<clang::CXXConversionDecl>(decl)) {
         Type t = build_local_type(convdecl->getReturnType(),
-                                  convdecl->getASTContext().getSourceManager(),
+                                  convdecl->getASTContext(),
                                   preprocessor_, convdecl->getBeginLoc());
         return std::string("operator ") + t.name;
       } else {
@@ -1218,8 +1232,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     }();
 
     // Make a copy before moving `comment` to the contructor argument.
-    Option<std::string> overload_set =
-        sus::clone(comment.attrs.overload_set);
+    Option<std::string> overload_set = sus::clone(comment.attrs.overload_set);
 
     std::string signature = "(";
     for (clang::ParmVarDecl* p : decl->parameters()) {
@@ -1265,7 +1278,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
     auto linked_return_type = LinkedType::with_type(
         build_local_type(decl->getReturnType(),
-                         decl->getASTContext().getSourceManager(),
+                         decl->getASTContext(),
                          preprocessor_, decl->getBeginLoc()),
         docs_db_);
 

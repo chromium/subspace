@@ -48,6 +48,11 @@ std::string template_arg_to_string(const clang::TemplateArgumentLoc& loc,
     case clang::TemplateArgument::ArgKind::Integral: {
       return llvm_int_to_string(arg.getAsIntegral());
     }
+#if CLANG_VERSION_MAJOR >= 18
+    case clang::TemplateArgument::ArgKind::StructuralValue:
+      return arg.getAsStructuralValue().getAsString(
+          context, arg.getStructuralValueType());
+#endif
     case clang::TemplateArgument::ArgKind::Template:
       // How can this happen in a concept instantiation?
       arg.dump();

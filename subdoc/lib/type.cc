@@ -204,14 +204,15 @@ clang::DeclContext* find_context(const clang::Type* type,
 
 Type build_local_type_internal(
     clang::QualType qualtype, llvm::ArrayRef<clang::NamedDecl*> template_params,
-    const clang::SourceManager& sm, clang::Preprocessor& preprocessor,
+    const clang::ASTContext& cx, clang::Preprocessor& preprocessor,
     clang::SourceLocation loc) noexcept;
 
 TypeOrValue build_template_param(
     const clang::TemplateArgument& arg,
     llvm::ArrayRef<clang::NamedDecl*> template_params,
-    const clang::SourceManager& sm, clang::Preprocessor& preprocessor,
+    const clang::ASTContext& cx, clang::Preprocessor& preprocessor,
     clang::SourceLocation loc) noexcept {
+  const clang::SourceManager& sm = cx.getSourceManager();
   switch (arg.getKind()) {
     case clang::TemplateArgument::ArgKind::Null:
       arg.dump();
@@ -220,20 +221,26 @@ TypeOrValue build_template_param(
       sus_unreachable();
     case clang::TemplateArgument::ArgKind::Type:
       return TypeOrValue(TypeOrValueChoice::with<TypeOrValueChoice::Tag::Type>(
-          build_local_type_internal(arg.getAsType(), template_params, sm,
+          build_local_type_internal(arg.getAsType(), template_params, cx,
                                     preprocessor, loc)));
     case clang::TemplateArgument::ArgKind::Declaration:
       return TypeOrValue(TypeOrValueChoice::with<TypeOrValueChoice::Tag::Type>(
           build_local_type_internal(arg.getAsDecl()->getType(), template_params,
-                                    sm, preprocessor, loc)));
+                                    cx, preprocessor, loc)));
     case clang::TemplateArgument::ArgKind::NullPtr:
       return TypeOrValue(TypeOrValueChoice::with<TypeOrValueChoice::Tag::Type>(
-          build_local_type_internal(arg.getNullPtrType(), template_params, sm,
+          build_local_type_internal(arg.getNullPtrType(), template_params, cx,
                                     preprocessor, loc)));
     case clang::TemplateArgument::ArgKind::Integral: {
       return TypeOrValue(TypeOrValueChoice::with<TypeOrValueChoice::Tag::Value>(
           llvm_int_to_string(arg.getAsIntegral())));
     }
+#if CLANG_VERSION_MAJOR >= 18
+    case clang::TemplateArgument::ArgKind::StructuralValue:
+      return TypeOrValue(TypeOrValueChoice::with<TypeOrValueChoice::Tag::Value>(
+          arg.getAsStructuralValue().getAsString(
+              cx, arg.getStructuralValueType())));
+#endif
     case clang::TemplateArgument::ArgKind::Template:
       // Getting here means the template parameter is itself a template
       // (without its own parameters specified), rather than a specialization of
@@ -291,8 +298,10 @@ clang::QualType unwrap_skipped_types(clang::QualType q) noexcept {
 Type build_local_type_internal(
     clang::QualType qualtype,
     llvm::ArrayRef<clang::NamedDecl*> template_params_from_context,
-    const clang::SourceManager& sm, clang::Preprocessor& preprocessor,
+    const clang::ASTContext& cx, clang::Preprocessor& preprocessor,
     clang::SourceLocation loc) noexcept {
+  const clang::SourceManager& sm = cx.getSourceManager();
+
   // PackExpansionTypes wrap a QualType that has all the actual type data we
   // want on it. We just need to remember that it was a pack to add back the
   // `...`.
@@ -330,7 +339,7 @@ Type build_local_type_internal(
             TypeOrValue(TypeOrValueChoice::with<TypeOrValueTag::Type>(
                 build_local_type_internal(
                     clang::QualType(spec->getAsType(), 0u),
-                    llvm::ArrayRef<clang::NamedDecl*>(), sm, preprocessor,
+                    llvm::ArrayRef<clang::NamedDecl*>(), cx, preprocessor,
                     loc))));
       } else {
         qualtype->dump();
@@ -416,7 +425,7 @@ Type build_local_type_internal(
   if (auto* member = clang::dyn_cast<clang::MemberPointerType>(&*qualtype)) {
     member_pointer_type = sus::some(sus::Box<Type>(build_local_type_internal(
         clang::QualType(member->getClass(), 0u), template_params_from_context,
-        sm, preprocessor, loc)));
+        cx, preprocessor, loc)));
 
     pointers.push(qualifier);
     qualifier = qualifier_from_qualtype(qualtype->getPointeeType());
@@ -447,7 +456,7 @@ Type build_local_type_internal(
     for (const clang::TemplateArgument& arg :
          iter_args(sus::iter::from_range(ttype->template_arguments()))) {
       template_params.push(build_template_param(
-          arg, template_params_from_context, sm, preprocessor, loc));
+          arg, template_params_from_context, cx, preprocessor, loc));
     }
   } else if (auto* ptype =
                  clang::dyn_cast<clang::TemplateTypeParmType>(&*qualtype)) {
@@ -466,7 +475,7 @@ Type build_local_type_internal(
       for (const clang::TemplateArgument& arg :
            sus::move(it).generate(iter_args)) {
         template_params.push(build_template_param(
-            arg, template_params_from_context, sm, preprocessor, loc));
+            arg, template_params_from_context, cx, preprocessor, loc));
       }
     }
   } else if (auto* auto_type = clang::dyn_cast<clang::AutoType>(&*qualtype)) {
@@ -475,7 +484,7 @@ Type build_local_type_internal(
     for (const clang::TemplateArgument& arg : iter_args(
              sus::iter::from_range(auto_type->getTypeConstraintArguments()))) {
       template_params.push(build_template_param(
-          arg, template_params_from_context, sm, preprocessor, loc));
+          arg, template_params_from_context, cx, preprocessor, loc));
     }
   } else if (auto* rec_type = clang::dyn_cast<clang::RecordType>(&*qualtype)) {
     if (auto* partial =
@@ -494,7 +503,7 @@ Type build_local_type_internal(
       for (const clang::TemplateArgument& arg : iter_args(
                sus::iter::from_range(full->getTemplateArgs().asArray()))) {
         template_params.push(build_template_param(
-            arg, template_params_from_context, sm, preprocessor, loc));
+            arg, template_params_from_context, cx, preprocessor, loc));
       }
     }
   } else if (auto* inj_type =
@@ -521,7 +530,7 @@ Type build_local_type_internal(
     for (const clang::TemplateArgument& arg : iter_args(sus::iter::from_range(
              inj_type->getInjectedTST()->template_arguments()))) {
       template_params.push(build_template_param(
-          arg, template_params_from_context_here, sm, preprocessor, loc));
+          arg, template_params_from_context_here, cx, preprocessor, loc));
     }
   } else {
     // No template parameters.
@@ -549,12 +558,12 @@ Type build_local_type_internal(
   Vec<Type> fn_param_types;
   if (auto* proto = clang::dyn_cast<clang::FunctionProtoType>(&*qualtype)) {
     fn_return_type = sus::some(sus::Box<Type>(build_local_type_internal(
-        proto->getReturnType(), template_params_from_context, sm, preprocessor,
+        proto->getReturnType(), template_params_from_context, cx, preprocessor,
         loc)));
 
     for (clang::QualType p : proto->param_types()) {
       fn_param_types.push(build_local_type_internal(
-          p, template_params_from_context, sm, preprocessor, loc));
+          p, template_params_from_context, cx, preprocessor, loc));
     }
   }
 
@@ -629,11 +638,11 @@ Type build_local_type_internal(
 
 }  // namespace
 
-Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
+Type build_local_type(clang::QualType qualtype, const clang::ASTContext& cx,
                       clang::Preprocessor& preprocessor,
                       clang::SourceLocation loc) noexcept {
   return build_local_type_internal(
-      qualtype, llvm::ArrayRef<clang::NamedDecl*>(), sm, preprocessor, loc);
+      qualtype, llvm::ArrayRef<clang::NamedDecl*>(), cx, preprocessor, loc);
 }
 
 /// Writes the pointers and returns if it ended with a qualifer.
@@ -898,12 +907,12 @@ void type_walk_types_internal(
 
 }  // namespace
 
-void type_to_string(
-    const Type& type, sus::fn::DynFnMut<void(std::string_view)>& text_fn,
-    sus::fn::DynFnMut<void(TypeToStringQuery)>& type_fn,
-    sus::fn::DynFnMut<void()>& const_qualifier_fn,
-    sus::fn::DynFnMut<void()>& volatile_qualifier_fn,
-    Option<sus::fn::DynFnMut<void()>&> var_name_fn) noexcept {
+void type_to_string(const Type& type,
+                    sus::fn::DynFnMut<void(std::string_view)>& text_fn,
+                    sus::fn::DynFnMut<void(TypeToStringQuery)>& type_fn,
+                    sus::fn::DynFnMut<void()>& const_qualifier_fn,
+                    sus::fn::DynFnMut<void()>& volatile_qualifier_fn,
+                    Option<sus::fn::DynFnMut<void()>&> var_name_fn) noexcept {
   return type_to_string_internal(type, text_fn, type_fn, const_qualifier_fn,
                                  volatile_qualifier_fn, sus::move(var_name_fn));
 }
