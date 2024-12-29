@@ -19,11 +19,6 @@ jobs:
         with:
           submodules: 'true'
 
-      - uses: actions/checkout@v4
-        with:
-          repository: 'subspace-cpp/logos'
-          path: 'logos'
-
       - uses: webfactory/ssh-agent@v0.7.0
         with:
           ssh-private-key: ${{ secrets.DOCS_SSH_PRIVATE_KEY }}
@@ -188,12 +183,10 @@ jobs:
             --include-macro-prefix sus_ \
             --include-macro-prefix SUS_ \
             --copy-file subdoc/gen_tests/subdoc-test-style.css \
-            --copy-file web/logo.png \
-            --copy-file web/logo32.png \
-            --copy-file web/logo16.png \
+            --copy-file "web/logos/logo-512px/subspace unpadded.png;logo.png" ^
+            --copy-file "web/logos/logo-32px/subspace unpadded.png;logo32.png" ^
             --favicon "logo.png;image/png" \
             --favicon "logo32.png;image/png" \
-            --favicon "logo16.png;image/png" \
             --css subdoc-test-style.css \
             --project-logo logo.png \
             --project-md sus/project.md \

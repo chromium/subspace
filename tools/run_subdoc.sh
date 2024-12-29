@@ -9,7 +9,7 @@ out/subdoc/subdoc -p out --out docs \
     --include-macro-prefix SUS_ \
     --css subdoc-test-style.css \
     --copy-file subdoc/gen_tests/subdoc-test-style.css \
-    --copy-file logos/logo-512px/subspace\ unpadded.png \
+    --copy-file "web/logos/logo-512px/subspace unpadded.png;logo.png" \
     --favicon "logo.png;image/png" \
     --project-md sus/project.md \
     --project-logo logo.png \
