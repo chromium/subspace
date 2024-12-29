@@ -310,6 +310,11 @@ jobs:
         with:
           submodules: 'true'
 
+      - uses: actions/checkout@v4
+        with:
+          repository: 'https://github.com/subspace-cpp/logos'
+          path: 'logos'
+
       - name: Install LLVM+Clang
         if: env.clang_version != env.installed_clang_version
         run: |
