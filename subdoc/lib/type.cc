@@ -64,6 +64,9 @@ std::string name_of_type(clang::QualType q) noexcept {
   p.SuppressTagKeyword = true;
   p.SplitTemplateClosers = false;
   std::string name = q.getLocalUnqualifiedType().getAsString(p);
+  if (name.starts_with("template ")) {
+    name = name.substr(9u);
+  }
   // TODO: Is there a better way to drop the namespaces/records from the type?
   //if (usize pos = name.rfind("::"); pos != std::string::npos)
   //  name = name.substr(pos + 2u);
