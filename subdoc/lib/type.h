@@ -15,11 +15,11 @@
 #pragma once
 
 #include "subdoc/llvm.h"
+#include "sus/boxed/box.h"
 #include "sus/choice/choice.h"
 #include "sus/collections/vec.h"
 #include "sus/fn/fn.h"
 #include "sus/prelude.h"
-#include "sus/boxed/box.h"
 
 namespace subdoc {
 
@@ -241,7 +241,8 @@ struct TypeOrValue {
 
 /// Builds a Type structure from `qualtype` without looking through type
 /// aliases.
-Type build_local_type(clang::QualType qualtype, const clang::SourceManager& sm,
+Type build_local_type(clang::QualType qualtype,
+                      const clang::ASTContext& cx,
                       clang::Preprocessor& preprocessor,
                       clang::SourceLocation loc) noexcept;
 
@@ -258,12 +259,12 @@ struct TypeToStringQuery {
 ///
 /// The `var_name_fn` is called at the place where the variable name (if any)
 /// would appear.
-void type_to_string(
-    const Type& type, sus::fn::DynFnMut<void(std::string_view)>& text_fn,
-    sus::fn::DynFnMut<void(TypeToStringQuery)>& type_fn,
-    sus::fn::DynFnMut<void()>& const_qualifier_fn,
-    sus::fn::DynFnMut<void()>& volatile_qualifier_fn,
-    Option<sus::fn::DynFnMut<void()>&> var_name_fn) noexcept;
+void type_to_string(const Type& type,
+                    sus::fn::DynFnMut<void(std::string_view)>& text_fn,
+                    sus::fn::DynFnMut<void(TypeToStringQuery)>& type_fn,
+                    sus::fn::DynFnMut<void()>& const_qualifier_fn,
+                    sus::fn::DynFnMut<void()>& volatile_qualifier_fn,
+                    Option<sus::fn::DynFnMut<void()>&> var_name_fn) noexcept;
 
 /// Like `type_to_string` but just walks through the types and does not produce
 /// any output.
