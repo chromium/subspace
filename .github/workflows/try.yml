@@ -112,7 +112,7 @@ jobs:
         #  }
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'true'
 
@@ -281,7 +281,7 @@ jobs:
       source_url: "https://github.com/chromium/subspace/blob/main"
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'true'
 
@@ -440,7 +440,7 @@ jobs:
       installed_clang_version: 14
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'true'
 
