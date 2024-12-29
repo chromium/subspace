@@ -662,14 +662,14 @@ class [[_sus_trivial_abi]] Box final : public __private::BoxBase<Box<T>, T> {
 
   T* t_;
 
-  static constexpr T* never_value() {
-    return static_cast<T*>(nullptr) + alignof(T);
+  static T* never_value() {
+    return reinterpret_cast<T*>(alignof(T));
   }
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(t_));
   sus_class_never_value_field(::sus::marker::unsafe_fn, Box, t_, never_value(),
                               nullptr);
-  constexpr explicit Box(::sus::mem::NeverValueConstructor) noexcept
+  explicit Box(::sus::mem::NeverValueConstructor) noexcept
       : t_(never_value()) {}
 };
 
