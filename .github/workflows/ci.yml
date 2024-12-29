@@ -36,7 +36,7 @@ jobs:
             cc: "clang-16",
             cxx: "clang++-16",
             clang_version: 16,
-            installed_clang_version: 14
+            installed_clang_version: 16
           }
 
         - {
@@ -46,7 +46,7 @@ jobs:
             cc: "clang-16",
             cxx: "clang++-16",
             clang_version: 16,
-            installed_clang_version: 14
+            installed_clang_version: 16
           }
 
         - {
@@ -56,7 +56,7 @@ jobs:
             cc: "clang-17",
             cxx: "clang++-17",
             clang_version: 17,
-            installed_clang_version: 14
+            installed_clang_version: 16
           }
 
         - {
@@ -66,7 +66,7 @@ jobs:
             cc: "clang-18",
             cxx: "clang++-18",
             clang_version: 18,
-            installed_clang_version: 14
+            installed_clang_version: 16
           }
         - {
             name: "Ubuntu Clang-18 Sanitizer",
@@ -75,7 +75,7 @@ jobs:
             cc: "clang-18",
             cxx: "clang++-18",
             clang_version: 18,
-            installed_clang_version: 14
+            installed_clang_version: 16
           }
 
 
@@ -86,7 +86,7 @@ jobs:
             cc: "clang-19",
             cxx: "clang++-19",
             clang_version: 19,
-            installed_clang_version: 14
+            installed_clang_version: 16
           }
 
         - {
@@ -96,7 +96,7 @@ jobs:
             cc: "gcc-13",
             cxx: "g++-13",
             clang_version: 16,
-            installed_clang_version: 14
+            installed_clang_version: 16
           }
 
           # Clang doesn't have good enough C++20 support to compile this library
@@ -116,7 +116,7 @@ jobs:
           submodules: 'true'
 
       - name: Install LLVM+Clang
-        if: startsWith(matrix.config.os, 'ubuntu-')
+        if: startsWith(matrix.config.os, 'ubuntu-') && matrix.config.clang_version != matrix.config.installed_clang_version
         run: |
           sudo apt-get remove clang-${{matrix.config.installed_clang_version}} \
             lldb-${{matrix.config.installed_clang_version}} \

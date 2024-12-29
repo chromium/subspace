@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       clang_version: 18
-      installed_clang_version: 14
+      installed_clang_version: 16
       source_url: "https://github.com/chromium/subspace/blob/main"
 
     steps:
@@ -29,6 +29,7 @@ jobs:
           ssh-private-key: ${{ secrets.DOCS_SSH_PRIVATE_KEY }}
 
       - name: Install LLVM+Clang
+        if: env.clang_version != env.installed_clang_version
         run: |
           sudo apt-get remove clang-${installed_clang_version} \
             lldb-${installed_clang_version} \

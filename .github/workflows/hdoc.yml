@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       clang_version: 16
-      installed_clang_version: 14
+      installed_clang_version: 16
 
     steps:
       - uses: actions/checkout@v4
@@ -19,6 +19,7 @@ jobs:
           submodules: 'true'
 
       - name: Install LLVM+Clang
+        if: env.clang_version != env.installed_clang_version
         run: |
           sudo apt-get remove clang-${installed_clang_version} \
             lldb-${installed_clang_version} \
