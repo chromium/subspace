@@ -54,6 +54,8 @@ struct FavIcon {
 struct Options {
   std::string project_name = "PROJECT NAME";
   std::string project_logo = "PROJECT LOGO.png";
+  /// The base url where the site will be published.
+  Option<std::string> project_url;
   /// The version string for the project. Typically a semver version such as
   /// "1.2.3" or "0.2.0-beta-4".
   Option<std::string> version_text;

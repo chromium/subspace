@@ -12,6 +12,7 @@ out\subdoc\subdoc -p out --out docs ^
     --project-md sus/project.md ^
     --project-logo logo.png ^
     --project-name Subspace ^
+    --project-url https://suslib.cc ^
     --project-version 0.1.2 ^
     --ignore-bad-code-links ^
     --remove-source-path-prefix %cd% ^

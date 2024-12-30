@@ -47,6 +47,13 @@ int main(int argc, const char** argv) {
                      "to insert into the project root"),
       llvm::cl::cat(option_category));
 
+  llvm::cl::opt<std::string> option_project_url(
+      "project-url",
+      llvm::cl::desc("The base URL where the site will be hosted, "
+                     "such as https://website.abc/here. The index page would "
+                     "be at https://website.abc/here/index.html."),
+      llvm::cl::cat(option_category));
+
   llvm::cl::opt<std::string> option_project_version(
       "project-version",
       llvm::cl::desc("A string representing the version of the project, "
@@ -275,6 +282,14 @@ int main(int argc, const char** argv) {
   }
   if (option_project_logo.getNumOccurrences() > 0) {
     gen_options.project_logo = option_project_logo.getValue();
+  }
+  if (option_project_url.getNumOccurrences() > 0) {
+    gen_options.project_url =
+        sus::some(sus::clone(option_project_url.getValue()));
+  } else {
+    fmt::println(stderr,
+                 "Warning: Missing --project-url. Without this, the og:url tag "
+                 "will be left empty.");
   }
   if (option_project_version.getNumOccurrences() > 0) {
     gen_options.version_text =

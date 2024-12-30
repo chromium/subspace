@@ -192,7 +192,8 @@ sus::Result<void, MarkdownToHtmlError> generate_concept(
       }
     }
     title << element.name;
-    generate_head(html, sus::move(title).str(), md_html.summary_text, options);
+    generate_head(html, sus::move(title).str(), md_html.summary_text,
+                  path.filename(), options);
   }
 
   auto body = html.open_body();

@@ -192,6 +192,7 @@ jobs:
             --project-md sus/project.md \
             --project-name Subspace \
             --project-version 0.0.0 \
+            --project-url https://suslib.cc \
             --remove-source-path-prefix $PWD \
             --add-source-path-prefix ${source_url} \
             --source-path-line-prefix L \

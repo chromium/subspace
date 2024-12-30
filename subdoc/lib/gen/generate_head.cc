@@ -18,6 +18,7 @@ namespace subdoc::gen {
 
 void generate_head(HtmlWriter& html, std::string_view title,
                    std::string_view description,
+                   const std::filesystem::path& file_path,
                    const Options& options) noexcept {
   {
     auto head = html.open_head();
@@ -45,6 +46,16 @@ void generate_head(HtmlWriter& html, std::string_view title,
       auto meta = head.open_meta();
       meta.add_property("og:site_name");
       meta.add_content(options.project_name);
+    }
+    {
+      auto meta = head.open_meta();
+      meta.add_property("og:url");
+      if (options.project_url.is_some()) {
+        std::string url = options.project_url.as_value();
+        url += '/';
+        url += file_path.string();
+        meta.add_content(url);
+      }
     }
 
     auto page_title = std::string(title);

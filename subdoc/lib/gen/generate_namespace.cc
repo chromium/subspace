@@ -665,7 +665,7 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
       construct_html_file_path_for_namespace(options.output_root, element);
   auto html = HtmlWriter(open_file_for_writing(path).unwrap());
   generate_head(html, namespace_display_name(element, ancestors, options),
-                md_html.summary_text, options);
+                md_html.summary_text, path.filename(), options);
 
   Vec<SortedNamespaceByName> sorted_namespaces;
   for (const auto& [key, sub_element] : element.namespaces) {

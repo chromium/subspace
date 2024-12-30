@@ -480,7 +480,8 @@ sus::Result<void, MarkdownToHtmlError> generate_record(
       title << "::";
     }
     title << element.name;
-    generate_head(html, sus::move(title).str(), md_html.summary_text, options);
+    generate_head(html, sus::move(title).str(), md_html.summary_text,
+                  path.filename(), options);
   }
 
   Vec<SortedFieldByName> sorted_static_fields;
