@@ -183,8 +183,8 @@ jobs:
             --include-macro-prefix sus_ \
             --include-macro-prefix SUS_ \
             --copy-file subdoc/gen_tests/subdoc-test-style.css \
-            --copy-file "web/logos/logo-512px/subspace unpadded.png;logo.png" ^
-            --copy-file "web/logos/logo-32px/subspace unpadded.png;logo32.png" ^
+            --copy-file "web/logos/logo-512px/subspace unpadded.png;logo.png" \
+            --copy-file "web/logos/logo-32px/subspace unpadded.png;logo32.png" \
             --favicon "logo.png;image/png" \
             --favicon "logo32.png;image/png" \
             --css subdoc-test-style.css \
