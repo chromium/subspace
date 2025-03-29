@@ -43,13 +43,13 @@ Run CMake to configure the build to happen in the `out/` directory.
 ```
 cmake -B out \
     -DSUBSPACE_BUILD_TESTS=ON \
-    -BCMAKE_BUILD_TYPE=Release
+    -DCMAKE_BUILD_TYPE=Release
 ```
 Or for debug:
 ```
 cmake -B out \
     -DSUBSPACE_BUILD_TESTS=ON \
-    -BCMAKE_BUILD_TYPE=Debug
+    -DCMAKE_BUILD_TYPE=Debug
 ```
 
 If you want to build Subdoc, you will need [a recent LLVM installation](
@@ -66,7 +66,7 @@ set Clang_DIR=/path/to/llvm/install/lib/cmake/clang
 cmake -B out \
     -DSUBSPACE_BUILD_TESTS=ON \
     -DSUBSPACE_BUILD_SUBDOC=ON \
-    -BCMAKE_BUILD_TYPE=RelWithDebInfo
+    -DCMAKE_BUILD_TYPE=RelWithDebInfo
 ```
 
 ## Build Subspace
