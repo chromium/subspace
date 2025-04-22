@@ -80,8 +80,9 @@ void copy_nonoverlapping(::sus::marker::UnsafeFnMarker, const T* src, T* dst,
   if constexpr (::sus::mem::size_of<T>() > 1) {
     auto bytes = count.checked_mul(::sus::mem::size_of<T>()).expect("overflow");
     // Clang isn't able to detect that `T` is trivially relocatable, and errors
-    // out when it's not trivially copyable. We cast to `void*` since we are
-    // certain that it's trivially relocatable.
+    // out when it's not trivially copyable. We cast to `void*` since we
+    // require the caller to ensure the type is `TrivialCopy` or
+    // `TriviallyRelocatable`.
     memcpy(static_cast<void*>(dst), src, bytes);
   } else {
     memcpy(static_cast<void*>(dst), src, count);
