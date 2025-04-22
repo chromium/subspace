@@ -164,7 +164,7 @@ class [[_sus_trivial_abi]] Slice final {
   /// #[doc.overloads=from.array]
   template <size_t N>
     requires(N <= ::sus::cast<usize>(isize::MAX))
-  _sus_pure static constexpr Slice from(const T (&data)[N] sus_lifetimebound) {
+  _sus_pure static constexpr Slice from(const T (&data sus_lifetimebound)[N]) {
     // We strip the `const` off `data`, however only const access is provided
     // through this class. This is done so that mutable types can compose Slice
     // and store a mutable pointer.
@@ -383,7 +383,7 @@ class [[_sus_trivial_abi]] SliceMut final {
   /// #[doc.overloads=from.array]
   template <size_t N>
     requires(N <= ::sus::cast<usize>(isize::MAX_PRIMITIVE))
-  _sus_pure static constexpr SliceMut from(T (&data)[N] sus_lifetimebound) {
+  _sus_pure static constexpr SliceMut from(T (&data sus_lifetimebound)[N]) {
     return SliceMut(::sus::iter::IterRefCounter::empty_for_view(), data, N);
   }
 
