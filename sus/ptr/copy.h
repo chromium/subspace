@@ -140,9 +140,13 @@ void copy(::sus::marker::UnsafeFnMarker, const T* src, T* dst,
   sus_debug_check(reinterpret_cast<uintptr_t>(dst) % alignof(T) == 0);
   if constexpr (::sus::mem::size_of<T>() > 1) {
     auto bytes = count.checked_mul(::sus::mem::size_of<T>()).expect("overflow");
-    memmove(dst, src, bytes);
+    // Clang isn't able to detect that `T` is trivially relocatable, and errors
+    // out when it's not trivially copyable. We cast to `void*` since we
+    // require the caller to ensure the type is `TrivialCopy` or
+    // `TriviallyRelocatable`.
+    memmove(static_cast<void*>(dst), src, bytes);
   } else {
-    memmove(dst, src, count);
+    memmove(static_cast<void*>(dst), src, count);
   }
 }
 

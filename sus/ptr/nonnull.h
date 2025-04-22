@@ -197,13 +197,11 @@ struct fmt::formatter<::sus::ptr::NonNull<T>, Char> {
   template <class FormatContext>
   constexpr auto format(const ::sus::ptr::NonNull<T>& t,
                         FormatContext& ctx) const {
-    // t.as_ptr() returns `const T*`, so we need to cast its constness away in
-    // order to format it.
-    return underlying_.format(const_cast<T*>(t.as_ptr()), ctx);
+    return underlying_.format(t.as_ptr(), ctx);
   }
 
  private:
-  formatter<void*, Char> underlying_;
+  formatter<const void*, Char> underlying_;
 };
 
 // Stream support.
