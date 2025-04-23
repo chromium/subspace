@@ -12,15 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifdef TEST_MODULE
+import sus;
+
+#include "sus/assertions/check.h"
+#include "sus/assertions/unreachable.h"
+#else
 #include "sus/error/error.h"
 
-#include <concepts>
-
-#include "googletest/include/gtest/gtest.h"
 #include "sus/boxed/box.h"
 #include "sus/env/var.h"
 #include "sus/mem/clone.h"
 #include "sus/prelude.h"
+#endif
+
+#include <concepts>
+
+#include "fmt/format.h"
+#include "googletest/include/gtest/gtest.h"
 
 namespace test::error {
 

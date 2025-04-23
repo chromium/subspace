@@ -12,16 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifdef TEST_MODULE
+import sus;
+
+#include "sus/assertions/check.h"
+#else
 #include "sus/num/overflow_integer.h"
 
-#include <concepts>
-
-#include "googletest/include/gtest/gtest.h"
 #include "sus/collections/array.h"
 #include "sus/iter/iterator.h"
 #include "sus/num/signed_integer.h"
 #include "sus/num/unsigned_integer.h"
 #include "sus/prelude.h"
+#endif
+
+#include <concepts>
+
+#include "googletest/include/gtest/gtest.h"
 #include "sus/test/ensure_use.h"
 
 namespace {

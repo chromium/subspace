@@ -737,12 +737,12 @@ union Storage<I, ::sus::Tuple<T>> {
 };
 
 template <size_t I, class S>
-static constexpr auto& construct_choice_storage(S& storage) {
+constexpr auto& construct_choice_storage(S& storage) {
   return construct_choice_storage(storage, std::integral_constant<size_t, I>());
 }
 
 template <size_t I, class S>
-static constexpr auto& construct_choice_storage(
+constexpr auto& construct_choice_storage(
     S& storage, std::integral_constant<size_t, I>) {
   std::construct_at(&storage.more_);
   return construct_choice_storage(storage.more_,
@@ -750,43 +750,43 @@ static constexpr auto& construct_choice_storage(
 }
 
 template <class S>
-static constexpr auto& construct_choice_storage(
+constexpr auto& construct_choice_storage(
     S& storage, std::integral_constant<size_t, 0>) {
   return storage;
 }
 
 template <size_t I, class S>
-static constexpr const auto& find_choice_storage(const S& storage) {
+constexpr const auto& find_choice_storage(const S& storage) {
   return find_choice_storage(storage, std::integral_constant<size_t, I>());
 }
 
 template <size_t I, class S>
-static constexpr const auto& find_choice_storage(
+constexpr const auto& find_choice_storage(
     const S& storage, std::integral_constant<size_t, I>) {
   return find_choice_storage(storage.more_,
                              std::integral_constant<size_t, I - 1u>());
 }
 
 template <class S>
-static constexpr const auto& find_choice_storage(
+constexpr const auto& find_choice_storage(
     const S& storage, std::integral_constant<size_t, 0>) {
   return storage;
 }
 
 template <size_t I, class S>
-static constexpr auto& find_choice_storage_mut(S& storage) {
+constexpr auto& find_choice_storage_mut(S& storage) {
   return find_choice_storage_mut(storage, std::integral_constant<size_t, I>());
 }
 
 template <size_t I, class S>
-static constexpr auto& find_choice_storage_mut(
+constexpr auto& find_choice_storage_mut(
     S& storage, std::integral_constant<size_t, I>) {
   return find_choice_storage_mut(storage.more_,
                                  std::integral_constant<size_t, I - 1u>());
 }
 
 template <class S>
-static constexpr auto& find_choice_storage_mut(
+constexpr auto& find_choice_storage_mut(
     S& storage, std::integral_constant<size_t, 0>) {
   return storage;
 }

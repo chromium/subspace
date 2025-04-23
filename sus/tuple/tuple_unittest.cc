@@ -12,7 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifdef TEST_MODULE
+import sus;
+
+#include "sus/macros/no_unique_address.h"
+#else
 #include "sus/tuple/tuple.h"
+
+#include "sus/mem/clone.h"
+#include "sus/mem/copy.h"
+#include "sus/mem/move.h"
+#include "sus/num/types.h"
+#include "sus/prelude.h"
+#endif
 
 #include <math.h>  // TODO: Replace with f32::NaN()
 
@@ -20,12 +32,8 @@
 #include <tuple>
 #include <utility>  // std::tuple_size.
 
+#include "fmt/format.h"
 #include "googletest/include/gtest/gtest.h"
-#include "sus/mem/clone.h"
-#include "sus/mem/copy.h"
-#include "sus/mem/move.h"
-#include "sus/num/types.h"
-#include "sus/prelude.h"
 #include "sus/test/no_copy_move.h"
 
 namespace {

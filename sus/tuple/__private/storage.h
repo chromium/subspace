@@ -106,68 +106,67 @@ struct TupleStorage<T&, Ts...> : TupleStorage<Ts...> {
 };
 
 template <size_t I, class S>
-static constexpr const auto& find_tuple_storage(const S& storage) {
+constexpr const auto& find_tuple_storage(const S& storage) {
   return find_tuple_storage(storage, std::integral_constant<size_t, I>());
 }
 
 template <size_t I, class S>
-static constexpr const auto& find_tuple_storage(
+constexpr const auto& find_tuple_storage(
     const S& storage, std::integral_constant<size_t, I>) {
   return find_tuple_storage(static_cast<const S::Super&>(storage),
                             std::integral_constant<size_t, I - 1>());
 }
 
 template <class S>
-static constexpr const S& find_tuple_storage(
+constexpr const S& find_tuple_storage(
     const S& storage, std::integral_constant<size_t, 0>) {
   return storage;
 }
 
 template <size_t I, class S>
-static constexpr auto& find_tuple_storage_mut(S& storage) {
+constexpr auto& find_tuple_storage_mut(S& storage) {
   return find_tuple_storage_mut(storage, std::integral_constant<size_t, I>());
 }
 
 template <size_t I, class S>
-static constexpr auto& find_tuple_storage_mut(
+constexpr auto& find_tuple_storage_mut(
     S& storage, std::integral_constant<size_t, I>) {
   return find_tuple_storage_mut(static_cast<S::Super&>(storage),
                                 std::integral_constant<size_t, I - 1>());
 }
 
 template <class S>
-static constexpr S& find_tuple_storage_mut(S& storage,
-                                           std::integral_constant<size_t, 0>) {
+constexpr S& find_tuple_storage_mut(S& storage, std::integral_constant<size_t, 0>) {
   return storage;
 }
 
 template <size_t I, class S1, class S2>
-constexpr inline auto storage_eq_impl(const S1& l, const S2& r) noexcept {
+constexpr auto storage_eq_impl(const S1& l, const S2& r) noexcept {
   return find_tuple_storage<I>(l).at() == find_tuple_storage<I>(r).at();
-};
+}
 
 template <class S1, class S2, size_t... N>
-constexpr inline auto storage_eq(const S1& l, const S2& r,
+constexpr auto storage_eq(const S1& l, const S2& r,
                                  std::index_sequence<N...>) noexcept {
   return (... && (storage_eq_impl<N>(l, r)));
-};
+}
 
 template <size_t I, class O, class S1, class S2>
-constexpr inline bool storage_cmp_impl(O& val, const S1& l,
+constexpr bool storage_cmp_impl(O& val, const S1& l,
                                        const S2& r) noexcept {
   auto cmp = find_tuple_storage<I>(l).at() <=> find_tuple_storage<I>(r).at();
   // Allow downgrading from equal to equivalent, but not the inverse.
   if (cmp != 0) val = cmp;
   // Short circuit by returning true when we find a difference.
   return val == 0;
-};
+}
 
 template <class S1, class S2, size_t... N>
-constexpr inline auto storage_cmp(auto equal, const S1& l, const S2& r,
+constexpr auto storage_cmp(auto equal, const S1& l, const S2& r,
                                   std::index_sequence<N...>) noexcept {
   auto val = equal;
   (... && (storage_cmp_impl<N>(val, l, r)));
   return val;
-};
+}
 
 }  // namespace sus::tuple_type::__private

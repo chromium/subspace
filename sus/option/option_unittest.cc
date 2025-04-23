@@ -12,23 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifdef TEST_MODULE
+import sus;
+
+#include "sus/mem/never_value_macros.h"
+#else
 #include "sus/option/option.h"
 
-#include <bit>
-#include <sstream>
-
-#include "fmt/std.h"
-#include "googletest/include/gtest/gtest.h"
 #include "sus/collections/array.h"
 #include "sus/iter/from_iterator.h"
 #include "sus/iter/iterator.h"
-#include "sus/macros/__private/compiler_bugs.h"
-#include "sus/macros/builtin.h"
 #include "sus/mem/relocate.h"
 #include "sus/num/types.h"
 #include "sus/prelude.h"
 #include "sus/ptr/nonnull.h"
 #include "sus/result/result.h"
+#endif
+
+#include <bit>
+#include <concepts>
+#include <sstream>
+
+#include "fmt/std.h"
+#include "googletest/include/gtest/gtest.h"
+#include "sus/macros/__private/compiler_bugs.h"
+#include "sus/macros/builtin.h"
 #include "sus/test/behaviour_types.h"
 #include "sus/test/no_copy_move.h"
 #include "sus/tuple/tuple.h"

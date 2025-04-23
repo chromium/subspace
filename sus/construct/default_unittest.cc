@@ -12,7 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#if TEST_MODULE
+import sus;
+#else
 #include "sus/construct/default.h"
+#endif
 
 using sus::construct::Default;
 

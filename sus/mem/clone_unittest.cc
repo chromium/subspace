@@ -12,12 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifdef TEST_MODULE
+import sus;
+#else
 #include "sus/mem/clone.h"
+
+#include "sus/num/types.h"
+#include "sus/prelude.h"
+#endif
 
 #include "googletest/include/gtest/gtest.h"
 #include "sus/macros/__private/compiler_bugs.h"
-#include "sus/num/types.h"
-#include "sus/prelude.h"
 
 using sus::mem::Clone;
 using sus::mem::clone;
