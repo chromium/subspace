@@ -84,6 +84,7 @@ endif()
 
 if(${SUBSPACE_BUILD_BENCHMARKS})
     add_subdirectory(third_party/nanobench)
+    set_property(TARGET nanobench PROPERTY CXX_STANDARD 20)
     add_subdirectory(bench)
 endif()
 
