@@ -54,6 +54,7 @@ class SubDocGenTest : public testing::Test {
     using subdoc::gen::FavIcon;
     using namespace std::string_literals;
     auto options = subdoc::gen::Options{
+        .project_url = sus::some("PROJECT_URL"),
         .version_text = sus::some("VERSION_STRING"s),
         .output_root =
             [&]() {
