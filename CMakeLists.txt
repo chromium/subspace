@@ -77,6 +77,13 @@ endfunction()
 
 if(${SUBSPACE_BUILD_TESTS} OR ${SUBSPACE_BUILD_BENCHMARKS})
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    # Prevent googletest from including libc++abi's cxxabi.h, since it has a
+    # conflicting declaration of the __cxa_init_primary_exception symbol with
+    # libstdc++. It's very unclear why googletest unconditionally includes this
+    # header when the build is not set up to use libc++abi otherwise. We could
+    # add detection here to keep it when using libc++abi but we currently
+    # don't. See https://github.com/llvm/llvm-project/issues/121300
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGTEST_HAS_CXXABI_H_=0")
     add_subdirectory(third_party/googletest)
     include(GoogleTest)
     enable_testing()
