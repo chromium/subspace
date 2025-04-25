@@ -365,19 +365,19 @@ TEST(NumTransmogrify, LosslessFloatConversion) {
 }
 
 TEST(NumTransmogrify, f64tof32) {
-  EXPECT_EQ(sus::cast<f32>(f64::NAN).is_nan(), true);
-  EXPECT_EQ(sus::cast<f32>(f64::INFINITY), f32::INFINITY);
-  EXPECT_EQ(sus::cast<f32>(f64::NEG_INFINITY), f32::NEG_INFINITY);
-  EXPECT_EQ(sus::cast<f32>(f64::MAX), f32::INFINITY);
-  EXPECT_EQ(sus::cast<f32>(f64::MIN), f32::NEG_INFINITY);
+  EXPECT_EQ(sus::cast<f32>(f64::NaN).is_nan(), true);
+  EXPECT_EQ(sus::cast<f32>(f64::INF), f32::INF);
+  EXPECT_EQ(sus::cast<f32>(f64::NEG_INF), f32::NEG_INF);
+  EXPECT_EQ(sus::cast<f32>(f64::MAX), f32::INF);
+  EXPECT_EQ(sus::cast<f32>(f64::MIN), f32::NEG_INF);
 
   // Just past the valid range of values for f32 in either direciton. A
   // static_cast<float>(double) for these values would cause UB.
   EXPECT_EQ(
-      sus::cast<f32>(sus::cast<f64>(f32::MIN).next_toward(f64::NEG_INFINITY)),
-      f32::NEG_INFINITY);
-  EXPECT_EQ(sus::cast<f32>(sus::cast<f64>(f32::MAX).next_toward(f64::INFINITY)),
-            f32::INFINITY);
+      sus::cast<f32>(sus::cast<f64>(f32::MIN).next_toward(f64::NEG_INF)),
+      f32::NEG_INF);
+  EXPECT_EQ(sus::cast<f32>(sus::cast<f64>(f32::MAX).next_toward(f64::INF)),
+            f32::INF);
 
   // This is a value with bits set throughout the exponent and mantissa. Its
   // exponent is <= 127 and >= -126 so it's possible to represent it in f32.
@@ -390,13 +390,13 @@ TEST(NumTransmogrify, f32) {
 
   // Float to smaller unsigned.
   {
-    EXPECT_EQ(sus::cast<u16>(f32::NAN), 0_u16);
+    EXPECT_EQ(sus::cast<u16>(f32::NaN), 0_u16);
 
     EXPECT_EQ(sus::cast<u16>(0_f32), u16::MIN);
     EXPECT_EQ(sus::cast<u16>(-0_f32), u16::MIN);
     EXPECT_EQ(sus::cast<u16>(-0.00001_f32), u16::MIN);
     EXPECT_EQ(sus::cast<u16>(-99999999_f32), u16::MIN);
-    EXPECT_EQ(sus::cast<u16>(f32::NEG_INFINITY), u16::MIN);
+    EXPECT_EQ(sus::cast<u16>(f32::NEG_INF), u16::MIN);
 
     EXPECT_EQ(sus::cast<u16>(0.1_f32), 0_u16);
     EXPECT_EQ(sus::cast<u16>(0.51_f32), 0_u16);
@@ -406,9 +406,9 @@ TEST(NumTransmogrify, f32) {
     EXPECT_EQ(sus::cast<u16>(65535.00001_f32), u16::MAX);
     EXPECT_EQ(sus::cast<u16>(65536_f32), u16::MAX);
     EXPECT_EQ(sus::cast<u16>(999999999_f32), u16::MAX);
-    EXPECT_EQ(sus::cast<u16>(f32::INFINITY), u16::MAX);
+    EXPECT_EQ(sus::cast<u16>(f32::INF), u16::MAX);
 
-    EXPECT_EQ(sus::cast<u8>(f32::NAN), 0_u8);
+    EXPECT_EQ(sus::cast<u8>(f32::NaN), 0_u8);
     EXPECT_EQ(sus::cast<u8>(-99999999_f32), u8::MIN);
     EXPECT_EQ(sus::cast<u8>(999999999_f32), u8::MAX);
     EXPECT_EQ(sus::cast<u8>(1.1_f32), 1_u8);
@@ -416,7 +416,7 @@ TEST(NumTransmogrify, f32) {
   }
   // Float to smaller signed.
   {
-    EXPECT_EQ(sus::cast<i16>(f32::NAN), 0_i16);
+    EXPECT_EQ(sus::cast<i16>(f32::NaN), 0_i16);
 
     EXPECT_EQ(sus::cast<i16>(0_f32), 0_i16);
     EXPECT_EQ(sus::cast<i16>(-0_f32), 0_i16);
@@ -427,7 +427,7 @@ TEST(NumTransmogrify, f32) {
     EXPECT_EQ(sus::cast<i16>(-32768_f32), i16::MIN);
     EXPECT_EQ(sus::cast<i16>(-32768.00001_f32), i16::MIN);
     EXPECT_EQ(sus::cast<i16>(-99999999_f32), i16::MIN);
-    EXPECT_EQ(sus::cast<i16>(f32::NEG_INFINITY), i16::MIN);
+    EXPECT_EQ(sus::cast<i16>(f32::NEG_INF), i16::MIN);
 
     EXPECT_EQ(sus::cast<i16>(0.1_f32), 0_i16);
     EXPECT_EQ(sus::cast<i16>(0.51_f32), 0_i16);
@@ -437,10 +437,10 @@ TEST(NumTransmogrify, f32) {
     EXPECT_EQ(sus::cast<i16>(32767.00001_f32), i16::MAX);
     EXPECT_EQ(sus::cast<i16>(32767_f32), i16::MAX);
     EXPECT_EQ(sus::cast<i16>(999999999_f32), i16::MAX);
-    EXPECT_EQ(sus::cast<i16>(f32::INFINITY), i16::MAX);
+    EXPECT_EQ(sus::cast<i16>(f32::INF), i16::MAX);
 
-    EXPECT_EQ(sus::cast<i8>(f32::NAN), 0_i8);
-    EXPECT_EQ(sus::cast<i8>(f32::NAN), 0_i8);
+    EXPECT_EQ(sus::cast<i8>(f32::NaN), 0_i8);
+    EXPECT_EQ(sus::cast<i8>(f32::NaN), 0_i8);
     EXPECT_EQ(sus::cast<i8>(-99999999_f32), i8::MIN);
     EXPECT_EQ(sus::cast<i8>(999999999_f32), i8::MAX);
     EXPECT_EQ(sus::cast<i8>(1.1_f32), 1_i8);
@@ -451,13 +451,13 @@ TEST(NumTransmogrify, f32) {
 
   // Float to larger unsigned.
   {
-    EXPECT_EQ(sus::cast<u64>(f32::NAN), 0_u64);
+    EXPECT_EQ(sus::cast<u64>(f32::NaN), 0_u64);
 
     EXPECT_EQ(sus::cast<u64>(0_f32), u64::MIN);
     EXPECT_EQ(sus::cast<u64>(-0_f32), u64::MIN);
     EXPECT_EQ(sus::cast<u64>(-0.00001_f32), u64::MIN);
     EXPECT_EQ(sus::cast<u64>(-99999999_f32), u64::MIN);
-    EXPECT_EQ(sus::cast<u64>(f32::NEG_INFINITY), u64::MIN);
+    EXPECT_EQ(sus::cast<u64>(f32::NEG_INF), u64::MIN);
 
     EXPECT_EQ(sus::cast<u64>(0.1_f32), 0_u64);
     EXPECT_EQ(sus::cast<u64>(0.51_f32), 0_u64);
@@ -469,9 +469,9 @@ TEST(NumTransmogrify, f32) {
     EXPECT_EQ(sus::cast<u64>(18446744073709551615.00001_f32), u64::MAX);
     EXPECT_EQ(sus::cast<u64>(18446744073709551615_f32 + 1_f32), u64::MAX);
     EXPECT_EQ(sus::cast<u64>(18446744073709551615_f32 * 2_f32), u64::MAX);
-    EXPECT_EQ(sus::cast<u64>(f32::INFINITY), u64::MAX);
+    EXPECT_EQ(sus::cast<u64>(f32::INF), u64::MAX);
 
-    EXPECT_EQ(sus::cast<u32>(f32::NAN), 0_u32);
+    EXPECT_EQ(sus::cast<u32>(f32::NaN), 0_u32);
     EXPECT_EQ(sus::cast<u32>(-99999999999_f32), u32::MIN);
     EXPECT_EQ(sus::cast<u32>(99999999999_f32), u32::MAX);
     EXPECT_EQ(sus::cast<u32>(0.9_f32), 0_u32);
@@ -479,7 +479,7 @@ TEST(NumTransmogrify, f32) {
   }
   // Float to larger signed.
   {
-    EXPECT_EQ(sus::cast<i64>(f32::NAN), 0_i64);
+    EXPECT_EQ(sus::cast<i64>(f32::NaN), 0_i64);
 
     EXPECT_EQ(sus::cast<i64>(0_f32), 0_i64);
     EXPECT_EQ(sus::cast<i64>(-0_f32), 0_i64);
@@ -491,7 +491,7 @@ TEST(NumTransmogrify, f32) {
     EXPECT_EQ(sus::cast<i64>(-9223372036854775808_f32), i64::MIN);
     EXPECT_EQ(sus::cast<i64>(-9223372036854775808.00001_f32), i64::MIN);
     EXPECT_EQ(sus::cast<i64>(-9999999999999999999_f32), i64::MIN);
-    EXPECT_EQ(sus::cast<i64>(f32::NEG_INFINITY), i64::MIN);
+    EXPECT_EQ(sus::cast<i64>(f32::NEG_INF), i64::MIN);
 
     EXPECT_EQ(sus::cast<i64>(0.1_f32), 0_i64);
     EXPECT_EQ(sus::cast<i64>(0.51_f32), 0_i64);
@@ -503,9 +503,9 @@ TEST(NumTransmogrify, f32) {
     EXPECT_EQ(sus::cast<i64>(92233720368547758075.00001_f32), i64::MAX);
     EXPECT_EQ(sus::cast<i64>(9223372036854775808_f32), i64::MAX);
     EXPECT_EQ(sus::cast<i64>(9999999999999999999_f32), i64::MAX);
-    EXPECT_EQ(sus::cast<i64>(f32::INFINITY), i64::MAX);
+    EXPECT_EQ(sus::cast<i64>(f32::INF), i64::MAX);
 
-    EXPECT_EQ(sus::cast<i32>(f32::NAN), 0_i32);
+    EXPECT_EQ(sus::cast<i32>(f32::NaN), 0_i32);
     EXPECT_EQ(sus::cast<i32>(-99999999999_f32), i32::MIN);
     EXPECT_EQ(sus::cast<i32>(999999999999_f32), i32::MAX);
     EXPECT_EQ(sus::cast<i32>(1.1_f32), 1_i32);
@@ -535,13 +535,13 @@ TEST(NumTransmogrify, f64) {
 
   // Float to smaller unsigned.
   {
-    EXPECT_EQ(sus::cast<u16>(f64::NAN), 0_u16);
+    EXPECT_EQ(sus::cast<u16>(f64::NaN), 0_u16);
 
     EXPECT_EQ(sus::cast<u16>(0_f64), u16::MIN);
     EXPECT_EQ(sus::cast<u16>(-0_f64), u16::MIN);
     EXPECT_EQ(sus::cast<u16>(-0.00001_f64), u16::MIN);
     EXPECT_EQ(sus::cast<u16>(-99999999_f64), u16::MIN);
-    EXPECT_EQ(sus::cast<u16>(f64::NEG_INFINITY), u16::MIN);
+    EXPECT_EQ(sus::cast<u16>(f64::NEG_INF), u16::MIN);
 
     EXPECT_EQ(sus::cast<u16>(0.1_f64), 0_u16);
     EXPECT_EQ(sus::cast<u16>(0.51_f64), 0_u16);
@@ -551,11 +551,11 @@ TEST(NumTransmogrify, f64) {
     EXPECT_EQ(sus::cast<u16>(65535.00001_f64), u16::MAX);
     EXPECT_EQ(sus::cast<u16>(65536_f64), u16::MAX);
     EXPECT_EQ(sus::cast<u16>(999999999_f64), u16::MAX);
-    EXPECT_EQ(sus::cast<u16>(f64::INFINITY), u16::MAX);
+    EXPECT_EQ(sus::cast<u16>(f64::INF), u16::MAX);
   }
   // Float to smaller signed.
   {
-    EXPECT_EQ(sus::cast<i16>(f64::NAN), 0_i16);
+    EXPECT_EQ(sus::cast<i16>(f64::NaN), 0_i16);
 
     EXPECT_EQ(sus::cast<i16>(0_f64), 0_i16);
     EXPECT_EQ(sus::cast<i16>(-0_f64), 0_i16);
@@ -566,7 +566,7 @@ TEST(NumTransmogrify, f64) {
     EXPECT_EQ(sus::cast<i16>(-32768_f64), i16::MIN);
     EXPECT_EQ(sus::cast<i16>(-32768.00001_f64), i16::MIN);
     EXPECT_EQ(sus::cast<i16>(-99999999_f64), i16::MIN);
-    EXPECT_EQ(sus::cast<i16>(f64::NEG_INFINITY), i16::MIN);
+    EXPECT_EQ(sus::cast<i16>(f64::NEG_INF), i16::MIN);
 
     EXPECT_EQ(sus::cast<i16>(0.1_f64), 0_i16);
     EXPECT_EQ(sus::cast<i16>(0.51_f64), 0_i16);
@@ -576,18 +576,18 @@ TEST(NumTransmogrify, f64) {
     EXPECT_EQ(sus::cast<i16>(65535.00001_f64), i16::MAX);
     EXPECT_EQ(sus::cast<i16>(65536_f64), i16::MAX);
     EXPECT_EQ(sus::cast<i16>(999999999_f64), i16::MAX);
-    EXPECT_EQ(sus::cast<i16>(f64::INFINITY), i16::MAX);
+    EXPECT_EQ(sus::cast<i16>(f64::INF), i16::MAX);
   }
 
   // Float to unsigned.
   {
-    EXPECT_EQ(sus::cast<u64>(f64::NAN), 0_u64);
+    EXPECT_EQ(sus::cast<u64>(f64::NaN), 0_u64);
 
     EXPECT_EQ(sus::cast<u64>(0_f64), u64::MIN);
     EXPECT_EQ(sus::cast<u64>(-0_f64), u64::MIN);
     EXPECT_EQ(sus::cast<u64>(-0.00001_f64), u64::MIN);
     EXPECT_EQ(sus::cast<u64>(-99999999_f64), u64::MIN);
-    EXPECT_EQ(sus::cast<u64>(f64::NEG_INFINITY), u64::MIN);
+    EXPECT_EQ(sus::cast<u64>(f64::NEG_INF), u64::MIN);
 
     EXPECT_EQ(sus::cast<u64>(0.1_f64), 0_u64);
     EXPECT_EQ(sus::cast<u64>(0.51_f64), 0_u64);
@@ -599,11 +599,11 @@ TEST(NumTransmogrify, f64) {
     EXPECT_EQ(sus::cast<u64>(18446744073709551615.00001_f64), u64::MAX);
     EXPECT_EQ(sus::cast<u64>(18446744073709551615_f64 + 1_f64), u64::MAX);
     EXPECT_EQ(sus::cast<u64>(18446744073709551615_f64 * 2_f64), u64::MAX);
-    EXPECT_EQ(sus::cast<u64>(f64::INFINITY), u64::MAX);
+    EXPECT_EQ(sus::cast<u64>(f64::INF), u64::MAX);
   }
   // Float to signed.
   {
-    EXPECT_EQ(sus::cast<i64>(f64::NAN), 0_i64);
+    EXPECT_EQ(sus::cast<i64>(f64::NaN), 0_i64);
 
     EXPECT_EQ(sus::cast<i64>(0_f64), 0_i64);
     EXPECT_EQ(sus::cast<i64>(-0_f64), 0_i64);
@@ -615,7 +615,7 @@ TEST(NumTransmogrify, f64) {
     EXPECT_EQ(sus::cast<i64>(-9223372036854775808_f64), i64::MIN);
     EXPECT_EQ(sus::cast<i64>(-9223372036854775808.00001_f64), i64::MIN);
     EXPECT_EQ(sus::cast<i64>(-9223372036854775808_f64 * 2_f64), i64::MIN);
-    EXPECT_EQ(sus::cast<i64>(f64::NEG_INFINITY), i64::MIN);
+    EXPECT_EQ(sus::cast<i64>(f64::NEG_INF), i64::MIN);
 
     EXPECT_EQ(sus::cast<i64>(0.1_f64), 0_i64);
     EXPECT_EQ(sus::cast<i64>(0.51_f64), 0_i64);
@@ -626,7 +626,7 @@ TEST(NumTransmogrify, f64) {
     EXPECT_EQ(sus::cast<i64>(9223372036854775807_f64), i64::MAX);
     EXPECT_EQ(sus::cast<i64>(9223372036854775807.00001_f64), i64::MAX);
     EXPECT_EQ(sus::cast<i64>(9223372036854775807_f64 * 2_f64), i64::MAX);
-    EXPECT_EQ(sus::cast<i64>(f64::INFINITY), i64::MAX);
+    EXPECT_EQ(sus::cast<i64>(f64::INF), i64::MAX);
   }
 
   // Ints to f64.

@@ -31,7 +31,6 @@
 #include "sus/num/__private/float_ordering.h"
 #include "sus/num/__private/intrinsics.h"
 #include "sus/num/__private/literals.h"
-#include "sus/num/cmath_macros.h"
 #include "sus/num/float_concepts.h"
 #include "sus/num/fp_category.h"
 #include "sus/num/signed_integer.h"

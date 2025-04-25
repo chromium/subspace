@@ -192,7 +192,7 @@ class Range final : public __private::RangeIter<Range<T>, T> {
 
   /// Returns true if the range contains no items.
   ///
-  /// The range is empty if either side is incomparable, such as `f32::NAN`.
+  /// The range is empty if either side is incomparable, such as `f32::NaN`.
   constexpr bool is_empty() const noexcept { return !(start < finish); }
 
   /// Return a new Range that starts at `t` and ends where the original Range

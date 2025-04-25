@@ -1873,10 +1873,10 @@ __sus_pure_const constexpr inline Out static_cast_to_smaller_float(
     return static_cast<Out>(x);  // Handles values in range.
   }
   if (x > T{max_value<Out>()}) {
-    return infinity<Out>();  // Handles large values and INFINITY.
+    return infinity<Out>();  // Handles large values and INF.
   }
   if (x < T{min_value<Out>()}) {
-    return negative_infinity<Out>();  // Handles small values and NEG_INFINITY.
+    return negative_infinity<Out>();  // Handles small values and NEG_INF.
   }
   return nan<Out>();  // All that's left are NaNs.
 }

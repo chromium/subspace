@@ -859,7 +859,7 @@ TEST(Choice, PartialOrder) {
   EXPECT_EQ(std::partial_order(u1, u2), std::partial_ordering::less);
 
   // NaN is unordered.
-  auto u3 = ChoiceFloatFloat::with<Order::First>(f32::NAN);
+  auto u3 = ChoiceFloatFloat::with<Order::First>(f32::NaN);
   EXPECT_EQ(std::partial_order(u1, u3), std::partial_ordering::unordered);
 
   // 0 == -0.

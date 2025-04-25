@@ -14,7 +14,7 @@
 
 #include "sus/tuple/tuple.h"
 
-#include <math.h>  // TODO: Replace with f32::NAN()
+#include <math.h>  // TODO: Replace with f32::NaN()
 
 #include <concepts>
 #include <tuple>
@@ -448,7 +448,7 @@ TEST(Tuple, Eq) {
   EXPECT_EQ(Tuple<f32>(1.f), Tuple<f32>(1.f));
   EXPECT_EQ(Tuple<f32>(0.f), Tuple<f32>(0.f));
   EXPECT_EQ(Tuple<f32>(0.f), Tuple<f32>(-0.f));
-  EXPECT_NE(Tuple<f32>(f32::NAN), Tuple<f32>(f32::NAN));
+  EXPECT_NE(Tuple<f32>(f32::NaN), Tuple<f32>(f32::NaN));
 
   auto n1 = NoCopyMove();
   auto tn1 = Tuple<NoCopyMove&>(n1);
@@ -530,13 +530,13 @@ TEST(Tuple, PartialOrder) {
             std::partial_ordering::equivalent);
   EXPECT_EQ(std::partial_order(Tuple<f32>(0.f), Tuple<f32>(1.f)),
             std::partial_ordering::less);
-  EXPECT_EQ(std::partial_order(Tuple<f32>(0.f), Tuple<f32>(f32::NAN)),
+  EXPECT_EQ(std::partial_order(Tuple<f32>(0.f), Tuple<f32>(f32::NaN)),
             std::partial_ordering::unordered);
-  EXPECT_EQ(std::partial_order(Tuple<f32>(f32::NAN), Tuple<f32>(f32::NAN)),
+  EXPECT_EQ(std::partial_order(Tuple<f32>(f32::NaN), Tuple<f32>(f32::NaN)),
             std::partial_ordering::unordered);
-  EXPECT_EQ(std::partial_order(Tuple<f32>(0.f), Tuple<f32>(f32::INFINITY)),
+  EXPECT_EQ(std::partial_order(Tuple<f32>(0.f), Tuple<f32>(f32::INF)),
             std::partial_ordering::less);
-  EXPECT_EQ(std::partial_order(Tuple<f32>(0.f), Tuple<f32>(f32::NEG_INFINITY)),
+  EXPECT_EQ(std::partial_order(Tuple<f32>(0.f), Tuple<f32>(f32::NEG_INF)),
             std::partial_ordering::greater);
 }
 

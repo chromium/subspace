@@ -45,10 +45,10 @@ inline constexpr i32 _self::MIN_EXP = __private::min_exp<_primitive>();
 inline constexpr i32 _self::MAX_EXP = __private::max_exp<_primitive>();
 inline constexpr i32 _self::MIN_10_EXP = __private::min_10_exp<_primitive>();
 inline constexpr i32 _self::MAX_10_EXP = __private::max_10_exp<_primitive>();
-inline constexpr _self _self::NAN = _self(__private::nan<_primitive>());
-inline constexpr _self _self::INFINITY =
+inline constexpr _self _self::NaN = _self(__private::nan<_primitive>());
+inline constexpr _self _self::INF =
     _self(__private::infinity<_primitive>());
-inline constexpr _self _self::NEG_INFINITY =
+inline constexpr _self _self::NEG_INF =
     _self(__private::negative_infinity<_primitive>());
 
 inline constexpr _self _self::consts::E =

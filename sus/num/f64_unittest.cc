@@ -87,7 +87,7 @@ TEST(f64, Traits) {
   static_assert(!(1_f64 == 2_f64));
   static_assert(1_f64 != 2_f64);
   static_assert(!(1_f64 != 1_f64));
-  EXPECT_NE(f64::NAN, f64::NAN);
+  EXPECT_NE(f64::NaN, f64::NaN);
 
   // Verify constexpr.
   constexpr f64 c = 1_f64 + 2_f64 - 3_f64 * 4_f64 / 5_f64 % 6_f64;
@@ -123,11 +123,11 @@ TEST(f64, Consts) {
   EXPECT_EQ(f64::MAX_EXP, 1024_i32);
   EXPECT_EQ(f64::MIN_10_EXP, -307_i32);
   EXPECT_EQ(f64::MAX_10_EXP, 308_i32);
-  EXPECT_TRUE(isnan(f64::NAN.primitive_value));
-  EXPECT_TRUE(isinf(f64::INFINITY.primitive_value));
-  EXPECT_GT(f64::INFINITY, 0_f64);
-  EXPECT_TRUE(isinf(f64::NEG_INFINITY.primitive_value));
-  EXPECT_LT(f64::NEG_INFINITY, 0_f64);
+  EXPECT_TRUE(isnan(f64::NaN.primitive_value));
+  EXPECT_TRUE(isinf(f64::INF.primitive_value));
+  EXPECT_GT(f64::INF, 0_f64);
+  EXPECT_TRUE(isinf(f64::NEG_INF.primitive_value));
+  EXPECT_LT(f64::NEG_INF, 0_f64);
 
   EXPECT_EQ(f64::consts::E, 2.71828182845904523536028747135266250_f64);
   EXPECT_EQ(f64::consts::FRAC_1_PI, 0.318309886183790671537767526745028724_f64);
@@ -378,8 +378,8 @@ TEST(f64, TotalCmp) {
   EXPECT_FALSE(sus::num::__private::float_is_nan_quiet(
       neg_signaling_nan2.primitive_value));
 
-  const auto inf = f64::INFINITY;
-  const auto neg_inf = f64::NEG_INFINITY;
+  const auto inf = f64::INF;
+  const auto neg_inf = f64::NEG_INF;
   EXPECT_EQ(inf.classify(), sus::num::FpCategory::Infinite);
   EXPECT_EQ(neg_inf.classify(), sus::num::FpCategory::Infinite);
 
@@ -690,10 +690,10 @@ TEST(f64, Copysign) {
   EXPECT_EQ(a, 0.456_f64);
   auto b = (0.456_f64).copysign(-1_f64);
   EXPECT_EQ(b, -0.456_f64);
-  auto c = f64::NAN.copysign(-1_f64);
+  auto c = f64::NaN.copysign(-1_f64);
   EXPECT_TRUE(c.is_nan());
   EXPECT_TRUE(c.is_sign_negative());
-  auto d = f64::NAN.copysign(1_f64);
+  auto d = f64::NaN.copysign(1_f64);
   EXPECT_TRUE(d.is_nan());
   EXPECT_TRUE(d.is_sign_positive());
 }
@@ -781,9 +781,9 @@ TEST(f64, Max) {
   EXPECT_EQ(a, 0.456_f64);
   auto b = (0.456_f64).max(0.457_f64);
   EXPECT_EQ(b, 0.457_f64);
-  auto c = f64::NAN.max(0.457_f64);
+  auto c = f64::NaN.max(0.457_f64);
   EXPECT_EQ(c, 0.457_f64);
-  auto d = (0.456_f64).max(f64::NAN);
+  auto d = (0.456_f64).max(f64::NaN);
   EXPECT_EQ(d, 0.456_f64);
 }
 
@@ -792,9 +792,9 @@ TEST(f64, Min) {
   EXPECT_EQ(a, -0.456_f64);
   auto b = (0.456_f64).min(0.457_f64);
   EXPECT_EQ(b, 0.456_f64);
-  auto c = f64::NAN.min(0.457_f64);
+  auto c = f64::NaN.min(0.457_f64);
   EXPECT_EQ(c, 0.457_f64);
-  auto d = (0.456_f64).min(f64::NAN);
+  auto d = (0.456_f64).min(f64::NaN);
   EXPECT_EQ(d, 0.456_f64);
 }
 
@@ -816,7 +816,7 @@ TEST(f64, Powi) {
 TEST(f64, Recip) {
   auto a = (0.456_f64).recip();
   F64_NEAR(a, 2.19298245614_f64, 0.0000001_f64);
-  auto b = f64::NAN.recip();
+  auto b = f64::NaN.recip();
   EXPECT_TRUE(b.is_nan());
 }
 
@@ -839,7 +839,7 @@ TEST(f64, Round) {
   auto g = (-0.02_f64).round();
   EXPECT_EQ(g.is_sign_negative(), true);
   EXPECT_EQ(g, -0_f64);
-  auto h = f64::NAN.round();
+  auto h = f64::NaN.round();
   EXPECT_EQ(h.is_nan(), true);
 }
 
@@ -862,7 +862,7 @@ TEST(f64, RoundTies) {
   auto g = (-0.02_f64).round_ties();
   EXPECT_EQ(g.is_sign_negative(), true);
   EXPECT_EQ(g, -0_f64);
-  auto h = f64::NAN.round_ties();
+  auto h = f64::NaN.round_ties();
   EXPECT_EQ(h.is_nan(), true);
 }
 
@@ -915,9 +915,9 @@ TEST(f64, Signum) {
   EXPECT_EQ((-0_f64).signum(), -1_f64);
   EXPECT_EQ((123_f64).signum(), 1_f64);
   EXPECT_EQ((-123_f64).signum(), -1_f64);
-  EXPECT_EQ(f64::INFINITY.signum(), 1_f64);
-  EXPECT_EQ(f64::NEG_INFINITY.signum(), -1_f64);
-  EXPECT_TRUE(f64::NAN.signum().is_nan());
+  EXPECT_EQ(f64::INF.signum(), 1_f64);
+  EXPECT_EQ(f64::NEG_INF.signum(), -1_f64);
+  EXPECT_TRUE(f64::NaN.signum().is_nan());
 }
 
 TEST(f64, Sin) {
@@ -1036,9 +1036,9 @@ TEST(f64, ToBits) {
 }
 
 TEST(f64, Classify) {
-  EXPECT_EQ(f64::NAN.classify(), FpCategory::Nan);
-  EXPECT_EQ(f64::INFINITY.classify(), FpCategory::Infinite);
-  EXPECT_EQ(f64::NEG_INFINITY.classify(), FpCategory::Infinite);
+  EXPECT_EQ(f64::NaN.classify(), FpCategory::Nan);
+  EXPECT_EQ(f64::INF.classify(), FpCategory::Infinite);
+  EXPECT_EQ(f64::NEG_INF.classify(), FpCategory::Infinite);
   EXPECT_EQ((0_f64).classify(), FpCategory::Zero);
   EXPECT_EQ((-0_f64).classify(), FpCategory::Zero);
   EXPECT_EQ(
@@ -1047,11 +1047,11 @@ TEST(f64, Classify) {
       FpCategory::Subnormal);
   EXPECT_EQ((123_f64).classify(), FpCategory::Normal);
 
-  auto a = f64::NAN.classify();
+  auto a = f64::NaN.classify();
   EXPECT_EQ(a, FpCategory::Nan);
-  constexpr auto b = f64::INFINITY.classify();
+  constexpr auto b = f64::INF.classify();
   EXPECT_EQ(b, FpCategory::Infinite);
-  constexpr auto c = f64::NEG_INFINITY.classify();
+  constexpr auto c = f64::NEG_INF.classify();
   EXPECT_EQ(c, FpCategory::Infinite);
   constexpr auto d = (0_f64).classify();
   EXPECT_EQ(d, FpCategory::Zero);
@@ -1066,9 +1066,9 @@ TEST(f64, Classify) {
 }
 
 TEST(f64, IsFinite) {
-  EXPECT_FALSE(f64::INFINITY.is_finite());
-  EXPECT_FALSE(f64::NEG_INFINITY.is_finite());
-  EXPECT_FALSE(f64::NAN.is_finite());
+  EXPECT_FALSE(f64::INF.is_finite());
+  EXPECT_FALSE(f64::NEG_INF.is_finite());
+  EXPECT_FALSE(f64::NaN.is_finite());
   EXPECT_TRUE((0_f64).is_finite());
   EXPECT_TRUE((-0_f64).is_finite());
   EXPECT_TRUE(
@@ -1078,9 +1078,9 @@ TEST(f64, IsFinite) {
 }
 
 TEST(f64, IsInfinite) {
-  EXPECT_TRUE(f64::INFINITY.is_infinite());
-  EXPECT_TRUE(f64::NEG_INFINITY.is_infinite());
-  EXPECT_FALSE(f64::NAN.is_infinite());
+  EXPECT_TRUE(f64::INF.is_infinite());
+  EXPECT_TRUE(f64::NEG_INF.is_infinite());
+  EXPECT_FALSE(f64::NaN.is_infinite());
   EXPECT_FALSE((0_f64).is_infinite());
   EXPECT_FALSE((-0_f64).is_infinite());
   EXPECT_FALSE(
@@ -1090,9 +1090,9 @@ TEST(f64, IsInfinite) {
 }
 
 TEST(f64, IsNan) {
-  EXPECT_FALSE(f64::INFINITY.is_nan());
-  EXPECT_FALSE(f64::NEG_INFINITY.is_nan());
-  EXPECT_TRUE(f64::NAN.is_nan());
+  EXPECT_FALSE(f64::INF.is_nan());
+  EXPECT_FALSE(f64::NEG_INF.is_nan());
+  EXPECT_TRUE(f64::NaN.is_nan());
   EXPECT_FALSE((0_f64).is_nan());
   EXPECT_FALSE((-0_f64).is_nan());
   EXPECT_FALSE(
@@ -1102,9 +1102,9 @@ TEST(f64, IsNan) {
 }
 
 TEST(f64, IsNormal) {
-  EXPECT_FALSE(f64::INFINITY.is_normal());
-  EXPECT_FALSE(f64::NEG_INFINITY.is_normal());
-  EXPECT_FALSE(f64::NAN.is_normal());
+  EXPECT_FALSE(f64::INF.is_normal());
+  EXPECT_FALSE(f64::NEG_INF.is_normal());
+  EXPECT_FALSE(f64::NaN.is_normal());
   EXPECT_FALSE((0_f64).is_normal());
   EXPECT_FALSE((-0_f64).is_normal());
   EXPECT_FALSE(
@@ -1114,9 +1114,9 @@ TEST(f64, IsNormal) {
 }
 
 TEST(f64, IsSignNegative) {
-  EXPECT_FALSE(f64::INFINITY.is_sign_negative());
-  EXPECT_TRUE(f64::NEG_INFINITY.is_sign_negative());
-  EXPECT_FALSE(f64::NAN.is_sign_negative());
+  EXPECT_FALSE(f64::INF.is_sign_negative());
+  EXPECT_TRUE(f64::NEG_INF.is_sign_negative());
+  EXPECT_FALSE(f64::NaN.is_sign_negative());
   EXPECT_FALSE((0_f64).is_sign_negative());
   EXPECT_TRUE((-0_f64).is_sign_negative());
   EXPECT_FALSE(
@@ -1130,9 +1130,9 @@ TEST(f64, IsSignNegative) {
 }
 
 TEST(f64, IsSignPositive) {
-  EXPECT_TRUE(f64::INFINITY.is_sign_positive());
-  EXPECT_FALSE(f64::NEG_INFINITY.is_sign_positive());
-  EXPECT_TRUE(f64::NAN.is_sign_positive());
+  EXPECT_TRUE(f64::INF.is_sign_positive());
+  EXPECT_FALSE(f64::NEG_INF.is_sign_positive());
+  EXPECT_TRUE(f64::NaN.is_sign_positive());
   EXPECT_TRUE((0_f64).is_sign_positive());
   EXPECT_FALSE((-0_f64).is_sign_positive());
   EXPECT_TRUE(
@@ -1146,9 +1146,9 @@ TEST(f64, IsSignPositive) {
 }
 
 TEST(f64, IsSubnormal) {
-  EXPECT_FALSE(f64::INFINITY.is_subnormal());
-  EXPECT_FALSE(f64::NEG_INFINITY.is_subnormal());
-  EXPECT_FALSE(f64::NAN.is_subnormal());
+  EXPECT_FALSE(f64::INF.is_subnormal());
+  EXPECT_FALSE(f64::NEG_INF.is_subnormal());
+  EXPECT_FALSE(f64::NaN.is_subnormal());
   EXPECT_FALSE((0_f64).is_subnormal());
   EXPECT_FALSE((-0_f64).is_subnormal());
   EXPECT_TRUE(
@@ -1161,7 +1161,7 @@ TEST(f64, Clamp) {
   EXPECT_TRUE((-3.0_f64).clamp(-2.0_f64, 1.0_f64) == -2.0_f64);
   EXPECT_TRUE((0.0_f64).clamp(-2.0_f64, 1.0_f64) == 0.0_f64);
   EXPECT_TRUE((2.0_f64).clamp(-2.0_f64, 1.0_f64) == 1.0_f64);
-  EXPECT_TRUE((f64::NAN).clamp(-2.0_f64, 1.0_f64).is_nan());
+  EXPECT_TRUE((f64::NaN).clamp(-2.0_f64, 1.0_f64).is_nan());
 }
 
 TEST(f64, DivEuclid) {
@@ -1219,13 +1219,13 @@ TEST(f64, fmt) {
 }
 
 TEST(f64, NextToward) {
-  EXPECT_EQ((0_f64).next_toward(f64::NAN).is_nan(), true);
-  EXPECT_EQ(f64::NAN.next_toward(0_f64).is_nan(), true);
-  EXPECT_EQ((1_f64).next_toward(f64::INFINITY) - 1_f64,
+  EXPECT_EQ((0_f64).next_toward(f64::NaN).is_nan(), true);
+  EXPECT_EQ(f64::NaN.next_toward(0_f64).is_nan(), true);
+  EXPECT_EQ((1_f64).next_toward(f64::INF) - 1_f64,
             f64(std::numeric_limits<double>::epsilon()));
-  EXPECT_GT((0_f64).next_toward(f64::INFINITY), 0_f64);
+  EXPECT_GT((0_f64).next_toward(f64::INF), 0_f64);
   EXPECT_GT((0_f64).next_toward(1_f64), 0_f64);
-  EXPECT_LT((0_f64).next_toward(f64::NEG_INFINITY), 0_f64);
+  EXPECT_LT((0_f64).next_toward(f64::NEG_INF), 0_f64);
   EXPECT_LT((0_f64).next_toward(-1_f64), 0_f64);
 }
 

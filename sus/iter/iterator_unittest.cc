@@ -1011,26 +1011,26 @@ TEST(Iterator, PartialCmp) {
               smol.iter().partial_cmp(bigg.iter()));
   }
   {
-    auto smol = sus::Array<f32, 2>(f32::NAN, f32::NAN);
-    auto bigg = sus::Array<f32, 2>(f32::NAN, f32::NAN);
+    auto smol = sus::Array<f32, 2>(f32::NaN, f32::NaN);
+    auto bigg = sus::Array<f32, 2>(f32::NaN, f32::NaN);
     EXPECT_EQ(std::partial_ordering::unordered,
               smol.iter().partial_cmp(bigg.iter()));
   }
   {
-    auto smol = sus::Array<f32, 2>(f32::NAN, 1.f);
-    auto bigg = sus::Array<f32, 2>(f32::NAN, 2.f);
+    auto smol = sus::Array<f32, 2>(f32::NaN, 1.f);
+    auto bigg = sus::Array<f32, 2>(f32::NaN, 2.f);
     EXPECT_EQ(std::partial_ordering::unordered,
               smol.iter().partial_cmp(bigg.iter()));
   }
   {
-    auto smol = sus::Array<f32, 2>(1.f, f32::NAN);
-    auto bigg = sus::Array<f32, 2>(f32::NAN, f32::NAN);
+    auto smol = sus::Array<f32, 2>(1.f, f32::NaN);
+    auto bigg = sus::Array<f32, 2>(f32::NaN, f32::NaN);
     EXPECT_EQ(std::partial_ordering::unordered,
               smol.iter().partial_cmp(bigg.iter()));
   }
   {
-    auto smol = sus::Array<f32, 2>(1.f, f32::NAN);
-    auto bigg = sus::Array<f32, 2>(2.f, f32::NAN);
+    auto smol = sus::Array<f32, 2>(1.f, f32::NaN);
+    auto bigg = sus::Array<f32, 2>(2.f, f32::NaN);
     EXPECT_EQ(std::partial_ordering::less,
               smol.iter().partial_cmp(bigg.iter()));
   }
@@ -2164,11 +2164,11 @@ TEST(Iterator, Ge) {
   }
   {
     auto it1 = sus::Array<f32, 2>(1.f, 4.f).into_iter();
-    auto it2 = sus::Array<f32, 2>(1.f, f32::NAN).into_iter();
+    auto it2 = sus::Array<f32, 2>(1.f, f32::NaN).into_iter();
     EXPECT_EQ(false, sus::move(it1).ge(sus::move(it2)));
   }
   {
-    auto it1 = sus::Array<f32, 2>(1.f, f32::NAN).into_iter();
+    auto it1 = sus::Array<f32, 2>(1.f, f32::NaN).into_iter();
     auto it2 = sus::Array<f32, 2>(1.f, 3.f).into_iter();
     EXPECT_EQ(false, sus::move(it1).ge(sus::move(it2)));
   }
@@ -2195,11 +2195,11 @@ TEST(Iterator, Gt) {
   }
   {
     auto it1 = sus::Array<f32, 2>(1.f, 4.f).into_iter();
-    auto it2 = sus::Array<f32, 2>(1.f, f32::NAN).into_iter();
+    auto it2 = sus::Array<f32, 2>(1.f, f32::NaN).into_iter();
     EXPECT_EQ(false, sus::move(it1).gt(sus::move(it2)));
   }
   {
-    auto it1 = sus::Array<f32, 2>(1.f, f32::NAN).into_iter();
+    auto it1 = sus::Array<f32, 2>(1.f, f32::NaN).into_iter();
     auto it2 = sus::Array<f32, 2>(1.f, 3.f).into_iter();
     EXPECT_EQ(false, sus::move(it1).gt(sus::move(it2)));
   }
@@ -2226,11 +2226,11 @@ TEST(Iterator, Le) {
   }
   {
     auto it1 = sus::Array<f32, 2>(1.f, 4.f).into_iter();
-    auto it2 = sus::Array<f32, 2>(1.f, f32::NAN).into_iter();
+    auto it2 = sus::Array<f32, 2>(1.f, f32::NaN).into_iter();
     EXPECT_EQ(false, sus::move(it1).le(sus::move(it2)));
   }
   {
-    auto it1 = sus::Array<f32, 2>(1.f, f32::NAN).into_iter();
+    auto it1 = sus::Array<f32, 2>(1.f, f32::NaN).into_iter();
     auto it2 = sus::Array<f32, 2>(1.f, 3.f).into_iter();
     EXPECT_EQ(false, sus::move(it1).le(sus::move(it2)));
   }
@@ -2257,11 +2257,11 @@ TEST(Iterator, Lt) {
   }
   {
     auto it1 = sus::Array<f32, 2>(1.f, 4.f).into_iter();
-    auto it2 = sus::Array<f32, 2>(1.f, f32::NAN).into_iter();
+    auto it2 = sus::Array<f32, 2>(1.f, f32::NaN).into_iter();
     EXPECT_EQ(false, sus::move(it1).lt(sus::move(it2)));
   }
   {
-    auto it1 = sus::Array<f32, 2>(1.f, f32::NAN).into_iter();
+    auto it1 = sus::Array<f32, 2>(1.f, f32::NaN).into_iter();
     auto it2 = sus::Array<f32, 2>(1.f, 3.f).into_iter();
     EXPECT_EQ(false, sus::move(it1).lt(sus::move(it2)));
   }

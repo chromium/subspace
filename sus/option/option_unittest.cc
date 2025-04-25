@@ -2390,7 +2390,7 @@ TEST(Option, Eq) {
   EXPECT_EQ(Option<i32>(), Option<i32>());
   EXPECT_EQ(Option<f32>(1.f), Option<f32>(1.f));
   EXPECT_EQ(Option<f32>(0.f), Option<f32>(-0.f));
-  EXPECT_NE(Option<f32>(f32::NAN), Option<f32>(f32::NAN));
+  EXPECT_NE(Option<f32>(f32::NaN), Option<f32>(f32::NaN));
 
   // Compares with the State enum.
   EXPECT_EQ(Option<i32>(1), Some);
@@ -2474,19 +2474,19 @@ TEST(Option, PartialOrder) {
             std::partial_ordering::greater);
   EXPECT_EQ(std::partial_order(Option<float>(11.f), Option<float>(12.f)),
             std::partial_ordering::less);
-  EXPECT_EQ(std::partial_order(Option<f32>(11.f), Option<f32>(f32::NAN)),
+  EXPECT_EQ(std::partial_order(Option<f32>(11.f), Option<f32>(f32::NaN)),
             std::partial_ordering::unordered);
-  EXPECT_EQ(std::partial_order(Option<f32>(f32::NAN), Option<f32>(f32::NAN)),
+  EXPECT_EQ(std::partial_order(Option<f32>(f32::NaN), Option<f32>(f32::NaN)),
             std::partial_ordering::unordered);
-  EXPECT_EQ(std::partial_order(Option<f32>(0.f), Option<f32>(f32::INFINITY)),
+  EXPECT_EQ(std::partial_order(Option<f32>(0.f), Option<f32>(f32::INF)),
             std::partial_ordering::less);
   EXPECT_EQ(
-      std::partial_order(Option<f32>(0.f), Option<f32>(f32::NEG_INFINITY)),
+      std::partial_order(Option<f32>(0.f), Option<f32>(f32::NEG_INF)),
       std::partial_ordering::greater);
 
   EXPECT_EQ(std::partial_order(Option<f32>(0.f), Option<f32>()),
             std::partial_ordering::greater);
-  EXPECT_EQ(std::partial_order(Option<f32>(), Option<f32>(f32::NAN)),
+  EXPECT_EQ(std::partial_order(Option<f32>(), Option<f32>(f32::NaN)),
             std::partial_ordering::less);
 }
 
