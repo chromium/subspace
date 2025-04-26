@@ -22,8 +22,25 @@
 namespace sus {
 /// Marker types, such as for accessing unsafe APIs, for overload resolution,
 /// or type elision.
-namespace marker {}
+namespace marker {
+  struct UnsafeFnMarker;
+}
 }  // namespace sus
+
+// fmt support.
+template <class Char>
+struct fmt::formatter<::sus::marker::UnsafeFnMarker, Char> {
+  template <class ParseContext>
+  constexpr auto parse(ParseContext& ctx) {
+    return ctx.begin();
+  }
+
+  template <class FormatContext>
+  constexpr auto format(const ::sus::marker::UnsafeFnMarker&,
+                        FormatContext& ctx) const {
+    return fmt::format_to(ctx.out(), "unsafe_fn");
+  }
+};
 
 namespace sus::marker {
 
@@ -51,6 +68,9 @@ struct UnsafeFnMarker {
   /// $sus::marker::unsafe_fn).
   /// #[doc.hidden]
   explicit consteval UnsafeFnMarker() {}
+
+  // Stream support.
+  _sus_format_to_stream(UnsafeFnMarker)
 };
 
 /// The global [`UnsafeFnMarker`]($sus::marker::UnsafeFnMarker) which can be
@@ -59,21 +79,3 @@ struct UnsafeFnMarker {
 constexpr inline auto unsafe_fn = UnsafeFnMarker();
 
 }  // namespace sus::marker
-
-// fmt support.
-template <class Char>
-struct fmt::formatter<::sus::marker::UnsafeFnMarker, Char> {
-  template <class ParseContext>
-  constexpr auto parse(ParseContext& ctx) {
-    return ctx.begin();
-  }
-
-  template <class FormatContext>
-  constexpr auto format(const ::sus::marker::UnsafeFnMarker&,
-                        FormatContext& ctx) const {
-    return fmt::format_to(ctx.out(), "unsafe_fn");
-  }
-};
-
-// Stream support.
-_sus_format_to_stream(sus::marker, UnsafeFnMarker);

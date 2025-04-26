@@ -829,6 +829,9 @@ class Vec final {
         ::sus::marker::unsafe_fn, iter_refs_.to_view_from_owner(), data_, len_);
   }
 
+  // Stream support.
+  _sus_format_to_stream(Vec)
+
 #define _ptr_expr data_
 #define _len_expr len_
 #define _iter_refs_expr iter_refs_.to_iter_from_owner()
@@ -1093,9 +1096,6 @@ struct fmt::formatter<::sus::collections::Vec<T>, Char> {
  private:
   ::sus::string::__private::AnyFormatter<T, Char> underlying_;
 };
-
-// Stream support.
-_sus_format_to_stream(sus::collections, Vec, T);
 
 namespace sus::collections {
 /// Implicit for-ranged loop iteration for all collections via the `iter`

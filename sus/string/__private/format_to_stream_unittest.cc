@@ -25,7 +25,9 @@
 #include "sus/tuple/tuple.h"
 
 namespace {
-struct Streamable {};
+struct Streamable {
+  _sus_format_to_stream(Streamable)
+};
 }  // namespace
 
 template <>
@@ -40,8 +42,6 @@ struct fmt::formatter<Streamable, char> {
     return fmt::format_to(ctx.out(), "hello");
   }
 };
-
-_sus_format_to_stream(, Streamable);
 
 namespace {
 

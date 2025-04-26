@@ -748,6 +748,48 @@ _sus_pure constexpr _self _self::from_ne_bytes(
   return _self(val);
 }
 
+_sus_pure constexpr u32 _self::count_ones() const& noexcept {
+  return __private::count_ones(primitive_value);
+}
+
+_sus_pure constexpr u32 _self::count_zeros() const& noexcept {
+  return (~(*this)).count_ones();
+}
+
+_sus_pure constexpr u32 _self::leading_ones() const& noexcept {
+  return (~(*this)).leading_zeros();
+}
+
+_sus_pure constexpr u32 _self::leading_zeros() const& noexcept {
+  return __private::leading_zeros(primitive_value);
+}
+
+_sus_pure constexpr u32 _self::trailing_ones() const& noexcept {
+  return (~(*this)).trailing_zeros();
+}
+
+_sus_pure constexpr u32 _self::trailing_zeros() const& noexcept {
+  return __private::trailing_zeros(primitive_value);
+}
+
+_sus_pure constexpr _self _self::pow(u32 rhs) const& noexcept {
+  const auto out =
+      __private::pow_with_overflow(primitive_value, rhs.primitive_value);
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    sus_check_with_message(!out.overflow,
+                              "attempt to multiply with overflow");
+  }
+  return _self(out.value);
+}
+
+_sus_pure constexpr _self _self::wrapping_pow(u32 exp) const& noexcept {
+  return _self(__private::wrapping_pow(primitive_value, exp.primitive_value));
+}
+
+_sus_pure constexpr bool _self::is_power_of_two() const& noexcept {
+  return count_ones() == _self(_primitive{1u});
+}
+
 }  // namespace sus::num
 
 // std hash support.
@@ -781,9 +823,6 @@ struct fmt::formatter<::sus::num::_self, Char> {
  private:
   formatter<_primitive, Char> underlying_;
 };
-
-// Stream support.
-_sus_format_to_stream(sus::num, _self);
 
 #undef _self
 #undef _primitive

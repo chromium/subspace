@@ -656,6 +656,9 @@ class [[_sus_trivial_abi]] Box final : public __private::BoxBase<Box<T>, T> {
     return {};
   }
 
+  // Stream support.
+  _sus_format_to_stream(Box)
+
  private:
   enum FromPointer { FROM_POINTER };
   constexpr explicit Box(FromPointer, T* t) noexcept : t_(t) {}
@@ -707,9 +710,6 @@ struct fmt::formatter<::sus::boxed::Box<T>, Char> {
  private:
   ::sus::string::__private::AnyFormatter<T, Char> underlying_;
 };
-
-// Stream support.
-_sus_format_to_stream(sus::boxed, Box, T);
 
 // Promote `Box` into the `sus` namespace.
 namespace sus {

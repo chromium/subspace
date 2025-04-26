@@ -365,7 +365,7 @@ namespace sus {
 /// another [`Option`]($sus::option::Option) as input, and produce an
 /// [`Option`]($sus::option::Option) as output.
 /// Only the [`and_that`]($sus::option::Option::and_that)
-/// method can produce an [`Option<U>`]($sus::option::Option) value having a 
+/// method can produce an [`Option<U>`]($sus::option::Option) value having a
 /// different inner type `U` than [`Option<T>`]($sus::option::Option).
 ///
 /// | method                                               | self    | input     | output  |
@@ -1933,6 +1933,9 @@ class Option final {
     }
   }
 
+  // Stream support.
+  _sus_format_to_stream(Option)
+
  private:
   template <class U>
   friend class Option;
@@ -2096,9 +2099,6 @@ struct fmt::formatter<::sus::option::Option<T>, Char> {
  private:
   ::sus::string::__private::AnyFormatter<T, Char> underlying_;
 };
-
-// Stream support.
-_sus_format_to_stream(sus::option, Option, T);
 
 // Promote Option and its enum values into the `sus` namespace.
 namespace sus {

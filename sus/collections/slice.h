@@ -248,6 +248,9 @@ class [[_sus_trivial_abi]] Slice final {
     iter_refs_ = ::sus::iter::IterRefCounter::empty_for_view();
   }
 
+  // Stream support.
+  _sus_format_to_stream(Slice)
+
 #define _ptr_expr data_
 #define _len_expr len_
 #define _iter_refs_expr iter_refs_.to_iter_from_view()
@@ -471,6 +474,9 @@ class [[_sus_trivial_abi]] SliceMut final {
     slice_.iter_refs_ = ::sus::iter::IterRefCounter::empty_for_view();
   }
 
+  // Stream support.
+  _sus_format_to_stream(SliceMut);
+
 #define _ptr_expr slice_.data_
 #define _len_expr slice_.len_
 #define _iter_refs_expr slice_.iter_refs_.to_iter_from_view()
@@ -540,9 +546,6 @@ struct fmt::formatter<::sus::collections::Slice<T>, Char> {
   ::sus::string::__private::AnyFormatter<T, Char> underlying_;
 };
 
-// Stream support.
-_sus_format_to_stream(sus::collections, Slice, T);
-
 // fmt support.
 template <class T, class Char>
 struct fmt::formatter<::sus::collections::SliceMut<T>, Char> {
@@ -567,9 +570,6 @@ struct fmt::formatter<::sus::collections::SliceMut<T>, Char> {
  private:
   ::sus::string::__private::AnyFormatter<T, Char> underlying_;
 };
-
-// Stream support.
-_sus_format_to_stream(sus::collections, SliceMut, T);
 
 // Promote Slice into the `sus` namespace.
 namespace sus {

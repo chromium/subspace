@@ -18,6 +18,7 @@
 
 #include "sus/num/unsigned_integer.h"
 #include "sus/option/option.h"
+#include "sus/string/__private/format_to_stream.h"
 
 namespace sus::iter {
 
@@ -27,6 +28,21 @@ struct SizeHint {
 
   friend constexpr bool operator==(const SizeHint& lhs,
                                    const SizeHint& rhs) noexcept = default;
+
+  // Stream support.
+  _sus_format_to_stream(SizeHint)
 };
 
 }  // namespace sus::iter
+
+// fmt support.
+template <class Char>
+struct fmt::formatter<::sus::iter::SizeHint, Char> {
+  template <class ParseContext>
+  constexpr auto parse(ParseContext& ctx) {
+    return ctx.begin();
+  }
+
+  template <class FormatContext>
+  FormatContext::iterator format(const ::sus::iter::SizeHint& t, FormatContext& ctx) const;
+};

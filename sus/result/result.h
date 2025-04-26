@@ -775,6 +775,7 @@ class [[nodiscard]] Result final {
   {
     return eq(l, r);
   }
+
   template <class U, class F>
     requires(VoidOrEq<T, U> && ::sus::cmp::Eq<E, F>)
   friend constexpr bool operator==(const Result& l,
@@ -847,6 +848,9 @@ class [[nodiscard]] Result final {
     requires(!VoidOrPartialOrd<T, U> || !::sus::cmp::PartialOrd<E, F>)
   friend constexpr auto operator<=>(const Result& l,
                                     const Result<U, F>& r) noexcept = delete;
+
+  // Stream support.
+  _sus_format_to_stream(Result)
 
  private:
   template <class U, class V>
@@ -1140,9 +1144,6 @@ struct fmt::formatter<::sus::result::Result<T, E>, Char> {
   ::sus::string::__private::AnyOrVoidFormatter<T, Char> underlying_ok_;
   ::sus::string::__private::AnyFormatter<E, Char> underlying_err_;
 };
-
-// Stream support.
-_sus_format_to_stream(sus::result, Result, T, E);
 
 namespace sus {
 using ::sus::result::Err;
