@@ -109,10 +109,11 @@ void print_panic_location(const PanicLocation& location) noexcept;
 ///
 /// If `SUS_PROVIDE_PANIC_HANDLER()` is defined, the macro _must_ not return or
 /// Undefined Behaviour will result.
-#define sus_panic()                                                         \
-  _sus_panic_location_handler(::sus::assertions::PanicLocation::current()); \
-  _sus_panic_handler();                                                     \
-  static_assert(true)
+[[noreturn, gnu::always_inline, gnu::nodebug]] inline void sus_panic(::sus::assertions::PanicLocation loc = ::sus::assertions::PanicLocation::current()) noexcept
+{
+  _sus_panic_location_handler(loc);
+  _sus_panic_handler();
+}
 
 /// Terminate the program, after printing a message.
 ///
@@ -129,8 +130,8 @@ void print_panic_location(const PanicLocation& location) noexcept;
 /// * A [`PanicLocation`]($sus::assertions::PanicLocation).
 /// If the `SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER` macro does not consume the
 /// `msg`, this macro will avoid instantiating it at all.
-#define sus_panic_with_message(msg)                                        \
-  _sus_panic_message_handler((msg),                                        \
-                             ::sus::assertions::PanicLocation::current()); \
-  _sus_panic_handler();                                                    \
-  static_assert(true)
+[[noreturn, gnu::always_inline, gnu::nodebug]] inline void sus_panic_with_message(std::string_view message, ::sus::assertions::PanicLocation loc = ::sus::assertions::PanicLocation::current()) noexcept
+{
+  _sus_panic_message_handler(message, loc);
+  _sus_panic_handler();
+}
