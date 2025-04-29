@@ -125,10 +125,10 @@ TEST(f32, Consts) {
   EXPECT_EQ(f32::MAX_EXP, 128_i32);
   EXPECT_EQ(f32::MIN_10_EXP, -37_i32);
   EXPECT_EQ(f32::MAX_10_EXP, 38_i32);
-  EXPECT_TRUE(::isnan(f32::NaN.primitive_value));
-  EXPECT_TRUE(::isinf(f32::INF.primitive_value));
+  EXPECT_TRUE(std::isnan(f32::NaN.primitive_value));
+  EXPECT_TRUE(std::isinf(f32::INF.primitive_value));
   EXPECT_GT(f32::INF, 0_f32);
-  EXPECT_TRUE(::isinf(f32::NEG_INF.primitive_value));
+  EXPECT_TRUE(std::isinf(f32::NEG_INF.primitive_value));
   EXPECT_LT(f32::NEG_INF, 0_f32);
 
   EXPECT_EQ(f32::consts::E, 2.71828182845904523536028747135266250_f32);

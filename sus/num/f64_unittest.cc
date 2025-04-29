@@ -123,10 +123,10 @@ TEST(f64, Consts) {
   EXPECT_EQ(f64::MAX_EXP, 1024_i32);
   EXPECT_EQ(f64::MIN_10_EXP, -307_i32);
   EXPECT_EQ(f64::MAX_10_EXP, 308_i32);
-  EXPECT_TRUE(isnan(f64::NaN.primitive_value));
-  EXPECT_TRUE(isinf(f64::INF.primitive_value));
+  EXPECT_TRUE(std::isnan(f64::NaN.primitive_value));
+  EXPECT_TRUE(std::isinf(f64::INF.primitive_value));
   EXPECT_GT(f64::INF, 0_f64);
-  EXPECT_TRUE(isinf(f64::NEG_INF.primitive_value));
+  EXPECT_TRUE(std::isinf(f64::NEG_INF.primitive_value));
   EXPECT_LT(f64::NEG_INF, 0_f64);
 
   EXPECT_EQ(f64::consts::E, 2.71828182845904523536028747135266250_f64);
