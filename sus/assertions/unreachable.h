@@ -41,7 +41,9 @@
 /// and security bugs when working across languages. Use
 /// [`sus_unreachable_unchecked`]($sus_unreachable_unchecked) to
 /// indicate to the compiler the code is not reachable.
-#define sus_unreachable() sus::panic("entered unreachable code")
+[[noreturn, gnu::always_inline, gnu::nodebug]] inline void sus_unreachable() {
+  [[clang::always_inline]] sus::panic("entered unreachable code");
+}
 
 /// Indicates to the compiler that the location will never be reached, allowing
 /// it to optimize code generation accordingly. If this function is actually
@@ -52,7 +54,6 @@
 ///
 /// # Safety
 /// This function must never actually be reached, or Undefined Behaviour occurs.
-#define sus_unreachable_unchecked(unsafe_fn_marker)                 \
-  static_assert(std::same_as<decltype(unsafe_fn_marker),            \
-                             const ::sus::marker::UnsafeFnMarker>); \
-  _sus_unreachable_unchecked_impl()
+[[noreturn, gnu::always_inline, gnu::nodebug]] inline void sus_unreachable_unchecked(::sus::marker::UnsafeFnMarker) {
+  _sus_unreachable_unchecked_impl();
+}
