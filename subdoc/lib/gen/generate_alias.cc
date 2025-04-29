@@ -77,7 +77,7 @@ sus::Result<MarkdownToHtml, MarkdownToHtmlError> get_alias_comment(
       }
       case AliasTarget::Tag::AliasOfMethod: {
         // TODO: Link to method.
-        sus_unreachable();
+        sus::unreachable();
       }
       case AliasTarget::Tag::AliasOfFunction: {
         const LinkedFunction& fun =
@@ -94,7 +94,7 @@ sus::Result<MarkdownToHtml, MarkdownToHtmlError> get_alias_comment(
       }
       case AliasTarget::Tag::AliasOfEnumConstant: {
         // TODO: Link to constant.
-        sus_unreachable();
+        sus::unreachable();
       }
       case AliasTarget::Tag::AliasOfVariable: {
         const LinkedVariable& var =

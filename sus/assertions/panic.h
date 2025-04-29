@@ -25,7 +25,7 @@ namespace sus {
 
 /// Checking for (e.g. [`sus_check`]($sus_check)) and handling
 /// (e.g. [`sus::panic`]($sus::panic),
-/// [`sus_unreachable`]($sus_unreachable)) unexpected runtime
+/// [`sus::unreachable`]($sus::unreachable)) unexpected runtime
 /// conditions.
 namespace assertions {}
 }  // namespace sus

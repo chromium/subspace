@@ -293,7 +293,7 @@ concept HasErrorSource = requires(const T& t) {
 ///     switch (self) {
 ///       case ErrorReason::SomeReason: return "we saw SomeReason happen";
 ///     }
-///     sus_unreachable();
+///     sus::unreachable();
 ///   }
 /// };
 ///

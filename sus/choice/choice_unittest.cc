@@ -48,7 +48,7 @@ struct fmt::formatter<Order, Char> {
       case Second: return fmt::format_to(ctx.out(), "Second");
       case Third: return fmt::format_to(ctx.out(), "Third");
     }
-    sus_unreachable();
+    sus::unreachable();
   }
 };
 

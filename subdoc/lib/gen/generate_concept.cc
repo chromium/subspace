@@ -77,7 +77,7 @@ void generate_concept_overview(HtmlWriter::OpenDiv& record_div,
               break;  // Macro can't be an ancesor of a concept.
             case CppPathConcept: return "concept-name";
           }
-          sus_unreachable();
+          sus::unreachable();
         }());
         ancestor_anchor.add_href(e.link_href);
         ancestor_anchor.write_text(e.name);

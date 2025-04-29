@@ -624,7 +624,7 @@ class [[nodiscard]] Result final {
       // construction, possibly because the `state_` gets clobbered below?
       // The signed code version at https://godbolt.org/z/Gax47shsb improves
       // greatly when the compiler is informed about the UB here.
-      sus_unreachable_unchecked(::sus::marker::unsafe_fn);
+      sus::unreachable_unchecked(::sus::marker::unsafe_fn);
     }
     return storage_.template take_ok<T>();
   }
@@ -660,7 +660,7 @@ class [[nodiscard]] Result final {
     if (!storage_.is_err()) {
       // Match the code in unwrap_unchecked, and tell the compiler that the
       // `state_` is an Err before clobbering it.
-      sus_unreachable_unchecked(::sus::marker::unsafe_fn);
+      sus::unreachable_unchecked(::sus::marker::unsafe_fn);
     }
     return storage_.take_err();
   }

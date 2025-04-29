@@ -101,7 +101,7 @@ inline std::filesystem::path construct_html_namespace_file_path(
         return fmt::format("namespace.{}",
                            namespace_path[0u].as<Namespace::Tag::Named>());
     }
-    sus_unreachable();
+    sus::unreachable();
   }();
 
   fname << name;
@@ -316,7 +316,7 @@ inline Option<std::string> construct_html_url_for_alias(
               // aliases.
               break;
           }
-          sus_unreachable();
+          sus::unreachable();
         });
       }
       case AliasTarget::Tag::AliasOfConcept: {
@@ -330,11 +330,11 @@ inline Option<std::string> construct_html_url_for_alias(
           }
           case ConceptRefOrName::Tag::Name: return sus::none();
         }
-        sus_unreachable();
+        sus::unreachable();
       }
       case AliasTarget::Tag::AliasOfMethod: {
         // TODO: Link to method.
-        sus_unreachable();
+        sus::unreachable();
       }
       case AliasTarget::Tag::AliasOfFunction: {
         const LinkedFunction& fun =
@@ -347,11 +347,11 @@ inline Option<std::string> construct_html_url_for_alias(
           }
           case FunctionRefOrName::Tag::Name: return sus::none();
         }
-        sus_unreachable();
+        sus::unreachable();
       }
       case AliasTarget::Tag::AliasOfEnumConstant: {
         // TODO: Link to constant.
-        sus_unreachable();
+        sus::unreachable();
       }
       case AliasTarget::Tag::AliasOfVariable: {
         const LinkedVariable& var =
@@ -364,10 +364,10 @@ inline Option<std::string> construct_html_url_for_alias(
           }
           case VariableRefOrName::Tag::Name: return sus::none();
         }
-        sus_unreachable();
+        sus::unreachable();
       }
     }
-    sus_unreachable();
+    sus::unreachable();
   } else {
     // TODO: Link to the alias' page.
     return sus::some("TODO");

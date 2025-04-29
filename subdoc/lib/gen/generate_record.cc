@@ -64,7 +64,7 @@ const FunctionElement& function_element_from_sorted(
     case MethodType::NonStaticOperators: return element.methods.at(s.at<3>());
     case MethodType::Conversions: return element.conversions.at(s.at<3>());
   }
-  sus_unreachable();
+  sus::unreachable();
 }
 
 /// Compares two `SortedFunctionByName` for ordering. It compares by ignoring
@@ -135,7 +135,7 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
             case CppPathConcept:
               break;  // Concept can't be an ancestor of a record.
           }
-          sus_unreachable();
+          sus::unreachable();
         }());
         ancestor_anchor.add_href(e.link_href);
         ancestor_anchor.write_text(e.name);

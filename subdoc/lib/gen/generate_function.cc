@@ -321,7 +321,7 @@ sus::Result<void, MarkdownToHtmlError> generate_function(
             case CppPathConcept:
               break;  // Concept can't be an ancestor of a function.
           }
-          sus_unreachable();
+          sus::unreachable();
         }());
         ancestor_anchor.add_href(e.link_href);
         ancestor_anchor.write_text(e.name);

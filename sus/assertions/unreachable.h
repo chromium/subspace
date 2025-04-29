@@ -14,16 +14,12 @@
 
 #pragma once
 
+#include "panic.h"
 #include "sus/assertions/panic.h"
 #include "sus/macros/builtin.h"
 #include "sus/marker/unsafe.h"
 
-#if __has_builtin(__builtin_unreachable)
-#  define _sus_unreachable_unchecked_impl() __builtin_unreachable()
-#else
-#  define _sus_unreachable_unchecked_impl() __assume(false)
-#endif
-
+namespace sus::assertions {
 /// Indicates to the developer that the location should not be reached, and
 /// terminates the program with a [`panic`]($sus::panic).
 ///
@@ -39,10 +35,10 @@
 /// top of [`sus::panic`]($sus::panic).
 /// The Subspace library matches the safer behaviour of Rust to avoid confusion
 /// and security bugs when working across languages. Use
-/// [`sus_unreachable_unchecked`]($sus_unreachable_unchecked) to
+/// [`sus::unreachable_unchecked`]($sus::unreachable_unchecked) to
 /// indicate to the compiler the code is not reachable.
-[[noreturn, gnu::always_inline, gnu::nodebug]] inline void sus_unreachable() {
-  [[clang::always_inline]] sus::panic("entered unreachable code");
+[[noreturn, gnu::always_inline, gnu::nodebug]] inline void unreachable(PanicLocation loc = PanicLocation::current()) {
+  [[clang::always_inline]] sus::panic("entered unreachable code", loc);
 }
 
 /// Indicates to the compiler that the location will never be reached, allowing
@@ -54,6 +50,16 @@
 ///
 /// # Safety
 /// This function must never actually be reached, or Undefined Behaviour occurs.
-[[noreturn, gnu::always_inline, gnu::nodebug]] inline void sus_unreachable_unchecked(::sus::marker::UnsafeFnMarker) {
-  _sus_unreachable_unchecked_impl();
+[[noreturn, gnu::always_inline, gnu::nodebug]] inline void unreachable_unchecked(::sus::marker::UnsafeFnMarker) {
+#if __has_builtin(__builtin_unreachable)
+  __builtin_unreachable();
+#else
+  __assume(false);
+#endif
+}
+}  // namespace ::sus::assertions
+
+namespace sus {
+  using sus::assertions::unreachable;
+  using sus::assertions::unreachable_unchecked;
 }

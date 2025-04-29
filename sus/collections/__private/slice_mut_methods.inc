@@ -597,7 +597,7 @@ constexpr RSplitNMut<T, Pred> rsplitn_mut(usize n,
       index < len(), "partition_at_index index greater than length of slice");
 
   // TODO: Requires Iterator::enumerate(), max_by(), min_by()
-  sus_unreachable();
+  sus::unreachable();
 }
 
 /// Reorder the slice with a key extraction function such that the element at
