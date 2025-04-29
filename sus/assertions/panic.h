@@ -90,7 +90,10 @@ void print_panic_message(std::string_view msg,
 ///
 /// If `SUS_PROVIDE_PANIC_HANDLER()` is defined, the macro _must_ not return or
 /// Undefined Behaviour will result.
+#pragma GCC diagnostics push
+#pragma GCC diagnostics ignored "-Wattributes"
 [[noreturn, gnu::always_inline, gnu::nodebug]]
+#pragma GCC diagnostics pop
 inline void panic(std::string_view message = "",
                   PanicLocation loc = PanicLocation::current()) noexcept
 {

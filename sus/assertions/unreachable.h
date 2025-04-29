@@ -20,6 +20,8 @@
 #include "sus/marker/unsafe.h"
 
 namespace sus::assertions {
+#pragma GCC diagnostics push
+#pragma GCC diagnostics ignored "-Wattributes"
 /// Indicates to the developer that the location should not be reached, and
 /// terminates the program with a [`panic`]($sus::panic).
 ///
@@ -57,6 +59,7 @@ namespace sus::assertions {
   __assume(false);
 #endif
 }
+#pragma GCC diagnostics pop
 }  // namespace ::sus::assertions
 
 namespace sus {
