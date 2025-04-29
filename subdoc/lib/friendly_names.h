@@ -67,7 +67,7 @@ inline std::string friendly_record_type_name(RecordType t,
     case RecordType::Struct: return capitalize ? "Struct" : "struct";
     case RecordType::Union: return capitalize ? "Union" : "union";
   }
-  sus_unreachable_unchecked(unsafe_fn);
+  sus::unreachable_unchecked(unsafe_fn);
 }
 
 }  // namespace subdoc
