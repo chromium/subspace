@@ -43,6 +43,6 @@
 /// this macro will avoid instantiating it at all.
 #define sus_check_with_message(cond, msg) \
   if (!(cond)) [[unlikely]] {             \
-    sus::panic_with_message(msg);          \
+    sus::panic(msg);          \
   }                                       \
   static_assert(true)

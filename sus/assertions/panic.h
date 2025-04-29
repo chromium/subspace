@@ -128,7 +128,7 @@ void print_panic_location(const PanicLocation& location) noexcept;
 /// * A [`PanicLocation`]($sus::assertions::PanicLocation).
 /// If the `SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER` macro does not consume the
 /// `msg`, this macro will avoid instantiating it at all.
-[[noreturn, gnu::always_inline, gnu::nodebug]] inline void panic_with_message(std::string_view message, ::sus::assertions::PanicLocation loc = ::sus::assertions::PanicLocation::current()) noexcept
+[[noreturn, gnu::always_inline, gnu::nodebug]] inline void panic(std::string_view message, ::sus::assertions::PanicLocation loc = ::sus::assertions::PanicLocation::current()) noexcept
 {
   _sus_panic_message_handler(message, loc);
   _sus_panic_handler();
@@ -138,5 +138,4 @@ void print_panic_location(const PanicLocation& location) noexcept;
 
 namespace sus {
   using ::sus::assertions::panic;
-  using ::sus::assertions::panic_with_message;
 }

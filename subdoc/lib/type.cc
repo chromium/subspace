@@ -593,7 +593,7 @@ Type build_local_type_internal(
         if (auto_type->isConstrained()) {
           qualtype->dump();
           loc.dump(sm);
-          sus::panic_with_message("constrained auto without a concept?");
+          sus::panic("constrained auto without a concept?");
         }
         if (auto_type->isDecltypeAuto()) {
           return sus::tuple("decltype(auto)", TypeCategory::TemplateVariable);

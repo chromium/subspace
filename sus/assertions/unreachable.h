@@ -41,7 +41,7 @@
 /// and security bugs when working across languages. Use
 /// [`sus_unreachable_unchecked`]($sus_unreachable_unchecked) to
 /// indicate to the compiler the code is not reachable.
-#define sus_unreachable() sus::panic_with_message("entered unreachable code")
+#define sus_unreachable() sus::panic("entered unreachable code")
 
 /// Indicates to the compiler that the location will never be reached, allowing
 /// it to optimize code generation accordingly. If this function is actually
