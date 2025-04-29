@@ -43,7 +43,7 @@ namespace sus {
 /// responsibilities they cover:
 ///
 /// * [`sus::panic`]($sus::panic) (Constructing, Propagating)
-/// * [`SUS_PROVIDE_PRINT_PANIC_LOCATION_HANDLER`]($sus::panic) (Reporting)
+/// * [`SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER`]($sus::panic) (Reporting)
 /// * [`SUS_PROVIDE_PANIC_HANDLER`]($sus::panic) (Reacting)
 ///
 /// The following are the primary interfaces of the error system and the
