@@ -170,7 +170,7 @@ clang::DeclContext* find_context(const clang::Type* type,
       case clang::NestedNameSpecifier::Super:
         return spec->getAsRecordDecl()->getDeclContext();
     }
-    sus_unreachable();
+    sus::unreachable();
   } else if (auto* tag_type = clang::dyn_cast<clang::TagType>(type)) {
     return tag_type->getDecl()->getDeclContext();
   } else if (auto* spec_type =
@@ -201,7 +201,7 @@ clang::DeclContext* find_context(const clang::Type* type,
   } else {
     type->dump();
     loc.dump(sm);
-    sus_unreachable();  // Find the context.
+    sus::unreachable();  // Find the context.
   }
 }
 
@@ -221,7 +221,7 @@ TypeOrValue build_template_param(
       arg.dump();
       fmt::println(stderr, "");
       loc.dump(sm);
-      sus_unreachable();
+      sus::unreachable();
     case clang::TemplateArgument::ArgKind::Type:
       return TypeOrValue(TypeOrValueChoice::with<TypeOrValueChoice::Tag::Type>(
           build_local_type_internal(arg.getAsType(), template_params, cx,
@@ -261,16 +261,16 @@ TypeOrValue build_template_param(
       arg.dump();
       fmt::println(stderr, "");
       loc.dump(sm);
-      sus_unreachable();
+      sus::unreachable();
     case clang::TemplateArgument::ArgKind::Expression:
       return TypeOrValue(TypeOrValueChoice::with<TypeOrValueChoice::Tag::Value>(
           stmt_to_string(*arg.getAsExpr(), sm, preprocessor)));
     case clang::TemplateArgument::ArgKind::Pack:
       // Packs are handled at a higher level since they produce multiple types.
       loc.dump(sm);
-      sus_unreachable();
+      sus::unreachable();
   }
-  sus_unreachable();
+  sus::unreachable();
 };
 
 clang::QualType unwrap_skipped_types(clang::QualType q) noexcept {
@@ -348,7 +348,7 @@ Type build_local_type_internal(
         qualtype->dump();
         loc.dump(sm);
         fmt::println(stderr, "\nkind: {}", (int)kind);
-        sus_unreachable();
+        sus::unreachable();
       }
       spec = spec->getPrefix();
     }
@@ -374,7 +374,7 @@ Type build_local_type_internal(
       if (is_pack) {
         qualtype->dump();
         loc.dump(sm);
-        sus_unreachable();
+        sus::unreachable();
       }
 
       // Arrays come with the var name wrapped in parens, which must be removed.
@@ -397,7 +397,7 @@ Type build_local_type_internal(
       if (auto* vararr = clang::dyn_cast<clang::VariableArrayType>(type)) {
         qualtype->dump();
         loc.dump(sm);
-        sus_unreachable();  // This is a C thing, not C++.
+        sus::unreachable();  // This is a C thing, not C++.
       }
 
       // For arrays the root qualifiers come from the element type.
@@ -496,7 +496,7 @@ Type build_local_type_internal(
       // Partial specialization in another type?
       partial->dump();
       loc.dump(sm);
-      sus_unreachable();
+      sus::unreachable();
     } else if (auto* full =
                    clang::dyn_cast<clang::ClassTemplateSpecializationDecl>(
                        rec_type->getDecl())) {
@@ -539,7 +539,7 @@ Type build_local_type_internal(
     // No template parameters.
     // qualtype->dump();
     // loc.dump(sm);
-    // sus_unreachable();
+    // sus::unreachable();
   }
 
   // Find the context from which to collect the namespace/record paths.
