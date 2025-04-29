@@ -241,7 +241,7 @@ class [[nodiscard]] Result final {
     } else if (storage_.is_err()) {
       return Result(WITH_ERR, ::sus::clone(storage_.get_err()));
     } else {
-      sus_panic_with_message("Result used after move");
+      sus::panic_with_message("Result used after move");
     }
   }
 
@@ -251,7 +251,7 @@ class [[nodiscard]] Result final {
              !(::sus::mem::CopyOrRefOrVoid<T> && ::sus::mem::Copy<E>))
   {
     if (source.storage_.is_moved()) [[unlikely]] {
-      sus_panic_with_message("Result used after move");
+      sus::panic_with_message("Result used after move");
     } else if (&source == this) [[unlikely]] {
       // Nothing to do.
     } else if (storage_.is_moved()) {
@@ -429,7 +429,7 @@ class [[nodiscard]] Result final {
     } else if (storage_.is_err()) {
       return sus::fn::ReturnOnce<AndFn>::with_err(storage_.take_err());
     } else {
-      sus_panic_with_message("Result used after move");
+      sus::panic_with_message("Result used after move");
     }
   }
   template <::sus::fn::FnOnce<::sus::fn::NonVoid()> AndFn>
@@ -444,7 +444,7 @@ class [[nodiscard]] Result final {
     } else if (storage_.is_err()) {
       return sus::fn::ReturnOnce<AndFn>::with_err(storage_.take_err());
     } else {
-      sus_panic_with_message("Result used after move");
+      sus::panic_with_message("Result used after move");
     }
   }
   /// Converts from `Result<T, E>` to [`Option<T>`]($sus::option::Option).
@@ -463,7 +463,7 @@ class [[nodiscard]] Result final {
       storage_.drop_err();
       return Option<T>();
     } else {
-      sus_panic_with_message("Result used after move");
+      sus::panic_with_message("Result used after move");
     }
   }
 
@@ -478,7 +478,7 @@ class [[nodiscard]] Result final {
     } else if (storage_.is_err()) {
       return Option<E>(storage_.take_err());
     } else {
-      sus_panic_with_message("Result used after move");
+      sus::panic_with_message("Result used after move");
     }
   }
 
@@ -493,12 +493,12 @@ class [[nodiscard]] Result final {
       return storage_.template get_ok<T>();
     } else if (storage_.is_err()) {
       if constexpr (fmt::is_formattable<E>::value) {
-        sus_panic_with_message(fmt::to_string(storage_.get_err()));
+        sus::panic_with_message(fmt::to_string(storage_.get_err()));
       } else {
-        sus_panic_with_message("Result has error state");
+        sus::panic_with_message("Result has error state");
       }
     } else {
-      sus_panic_with_message("Result used after move");
+      sus::panic_with_message("Result used after move");
     }
   }
   constexpr const std::remove_reference_t<TUnlessVoid>& as_value() && = delete;
@@ -514,12 +514,12 @@ class [[nodiscard]] Result final {
       return storage_.template get_ok_mut<T>();
     } else if (storage_.is_err()) {
       if constexpr (fmt::is_formattable<E>::value) {
-        sus_panic_with_message(fmt::to_string(storage_.get_err()));
+        sus::panic_with_message(fmt::to_string(storage_.get_err()));
       } else {
-        sus_panic_with_message("Result has error state");
+        sus::panic_with_message("Result has error state");
       }
     } else {
-      sus_panic_with_message("Result used after move");
+      sus::panic_with_message("Result used after move");
     }
   }
   /// Returns a const reference to the contained `Err` value.
@@ -531,14 +531,14 @@ class [[nodiscard]] Result final {
       return storage_.get_err();
     } else if (storage_.is_ok()) {
       if constexpr (std::is_void_v<T>) {
-        sus_panic_with_message("Result has ok state");
+        sus::panic_with_message("Result has ok state");
       } else if constexpr (!fmt::is_formattable<T>::value) {
-        sus_panic_with_message("Result has ok state");
+        sus::panic_with_message("Result has ok state");
       } else {
-        sus_panic_with_message(fmt::to_string(storage_.template get_ok<T>()));
+        sus::panic_with_message(fmt::to_string(storage_.template get_ok<T>()));
       }
     } else {
-      sus_panic_with_message("Result used after move");
+      sus::panic_with_message("Result used after move");
     }
   }
   constexpr const E& as_err() && = delete;
@@ -557,12 +557,12 @@ class [[nodiscard]] Result final {
       return storage_.template take_ok<T>();
     } else if (storage_.is_err()) {
       if constexpr (fmt::is_formattable<E>::value) {
-        sus_panic_with_message(fmt::to_string(storage_.get_err()));
+        sus::panic_with_message(fmt::to_string(storage_.get_err()));
       } else {
-        sus_panic_with_message("Result has error state");
+        sus::panic_with_message("Result has error state");
       }
     } else {
-      sus_panic_with_message("Result used after move");
+      sus::panic_with_message("Result used after move");
     }
   }
 
@@ -580,12 +580,12 @@ class [[nodiscard]] Result final {
       return storage_.template take_ok<T>();
     } else if (storage_.is_err()) {
       if constexpr (fmt::is_formattable<E>::value) {
-        sus_panic_with_message(fmt::format("{}: {}", msg, storage_.get_err()));
+        sus::panic_with_message(fmt::format("{}: {}", msg, storage_.get_err()));
       } else {
-        sus_panic_with_message(msg);
+        sus::panic_with_message(msg);
       }
     } else {
-      sus_panic_with_message("Result used after move");
+      sus::panic_with_message("Result used after move");
     }
   }
 
@@ -606,7 +606,7 @@ class [[nodiscard]] Result final {
       else
         return;
     } else {
-      sus_panic_with_message("Result used after move");
+      sus::panic_with_message("Result used after move");
     }
   }
 
@@ -638,14 +638,14 @@ class [[nodiscard]] Result final {
       return storage_.take_err();
     } else if (storage_.is_ok()) {
       if constexpr (std::is_void_v<T>) {
-        sus_panic_with_message("Result has ok state");
+        sus::panic_with_message("Result has ok state");
       } else if constexpr (!fmt::is_formattable<T>::value) {
-        sus_panic_with_message("Result has ok state");
+        sus::panic_with_message("Result has ok state");
       } else {
-        sus_panic_with_message(fmt::to_string(storage_.template get_ok<T>()));
+        sus::panic_with_message(fmt::to_string(storage_.template get_ok<T>()));
       }
     } else {
-      sus_panic_with_message("Result used after move");
+      sus::panic_with_message("Result used after move");
     }
   }
 
@@ -683,7 +683,7 @@ class [[nodiscard]] Result final {
     } else if (storage_.is_err()) {
       return ::sus::fn::call_once(::sus::move(op), storage_.take_err());
     } else {
-      sus_panic_with_message("Result used after move");
+      sus::panic_with_message("Result used after move");
     }
   }
 
@@ -700,7 +700,7 @@ class [[nodiscard]] Result final {
       return ::sus::option::OptionIter<const std::remove_reference_t<T>&>(
           Option<const std::remove_reference_t<T>&>());
     } else {
-      sus_panic_with_message("Result used after move");
+      sus::panic_with_message("Result used after move");
     }
   }
   constexpr ::sus::option::OptionIter<
@@ -717,7 +717,7 @@ class [[nodiscard]] Result final {
       return ::sus::option::OptionIter<const std::remove_reference_t<T>&>(
           Option<const std::remove_reference_t<T>&>());
     } else {
-      sus_panic_with_message("Result used after move");
+      sus::panic_with_message("Result used after move");
     }
   }
 
@@ -730,7 +730,7 @@ class [[nodiscard]] Result final {
     } else if (storage_.is_err()) {
       return ::sus::option::OptionIter<T&>(Option<T&>());
     } else {
-      sus_panic_with_message("Result used after move");
+      sus::panic_with_message("Result used after move");
     }
   }
   constexpr ::sus::option::OptionIter<TUnlessVoid&> iter_mut() && noexcept
@@ -744,7 +744,7 @@ class [[nodiscard]] Result final {
       storage_.drop_err();
       return ::sus::option::OptionIter<T&>(Option<T&>());
     } else {
-      sus_panic_with_message("Result used after move");
+      sus::panic_with_message("Result used after move");
     }
   }
 
@@ -758,7 +758,7 @@ class [[nodiscard]] Result final {
       storage_.drop_err();
       return ::sus::option::OptionIter<T>(Option<T>());
     } else {
-      sus_panic_with_message("Result used after move");
+      sus::panic_with_message("Result used after move");
     }
   }
 

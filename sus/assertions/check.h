@@ -17,32 +17,32 @@
 #include "sus/assertions/panic.h"
 
 /// Verifies that the input, evaluated to a `bool`, is true. Otherwise, it will
-/// [`panic`]($sus_panic), printing a message and terminating the program.
+/// [`panic`]($sus::panic), printing a message and terminating the program.
 ///
 /// See [`sus_check_with_message`]($sus_check_with_message) to add a
 /// message to the display of the panic.
 ///
 /// The displayed output can be controlled by overriding the behaviour of
-/// [`sus_panic`]($sus_panic) as described there.
+/// [`sus::panic`]($sus::panic) as described there.
 #define sus_check(...)               \
   if (![](bool x) { return x; }(__VA_ARGS__)) [[unlikely]] { \
-    sus_panic();                     \
+    sus::panic();                     \
   }                                  \
   static_assert(true)
 
 /// Verifies that the input `cond`, evaluated to a `bool`, is true. Otherwise,
-/// it will [`panic`]($sus_panic), printing a customized message, and
+/// it will [`panic`]($sus::panic), printing a customized message, and
 /// terminating the program.
 ///
 /// Use [`sus_check`]($sus_check) when there's nothing useful to add
 /// in the message.
 ///
 /// The displayed output can be controlled by overriding the behaviour of
-/// [`sus_panic`]($sus_panic) as described there. If the
+/// [`sus::panic`]($sus::panic) as described there. If the
 /// `SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER` macro does not consume the `msg`,
 /// this macro will avoid instantiating it at all.
 #define sus_check_with_message(cond, msg) \
   if (!(cond)) [[unlikely]] {             \
-    sus_panic_with_message(msg);          \
+    sus::panic_with_message(msg);          \
   }                                       \
   static_assert(true)

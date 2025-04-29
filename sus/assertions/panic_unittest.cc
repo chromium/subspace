@@ -29,25 +29,25 @@ namespace {
 
 TEST(PanicDeathTest, Panic) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(sus_panic(),
+  EXPECT_DEATH(sus::panic(),
                "^PANIC! at .*panic_unittest.cc:" DIGIT "+:" DIGIT "+\n$");
 #endif
 }
 
 TEST(PanicDeathTest, WithMessage) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(sus_panic_with_message("hello world"),
+  EXPECT_DEATH(sus::panic_with_message("hello world"),
                "^PANIC! at 'hello world', .*panic_unittest.cc:" DIGIT "+:" DIGIT
                "+\n$");
 #endif
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(sus_panic_with_message(
+  EXPECT_DEATH(sus::panic_with_message(
                    std::string_view("hello world123").substr(0u, 11u)),
                "^PANIC! at 'hello world', .*panic_unittest.cc:" DIGIT "+:" DIGIT
                "+\n$");
 #endif
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(sus_panic_with_message(std::string("hello world")),
+  EXPECT_DEATH(sus::panic_with_message(std::string("hello world")),
                "^PANIC! at 'hello world', .*panic_unittest.cc:" DIGIT "+:" DIGIT
                "+\n$");
 #endif

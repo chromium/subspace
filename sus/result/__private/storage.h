@@ -138,7 +138,7 @@ struct StorageVoid {
       switch (o.state) {
         case Ok: break;
         case Err: std::construct_at(&u.err, o.u.err); break;
-        case Moved: sus_panic_with_message("Result used after move");
+        case Moved: sus::panic_with_message("Result used after move");
       }
       // After construct_at since it may write into the field if it's in tail
       // padding.
@@ -189,7 +189,7 @@ struct StorageVoid {
       switch (o.state) {
         case Ok: break;
         case Err: std::construct_at(&u.err, ::sus::move(o.u.err)); break;
-        case Moved: sus_panic_with_message("Result used after move");
+        case Moved: sus::panic_with_message("Result used after move");
       }
       // After construct_at since it may write into the field if it's in tail
       // padding.
@@ -384,7 +384,7 @@ struct StorageNonVoid {
       switch (o.state) {
         case Ok: std::construct_at(&u.ok, o.u.ok); break;
         case Err: std::construct_at(&u.err, o.u.err); break;
-        case Moved: sus_panic_with_message("Result used after move");
+        case Moved: sus::panic_with_message("Result used after move");
       }
       // After construct_at since it may write into the field if it's in tail
       // padding.
@@ -441,7 +441,7 @@ struct StorageNonVoid {
       switch (o.state) {
         case Ok: std::construct_at(&u.ok, ::sus::move(o.u.ok)); break;
         case Err: std::construct_at(&u.err, ::sus::move(o.u.err)); break;
-        case Moved: sus_panic_with_message("Result used after move");
+        case Moved: sus::panic_with_message("Result used after move");
       }
       // After construct_at since it may write into the field if it's in tail
       // padding.

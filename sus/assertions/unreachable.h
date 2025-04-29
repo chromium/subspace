@@ -25,7 +25,7 @@
 #endif
 
 /// Indicates to the developer that the location should not be reached, and
-/// terminates the program with a [`panic`]($sus_panic).
+/// terminates the program with a [`panic`]($sus::panic).
 ///
 /// This is similar to [`std::unreachable!`](
 /// https://doc.rust-lang.org/stable/std/macro.unreachable.html) in Rust,
@@ -36,12 +36,12 @@
 /// https://en.cppreference.com/w/cpp/utility/unreachable) in C++ which is
 /// Undefined Behaviour if reached. It is closer to [`std::abort`](
 /// https://en.cppreference.com/w/cpp/utility/program/abort) except built on
-/// top of [`sus_panic`]($sus_panic).
+/// top of [`sus::panic`]($sus::panic).
 /// The Subspace library matches the safer behaviour of Rust to avoid confusion
 /// and security bugs when working across languages. Use
 /// [`sus_unreachable_unchecked`]($sus_unreachable_unchecked) to
 /// indicate to the compiler the code is not reachable.
-#define sus_unreachable() sus_panic_with_message("entered unreachable code")
+#define sus_unreachable() sus::panic_with_message("entered unreachable code")
 
 /// Indicates to the compiler that the location will never be reached, allowing
 /// it to optimize code generation accordingly. If this function is actually

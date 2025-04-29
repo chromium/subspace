@@ -40,7 +40,7 @@ namespace sus {
 /// types, but are safer than primitive C++ types and eliminate many classes of
 /// bugs that often lead to security vulnerabilities:
 /// * Integer overflow is not allowed by default (see [Overflow behaviour](
-///   #overflow-behaviour)), and will [`panic`]($sus_panic) to terminate the
+///   #overflow-behaviour)), and will [`panic`]($sus::panic) to terminate the
 ///   program.
 ///   Intentional overflow can be achieved through methods like
 ///   [`wrapping_add`]($sus::num::i32::wrapping_add) or

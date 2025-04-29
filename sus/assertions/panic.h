@@ -24,7 +24,7 @@
 namespace sus {
 
 /// Checking for (e.g. [`sus_check`]($sus_check)) and handling
-/// (e.g. [`sus_panic`]($sus_panic),
+/// (e.g. [`sus::panic`]($sus::panic),
 /// [`sus_unreachable`]($sus_unreachable)) unexpected runtime
 /// conditions.
 namespace assertions {}
@@ -62,8 +62,6 @@ void print_panic_message(std::string_view msg,
                          const PanicLocation& location) noexcept;
 void print_panic_location(const PanicLocation& location) noexcept;
 }  // namespace __private
-
-}  // namespace sus::assertions
 
 #if defined(SUS_PROVIDE_PRINT_PANIC_LOCATION_HANDLER)
 #  define _sus_panic_location_handler(loc) \
@@ -109,7 +107,7 @@ void print_panic_location(const PanicLocation& location) noexcept;
 ///
 /// If `SUS_PROVIDE_PANIC_HANDLER()` is defined, the macro _must_ not return or
 /// Undefined Behaviour will result.
-[[noreturn, gnu::always_inline, gnu::nodebug]] inline void sus_panic(::sus::assertions::PanicLocation loc = ::sus::assertions::PanicLocation::current()) noexcept
+[[noreturn, gnu::always_inline, gnu::nodebug]] inline void panic(::sus::assertions::PanicLocation loc = ::sus::assertions::PanicLocation::current()) noexcept
 {
   _sus_panic_location_handler(loc);
   _sus_panic_handler();
@@ -130,8 +128,15 @@ void print_panic_location(const PanicLocation& location) noexcept;
 /// * A [`PanicLocation`]($sus::assertions::PanicLocation).
 /// If the `SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER` macro does not consume the
 /// `msg`, this macro will avoid instantiating it at all.
-[[noreturn, gnu::always_inline, gnu::nodebug]] inline void sus_panic_with_message(std::string_view message, ::sus::assertions::PanicLocation loc = ::sus::assertions::PanicLocation::current()) noexcept
+[[noreturn, gnu::always_inline, gnu::nodebug]] inline void panic_with_message(std::string_view message, ::sus::assertions::PanicLocation loc = ::sus::assertions::PanicLocation::current()) noexcept
 {
   _sus_panic_message_handler(message, loc);
   _sus_panic_handler();
+}
+
+}  // namespace sus::assertions
+
+namespace sus {
+  using ::sus::assertions::panic;
+  using ::sus::assertions::panic_with_message;
 }
