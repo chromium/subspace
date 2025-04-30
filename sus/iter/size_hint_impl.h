@@ -25,7 +25,7 @@
 // fmt support.
 template <class Char>
 template <class FormatContext>
- FormatContext::iterator fmt::formatter<::sus::iter::SizeHint, Char>::format(const ::sus::iter::SizeHint& t,
-                        FormatContext& ctx) const {
-    return fmt::format_to(ctx.out(), "SizeHint({}, {})", t.lower, t.upper);
-  }
+FormatContext::iterator fmt::formatter<::sus::iter::SizeHint, Char>::format(
+    const ::sus::iter::SizeHint& t, FormatContext& ctx) const {
+  return fmt::format_to(ctx.out(), "SizeHint({}, {})", t.lower, t.upper);
+}

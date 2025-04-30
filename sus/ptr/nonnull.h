@@ -155,7 +155,8 @@ class [[_sus_trivial_abi]] NonNull {
   /// pointers are comparable and thus satisfy `Eq` as well.
   template <class U>
     requires(::sus::cmp::Eq<const T*, const U*>)
-  constexpr friend bool operator==(const NonNull& l, const NonNull<U>& r) noexcept {
+  constexpr friend bool operator==(const NonNull& l,
+                                   const NonNull<U>& r) noexcept {
     return l.as_ptr() == r.as_ptr();
   }
 
@@ -163,12 +164,13 @@ class [[_sus_trivial_abi]] NonNull {
   /// pointers are comparable and thus satisfy `StrongOrd` as well.
   template <class U>
     requires(::sus::cmp::StrongOrd<const T*, const U*>)
-  constexpr friend std::strong_ordering operator<=>(const NonNull& l, const NonNull<U>& r) noexcept {
+  constexpr friend std::strong_ordering operator<=>(
+      const NonNull& l, const NonNull<U>& r) noexcept {
     return l.as_ptr() <=> r.as_ptr();
   }
 
   // Stream support.
-  _sus_format_to_stream(NonNull)
+  _sus_format_to_stream(NonNull);
 
  private:
   T* ptr_;

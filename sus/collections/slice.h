@@ -249,7 +249,7 @@ class [[_sus_trivial_abi]] Slice final {
   }
 
   // Stream support.
-  _sus_format_to_stream(Slice)
+  _sus_format_to_stream(Slice);
 
 #define _ptr_expr data_
 #define _len_expr len_

@@ -911,7 +911,8 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
       delete;
 
   // Stream support
-  _sus_format_to_stream(Choice)
+  _sus_format_to_stream(Choice);
+
  private:
   constexpr explicit Choice(IndexType i) noexcept : index_(i) {}
 

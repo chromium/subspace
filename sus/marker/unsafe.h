@@ -23,7 +23,7 @@ namespace sus {
 /// Marker types, such as for accessing unsafe APIs, for overload resolution,
 /// or type elision.
 namespace marker {
-  struct UnsafeFnMarker;
+struct UnsafeFnMarker;
 }
 }  // namespace sus
 
@@ -70,7 +70,7 @@ struct UnsafeFnMarker {
   explicit consteval UnsafeFnMarker() {}
 
   // Stream support.
-  _sus_format_to_stream(UnsafeFnMarker)
+  _sus_format_to_stream(UnsafeFnMarker);
 };
 
 /// The global [`UnsafeFnMarker`]($sus::marker::UnsafeFnMarker) which can be

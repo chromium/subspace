@@ -30,7 +30,7 @@ struct SizeHint {
                                    const SizeHint& rhs) noexcept = default;
 
   // Stream support.
-  _sus_format_to_stream(SizeHint)
+  _sus_format_to_stream(SizeHint);
 };
 
 }  // namespace sus::iter
@@ -44,5 +44,6 @@ struct fmt::formatter<::sus::iter::SizeHint, Char> {
   }
 
   template <class FormatContext>
-  FormatContext::iterator format(const ::sus::iter::SizeHint& t, FormatContext& ctx) const;
+  FormatContext::iterator format(const ::sus::iter::SizeHint& t,
+                                 FormatContext& ctx) const;
 };

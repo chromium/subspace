@@ -36,7 +36,8 @@ struct VarError {
   Reason reason;
 
   /// Satisfies the [`Eq`]($sus::cmp::Eq) concept.
-  constexpr friend bool operator==(const VarError& lhs, const VarError& rhs) noexcept = default;
+  constexpr friend bool operator==(const VarError& lhs,
+                                   const VarError& rhs) noexcept = default;
 };
 
 /// Fetches the environment variable `key` from the current process.

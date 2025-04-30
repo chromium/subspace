@@ -850,7 +850,7 @@ class [[nodiscard]] Result final {
                                     const Result<U, F>& r) noexcept = delete;
 
   // Stream support.
-  _sus_format_to_stream(Result)
+  _sus_format_to_stream(Result);
 
  private:
   template <class U, class V>

@@ -61,13 +61,14 @@ struct [[_sus_trivial_abi]] u64 final {
   [[nodiscard]] __sus_pure_const constexpr friend u64 operator<<(
       u64 l, std::convertible_to<u64> auto r) noexcept {
     if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-      sus_check_with_message(r < u64::BITS, "attempt to shift left with overflow");
+      sus_check_with_message(r < u64::BITS,
+                             "attempt to shift left with overflow");
       return u64(
           __private::unchecked_shl(l.primitive_value, u64(r).primitive_value));
     } else {
-      return u64(
-          __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value)
-              .value);
+      return u64(__private::shl_with_overflow(l.primitive_value,
+                                              u64(r).primitive_value)
+                     .value);
     }
   }
 
@@ -81,13 +82,13 @@ struct [[_sus_trivial_abi]] u64 final {
       u64 l, std::convertible_to<u64> auto r) noexcept {
     if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
       sus_check_with_message(r < u64::BITS,
-                                "attempt to shift right with overflow");
+                             "attempt to shift right with overflow");
       return u64(
           __private::unchecked_shr(l.primitive_value, u64(r).primitive_value));
     } else {
-      return u64(
-          __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value)
-              .value);
+      return u64(__private::shr_with_overflow(l.primitive_value,
+                                              u64(r).primitive_value)
+                     .value);
     }
   }
 
@@ -112,13 +113,14 @@ struct [[_sus_trivial_abi]] u32 final {
   [[nodiscard]] __sus_pure_const constexpr friend u32 operator<<(
       u32 l, std::convertible_to<u64> auto r) noexcept {
     if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-      sus_check_with_message(r < u32::BITS, "attempt to shift left with overflow");
+      sus_check_with_message(r < u32::BITS,
+                             "attempt to shift left with overflow");
       return u32(
           __private::unchecked_shl(l.primitive_value, u64(r).primitive_value));
     } else {
-      return u32(
-          __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value)
-              .value);
+      return u32(__private::shl_with_overflow(l.primitive_value,
+                                              u64(r).primitive_value)
+                     .value);
     }
   }
 
@@ -132,13 +134,13 @@ struct [[_sus_trivial_abi]] u32 final {
       u32 l, std::convertible_to<u64> auto r) noexcept {
     if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
       sus_check_with_message(r < u32::BITS,
-                                "attempt to shift right with overflow");
+                             "attempt to shift right with overflow");
       return u32(
           __private::unchecked_shr(l.primitive_value, u64(r).primitive_value));
     } else {
-      return u32(
-          __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value)
-              .value);
+      return u32(__private::shr_with_overflow(l.primitive_value,
+                                              u64(r).primitive_value)
+                     .value);
     }
   }
 
@@ -174,13 +176,13 @@ struct [[_sus_trivial_abi]] u8 final {
       u8 l, std::convertible_to<u64> auto r) noexcept {
     if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
       sus_check_with_message(r < u8::BITS,
-                                "attempt to shift left with overflow");
+                             "attempt to shift left with overflow");
       return u8(
           __private::unchecked_shl(l.primitive_value, u64(r).primitive_value));
     } else {
-      return u8(
-          __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value)
-              .value);
+      return u8(__private::shl_with_overflow(l.primitive_value,
+                                             u64(r).primitive_value)
+                    .value);
     }
   }
   /// #[doc.overloads=unsignedint.<<]
@@ -203,13 +205,13 @@ struct [[_sus_trivial_abi]] u8 final {
       u8 l, std::convertible_to<u64> auto r) noexcept {
     if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
       sus_check_with_message(r < u8::BITS,
-                                "attempt to shift right with overflow");
+                             "attempt to shift right with overflow");
       return u8(
           __private::unchecked_shr(l.primitive_value, u64(r).primitive_value));
     } else {
-      return u8(
-          __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value)
-              .value);
+      return u8(__private::shr_with_overflow(l.primitive_value,
+                                             u64(r).primitive_value)
+                    .value);
     }
   }
   /// #[doc.overloads=unsignedint.>>]
@@ -234,13 +236,13 @@ struct [[_sus_trivial_abi]] u16 final {
       u16 l, std::convertible_to<u64> auto r) noexcept {
     if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
       sus_check_with_message(r < u16::BITS,
-                                "attempt to shift left with overflow");
+                             "attempt to shift left with overflow");
       return u16(
           __private::unchecked_shl(l.primitive_value, u64(r).primitive_value));
     } else {
-      return u16(
-          __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value)
-              .value);
+      return u16(__private::shl_with_overflow(l.primitive_value,
+                                              u64(r).primitive_value)
+                     .value);
     }
   }
 
@@ -254,13 +256,13 @@ struct [[_sus_trivial_abi]] u16 final {
       u16 l, std::convertible_to<u64> auto r) noexcept {
     if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
       sus_check_with_message(r < u16::BITS,
-                                "attempt to shift right with overflow");
+                             "attempt to shift right with overflow");
       return u16(
           __private::unchecked_shr(l.primitive_value, u64(r).primitive_value));
     } else {
-      return u16(
-          __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value)
-              .value);
+      return u16(__private::shr_with_overflow(l.primitive_value,
+                                              u64(r).primitive_value)
+                     .value);
     }
   }
 
@@ -300,13 +302,14 @@ struct [[_sus_trivial_abi]] usize final {
   [[nodiscard]] __sus_pure_const constexpr friend usize operator<<(
       usize l, std::convertible_to<u64> auto r) noexcept {
     if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-      sus_check_with_message(r < usize::BITS, "attempt to shift left with overflow");
+      sus_check_with_message(r < usize::BITS,
+                             "attempt to shift left with overflow");
       return usize(
           __private::unchecked_shl(l.primitive_value, u64(r).primitive_value));
     } else {
-      return usize(
-          __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value)
-              .value);
+      return usize(__private::shl_with_overflow(l.primitive_value,
+                                                u64(r).primitive_value)
+                       .value);
     }
   }
 
@@ -319,13 +322,14 @@ struct [[_sus_trivial_abi]] usize final {
   [[nodiscard]] __sus_pure_const constexpr friend usize operator>>(
       usize l, std::convertible_to<u64> auto r) noexcept {
     if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-      sus_check_with_message(r < usize::BITS, "attempt to shift right with overflow");
+      sus_check_with_message(r < usize::BITS,
+                             "attempt to shift right with overflow");
       return usize(
           __private::unchecked_shr(l.primitive_value, u64(r).primitive_value));
     } else {
-      return usize(
-          __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value)
-              .value);
+      return usize(__private::shr_with_overflow(l.primitive_value,
+                                                u64(r).primitive_value)
+                       .value);
     }
   }
 
@@ -372,13 +376,14 @@ struct [[_sus_trivial_abi]] uptr final {
   [[nodiscard]] __sus_pure_const constexpr friend uptr operator<<(
       uptr l, std::convertible_to<u64> auto r) noexcept {
     if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-      sus_check_with_message(r < uptr::BITS, "attempt to shift left with overflow");
+      sus_check_with_message(r < uptr::BITS,
+                             "attempt to shift left with overflow");
       return uptr(
           __private::unchecked_shl(l.primitive_value, u64(r).primitive_value));
     } else {
-      return uptr(
-          __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value)
-              .value);
+      return uptr(__private::shl_with_overflow(l.primitive_value,
+                                               u64(r).primitive_value)
+                      .value);
     }
   }
 
@@ -391,13 +396,14 @@ struct [[_sus_trivial_abi]] uptr final {
   [[nodiscard]] __sus_pure_const constexpr friend uptr operator>>(
       uptr l, std::convertible_to<u64> auto r) noexcept {
     if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-      sus_check_with_message(r < uptr::BITS, "attempt to shift right with overflow");
+      sus_check_with_message(r < uptr::BITS,
+                             "attempt to shift right with overflow");
       return uptr(
           __private::unchecked_shr(l.primitive_value, u64(r).primitive_value));
     } else {
-      return uptr(
-          __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value)
-              .value);
+      return uptr(__private::shr_with_overflow(l.primitive_value,
+                                               u64(r).primitive_value)
+                      .value);
     }
   }
 

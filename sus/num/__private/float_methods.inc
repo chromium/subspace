@@ -1158,7 +1158,7 @@ _sus_pure static _self from_ne_bytes(
         bytes) noexcept;
 
 // Stream support.
-_sus_format_to_stream(_self)
+_sus_format_to_stream(_self);
 
 #undef _self
 #undef _primitive

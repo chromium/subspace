@@ -261,7 +261,8 @@ class Tuple final {
   template <class U, class... Us>
     requires(sizeof...(Us) == sizeof...(Ts) &&
              (::sus::cmp::Eq<T, U> && ... && ::sus::cmp::Eq<Ts, Us>))
-  constexpr friend bool operator==(const Tuple& l, const Tuple<U, Us...>& r) noexcept {
+  constexpr friend bool operator==(const Tuple& l,
+                                   const Tuple<U, Us...>& r) noexcept {
     return __private::storage_eq(
         l.storage_, r.storage_, std::make_index_sequence<1u + sizeof...(Ts)>());
   }
@@ -276,7 +277,8 @@ class Tuple final {
   /// Tuple for comparison.
   //
   // sus::cmp::StrongOrd<Tuple<U...>> trait.
-  constexpr friend std::strong_ordering operator<=>(const Tuple& l, const Tuple& r) noexcept
+  constexpr friend std::strong_ordering operator<=>(const Tuple& l,
+                                                    const Tuple& r) noexcept
     requires((::sus::cmp::StrongOrd<T> && ... && ::sus::cmp::StrongOrd<Ts>))
   {
     return __private::storage_cmp(
@@ -288,15 +290,15 @@ class Tuple final {
              (::sus::cmp::StrongOrd<T, U> && ... &&
               ::sus::cmp::StrongOrd<Ts, Us>))
   constexpr friend std::strong_ordering operator<=>(
-      const Tuple& l,
-      const Tuple<U, Us...>& r) noexcept {
+      const Tuple& l, const Tuple<U, Us...>& r) noexcept {
     return __private::storage_cmp(
         std::strong_ordering::equal, l.storage_, r.storage_,
         std::make_index_sequence<1u + sizeof...(Ts)>());
   }
 
   // sus::cmp::Ord<Tuple<U...>> trait.
-  constexpr friend std::weak_ordering operator<=>(const Tuple& l, const Tuple& r) noexcept
+  constexpr friend std::weak_ordering operator<=>(const Tuple& l,
+                                                  const Tuple& r) noexcept
     requires(!(::sus::cmp::StrongOrd<T> && ... && ::sus::cmp::StrongOrd<Ts>) &&
              (::sus::cmp::Ord<T> && ... && ::sus::cmp::Ord<Ts>))
   {
@@ -310,15 +312,15 @@ class Tuple final {
                ::sus::cmp::StrongOrd<Ts, Us>) &&
              (::sus::cmp::Ord<T, U> && ... && ::sus::cmp::Ord<Ts, Us>))
   constexpr friend std::weak_ordering operator<=>(
-      const Tuple& l,
-      const Tuple<U, Us...>& r) noexcept {
+      const Tuple& l, const Tuple<U, Us...>& r) noexcept {
     return __private::storage_cmp(
         std::weak_ordering::equivalent, l.storage_, r.storage_,
         std::make_index_sequence<1u + sizeof...(Ts)>());
   }
 
   // sus::cmp::PartialOrd<Tuple<U...>> trait.
-  constexpr friend std::partial_ordering operator<=>(const Tuple& l, const Tuple& r) noexcept
+  constexpr friend std::partial_ordering operator<=>(const Tuple& l,
+                                                     const Tuple& r) noexcept
     requires(!(::sus::cmp::Ord<T> && ... && ::sus::cmp::Ord<Ts>) &&
              (::sus::cmp::PartialOrd<T> && ... && ::sus::cmp::PartialOrd<Ts>))
   {
@@ -332,8 +334,7 @@ class Tuple final {
              (::sus::cmp::PartialOrd<T, U> && ... &&
               ::sus::cmp::PartialOrd<Ts, Us>))
   constexpr friend std::partial_ordering operator<=>(
-      const Tuple& l,
-      const Tuple<U, Us...>& r) noexcept {
+      const Tuple& l, const Tuple<U, Us...>& r) noexcept {
     return __private::storage_cmp(
         std::partial_ordering::equivalent, l.storage_, r.storage_,
         std::make_index_sequence<1u + sizeof...(Ts)>());
@@ -377,7 +378,7 @@ class Tuple final {
     }
   }
 
-  _sus_format_to_stream(Tuple)
+  _sus_format_to_stream(Tuple);
 
  private:
   template <class U, class... Us>

@@ -2422,7 +2422,7 @@ to_ne_bytes() const& noexcept;
         bytes) noexcept;
 
 // Stream support.
-_sus_format_to_stream(_self)
+_sus_format_to_stream(_self);
 
 #if _pointer
 

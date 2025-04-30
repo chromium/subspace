@@ -776,8 +776,7 @@ _sus_pure constexpr _self _self::pow(u32 rhs) const& noexcept {
   const auto out =
       __private::pow_with_overflow(primitive_value, rhs.primitive_value);
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    sus_check_with_message(!out.overflow,
-                              "attempt to multiply with overflow");
+    sus_check_with_message(!out.overflow, "attempt to multiply with overflow");
   }
   return _self(out.value);
 }

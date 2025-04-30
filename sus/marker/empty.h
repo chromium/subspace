@@ -20,7 +20,7 @@
 #include "sus/string/__private/format_to_stream.h"
 
 namespace sus::marker {
-  struct EmptyMarker;
+struct EmptyMarker;
 }
 
 // fmt support.
@@ -52,7 +52,7 @@ struct EmptyMarker {
   explicit consteval EmptyMarker() {}
 
   // Stream support.
-  _sus_format_to_stream(EmptyMarker)
+  _sus_format_to_stream(EmptyMarker);
 };
 
 /// The global [`EmptyMarker`]($sus::marker::EmptyMarker) which can be passed to

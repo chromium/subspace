@@ -24,7 +24,6 @@
 #include "sus/macros/compiler.h"
 #include "sus/macros/for_each.h"
 
-
 namespace sus::string::__private {
 
 template <class To, class From>
@@ -32,13 +31,13 @@ concept ConvertibleFrom = std::convertible_to<From, To>;
 
 template <class T, class Char, class U>
 concept StreamCanReceiveString =
-  !std::same_as<std::remove_cvref_t<T>, std::remove_cvref_t<U>> &&
-  requires(T& t, const std::basic_string<Char> s) {
-    // Check ConvertibleFrom as std streams return std::basic_ostream&, which the
-    // input type `T&` is convertible to. The concept ordering means we want
-    // `ConvertibleFrom<..the output type.., T&>` to be true then.
-    { t << s } -> ConvertibleFrom<T&>;
-  };
+    !std::same_as<std::remove_cvref_t<T>, std::remove_cvref_t<U>> &&
+    requires(T& t, const std::basic_string<Char> s) {
+      // Check ConvertibleFrom as std streams return std::basic_ostream&, which the
+      // input type `T&` is convertible to. The concept ordering means we want
+      // `ConvertibleFrom<..the output type.., T&>` to be true then.
+      { t << s } -> ConvertibleFrom<T&>;
+    };
 
 /// Consumes the string `s` and streams it to the output stream `os`.
 template <class Char, StreamCanReceiveString<Char, void> S>
@@ -95,4 +94,5 @@ S& format_to_stream(S& os, const std::basic_string<Char>& s) {
     static_assert(fmt::is_formattable<U>::value);                                     \
     return ::sus::string::__private::format_to_stream(stream, fmt::to_string(value)); \
   }                                                                                   \
+  static_assert(true)
 // clang-format on

@@ -657,7 +657,7 @@ class [[_sus_trivial_abi]] Box final : public __private::BoxBase<Box<T>, T> {
   }
 
   // Stream support.
-  _sus_format_to_stream(Box)
+  _sus_format_to_stream(Box);
 
  private:
   enum FromPointer { FROM_POINTER };

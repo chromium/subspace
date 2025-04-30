@@ -1934,7 +1934,7 @@ class Option final {
   }
 
   // Stream support.
-  _sus_format_to_stream(Option)
+  _sus_format_to_stream(Option);
 
  private:
   template <class U>

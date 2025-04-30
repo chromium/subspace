@@ -65,8 +65,8 @@ struct Storage<T, 0> final {};
 
 namespace __private {
 template <size_t I>
-constexpr bool array_cmp_impl(sus::cmp::Ordering auto& val,
-                                     const auto& l, const auto& r) noexcept {
+constexpr bool array_cmp_impl(sus::cmp::Ordering auto& val, const auto& l,
+                              const auto& r) noexcept {
   auto cmp = l.get_unchecked(::sus::marker::unsafe_fn, I) <=>
              r.get_unchecked(::sus::marker::unsafe_fn, I);
   // Allow downgrading from equal to equivalent, but not the inverse.
@@ -77,13 +77,12 @@ constexpr bool array_cmp_impl(sus::cmp::Ordering auto& val,
 
 template <size_t... Is>
 constexpr auto array_cmp(sus::cmp::Ordering auto equal, const auto& l,
-                                const auto& r,
-                                std::index_sequence<Is...>) noexcept {
+                         const auto& r, std::index_sequence<Is...>) noexcept {
   auto val = equal;
   (true && ... && (array_cmp_impl<Is>(val, l, r)));
   return val;
 }
-}
+}  // namespace __private
 
 /// A collection of objects of type `T`, with a fixed size `N`.
 ///
@@ -357,7 +356,8 @@ class Array final {
   /// Satisfies the [`Eq<Array<T, N>, Array<U, N>>`]($sus::cmp::Eq) concept.
   template <class U>
     requires(::sus::cmp::Eq<T, U>)
-  friend constexpr bool operator==(const Array& l, const Array<U, N>& r) noexcept
+  friend constexpr bool operator==(const Array& l,
+                                   const Array<U, N>& r) noexcept
     requires(::sus::cmp::Eq<T>)
   {
     return l.eq_impl(r, std::make_index_sequence<N>());
@@ -445,8 +445,8 @@ class Array final {
   /// #[doc.overloads=array.cmp.array]
   template <class U>
     requires(::sus::cmp::ExclusiveOrd<T, U>)
-  constexpr friend std::weak_ordering operator<=>(const Array& l,
-                                                  const Array<U, N>& r) noexcept {
+  constexpr friend std::weak_ordering operator<=>(
+      const Array& l, const Array<U, N>& r) noexcept {
     return __private::array_cmp(std::weak_ordering::equivalent, l, r,
                                 std::make_index_sequence<N>());
   }
@@ -471,8 +471,8 @@ class Array final {
   /// #[doc.overloads=array.cmp.slice]
   template <class U>
     requires(::sus::cmp::ExclusiveStrongOrd<T, U>)
-  constexpr friend std::strong_ordering operator<=>(const Array& l,
-                                                    const Slice<U>& r) noexcept {
+  constexpr friend std::strong_ordering operator<=>(
+      const Array& l, const Slice<U>& r) noexcept {
     if (r.len() != N) return r.len() <=> N;
     return __private::array_cmp(std::strong_ordering::equivalent, l, r,
                                 std::make_index_sequence<N>());
@@ -489,8 +489,8 @@ class Array final {
   /// #[doc.overloads=array.cmp.slice]
   template <class U>
     requires(::sus::cmp::ExclusivePartialOrd<T, U>)
-  constexpr friend std::partial_ordering operator<=>(const Array& l,
-                                                    const Slice<U>& r) noexcept {
+  constexpr friend std::partial_ordering operator<=>(
+      const Array& l, const Slice<U>& r) noexcept {
     if (r.len() != N) return r.len() <=> N;
     return __private::array_cmp(std::partial_ordering::equivalent, l, r,
                                 std::make_index_sequence<N>());
@@ -517,8 +517,8 @@ class Array final {
   /// #[doc.overloads=array.cmp.slicemut]
   template <class U>
     requires(::sus::cmp::ExclusiveOrd<T, U>)
-  constexpr friend std::weak_ordering operator<=>(const Array& l,
-                                                  const SliceMut<U>& r) noexcept {
+  constexpr friend std::weak_ordering operator<=>(
+      const Array& l, const SliceMut<U>& r) noexcept {
     if (r.len() != N) return r.len() <=> N;
     return __private::array_cmp(std::weak_ordering::equivalent, l, r,
                                 std::make_index_sequence<N>());
@@ -534,7 +534,8 @@ class Array final {
   }
 
   // Stream support
-  _sus_format_to_stream(Array)
+  _sus_format_to_stream(Array);
+
  private:
   enum WithDefault { WITH_DEFAULT };
   template <size_t... Is>

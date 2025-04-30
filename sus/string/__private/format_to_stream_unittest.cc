@@ -26,7 +26,7 @@
 
 namespace {
 struct Streamable {
-  _sus_format_to_stream(Streamable)
+  _sus_format_to_stream(Streamable);
 };
 }  // namespace
 
