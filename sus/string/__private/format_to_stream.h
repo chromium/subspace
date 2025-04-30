@@ -31,6 +31,7 @@ concept ConvertibleFrom = std::convertible_to<From, To>;
 
 template <class T, class Char, class U>
 concept StreamCanReceiveString =
+    /// Ensure that we don't accidentally recursively check `U`.
     !std::same_as<std::remove_cvref_t<T>, std::remove_cvref_t<U>> &&
     requires(T& t, const std::basic_string<Char> s) {
       // Check ConvertibleFrom as std streams return std::basic_ostream&, which the
@@ -60,30 +61,19 @@ S& format_to_stream(S& os, const std::basic_string<Char>& s) {
 ///
 /// # Implementation Notes
 ///
-/// The `Type` argument is encoded as a template argument for the GCC compiler
-/// because it does not reject the overload when the `Type` does not match
-/// otherwise, and then ends up recursively trying to solve
-/// `StreamCanReceiveString<S, char>`. On the first attempt to solve
-/// `StreamCanReceiveString<S, char>`, it tries to call this overload with
-/// `std::string` which is *not* `Type` and yet it considers it a valid
-/// overload, so it tries to again solve `StreamCanReceiveString<S, char>` which
-/// is now recursive. See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=99599.
-///
-/// Actually it gets worse. If the `Type` has template parameters, we can't use
-/// `std::same_as<Type<Params..>> Sus_ValueType` as the compiler can't
-/// infer the `Params...` there, even though `Sus_ValueType` appears in the
-/// parameter list. So we _have_ to put the real type in the parameter list.
-/// But also in this case GCC does the same thing as the others and does not
-/// include the function in the overload set if the non-concept type doesn't
-/// match. So we can revert back to the usual incantation then.
-//
+/// The `U` template type parameter allows `_sus_format_to_stream` to be a
+/// hidden friend when `Type` is not a class template. Directly using `Type`
+/// means that the function is immediately instantiated, and we'll get a
+/// compile-time error unless `fmt::formatter` is specialised before `Type`'s
+/// definition, since `fmt::is_formattable` doesn't know it's a formattable type
+/// at this point in the code. This isn't a problem for primary class templates,
+/// but it is problematic for regular classes and full specialisations. Using a
+/// dependent type `U` defers instantiation until `operator<<` is first used.
+/// We need to constrain `U` to be the same type as `Type`, otherwise it will
+/// be ambiguous as to which overload we want.
 // clang-format off
 #define _sus_format_to_stream(Type)                                                   \
   template<                                                                           \
-      /* Inserts `std::same_as<Type> Sus_ValueType` if required for GCC. */           \
-      sus_if_gcc(                                                                     \
-          _sus_format_to_stream_parameter_concept(Type)                               \
-      )                                                                               \
       sus::string::__private::StreamCanReceiveString<char, Type> Sus_StreamType,      \
       std::same_as<Type> U = Type                                                     \
   >                                                                                   \
