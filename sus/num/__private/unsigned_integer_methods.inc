@@ -2424,6 +2424,118 @@ to_ne_bytes() const& noexcept;
 // Stream support.
 _sus_format_to_stream(_self);
 
+/// Satisfies the [`Shl`]($sus::num::Shl) concept for unsigned integers.
+///
+/// # Panics
+/// This function will panic when `r` is not less than the number of bits in `l`
+/// if overflow checks are enabled (they are by default) and will perform a
+/// wrapping shift if overflow checks are disabled (not the default).
+///
+/// See [overflow checks]($sus::num#overflow-behaviour) for controlling this
+/// behaviour.
+///
+/// #[doc.overloads=unsignedint.<<]
+[[nodiscard]] __sus_pure_const constexpr friend _self operator<<(
+    _self l, std::convertible_to<u64> auto r) noexcept {
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    sus_check_with_message(r < _self::BITS,
+                            "attempt to shift left with overflow");
+    return _self(
+        __private::unchecked_shl(l.primitive_value, u64(r).primitive_value));
+  } else {
+    return _self(__private::shl_with_overflow(l.primitive_value,
+                                              u64(r).primitive_value)
+                    .value);
+  }
+}
+
+/// #[doc.overloads=unsignedint.<<]
+template <class U>
+  requires(!std::convertible_to<U, u64>)
+constexpr friend _self operator<<(_self l, U r) noexcept = delete;
+
+/// Satisfies the [`Shr`]($sus::num::Shr) concept for unsigned integers.
+///
+/// # Panics
+/// This function will panic when `r` is not less than the number of bits in `l`
+/// if overflow checks are enabled (they are by default) and will perform a
+/// wrapping shift if overflow checks are disabled (not the default).
+///
+/// See [overflow checks]($sus::num#overflow-behaviour) for controlling this
+/// behaviour.
+///
+/// #[doc.overloads=unsignedint.>>]
+[[nodiscard]] __sus_pure_const constexpr friend _self operator>>(
+    _self l, std::convertible_to<u64> auto r) noexcept {
+  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
+    sus_check_with_message(r < _self::BITS,
+                            "attempt to shift right with overflow");
+    return _self(
+        __private::unchecked_shr(l.primitive_value, u64(r).primitive_value));
+  } else {
+    return _self(__private::shr_with_overflow(l.primitive_value,
+                                              u64(r).primitive_value)
+                    .value);
+  }
+}
+
+/// #[doc.overloads=unsignedint.>>]
+template <class U>
+  requires(!std::convertible_to<U, u64>)
+constexpr friend _self operator>>(_self l, U r) noexcept = delete;
+
+/// Satisfies the [`Add`]($sus::num::Add) concept for pointers
+/// (`T*`) with [`usize`]($sus::num::usize).
+///
+/// Adds a [`usize`]($sus::num::usize) to a pointer, returning the resulting
+/// pointer.
+///
+/// #[doc.overloads=ptr.add.usize]
+template <class T>
+__sus_pure_const constexpr friend T* operator+(T* t, _self offset) {
+  return t + size_t{offset};
+}
+
+/// Satisfies the [`Shl`]($sus::num::Shl) concept for unsigned primitive
+/// integers shifted by [`u64`]($sus::num::u64).
+/// #[doc.overloads=unsigned.prim.<<u64]
+template <class P>
+  requires(UnsignedPrimitiveInteger<P> || UnsignedPrimitiveEnum<P>)
+[[nodiscard]] __sus_pure_const constexpr friend P operator<<(P l, _self r) noexcept {
+  // No UB checks on primitive types, since there's no promotion to a Subspace
+  // return type?
+  return l << u64(r).primitive_value;
+}
+
+/// Satisfies the [`Shr`]($sus::num::Shr) concept for unsigned primitive
+/// integers shifted by [`u64`]($sus::num::u64).
+/// #[doc.overloads=unsigned.prim.>>u64]
+template <class P>
+  requires(UnsignedPrimitiveInteger<P> || UnsignedPrimitiveEnum<P>)
+[[nodiscard]] __sus_pure_const constexpr friend P operator>>(P l, _self r) noexcept {
+  // No UB checks on primitive types, since there's no promotion to a Subspace
+  // return type?
+  return l >> u64(r).primitive_value;
+}
+
+/// #[doc.overloads=signed.prim.<<u64]
+template <class P>
+  requires(SignedPrimitiveInteger<P> || SignedPrimitiveEnum<P>)
+[[nodiscard]] __sus_pure_const constexpr friend P operator<<(P l, _self r) noexcept {
+  // No UB checks on primitive types, since there's no promotion to a Subspace
+  // return type?
+  return l << u64(r).primitive_value;
+}
+
+/// #[doc.overloads=signed.prim.>>u64]
+template <class P>
+  requires(SignedPrimitiveInteger<P> || SignedPrimitiveEnum<P>)
+[[nodiscard]] __sus_pure_const constexpr friend P operator>>(P l, _self r) noexcept {
+  // No UB checks on primitive types, since there's no promotion to a Subspace
+  // return type?
+  return l >> u64(r).primitive_value;
+}
+
 #if _pointer
 
 /// Returns the address portion of the pointer.
