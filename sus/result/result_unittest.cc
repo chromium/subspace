@@ -1798,13 +1798,13 @@ TEST(Result, Eq) {
   EXPECT_EQ((Result<f32, i32>(1.f)), (Result<f32, i32>(1.f)));
   EXPECT_EQ((Result<f32, i32>(0.f)), (Result<f32, i32>(-0.f)));
 
-  EXPECT_NE((Result<f32, i32>(f32::NAN)), (Result<f32, i32>(f32::NAN)));
+  EXPECT_NE((Result<f32, i32>(f32::NaN)), (Result<f32, i32>(f32::NaN)));
   EXPECT_EQ((Result<i32, f32>::with_err(1.f)),
             (Result<i32, f32>::with_err(1.f)));
   EXPECT_EQ((Result<i32, f32>::with_err(0.f)),
             (Result<i32, f32>::with_err(-0.f)));
-  EXPECT_NE((Result<i32, f32>::with_err(f32::NAN)),
-            (Result<i32, f32>::with_err(f32::NAN)));
+  EXPECT_NE((Result<i32, f32>::with_err(f32::NaN)),
+            (Result<i32, f32>::with_err(f32::NaN)));
 
   // Comparison with marker types. EXPECT_EQ also converts it to a const
   // reference, so this tests that comparison from a const marker works (if the
@@ -1937,7 +1937,7 @@ TEST(Result, PartialOrder) {
       std::partial_order(Result<f32, i8>(0.0f), Result<f32, i8>(1.0f)) ==
       std::partial_ordering::less);
   EXPECT_EQ(
-      std::partial_order(Result<f32, i8>(f32::NAN), Result<f32, i8>(f32::NAN)),
+      std::partial_order(Result<f32, i8>(f32::NaN), Result<f32, i8>(f32::NaN)),
       std::partial_ordering::unordered);
 }
 

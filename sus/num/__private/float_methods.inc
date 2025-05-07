@@ -74,11 +74,18 @@ static const i32 MAX_10_EXP;
 ///
 /// This value is not constexpr because the value can differ in a constexpr
 /// evaluation context from a runtime context, leading to bugs.
-static const _self NAN;
+///
+/// We have chosen the name NaN so that we don't clash with the C++ standard
+/// library macro NaN. It's not an ideal name, but is the best we've been able
+/// to come up with so far.
+static const _self NaN;
 /// Infinity.
-static const _self INFINITY;
+///
+/// We have chosen the name INF so that we don't clash with the C++ standard
+/// library macro INFINITY.
+static const _self INF;
 /// Negative infinity.
-static const _self NEG_INFINITY;
+static const _self NEG_INF;
 
 struct consts {
   /// Euler's number (e)
@@ -549,7 +556,7 @@ _sus_pure inline _self abs() const& noexcept {
 _sus_pure inline _self acos() const& noexcept {
   if (primitive_value < _primitive{-1} || primitive_value > _primitive{1})
       [[unlikely]]
-    return NAN;
+    return NaN;
   // MSVC acos(float) is returning a double for some reason.
   return static_cast<_primitive>(::acos(primitive_value));
 }
@@ -557,7 +564,7 @@ _sus_pure inline _self acos() const& noexcept {
 /// -1.
 _sus_pure inline _self acosh() const& noexcept {
   if (primitive_value < _primitive{-1}) [[unlikely]]
-    return NAN;
+    return NaN;
   // MSVC acosh(float) is returning a double for some reason.
   return static_cast<_primitive>(::acosh(primitive_value));
 }
@@ -566,14 +573,14 @@ _sus_pure inline _self acosh() const& noexcept {
 _sus_pure inline _self asin() const& noexcept {
   if (primitive_value < _primitive{-1} || primitive_value > _primitive{1})
       [[unlikely]]
-    return NAN;
+    return NaN;
   // MSVC asin(float) is returning a double for some reason.
   return static_cast<_primitive>(::asin(primitive_value));
 }
 /// Inverse hyperbolic sine function.
 _sus_pure inline _self asinh() const& noexcept {
   if (primitive_value < _primitive{-1}) [[unlikely]]
-    return NAN;
+    return NaN;
   // MSVC asinh(float) is returning a double for some reason.
   return static_cast<_primitive>(::asinh(primitive_value));
 }
@@ -721,7 +728,7 @@ _sus_pure inline _self mul_add(_self a, _self b) const& noexcept {
 
 /// Returns the next representable value of the float type after `self` in the
 /// direction of `toward`. If `self == toward`, `toward` is returned. If either
-/// `self` or `toward` is NAN, NAN is returned.
+/// `self` or `toward` is NaN, NaN is returned.
 ///
 /// This is implemented by the
 /// [cmath](https://en.cppreference.com/w/c/numeric/math/nextafter) library, see
@@ -875,10 +882,10 @@ _sus_pure inline isize round_to_isize() const& noexcept {
 }
 /// Returns a number that represents the sign of self.
 ///
-/// * `1.0` if the number is positive, `+0.0` or [`INFINITY`](
-///   $sus::num::@doc.self::INFINITY).
+/// * `1.0` if the number is positive, `+0.0` or [`INF`](
+///   $sus::num::@doc.self::INF).
 /// * `-1.0` if the number is negative, `-0.0` or
-///   [`NEG_INFINITY`]($sus::num::@doc.self::NEG_INFINITY).
+///   [`NEG_INF`]($sus::num::@doc.self::NEG_INF).
 /// * `NaN` if the number is `NaN`. The input value is returned exactly,
 ///   preserving signaling NaNs.
 _sus_pure inline _self signum() const& noexcept {
@@ -901,7 +908,7 @@ _sus_pure inline _self sinh() const& noexcept {
 /// Returns NaN if self is a negative number other than `-0.0`.
 _sus_pure inline _self sqrt() const& noexcept {
   if (primitive_value < -_primitive{0}) [[unlikely]]
-    return NAN;
+    return NaN;
   // MSVC sqrt(float) is returning a double for some reason.
   return static_cast<_primitive>(::sqrt(primitive_value));
 }

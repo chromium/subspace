@@ -79,12 +79,12 @@ struct CastImpl<T, T> {
 ///
 /// * Casting from a float to an integer will perform a static_cast, which
 ///   rounds the float towards zero, except:
-///   * `NAN` will return 0.
+///   * `NaN` will return 0.
 ///   * Values larger than the maximum integer value, including
-///     [`f32::INFINITY`]($sus::num::f32::INFINITY),
+///     [`f32::INF`]($sus::num::f32::INF),
 ///     will saturate to the maximum value of the integer type.
 ///   * Values smaller than the minimum integer value, including
-///     [`f32::NEG_INFINITY`]($sus::num::f32::NEG_INFINITY), will saturate to
+///     [`f32::NEG_INF`]($sus::num::f32::NEG_INF), will saturate to
 ///     the minimum value of the integer type.
 /// * Casting from an integer to a float will perform a `static_cast`, which
 ///   converts to the nearest floating point value. The rounding direction for
@@ -97,10 +97,10 @@ struct CastImpl<T, T> {
 ///   [`f32`]($sus::num::f32) (or float) performs the same action as a
 ///   `static_cast` if the value is in range for [`f32`]($sus::num::f32),
 ///   otherwise:
-///   * `NAN` will return a `NAN`.
+///   * `NaN` will return a `NaN`.
 ///   * Values outside of [`f32`]($sus::num::f32)'s range will return
-///     [`f32::INFINITY`]($sus::num::f32::INFINITY) or
-///     [`f32::NEG_INFINITY`]($sus::num::f32::NEG_INFINITY) for positive and
+///     [`f32::INF`]($sus::num::f32::INF) or
+///     [`f32::NEG_INF`]($sus::num::f32::NEG_INF) for positive and
 ///     negative values respectively.
 /// * Casting to and from [`std::byte`](
 ///   https://en.cppreference.com/w/cpp/types/byte) produces the same values

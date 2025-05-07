@@ -294,7 +294,6 @@ if(${SUBSPACE_BUILD_TESTS})
         "mem/swap_unittest.cc"
         "mem/take_unittest.cc"
         "num/__private/literals_unittest.cc"
-        "num/cmath_macros_unittest.cc"
         "num/cast_unittest.cc"
         "num/f32_unittest.cc"
         "num/f64_unittest.cc"
@@ -366,4 +365,3 @@ if(${SUBSPACE_BUILD_TESTS})
     )
     gtest_discover_tests(subspace_overflow_unittests)
 endif()
-
