@@ -115,4 +115,8 @@ namespace num {}
 #include "sus/num/try_from_int_error_impl.h"
 #include "sus/num/unsigned_integer.h"
 #include "sus/num/unsigned_integer_impl.h"
+
+// Running an include tracer indicated that placing size_hint_impl.h in this
+// header should fix link-time errors when attempting to format `SizeHint`.
+#include "sus/iter/size_hint_impl.h"
 // IWYU pragma: end_exports
