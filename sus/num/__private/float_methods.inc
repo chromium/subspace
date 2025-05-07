@@ -82,8 +82,7 @@ static const _self NaN;
 /// Infinity.
 ///
 /// We have chosen the name INF so that we don't clash with the C++ standard
-/// library macro INFINITY. It's not an ideal name, but is the best we've been
-/// able to come up with so far.
+/// library macro INFINITY.
 static const _self INF;
 /// Negative infinity.
 static const _self NEG_INF;
