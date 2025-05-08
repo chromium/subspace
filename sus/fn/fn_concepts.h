@@ -81,10 +81,10 @@ struct Anything {
 /// called correctly. It is moved-from after calling, and it should only be
 /// called once.
 ///
-/// Calling a `FnOnce` multiple times may [`panic`]($sus_panic)
+/// Calling a `FnOnce` multiple times may [`panic`]($sus::panic)
 /// or cause Undefined Behaviour.
 /// Not moving the `FnOnce` when calling it may fail to compile,
-/// [`panic`]($sus_panic), or cause Undefined Behaviour depending on the type
+/// [`panic`]($sus::panic), or cause Undefined Behaviour depending on the type
 /// that is being used to satisfy `FnOnce`.
 ///
 /// # Type erasure

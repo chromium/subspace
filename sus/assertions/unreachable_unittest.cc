@@ -31,7 +31,7 @@ namespace {
 
 TEST(UnreachableDeathTest, Unreachable) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(sus_unreachable(),
+  EXPECT_DEATH(sus::unreachable(),
                "^PANIC! at .*unreachable_unittest.cc:" DIGIT "+:" DIGIT "+\n$");
 #endif
 }
@@ -42,7 +42,7 @@ TEST(Unreachable, Unchecked) {
   }
   // We can't actually land here or we'd introduce UB, but the test confirms
   // we can write it and it compiles without warnings.
-  sus_unreachable_unchecked(unsafe_fn);
+  sus::unreachable_unchecked(unsafe_fn);
 }
 
 }  // namespace

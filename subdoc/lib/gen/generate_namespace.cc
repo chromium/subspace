@@ -196,7 +196,7 @@ void generate_namespace_overview(HtmlWriter::OpenDiv& namespace_div,
             case CppPathConcept:
               break;  // Concept can't be an ancestor of a namespace.
           }
-          sus_unreachable();
+          sus::unreachable();
         }());
         ancestor_anchor.add_href(e.link_href);
         ancestor_anchor.write_text(e.name);
@@ -615,7 +615,7 @@ sus::Result<void, MarkdownToHtmlError> generate_namespace(
           json.add_string("split_name", split_for_search(options.project_name));
           break;
         }
-        case Namespace::Tag::Anonymous: sus_unreachable();
+        case Namespace::Tag::Anonymous: sus::unreachable();
         case Namespace::Tag::Named: {
           json.add_string("type", "namespace");
           json.add_string("name", element.name);

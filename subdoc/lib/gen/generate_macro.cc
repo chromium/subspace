@@ -145,7 +145,7 @@ sus::Result<void, MarkdownToHtmlError> generate_macro(
             case CppPathProject: return "project-name";
             case CppPathMacro: return "macro-name";
             default:
-              sus_unreachable();  // Macros are only in the global namespace.
+              sus::unreachable();  // Macros are only in the global namespace.
           }
         }());
         ancestor_anchor.add_href(e.link_href);

@@ -75,7 +75,7 @@ struct [[_sus_trivial_abi]] BoxBase<Box, T, true>
 ///   https://en.cppreference.com/w/cpp/memory/unique_ptr/make_unique)
 ///   but built into the type.
 ///   A moved-from `Box` may not be used except to be assigned to or destroyed.
-///   Using a moved-from `Box` will [`panic`]($sus_panic) and
+///   Using a moved-from `Box` will [`panic`]($sus::panic) and
 ///   terminate the program rather than operate on a null. This prevents
 ///   Undefined Behaviour and memory bugs caused by dereferencing null or using
 ///   null in unintended ways.
