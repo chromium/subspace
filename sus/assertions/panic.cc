@@ -31,7 +31,7 @@ void print_panic_message(std::string_view msg,
   if (msg.empty()) {
     print_panic_location(location);
   } else {
-    fputs("PANIC! at '", stderr);
+    fprintf(stderr, "PANIC! at '");
     for (char c : msg) fprintf(stderr, "%c", c);
     fprintf(stderr, "', %s:%u:%u\n", location.file_name, location.line,
             location.column);

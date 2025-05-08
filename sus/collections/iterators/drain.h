@@ -73,7 +73,7 @@ struct [[nodiscard]] Drain final
   ///
   /// Calling this function will always panic.
   constexpr Drain& operator=(Drain&&) noexcept {
-    sus::panic("attempt to assign to Drain iterator");
+    ::sus::panic("attempt to assign to Drain iterator");
   }
 
   ~Drain() noexcept {

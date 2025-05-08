@@ -26,7 +26,7 @@
 /// [`sus::panic`]($sus::panic) as described there.
 #define sus_check(...)               \
   if (![](bool x) { return x; }(__VA_ARGS__)) [[unlikely]] { \
-    sus::panic();                     \
+    ::sus::panic();                     \
   }                                  \
   static_assert(true)
 
@@ -43,6 +43,6 @@
 /// this macro will avoid instantiating it at all.
 #define sus_check_with_message(cond, msg) \
   if (!(cond)) [[unlikely]] {             \
-    sus::panic(msg);          \
+    ::sus::panic(msg);          \
   }                                       \
   static_assert(true)

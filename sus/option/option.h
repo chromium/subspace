@@ -853,7 +853,7 @@ class Option final {
       // Result::unwrap_unchecked benefits from telling the compiler explicitly
       // that the other states are never set. Match that here until shown it's
       // actually not useful.
-      sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+      ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
     }
   }
   constexpr inline T unwrap_unchecked(
@@ -1724,7 +1724,7 @@ class Option final {
                                r.as_value_unchecked(::sus::marker::unsafe_fn));
       case None: return r.is_none();
     }
-    sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
   template <class U>
     requires(::sus::cmp::Eq<T, U>)
@@ -1736,7 +1736,7 @@ class Option final {
                                r.as_value_unchecked(::sus::marker::unsafe_fn));
       case None: return r.is_none();
     }
-    sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
 
   template <class U>
@@ -1776,7 +1776,7 @@ class Option final {
         else
           return std::strong_ordering::equivalent;
     }
-    sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
   template <class U>
     requires(::sus::cmp::ExclusiveStrongOrd<T, U>)
@@ -1796,7 +1796,7 @@ class Option final {
         else
           return std::strong_ordering::equivalent;
     }
-    sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
 
   // sus::cmp::Ord<Option<U>> trait.
@@ -1818,7 +1818,7 @@ class Option final {
         else
           return std::weak_ordering::equivalent;
     }
-    sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
   template <class U>
     requires(::sus::cmp::ExclusiveOrd<T, U>)
@@ -1838,7 +1838,7 @@ class Option final {
         else
           return std::weak_ordering::equivalent;
     }
-    sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
 
   // sus::cmp::PartialOrd<Option<U>> trait.
@@ -1860,7 +1860,7 @@ class Option final {
         else
           return std::partial_ordering::equivalent;
     }
-    sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
   friend constexpr inline std::partial_ordering operator<=>(
       const Option& l, const Option& r) noexcept
@@ -1880,7 +1880,7 @@ class Option final {
         else
           return std::partial_ordering::equivalent;
     }
-    sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
 
   template <class U>

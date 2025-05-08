@@ -66,18 +66,18 @@ void print_panic_message(std::string_view msg,
 /// possible and [`std::abort()`](
 /// https://en.cppreference.com/w/cpp/utility/program/abort) otherwise. The
 /// behaviour of this function can be overridden by defining a
-/// `SUS_PROVIDE_PANIC_HANDLER()` macro when compiling the library. The panic
+/// `SUS_PROVIDE_PANIC_HANDLER()` macro when compiling. The panic
 /// message will be printed to stderr before aborting. This behaviour can be
 /// overridden by defining a `SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER()` macro
-/// when compiling the library. Message handling can be suppressed entirely by
+/// when compiling. Message handling can be suppressed entirely by
 /// defining a `SUS_PANIC_ELIDE_MESSAGE` macro. This can be advantageous for
 /// optimised builds, as it turns `panic` into just calling the panic handler.
 /// `SUS_PROVIDE_PANIC_HANDLER`, `SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER`, and
 /// `SUS_PANIC_ELIDE_MESSAGE` must all have a consistent definition when
-/// building Subspace and any binaries that link against it (this means you can
+/// building Subspace and any binaries that link against it. This means you can
 /// change them for different build configurations, but cannot change them for
-/// different targets within the same build configuration). If used as a shared
-/// library, they cannot be modified by the calling code.
+/// different targets within the same build configuration. If used as a shared
+/// library, the compilation of calling code must match how the Subspace library was built.
 ///
 /// The `SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER()` macro receives two arguments:
 /// * A message, which is a `const char*`, a `std::string_view` or a

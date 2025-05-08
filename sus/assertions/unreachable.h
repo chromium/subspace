@@ -40,7 +40,7 @@ namespace sus::assertions {
 /// [`sus::unreachable_unchecked`]($sus::unreachable_unchecked) to
 /// indicate to the compiler the code is not reachable.
 [[noreturn, gnu::always_inline, gnu::nodebug]] inline void unreachable(PanicLocation loc = PanicLocation::current()) {
-  [[clang::always_inline]] sus::panic("entered unreachable code", loc);
+  [[clang::always_inline]] ::sus::panic("entered unreachable code", loc);
 }
 
 /// Indicates to the compiler that the location will never be reached, allowing
