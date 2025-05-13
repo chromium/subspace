@@ -218,7 +218,7 @@ class Range final : public __private::RangeIter<Range<T>, T> {
 
   /// Compares two `Range` for equality, satisfying the [`Eq`]($sus::cmp::Eq)
   /// concept if `T` satisfies [`Eq`]($sus::cmp::Eq).
-  constexpr friend bool operator==(const Range& lhs, const Range& rhs) noexcept
+  friend constexpr bool operator==(const Range& lhs, const Range& rhs) noexcept
     requires(::sus::cmp::Eq<T>)
   {
     return lhs.start == rhs.start && lhs.finish == rhs.finish;
@@ -302,7 +302,7 @@ class RangeFrom final : public __private::RangeFromIter<RangeFrom<T>, T> {
   }
 
   // sus::cmp::Eq trait
-  constexpr friend bool operator==(const RangeFrom& lhs,
+  friend constexpr bool operator==(const RangeFrom& lhs,
                                    const RangeFrom& rhs) noexcept
     requires(::sus::cmp::Eq<T>)
   {
@@ -377,7 +377,7 @@ class RangeTo final {
   constexpr RangeTo end_at(T t) && noexcept { return RangeTo(::sus::move(t)); }
 
   // sus::cmp::Eq trait
-  constexpr friend bool operator==(const RangeTo& lhs,
+  friend constexpr bool operator==(const RangeTo& lhs,
                                    const RangeTo& rhs) noexcept
     requires(::sus::cmp::Eq<T>)
   {
@@ -446,7 +446,7 @@ class [[_sus_trivial_abi]] RangeFull final {
   }
 
   // sus::cmp::Eq trait
-  constexpr friend bool operator==(const RangeFull&, const RangeFull&) noexcept
+  friend constexpr bool operator==(const RangeFull&, const RangeFull&) noexcept
     requires(::sus::cmp::Eq<T>)
   {
     return true;

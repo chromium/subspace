@@ -2102,7 +2102,7 @@ _sus_pure static constexpr _self from_ne_bytes(
 /// behaviour.
 ///
 /// #[doc.overloads=signedint.<<]
-[[nodiscard]] __sus_pure_const constexpr friend _self operator<<(
+[[nodiscard]] __sus_pure_const friend constexpr _self operator<<(
     _self l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out = __private::shl_with_overflow(l.primitive_value,
@@ -2118,7 +2118,7 @@ _sus_pure static constexpr _self from_ne_bytes(
 /// #[doc.overloads=signedint.<<]
 template <class U>
   requires(!std::convertible_to<U, u64>)
-constexpr friend _self operator<<(_self l, U r) noexcept = delete;
+friend constexpr _self operator<<(_self l, U r) noexcept = delete;
 
 /// Satisfies the [`Shr`]($sus::num::Shr) concept for signed integers.
 ///
@@ -2133,7 +2133,7 @@ constexpr friend _self operator<<(_self l, U r) noexcept = delete;
 /// behaviour.
 ///
 /// #[doc.overloads=signedint.>>]
-[[nodiscard]] __sus_pure_const constexpr friend _self operator>>(
+[[nodiscard]] __sus_pure_const friend constexpr _self operator>>(
     _self l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     const auto out = __private::shr_with_overflow(l.primitive_value,
@@ -2149,7 +2149,7 @@ constexpr friend _self operator<<(_self l, U r) noexcept = delete;
 /// #[doc.overloads=signedint.>>]
 template <class U>
   requires(!std::convertible_to<U, u64>)
-constexpr friend _self operator>>(_self l, U r) noexcept = delete;
+friend constexpr _self operator>>(_self l, U r) noexcept = delete;
 
 /// Satisfies the [`Shl`]($sus::num::Shl) concept for signed primitive integers
 /// shifted by [`u64`]($sus::num::u64).
@@ -2157,7 +2157,7 @@ constexpr friend _self operator>>(_self l, U r) noexcept = delete;
 template <class P, class U>
   requires((SignedPrimitiveInteger<P> || SignedPrimitiveEnum<P>) &&
            std::same_as<U, _self> && std::convertible_to<U, u64>)
-[[nodiscard]] __sus_pure_const constexpr friend P operator<<(P l, U r) noexcept {
+[[nodiscard]] __sus_pure_const friend constexpr P operator<<(P l, U r) noexcept {
   // No UB checks on primitive types, since there's no promotion to a Subspace
   // return type?
   return l << u64(r).primitive_value;
@@ -2166,7 +2166,7 @@ template <class P, class U>
 template <class P, class U>
   requires((SignedPrimitiveInteger<P> || SignedPrimitiveEnum<P>) &&
            std::same_as<U, _self> && !std::convertible_to<U, u64>)
-constexpr friend P operator<<(P l, U r) noexcept = delete;
+friend constexpr P operator<<(P l, U r) noexcept = delete;
 
 /// Satisfies the [`Shr`]($sus::num::Shr) concept for signed primitive integers
 /// shifted by [`u64`]($sus::num::u64).
@@ -2176,7 +2176,7 @@ constexpr friend P operator<<(P l, U r) noexcept = delete;
 template <class P, class U>
   requires((SignedPrimitiveInteger<P> || SignedPrimitiveEnum<P>) &&
            std::same_as<U, _self> && std::convertible_to<U, u64>)
-[[nodiscard]] __sus_pure_const constexpr friend P operator>>(P l, U r) noexcept {
+[[nodiscard]] __sus_pure_const friend constexpr P operator>>(P l, U r) noexcept {
   // No UB checks on primitive types, since there's no promotion to a Subspace
   // return type?
   return l >> u64(r).primitive_value;
@@ -2185,13 +2185,13 @@ template <class P, class U>
 template <class P, class U>
   requires((SignedPrimitiveInteger<P> || SignedPrimitiveEnum<P>) &&
            std::same_as<U, _self> && !std::convertible_to<U, u64>)
-constexpr friend P operator>>(P l, U r) noexcept = delete;
+friend constexpr P operator>>(P l, U r) noexcept = delete;
 
 /// #[doc.overloads=unsigned.prim.<<u64]
 template <class P, class U>
   requires((UnsignedPrimitiveInteger<P> || UnsignedPrimitiveEnum<P>) &&
            std::same_as<U, _self> && std::convertible_to<U, u64>)
-[[nodiscard]] __sus_pure_const constexpr friend P operator<<(P l, U r) noexcept {
+[[nodiscard]] __sus_pure_const friend constexpr P operator<<(P l, U r) noexcept {
   // No UB checks on primitive types, since there's no promotion to a Subspace
   // return type?
   return l << u64(r).primitive_value;
@@ -2201,13 +2201,13 @@ template <class P, class U>
 template <class P, class U>
   requires((UnsignedPrimitiveInteger<P> || UnsignedPrimitiveEnum<P>) &&
            std::same_as<U, _self> && !std::convertible_to<U, u64>)
-constexpr friend P operator<<(P l, U r) noexcept = delete;
+friend constexpr P operator<<(P l, U r) noexcept = delete;
 
 /// #[doc.overloads=unsigned.prim.>>u64]
 template <class P, class U>
   requires((UnsignedPrimitiveInteger<P> || UnsignedPrimitiveEnum<P>) &&
            std::same_as<U, _self> && std::convertible_to<U, u64>)
-[[nodiscard]] __sus_pure_const constexpr friend P operator>>(P l, U r) noexcept {
+[[nodiscard]] __sus_pure_const friend constexpr P operator>>(P l, U r) noexcept {
   // No UB checks on primitive types, since there's no promotion to a Subspace
   // return type?
   return l >> u64(r).primitive_value;
@@ -2217,7 +2217,7 @@ template <class P, class U>
 template <class P, class U>
   requires((UnsignedPrimitiveInteger<P> || UnsignedPrimitiveEnum<P>) &&
            std::same_as<U, _self> && !std::convertible_to<U, u64>)
-constexpr friend P operator>>(P l, U r) noexcept = delete;
+friend constexpr P operator>>(P l, U r) noexcept = delete;
 
 // Stream support.
 _sus_format_to_stream(_self);

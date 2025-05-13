@@ -128,7 +128,7 @@ struct [[_sus_trivial_abi]] usize final {
   ///
   /// #[doc.overloads=ptr.add.usize]
   template <class T>
-  constexpr friend T*& operator+=(T*& t, usize offset) {
+  friend constexpr T*& operator+=(T*& t, usize offset) {
     t += size_t{offset};
     return t;
   }
@@ -141,7 +141,7 @@ struct [[_sus_trivial_abi]] usize final {
   ///
   /// #[doc.overloads=ptr.sub.usize]
   template <class T>
-  __sus_pure_const constexpr friend T* operator-(T* t, usize offset) {
+  __sus_pure_const friend constexpr T* operator-(T* t, usize offset) {
     return t - size_t{offset};
   }
 
@@ -154,7 +154,7 @@ struct [[_sus_trivial_abi]] usize final {
   ///
   /// #[doc.overloads=ptr.sub.usize]
   template <class T>
-  constexpr friend T*& operator-=(T*& t, usize offset) {
+  friend constexpr T*& operator-=(T*& t, usize offset) {
     t -= size_t{offset};
     return t;
   }

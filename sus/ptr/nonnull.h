@@ -155,7 +155,7 @@ class [[_sus_trivial_abi]] NonNull {
   /// pointers are comparable and thus satisfy `Eq` as well.
   template <class U>
     requires(::sus::cmp::Eq<const T*, const U*>)
-  constexpr friend bool operator==(const NonNull& l,
+  friend constexpr bool operator==(const NonNull& l,
                                    const NonNull<U>& r) noexcept {
     return l.as_ptr() == r.as_ptr();
   }
@@ -164,7 +164,7 @@ class [[_sus_trivial_abi]] NonNull {
   /// pointers are comparable and thus satisfy `StrongOrd` as well.
   template <class U>
     requires(::sus::cmp::StrongOrd<const T*, const U*>)
-  constexpr friend std::strong_ordering operator<=>(
+  friend constexpr std::strong_ordering operator<=>(
       const NonNull& l, const NonNull<U>& r) noexcept {
     return l.as_ptr() <=> r.as_ptr();
   }

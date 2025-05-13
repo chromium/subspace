@@ -61,9 +61,6 @@ struct Storage final {
 template <class T>
 struct Storage<T, 0> final {};
 
-}  // namespace __private
-
-namespace __private {
 template <size_t I>
 constexpr bool array_cmp_impl(sus::cmp::Ordering auto& val, const auto& l,
                               const auto& r) noexcept {
@@ -437,7 +434,7 @@ class Array final {
   /// #[doc.overloads=array.cmp.array]
   template <class U>
     requires(::sus::cmp::ExclusiveStrongOrd<T, U>)
-  constexpr friend std::strong_ordering operator<=>(
+  friend constexpr std::strong_ordering operator<=>(
       const Array& l, const Array<U, N>& r) noexcept {
     return __private::array_cmp(std::strong_ordering::equivalent, l, r,
                                 std::make_index_sequence<N>());
@@ -445,7 +442,7 @@ class Array final {
   /// #[doc.overloads=array.cmp.array]
   template <class U>
     requires(::sus::cmp::ExclusiveOrd<T, U>)
-  constexpr friend std::weak_ordering operator<=>(
+  friend constexpr std::weak_ordering operator<=>(
       const Array& l, const Array<U, N>& r) noexcept {
     return __private::array_cmp(std::weak_ordering::equivalent, l, r,
                                 std::make_index_sequence<N>());
@@ -453,7 +450,7 @@ class Array final {
   /// #[doc.overloads=array.cmp.array]
   template <class U>
     requires(::sus::cmp::ExclusivePartialOrd<T, U>)
-  constexpr friend std::partial_ordering operator<=>(
+  friend constexpr std::partial_ordering operator<=>(
       const Array& l, const Array<U, N>& r) noexcept {
     return __private::array_cmp(std::partial_ordering::equivalent, l, r,
                                 std::make_index_sequence<N>());
@@ -471,7 +468,7 @@ class Array final {
   /// #[doc.overloads=array.cmp.slice]
   template <class U>
     requires(::sus::cmp::ExclusiveStrongOrd<T, U>)
-  constexpr friend std::strong_ordering operator<=>(
+  friend constexpr std::strong_ordering operator<=>(
       const Array& l, const Slice<U>& r) noexcept {
     if (r.len() != N) return r.len() <=> N;
     return __private::array_cmp(std::strong_ordering::equivalent, l, r,
@@ -480,7 +477,7 @@ class Array final {
   /// #[doc.overloads=array.cmp.slice]
   template <class U>
     requires(::sus::cmp::ExclusiveOrd<T, U>)
-  constexpr friend std::weak_ordering operator<=>(const Array& l,
+  friend constexpr std::weak_ordering operator<=>(const Array& l,
                                                   const Slice<U>& r) noexcept {
     if (r.len() != N) return r.len() <=> N;
     return __private::array_cmp(std::weak_ordering::equivalent, l, r,
@@ -489,7 +486,7 @@ class Array final {
   /// #[doc.overloads=array.cmp.slice]
   template <class U>
     requires(::sus::cmp::ExclusivePartialOrd<T, U>)
-  constexpr friend std::partial_ordering operator<=>(
+  friend constexpr std::partial_ordering operator<=>(
       const Array& l, const Slice<U>& r) noexcept {
     if (r.len() != N) return r.len() <=> N;
     return __private::array_cmp(std::partial_ordering::equivalent, l, r,
@@ -508,7 +505,7 @@ class Array final {
   /// #[doc.overloads=array.cmp.slicemut]
   template <class U>
     requires(::sus::cmp::ExclusiveStrongOrd<T, U>)
-  constexpr friend std::strong_ordering operator<=>(
+  friend constexpr std::strong_ordering operator<=>(
       const Array& l, const SliceMut<U>& r) noexcept {
     if (r.len() != N) return r.len() <=> N;
     return __private::array_cmp(std::strong_ordering::equivalent, l, r,
@@ -517,7 +514,7 @@ class Array final {
   /// #[doc.overloads=array.cmp.slicemut]
   template <class U>
     requires(::sus::cmp::ExclusiveOrd<T, U>)
-  constexpr friend std::weak_ordering operator<=>(
+  friend constexpr std::weak_ordering operator<=>(
       const Array& l, const SliceMut<U>& r) noexcept {
     if (r.len() != N) return r.len() <=> N;
     return __private::array_cmp(std::weak_ordering::equivalent, l, r,
@@ -526,7 +523,7 @@ class Array final {
   /// #[doc.overloads=array.cmp.slicemut]
   template <class U>
     requires(::sus::cmp::ExclusivePartialOrd<T, U>)
-  constexpr friend std::partial_ordering operator<=>(
+  friend constexpr std::partial_ordering operator<=>(
       const Array& l, const SliceMut<U>& r) noexcept {
     if (r.len() != N) return r.len() <=> N;
     return __private::array_cmp(std::partial_ordering::equivalent, l, r,

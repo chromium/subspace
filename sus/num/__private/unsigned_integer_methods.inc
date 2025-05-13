@@ -2435,7 +2435,7 @@ _sus_format_to_stream(_self);
 /// behaviour.
 ///
 /// #[doc.overloads=unsignedint.<<]
-[[nodiscard]] __sus_pure_const constexpr friend _self operator<<(
+[[nodiscard]] __sus_pure_const friend constexpr _self operator<<(
     _self l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     sus_check_with_message(r < _self::BITS,
@@ -2452,7 +2452,7 @@ _sus_format_to_stream(_self);
 /// #[doc.overloads=unsignedint.<<]
 template <class U>
   requires(!std::convertible_to<U, u64>)
-constexpr friend _self operator<<(_self l, U r) noexcept = delete;
+friend constexpr _self operator<<(_self l, U r) noexcept = delete;
 
 /// Satisfies the [`Shr`]($sus::num::Shr) concept for unsigned integers.
 ///
@@ -2465,7 +2465,7 @@ constexpr friend _self operator<<(_self l, U r) noexcept = delete;
 /// behaviour.
 ///
 /// #[doc.overloads=unsignedint.>>]
-[[nodiscard]] __sus_pure_const constexpr friend _self operator>>(
+[[nodiscard]] __sus_pure_const friend constexpr _self operator>>(
     _self l, std::convertible_to<u64> auto r) noexcept {
   if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
     sus_check_with_message(r < _self::BITS,
@@ -2482,7 +2482,7 @@ constexpr friend _self operator<<(_self l, U r) noexcept = delete;
 /// #[doc.overloads=unsignedint.>>]
 template <class U>
   requires(!std::convertible_to<U, u64>)
-constexpr friend _self operator>>(_self l, U r) noexcept = delete;
+friend constexpr _self operator>>(_self l, U r) noexcept = delete;
 
 /// Satisfies the [`Add`]($sus::num::Add) concept for pointers
 /// (`T*`) with [`usize`]($sus::num::usize).
@@ -2492,7 +2492,7 @@ constexpr friend _self operator>>(_self l, U r) noexcept = delete;
 ///
 /// #[doc.overloads=ptr.add.usize]
 template <class T>
-__sus_pure_const constexpr friend T* operator+(T* t, _self offset) {
+__sus_pure_const friend constexpr T* operator+(T* t, _self offset) {
   return t + size_t{offset};
 }
 
@@ -2501,7 +2501,7 @@ __sus_pure_const constexpr friend T* operator+(T* t, _self offset) {
 /// #[doc.overloads=unsigned.prim.<<u64]
 template <class P>
   requires(UnsignedPrimitiveInteger<P> || UnsignedPrimitiveEnum<P>)
-[[nodiscard]] __sus_pure_const constexpr friend P operator<<(P l, _self r) noexcept {
+[[nodiscard]] __sus_pure_const friend constexpr P operator<<(P l, _self r) noexcept {
   // No UB checks on primitive types, since there's no promotion to a Subspace
   // return type?
   return l << u64(r).primitive_value;
@@ -2512,7 +2512,7 @@ template <class P>
 /// #[doc.overloads=unsigned.prim.>>u64]
 template <class P>
   requires(UnsignedPrimitiveInteger<P> || UnsignedPrimitiveEnum<P>)
-[[nodiscard]] __sus_pure_const constexpr friend P operator>>(P l, _self r) noexcept {
+[[nodiscard]] __sus_pure_const friend constexpr P operator>>(P l, _self r) noexcept {
   // No UB checks on primitive types, since there's no promotion to a Subspace
   // return type?
   return l >> u64(r).primitive_value;
@@ -2521,7 +2521,7 @@ template <class P>
 /// #[doc.overloads=signed.prim.<<u64]
 template <class P>
   requires(SignedPrimitiveInteger<P> || SignedPrimitiveEnum<P>)
-[[nodiscard]] __sus_pure_const constexpr friend P operator<<(P l, _self r) noexcept {
+[[nodiscard]] __sus_pure_const friend constexpr P operator<<(P l, _self r) noexcept {
   // No UB checks on primitive types, since there's no promotion to a Subspace
   // return type?
   return l << u64(r).primitive_value;
@@ -2530,7 +2530,7 @@ template <class P>
 /// #[doc.overloads=signed.prim.>>u64]
 template <class P>
   requires(SignedPrimitiveInteger<P> || SignedPrimitiveEnum<P>)
-[[nodiscard]] __sus_pure_const constexpr friend P operator>>(P l, _self r) noexcept {
+[[nodiscard]] __sus_pure_const friend constexpr P operator>>(P l, _self r) noexcept {
   // No UB checks on primitive types, since there's no promotion to a Subspace
   // return type?
   return l >> u64(r).primitive_value;

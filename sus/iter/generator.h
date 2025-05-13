@@ -122,7 +122,7 @@ class [[nodiscard]] [[_sus_trivial_abi]] GeneratorLoop {
   constexpr GeneratorLoop(Generator& generator sus_lifetimebound) noexcept
       : generator_(generator) {}
 
-  constexpr friend bool operator==(
+  friend constexpr bool operator==(
       const GeneratorLoop& l,
       const ::sus::iter::__private::IteratorEnd&) noexcept {
     return l.generator_.co_handle_.done();
