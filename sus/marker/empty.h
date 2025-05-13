@@ -20,25 +20,6 @@
 #include "sus/string/__private/format_to_stream.h"
 
 namespace sus::marker {
-struct EmptyMarker;
-}
-
-// fmt support.
-template <class Char>
-struct fmt::formatter<::sus::marker::EmptyMarker, Char> {
-  template <class ParseContext>
-  constexpr auto parse(ParseContext& ctx) {
-    return ctx.begin();
-  }
-
-  template <class FormatContext>
-  constexpr auto format(const ::sus::marker::EmptyMarker&,
-                        FormatContext& ctx) const {
-    return fmt::format_to(ctx.out(), "empty");
-  }
-};
-
-namespace sus::marker {
 
 /// A marker that designates emptinesss, for constructing an empty collection.
 ///
@@ -66,3 +47,18 @@ constexpr inline auto empty = EmptyMarker();
 namespace sus {
 using sus::marker::empty;
 }
+
+// fmt support.
+template <class Char>
+struct fmt::formatter<::sus::marker::EmptyMarker, Char> {
+  template <class ParseContext>
+  constexpr auto parse(ParseContext& ctx) {
+    return ctx.begin();
+  }
+
+  template <class FormatContext>
+  constexpr auto format(const ::sus::marker::EmptyMarker&,
+                        FormatContext& ctx) const {
+    return fmt::format_to(ctx.out(), "empty");
+  }
+};

@@ -22,25 +22,8 @@
 namespace sus {
 /// Marker types, such as for accessing unsafe APIs, for overload resolution,
 /// or type elision.
-namespace marker {
-struct UnsafeFnMarker;
-}
+namespace marker {}
 }  // namespace sus
-
-// fmt support.
-template <class Char>
-struct fmt::formatter<::sus::marker::UnsafeFnMarker, Char> {
-  template <class ParseContext>
-  constexpr auto parse(ParseContext& ctx) {
-    return ctx.begin();
-  }
-
-  template <class FormatContext>
-  constexpr auto format(const ::sus::marker::UnsafeFnMarker&,
-                        FormatContext& ctx) const {
-    return fmt::format_to(ctx.out(), "unsafe_fn");
-  }
-};
 
 namespace sus::marker {
 
@@ -79,3 +62,18 @@ struct UnsafeFnMarker {
 constexpr inline auto unsafe_fn = UnsafeFnMarker();
 
 }  // namespace sus::marker
+
+// fmt support.
+template <class Char>
+struct fmt::formatter<::sus::marker::UnsafeFnMarker, Char> {
+  template <class ParseContext>
+  constexpr auto parse(ParseContext& ctx) {
+    return ctx.begin();
+  }
+
+  template <class FormatContext>
+  constexpr auto format(const ::sus::marker::UnsafeFnMarker&,
+                        FormatContext& ctx) const {
+    return fmt::format_to(ctx.out(), "unsafe_fn");
+  }
+};
