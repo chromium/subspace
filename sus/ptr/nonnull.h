@@ -151,6 +151,27 @@ class [[_sus_trivial_abi]] NonNull {
                                           static_cast<U*>(ptr_));
   }
 
+  /// Satisfies the [`Eq<NonNull<T>, NonNull<U>>`]($sus::cmp::Eq) concept if the
+  /// pointers are comparable and thus satisfy `Eq` as well.
+  template <class U>
+    requires(::sus::cmp::Eq<const T*, const U*>)
+  friend constexpr bool operator==(const NonNull& l,
+                                   const NonNull<U>& r) noexcept {
+    return l.as_ptr() == r.as_ptr();
+  }
+
+  /// Satisfies the [`StrongOrd<NonNull<T>>`]($sus::cmp::StrongOrd) concept if the
+  /// pointers are comparable and thus satisfy `StrongOrd` as well.
+  template <class U>
+    requires(::sus::cmp::StrongOrd<const T*, const U*>)
+  friend constexpr std::strong_ordering operator<=>(
+      const NonNull& l, const NonNull<U>& r) noexcept {
+    return l.as_ptr() <=> r.as_ptr();
+  }
+
+  // Stream support.
+  _sus_format_to_stream(NonNull);
+
  private:
   T* ptr_;
 
@@ -165,24 +186,6 @@ class [[_sus_trivial_abi]] NonNull {
   explicit constexpr NonNull(::sus::mem::NeverValueConstructor) noexcept
       : ptr_(nullptr) {}
 };
-
-/// Satisfies the [`Eq<NonNull<T>, NonNull<U>>`]($sus::cmp::Eq) concept if the
-/// pointers are comparable and thus satisfy `Eq` as well.
-template <class T, class U>
-  requires(::sus::cmp::Eq<const T*, const U*>)
-constexpr inline bool operator==(const NonNull<T>& l,
-                                 const NonNull<U>& r) noexcept {
-  return l.as_ptr() == r.as_ptr();
-}
-
-/// Satisfies the [`StrongOrd<NonNull<T>>`]($sus::cmp::StrongOrd) concept if the
-/// pointers are comparable and thus satisfy `StrongOrd` as well.
-template <class T, class U>
-  requires(::sus::cmp::StrongOrd<const T*, const U*>)
-constexpr inline std::strong_ordering operator<=>(
-    const NonNull<T>& l, const NonNull<U>& r) noexcept {
-  return l.as_ptr() <=> r.as_ptr();
-}
 
 }  // namespace sus::ptr
 
@@ -203,6 +206,3 @@ struct fmt::formatter<::sus::ptr::NonNull<T>, Char> {
  private:
   formatter<const void*, Char> underlying_;
 };
-
-// Stream support.
-_sus_format_to_stream(sus::ptr, NonNull, T);

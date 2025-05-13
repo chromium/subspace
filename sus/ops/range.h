@@ -218,14 +218,17 @@ class Range final : public __private::RangeIter<Range<T>, T> {
 
   /// Compares two `Range` for equality, satisfying the [`Eq`]($sus::cmp::Eq)
   /// concept if `T` satisfies [`Eq`]($sus::cmp::Eq).
-  constexpr bool operator==(const Range& rhs) const noexcept
+  friend constexpr bool operator==(const Range& lhs, const Range& rhs) noexcept
     requires(::sus::cmp::Eq<T>)
   {
-    return start == rhs.start && finish == rhs.finish;
+    return lhs.start == rhs.start && lhs.finish == rhs.finish;
   }
 
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
                                            decltype(start), decltype(finish));
+
+  // Stream support.
+  _sus_format_to_stream(Range);
 };
 
 /// A range only bounded inclusively below (`start..`).
@@ -299,14 +302,18 @@ class RangeFrom final : public __private::RangeFromIter<RangeFrom<T>, T> {
   }
 
   // sus::cmp::Eq trait
-  constexpr bool operator==(const RangeFrom& rhs) const noexcept
+  friend constexpr bool operator==(const RangeFrom& lhs,
+                                   const RangeFrom& rhs) noexcept
     requires(::sus::cmp::Eq<T>)
   {
-    return start == rhs.start;
+    return lhs.start == rhs.start;
   }
 
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
                                            decltype(start));
+
+  // Stream support.
+  _sus_format_to_stream(RangeFrom);
 };
 
 /// A range only bounded exclusively above (`..end`).
@@ -370,14 +377,18 @@ class RangeTo final {
   constexpr RangeTo end_at(T t) && noexcept { return RangeTo(::sus::move(t)); }
 
   // sus::cmp::Eq trait
-  constexpr bool operator==(const RangeTo& rhs) const noexcept
+  friend constexpr bool operator==(const RangeTo& lhs,
+                                   const RangeTo& rhs) noexcept
     requires(::sus::cmp::Eq<T>)
   {
-    return finish == rhs.finish;
+    return lhs.finish == rhs.finish;
   }
 
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
                                            decltype(finish));
+
+  // Stream support.
+  _sus_format_to_stream(RangeTo);
 };
 
 /// An unbounded range (`..`).
@@ -435,13 +446,16 @@ class [[_sus_trivial_abi]] RangeFull final {
   }
 
   // sus::cmp::Eq trait
-  constexpr bool operator==(const RangeFull& rhs) const noexcept
+  friend constexpr bool operator==(const RangeFull&, const RangeFull&) noexcept
     requires(::sus::cmp::Eq<T>)
   {
     return true;
   }
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn);
+
+  // Stream support.
+  _sus_format_to_stream(RangeFull);
 };
 
 /// Return a new Range that starts at `start` and ends at `end`.
@@ -487,9 +501,6 @@ struct fmt::formatter<::sus::ops::Range<T>, Char> {
   ::sus::string::__private::AnyFormatter<T, Char> underlying_;
 };
 
-// Stream support.
-_sus_format_to_stream(sus::ops, Range, T);
-
 // fmt support.
 template <class T, class Char>
 struct fmt::formatter<::sus::ops::RangeFrom<T>, Char> {
@@ -511,9 +522,6 @@ struct fmt::formatter<::sus::ops::RangeFrom<T>, Char> {
  private:
   ::sus::string::__private::AnyFormatter<T, Char> underlying_;
 };
-
-// Stream support.
-_sus_format_to_stream(sus::ops, RangeFrom, T);
 
 // fmt support.
 template <class T, class Char>
@@ -537,9 +545,6 @@ struct fmt::formatter<::sus::ops::RangeTo<T>, Char> {
   ::sus::string::__private::AnyFormatter<T, Char> underlying_;
 };
 
-// Stream support.
-_sus_format_to_stream(sus::ops, RangeTo, T);
-
 // fmt support.
 template <class T, class Char>
 struct fmt::formatter<::sus::ops::RangeFull<T>, Char> {
@@ -560,6 +565,3 @@ struct fmt::formatter<::sus::ops::RangeFull<T>, Char> {
  private:
   ::sus::string::__private::AnyFormatter<T, Char> underlying_;
 };
-
-// Stream support.
-_sus_format_to_stream(sus::ops, RangeFull, T);
