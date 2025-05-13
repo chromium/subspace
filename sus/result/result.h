@@ -775,7 +775,6 @@ class [[nodiscard]] Result final {
   {
     return eq(l, r);
   }
-
   template <class U, class F>
     requires(VoidOrEq<T, U> && ::sus::cmp::Eq<E, F>)
   friend constexpr bool operator==(const Result& l,

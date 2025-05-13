@@ -910,7 +910,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
       const Choice<__private::TypeList<RhsTs...>, RhsTag, RhsTags...>& r) =
       delete;
 
-  // Stream support
+  // Stream support.
   _sus_format_to_stream(Choice);
 
  private:

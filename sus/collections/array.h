@@ -533,7 +533,7 @@ class Array final {
                                 std::make_index_sequence<N>());
   }
 
-  // Stream support
+  // Stream support.
   _sus_format_to_stream(Array);
 
  private:

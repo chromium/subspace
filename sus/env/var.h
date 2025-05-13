@@ -36,7 +36,7 @@ struct VarError {
   Reason reason;
 
   /// Satisfies the [`Eq`]($sus::cmp::Eq) concept.
-  constexpr friend bool operator==(const VarError& lhs,
+  friend constexpr bool operator==(const VarError& lhs,
                                    const VarError& rhs) noexcept = default;
 };
 

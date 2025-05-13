@@ -60,5 +60,6 @@
 #define _pointer 1
 #define _primitive ::sus::num::__private::ptr_type<::sus::mem::size_of<uintptr_t>()>::unsigned_type
 #include "sus/num/__private/unsigned_integer_methods_impl.inc"
-// Comment to prevent clang-format from deleting this line and sorting includes
+
+// This must come last, after the types are fully defined.
 #include "sus/num/unsigned_integer_consts.h"
