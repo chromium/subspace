@@ -24,7 +24,7 @@
 #include "sus/macros/pure.h"
 #include "sus/marker/unsafe.h"
 #include "sus/mem/forward.h"
-#include "sus/mem/macros.h"
+#include "sus/mem/never_value_macros.h"
 #include "sus/mem/relocate.h"
 
 namespace sus::mem {

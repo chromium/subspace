@@ -152,9 +152,10 @@ target_sources(subspace PUBLIC
     "mem/clone.h"
     "mem/copy.h"
     "mem/forward.h"
-    "mem/macros.h"
     "mem/move.h"
+    "mem/never_value_macros.h"
     "mem/never_value.h"
+    "mem/relocate_macros.h"
     "mem/relocate.h"
     "mem/remove_rvalue_reference.h"
     "mem/replace.h"
@@ -369,4 +370,3 @@ if(${SUBSPACE_BUILD_TESTS})
     )
     gtest_discover_tests(subspace_overflow_unittests)
 endif()
-

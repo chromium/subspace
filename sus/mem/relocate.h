@@ -20,8 +20,8 @@
 #include "sus/macros/builtin.h"
 #include "sus/macros/compiler.h"
 #include "sus/marker/unsafe.h"
+#include "sus/mem/relocate_macros.h"
 #include "sus/mem/size_of.h"
-#include "sus/mem/macros.h"
 
 namespace sus::mem {
 
