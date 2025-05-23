@@ -43,11 +43,6 @@ constexpr inline auto empty = EmptyMarker();
 
 }  // namespace sus::marker
 
-// Promote `empty` into the `sus` namespace.
-namespace sus {
-using sus::marker::empty;
-}
-
 // fmt support.
 template <class Char>
 struct fmt::formatter<::sus::marker::EmptyMarker, Char> {
