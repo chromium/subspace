@@ -62,3 +62,8 @@ struct fmt::formatter<::sus::marker::EmptyMarker, Char> {
     return fmt::format_to(ctx.out(), "empty");
   }
 };
+
+// Promote `empty` into the `sus` namespace.
+namespace sus {
+using sus::marker::empty;
+}
