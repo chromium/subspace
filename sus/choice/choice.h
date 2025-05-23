@@ -29,6 +29,7 @@
 #include "sus/choice/__private/storage.h"
 #include "sus/choice/__private/type_list.h"
 #include "sus/choice/choice_types.h"
+#include "sus/choice/macros.h"
 #include "sus/cmp/eq.h"
 #include "sus/cmp/ord.h"
 #include "sus/lib/__private/forward_decl.h"
