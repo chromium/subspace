@@ -33,7 +33,7 @@ class [[nodiscard]] IteratorLoop final {
 
   friend constexpr bool operator==(const IteratorLoop& loop,
                                    __private::IteratorEnd) noexcept {
-    return x.item_.is_none();
+    return loop.item_.is_none();
   }
   constexpr inline void operator++() & noexcept { item_ = iter_.next(); }
   constexpr inline Item operator*() & noexcept {
