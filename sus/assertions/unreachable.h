@@ -17,6 +17,7 @@
 #include "panic.h"
 #include "sus/assertions/panic.h"
 #include "sus/macros/builtin.h"
+#include "sus/macros/nodebug.h"
 #include "sus/marker/unsafe.h"
 
 namespace sus::assertions {
@@ -39,8 +40,8 @@ namespace sus::assertions {
 /// and security bugs when working across languages. Use
 /// [`sus::unreachable_unchecked`]($sus::unreachable_unchecked) to
 /// indicate to the compiler the code is not reachable.
-[[noreturn, gnu::always_inline, gnu::nodebug]] inline void unreachable(PanicLocation loc = PanicLocation::current()) {
-  [[clang::always_inline]] ::sus::panic("entered unreachable code", loc);
+[[noreturn]] _sus_always_inline _sus_nodebug inline void unreachable(PanicLocation loc = PanicLocation::current()) {
+  ::sus::panic("entered unreachable code", loc);
 }
 
 /// Indicates to the compiler that the location will never be reached, allowing
@@ -52,7 +53,7 @@ namespace sus::assertions {
 ///
 /// # Safety
 /// This function must never actually be reached, or Undefined Behaviour occurs.
-[[noreturn, gnu::always_inline, gnu::nodebug]] inline void unreachable_unchecked(::sus::marker::UnsafeFnMarker) {
+[[noreturn]] _sus_always_inline _sus_nodebug inline void unreachable_unchecked(::sus::marker::UnsafeFnMarker) {
 #if __has_builtin(__builtin_unreachable)
   __builtin_unreachable();
 #else

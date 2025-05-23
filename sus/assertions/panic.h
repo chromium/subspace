@@ -20,6 +20,7 @@
 
 #include "sus/macros/builtin.h"
 #include "sus/macros/inline.h"
+#include "sus/macros/nodebug.h"
 
 namespace sus {
 
@@ -83,8 +84,6 @@ void print_panic_message(std::string_view msg,
 /// * A message, which is a `const char*`, a `std::string_view` or a
 ///   `std::string`. Overloads should be used to handle each case.
 /// * A [`PanicLocation`]($sus::assertions::PanicLocation).
-/// If the `SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER` macro does not consume the
-/// `msg`, this macro will avoid instantiating it at all.
 ///
 /// # Safety
 ///
@@ -92,7 +91,7 @@ void print_panic_message(std::string_view msg,
 /// Undefined Behaviour will result.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wattributes"
-[[noreturn, gnu::always_inline, gnu::nodebug]]
+[[noreturn]] _sus_always_inline _sus_nodebug
 inline void panic(std::string_view message = "",
                   PanicLocation loc = PanicLocation::current()) noexcept
 {
