@@ -105,7 +105,7 @@ class IterPromise {
 
   constexpr auto initial_suspend() noexcept { return std::suspend_always(); }
   constexpr auto final_suspend() noexcept { return std::suspend_always(); }
-  constexpr void unhandled_exception() noexcept { sus_unreachable(); }
+  constexpr void unhandled_exception() noexcept { ::sus::unreachable(); }
 
   constexpr Option<T> take() & noexcept { return yielded_.take(); }
 

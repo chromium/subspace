@@ -720,7 +720,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
           // unit.
           decl->dump();
           decl->getDeclContext()->dumpAsDecl();
-          sus_unreachable();
+          sus::unreachable();
         }
 
         auto te = AliasElement(
@@ -758,7 +758,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
           // unit.
           decl->dump();
           decl->getDeclContext()->dumpAsDecl();
-          sus_unreachable();
+          sus::unreachable();
         }
 
         auto te = AliasElement(
@@ -797,7 +797,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
           // The context for a concept is a namespace or translation unit.
           decl->dump();
           decl->getDeclContext()->dumpAsDecl();
-          sus_unreachable();
+          sus::unreachable();
         }
 
         Vec<Namespace> target_namespaces =
@@ -833,7 +833,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         decl->getBeginLoc().dump(decl->getASTContext().getSourceManager());
         // TODO: Put these into static fields on a record, and const global
         // variables on a namespace.
-        //sus_unreachable();
+        //sus::unreachable();
       } else if (auto* vardecl =
                      clang::dyn_cast<clang::VarDecl>(shadow->getTargetDecl())) {
         auto* context =
@@ -844,7 +844,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
           // can't write an alias to a static class data member.
           decl->dump();
           decl->getDeclContext()->dumpAsDecl();
-          sus_unreachable();
+          sus::unreachable();
         }
 
         Vec<Namespace> target_namespaces =
@@ -881,7 +881,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
           // The context for a using method is a record.
           decl->dump();
           decl->getDeclContext()->dumpAsDecl();
-          sus_unreachable();
+          sus::unreachable();
         }
 
         auto te = AliasElement(
@@ -926,7 +926,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
           // The context for a function is a namespace or translation unit.
           decl->dump();
           decl->getDeclContext()->dumpAsDecl();
-          sus_unreachable();
+          sus::unreachable();
         }
 
         Vec<Namespace> target_namespaces =
@@ -966,7 +966,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
           // The context for a function is a namespace or translation unit.
           decl->dump();
           decl->getDeclContext()->dumpAsDecl();
-          sus_unreachable();
+          sus::unreachable();
         }
 
         Vec<Namespace> target_namespaces =
@@ -1002,7 +1002,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         decl->getBeginLoc().dump(decl->getASTContext().getSourceManager());
         fmt::println(stderr, "");
         shadow->getTargetDecl()->dump();
-        sus_unreachable();
+        sus::unreachable();
       }
     }
 
@@ -1342,7 +1342,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                       else
                         return MethodQualifier::MutableRValue;
                   }
-                  sus_unreachable();
+                  sus::unreachable();
                 }(),
         });
       }
@@ -1775,7 +1775,7 @@ bool VisitCx::should_include_decl_based_on_file(clang::Decl* decl) noexcept {
       return true;
     }
   }
-  sus_unreachable();
+  sus::unreachable();
 }
 
 }  // namespace subdoc

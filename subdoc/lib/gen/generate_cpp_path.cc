@@ -41,7 +41,7 @@ Vec<CppPathElement> generate_with_ancestors(
                   return std::string("(anonymous)");
                 case Namespace::Tag::Named: return sus::clone(ancestor.name);
               }
-              sus_unreachable();
+              sus::unreachable();
             }(),
         .link_href = construct_html_url_for_namespace(ancestor),
         .type =
@@ -51,7 +51,7 @@ Vec<CppPathElement> generate_with_ancestors(
                 case Namespace::Tag::Anonymous: return CppPathNamespace;
                 case Namespace::Tag::Named: return CppPathNamespace;
               }
-              sus_unreachable();
+              sus::unreachable();
             }(),
         .search_weight = 1_f32,
     });

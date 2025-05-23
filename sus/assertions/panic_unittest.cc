@@ -14,7 +14,9 @@
 
 #include "sus/assertions/panic.h"
 
+#include "fmt/format.h"
 #include "googletest/include/gtest/gtest.h"
+#include "panic.h"
 
 // Incredibly, on Posix we can use [0-9] but on Windows we can't. Yet on Windows
 // we can use `\d` and on Posix we can't (or it doesn't match).
@@ -24,32 +26,38 @@
 #  define DIGIT "[0-9]"
 #endif
 
+// TODO: add cases for `SUS_PROVIDE_PANIC_HANDLER` and
+// `SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER` when it's clear how to test them
+// with modules.
+#if defined(SUS_PANIC_ELIDE_MESSAGE)
+#  define EXPECTED_MESSAGE(message) "^$"
+#else
+#  define EXPECTED_MESSAGE(message) "^PANIC! at " message ".*panic_unittest.cc:" DIGIT "+:" DIGIT "+\n$"
+#endif
+
 namespace sus {
 namespace {
 
+
 TEST(PanicDeathTest, Panic) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(sus_panic(),
-               "^PANIC! at .*panic_unittest.cc:" DIGIT "+:" DIGIT "+\n$");
+  EXPECT_DEATH(sus::panic(),
+               EXPECTED_MESSAGE(""));
 #endif
 }
 
 TEST(PanicDeathTest, WithMessage) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(sus_panic_with_message("hello world"),
-               "^PANIC! at 'hello world', .*panic_unittest.cc:" DIGIT "+:" DIGIT
-               "+\n$");
+  EXPECT_DEATH(sus::panic("hello world"), EXPECTED_MESSAGE("'hello world', "));
 #endif
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(sus_panic_with_message(
+  EXPECT_DEATH(sus::panic(
                    std::string_view("hello world123").substr(0u, 11u)),
-               "^PANIC! at 'hello world', .*panic_unittest.cc:" DIGIT "+:" DIGIT
-               "+\n$");
+               EXPECTED_MESSAGE("'hello world', "));
 #endif
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(sus_panic_with_message(std::string("hello world")),
-               "^PANIC! at 'hello world', .*panic_unittest.cc:" DIGIT "+:" DIGIT
-               "+\n$");
+  EXPECT_DEATH(sus::panic(std::string("hello world")),
+               EXPECTED_MESSAGE("'hello world', "));
 #endif
 }
 

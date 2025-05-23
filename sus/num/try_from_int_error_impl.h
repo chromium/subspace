@@ -48,7 +48,7 @@ struct sus::error::ErrorImpl<sus::num::TryFromIntError> {
     switch (e.kind()) {
       case sus::num::TryFromIntError::Kind::OutOfBounds: return "out of bounds";
     }
-    sus_unreachable_unchecked(::sus::marker::unsafe_fn);
+    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
 };
 
