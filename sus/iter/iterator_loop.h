@@ -31,7 +31,7 @@ class [[nodiscard]] IteratorLoop final {
   constexpr IteratorLoop(Iter&& iter) noexcept
       : iter_(::sus::forward<Iter>(iter)), item_(iter_.next()) {}
 
-  friend constexpr bool operator==(const IteratorLoop& x,
+  friend constexpr bool operator==(const IteratorLoop& loop,
                                    __private::IteratorEnd) noexcept {
     return x.item_.is_none();
   }
