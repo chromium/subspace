@@ -78,7 +78,8 @@ void print_panic_message(std::string_view msg,
 /// building Subspace and any binaries that link against it. This means you can
 /// change them for different build configurations, but cannot change them for
 /// different targets within the same build configuration. If used as a shared
-/// library, the compilation of calling code must match how the Subspace library was built.
+/// library, the compilation of calling code must match how the Subspace library
+/// was built.
 ///
 /// The `SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER()` macro receives two arguments:
 /// * A message, which is a `const char*`, a `std::string_view` or a
