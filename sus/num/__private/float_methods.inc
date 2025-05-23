@@ -1164,6 +1164,9 @@ _sus_pure static _self from_ne_bytes(
     const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept;
 
+// Stream support.
+_sus_format_to_stream(_self);
+
 #undef _self
 #undef _primitive
 #undef _unsigned

@@ -848,6 +848,9 @@ class [[nodiscard]] Result final {
   friend constexpr auto operator<=>(const Result& l,
                                     const Result<U, F>& r) noexcept = delete;
 
+  // Stream support.
+  _sus_format_to_stream(Result);
+
  private:
   template <class U, class V>
   friend class Result;
@@ -1140,9 +1143,6 @@ struct fmt::formatter<::sus::result::Result<T, E>, Char> {
   ::sus::string::__private::AnyOrVoidFormatter<T, Char> underlying_ok_;
   ::sus::string::__private::AnyFormatter<E, Char> underlying_err_;
 };
-
-// Stream support.
-_sus_format_to_stream(sus::result, Result, T, E);
 
 namespace sus {
 using ::sus::result::Err;

@@ -35,11 +35,6 @@ _sus_pure constexpr TryFromIntError::Kind TryFromIntError::kind()
   return kind_;
 }
 
-_sus_pure constexpr bool TryFromIntError::operator==(
-    TryFromIntError rhs) const noexcept {
-  return kind_ == rhs.kind_;
-}
-
 constexpr TryFromIntError::TryFromIntError(Construct, Kind k) noexcept
     : kind_(k) {}
 

@@ -122,9 +122,10 @@ class [[nodiscard]] [[_sus_trivial_abi]] GeneratorLoop {
   constexpr GeneratorLoop(Generator& generator sus_lifetimebound) noexcept
       : generator_(generator) {}
 
-  constexpr bool operator==(
+  friend constexpr bool operator==(
+      const GeneratorLoop& loop,
       const ::sus::iter::__private::IteratorEnd&) noexcept {
-    return generator_.co_handle_.done();
+    return loop.generator_.co_handle_.done();
   }
   constexpr GeneratorLoop& operator++() & noexcept {
     // UB occurs if this is called after GeneratorLoop == IteratorEnd. This

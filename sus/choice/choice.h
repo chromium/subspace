@@ -911,6 +911,9 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
       const Choice<__private::TypeList<RhsTs...>, RhsTag, RhsTags...>& r) =
       delete;
 
+  // Stream support.
+  _sus_format_to_stream(Choice);
+
  private:
   constexpr explicit Choice(IndexType i) noexcept : index_(i) {}
 
@@ -1001,18 +1004,6 @@ struct fmt::formatter<
     }
   }
 };
-
-// Stream support (written out manually due to use of template specialization).
-namespace sus::choice_type {
-template <class... Ts, auto... Tags,
-          ::sus::string::__private::StreamCanReceiveString<char> StreamType>
-inline StreamType& operator<<(
-    StreamType& stream,
-    const Choice<__private::TypeList<Ts...>, Tags...>& value) {
-  return ::sus::string::__private::format_to_stream(stream,
-                                                    fmt::to_string(value));
-}
-}  // namespace sus::choice_type
 
 // Promote Choice into the `sus` namespace.
 namespace sus {

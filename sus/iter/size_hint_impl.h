@@ -24,18 +24,8 @@
 
 // fmt support.
 template <class Char>
-struct fmt::formatter<::sus::iter::SizeHint, Char> {
-  template <class ParseContext>
-  constexpr auto parse(ParseContext& ctx) {
-    return ctx.begin();
-  }
-
-  template <class FormatContext>
-  constexpr auto format(const ::sus::iter::SizeHint& t,
-                        FormatContext& ctx) const {
-    return fmt::format_to(ctx.out(), "SizeHint({}, {})", t.lower, t.upper);
-  }
-};
-
-// Stream support.
-_sus_format_to_stream(sus::iter, SizeHint);
+template <class FormatContext>
+FormatContext::iterator fmt::formatter<::sus::iter::SizeHint, Char>::format(
+    const ::sus::iter::SizeHint& t, FormatContext& ctx) const {
+  return fmt::format_to(ctx.out(), "SizeHint({}, {})", t.lower, t.upper);
+}

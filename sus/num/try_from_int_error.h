@@ -35,7 +35,10 @@ class TryFromIntError {
   _sus_pure constexpr Kind kind() const noexcept;
 
   /// Satisfies the [`Eq`]($sus::cmp::Eq) concept.
-  _sus_pure constexpr bool operator==(TryFromIntError rhs) const noexcept;
+  _sus_pure friend constexpr bool operator==(TryFromIntError lhs,
+                                             TryFromIntError rhs) noexcept {
+    return lhs.kind_ == rhs.kind_;
+  }
 
  private:
   enum Construct { CONSTRUCT };

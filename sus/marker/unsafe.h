@@ -51,6 +51,9 @@ struct UnsafeFnMarker {
   /// $sus::marker::unsafe_fn).
   /// #[doc.hidden]
   explicit consteval UnsafeFnMarker() {}
+
+  // Stream support.
+  _sus_format_to_stream(UnsafeFnMarker);
 };
 
 /// The global [`UnsafeFnMarker`]($sus::marker::UnsafeFnMarker) which can be
@@ -74,6 +77,3 @@ struct fmt::formatter<::sus::marker::UnsafeFnMarker, Char> {
     return fmt::format_to(ctx.out(), "unsafe_fn");
   }
 };
-
-// Stream support.
-_sus_format_to_stream(sus::marker, UnsafeFnMarker);

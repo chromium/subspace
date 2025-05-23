@@ -31,6 +31,9 @@ struct EmptyMarker {
   /// $sus::marker::empty).
   /// #[doc.hidden]
   explicit consteval EmptyMarker() {}
+
+  // Stream support.
+  _sus_format_to_stream(EmptyMarker);
 };
 
 /// The global [`EmptyMarker`]($sus::marker::EmptyMarker) which can be passed to
@@ -54,9 +57,6 @@ struct fmt::formatter<::sus::marker::EmptyMarker, Char> {
     return fmt::format_to(ctx.out(), "empty");
   }
 };
-
-// Stream support.
-_sus_format_to_stream(sus::marker, EmptyMarker);
 
 // Promote `empty` into the `sus` namespace.
 namespace sus {

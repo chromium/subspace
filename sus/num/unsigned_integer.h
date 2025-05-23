@@ -46,6 +46,18 @@ namespace sus::num {
 
 // TODO: from_str_radix(). Need Result typ`e and Errors.
 
+/// A 64-bit unsigned integer.
+///
+/// See the [namespace level documentation]($sus::num) for more.
+struct [[_sus_trivial_abi]] u64 final {
+#define _self u64
+#define _pointer false
+#define _pointer_sized
+#define _primitive uint64_t
+#define _signed i64
+#include "sus/num/__private/unsigned_integer_methods.inc"
+};
+
 /// A 32-bit unsigned integer.
 ///
 /// See the [namespace level documentation]($sus::num) for more.
@@ -57,10 +69,6 @@ struct [[_sus_trivial_abi]] u32 final {
 #define _signed i32
 #include "sus/num/__private/unsigned_integer_methods.inc"
 };
-#define _self u32
-#define _pointer false
-#define _primitive uint32_t
-#include "sus/num/__private/unsigned_integer_consts.inc"
 
 /// An 8-bit unsigned integer.
 ///
@@ -73,10 +81,6 @@ struct [[_sus_trivial_abi]] u8 final {
 #define _signed i8
 #include "sus/num/__private/unsigned_integer_methods.inc"
 };
-#define _self u8
-#define _pointer false
-#define _primitive uint8_t
-#include "sus/num/__private/unsigned_integer_consts.inc"
 
 /// A 16-bit unsigned integer.
 ///
@@ -89,26 +93,6 @@ struct [[_sus_trivial_abi]] u16 final {
 #define _signed i16
 #include "sus/num/__private/unsigned_integer_methods.inc"
 };
-#define _self u16
-#define _pointer false
-#define _primitive uint16_t
-#include "sus/num/__private/unsigned_integer_consts.inc"
-
-/// A 64-bit unsigned integer.
-///
-/// See the [namespace level documentation]($sus::num) for more.
-struct [[_sus_trivial_abi]] u64 final {
-#define _self u64
-#define _pointer false
-#define _pointer_sized
-#define _primitive uint64_t
-#define _signed i64
-#include "sus/num/__private/unsigned_integer_methods.inc"
-};
-#define _self u64
-#define _pointer false
-#define _primitive uint64_t
-#include "sus/num/__private/unsigned_integer_consts.inc"
 
 /// An address-sized unsigned integer.
 ///
@@ -135,12 +119,46 @@ struct [[_sus_trivial_abi]] usize final {
   ::sus::num::__private::ptr_type<::sus::mem::size_of<size_t>()>::unsigned_type
 #define _signed isize
 #include "sus/num/__private/unsigned_integer_methods.inc"
+
+  /// Satisfies the [`AddAssign`]($sus::num::AddAssign) concept for pointers
+  /// (`T*`) with [`usize`]($sus::num::usize).
+  ///
+  /// Adds a [`usize`]($sus::num::usize) to a referenced pointer, and returns the
+  /// input reference.
+  ///
+  /// #[doc.overloads=ptr.add.usize]
+  template <class T>
+  friend constexpr T*& operator+=(T*& t, usize offset) {
+    t += size_t{offset};
+    return t;
+  }
+
+  /// Satisfies the [`Sub`]($sus::num::Sub) concept for pointers
+  /// (`T*`) with [`usize`]($sus::num::usize).
+  ///
+  /// Subtracts a [`usize`]($sus::num::usize) from a pointer, returning the
+  /// resulting pointer.
+  ///
+  /// #[doc.overloads=ptr.sub.usize]
+  template <class T>
+  __sus_pure_const friend constexpr T* operator-(T* t, usize offset) {
+    return t - size_t{offset};
+  }
+
+  /// Satisfies the [`SubAssign`]($sus::num::SubAssign) concept for pointers
+  /// (`T*`) with [`usize`]($sus::num::usize).
+  ///
+  /// Subtracts a [`usize`]($sus::num::usize) from a referenced pointer, and
+  /// returns the input
+  /// reference.
+  ///
+  /// #[doc.overloads=ptr.sub.usize]
+  template <class T>
+  friend constexpr T*& operator-=(T*& t, usize offset) {
+    t -= size_t{offset};
+    return t;
+  }
 };
-#define _self usize
-#define _pointer false
-#define _primitive \
-  ::sus::num::__private::ptr_type<::sus::mem::size_of<size_t>()>::unsigned_type
-#include "sus/num/__private/unsigned_integer_consts.inc"
 
 /// A pointer-sized unsigned integer.
 ///
@@ -175,329 +193,6 @@ struct [[_sus_trivial_abi]] uptr final {
       ::sus::mem::size_of<uintptr_t>()>::unsigned_type
 #include "sus/num/__private/unsigned_integer_methods.inc"
 };
-#define _self uptr
-#define _pointer true
-#define _primitive                 \
-  ::sus::num::__private::ptr_type< \
-      ::sus::mem::size_of<uintptr_t>()>::unsigned_type
-#include "sus/num/__private/unsigned_integer_consts.inc"
-
-/// Satisfies the [`Add`]($sus::num::Add) concept for pointers
-/// (`T*`) with [`usize`]($sus::num::usize).
-///
-/// Adds a [`usize`]($sus::num::usize) to a pointer, returning the resulting
-/// pointer.
-///
-/// #[doc.overloads=ptr.add.usize]
-template <class T, Unsigned U>
-  requires(std::constructible_from<usize, U>)
-__sus_pure_const constexpr inline T* operator+(T* t, U offset) {
-  return t + size_t{offset};
-}
-
-/// Satisfies the [`AddAssign`]($sus::num::AddAssign) concept for pointers
-/// (`T*`) with [`usize`]($sus::num::usize).
-///
-/// Adds a [`usize`]($sus::num::usize) to a referenced pointer, and returns the
-/// input reference.
-///
-/// #[doc.overloads=ptr.add.usize]
-template <class T>
-constexpr inline T*& operator+=(T*& t, usize offset) {
-  t += size_t{offset};
-  return t;
-}
-
-/// Satisfies the [`Sub`]($sus::num::Sub) concept for pointers
-/// (`T*`) with [`usize`]($sus::num::usize).
-///
-/// Subtracts a [`usize`]($sus::num::usize) from a pointer, returning the
-/// resulting pointer.
-///
-/// #[doc.overloads=ptr.sub.usize]
-template <class T>
-__sus_pure_const constexpr inline T* operator-(T* t, usize offset) {
-  return t - size_t{offset};
-}
-
-/// Satisfies the [`SubAssign`]($sus::num::SubAssign) concept for pointers
-/// (`T*`) with [`usize`]($sus::num::usize).
-///
-/// Subtracts a [`usize`]($sus::num::usize) from a referenced pointer, and
-/// returns the input
-/// reference.
-///
-/// #[doc.overloads=ptr.sub.usize]
-template <class T>
-constexpr inline T*& operator-=(T*& t, usize offset) {
-  t -= size_t{offset};
-  return t;
-}
-
-/// Satisfies the [`Shl`]($sus::num::Shl) concept for unsigned primitive
-/// integers shifted by [`u64`]($sus::num::u64).
-/// #[doc.overloads=unsigned.prim.<<u64]
-template <class P, Integer U>
-  requires((UnsignedPrimitiveInteger<P> || UnsignedPrimitiveEnum<P>) &&
-           std::convertible_to<U, u64>)
-[[nodiscard]] __sus_pure_const constexpr inline P operator<<(P l, U r) noexcept {
-  // No UB checks on primitive types, since there's no promotion to a Subspace
-  // return type?
-  return l << u64(r).primitive_value;
-}
-/// #[doc.overloads=unsigned.prim.<<u64]
-template <class P, Integer U>
-  requires((UnsignedPrimitiveInteger<P> || UnsignedPrimitiveEnum<P>) &&
-           !std::convertible_to<U, u64>)
-constexpr inline P operator<<(P l, U r) noexcept = delete;
-
-/// Satisfies the [`Shr`]($sus::num::Shr) concept for unsigned primitive
-/// integers shifted by [`u64`]($sus::num::u64).
-/// #[doc.overloads=unsigned.prim.>>u64]
-template <class P, Integer U>
-  requires((UnsignedPrimitiveInteger<P> || UnsignedPrimitiveEnum<P>) &&
-           std::convertible_to<U, u64>)
-[[nodiscard]] __sus_pure_const constexpr inline P operator>>(P l, U r) noexcept {
-  // No UB checks on primitive types, since there's no promotion to a Subspace
-  // return type?
-  return l >> u64(r).primitive_value;
-}
-/// #[doc.overloads=unsigned.prim.>>u64]
-template <class P, Integer U>
-  requires((UnsignedPrimitiveInteger<P> || UnsignedPrimitiveEnum<P>) &&
-           !std::convertible_to<U, u64>)
-constexpr inline P operator>>(P l, U r) noexcept = delete;
-
-/// Satisfies the [`Shl`]($sus::num::Shl) concept for unsigned integers.
-///
-/// # Panics
-/// This function will panic when `r` is not less than the number of bits in `l`
-/// if overflow checks are enabled (they are by default) and will perform a
-/// wrapping shift if overflow checks are disabled (not the default).
-///
-/// See [overflow checks]($sus::num#overflow-behaviour) for controlling this
-/// behaviour.
-///
-/// #[doc.overloads=unsignedint.<<]
-[[nodiscard]] __sus_pure_const constexpr inline u8 operator<<(
-    u8 l, std::convertible_to<u64> auto r) noexcept {
-  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    sus_check_with_message(r < u8::BITS,
-                              "attempt to shift left with overflow");
-    return u8(
-        __private::unchecked_shl(l.primitive_value, u64(r).primitive_value));
-  } else {
-    return u8(
-        __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value)
-            .value);
-  }
-}
-/// #[doc.overloads=unsignedint.<<]
-template <class U>
-  requires(!std::convertible_to<U, u64>)
-constexpr inline u8 operator<<(u8 l, U r) noexcept = delete;
-/// Satisfies the [`Shr`]($sus::num::Shr) concept for unsigned integers.
-///
-/// # Panics
-/// This function will panic when `r` is not less than the number of bits in `l`
-/// if overflow checks are enabled (they are by default) and will perform a
-/// wrapping shift if overflow checks are disabled (not the default).
-///
-/// See [overflow checks]($sus::num#overflow-behaviour) for controlling this
-/// behaviour.
-///
-/// #[doc.overloads=unsignedint.>>]
-[[nodiscard]] __sus_pure_const constexpr inline u8 operator>>(
-    u8 l, std::convertible_to<u64> auto r) noexcept {
-  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    sus_check_with_message(r < u8::BITS,
-                              "attempt to shift right with overflow");
-    return u8(
-        __private::unchecked_shr(l.primitive_value, u64(r).primitive_value));
-  } else {
-    return u8(
-        __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value)
-            .value);
-  }
-}
-/// #[doc.overloads=unsignedint.>>]
-template <class U>
-  requires(!std::convertible_to<U, u64>)
-constexpr inline u8 operator>>(u8 l, U r) noexcept = delete;
-/// #[doc.overloads=unsignedint.<<]
-[[nodiscard]] __sus_pure_const constexpr inline u16 operator<<(
-    u16 l, std::convertible_to<u64> auto r) noexcept {
-  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    sus_check_with_message(r < u16::BITS,
-                              "attempt to shift left with overflow");
-    return u16(
-        __private::unchecked_shl(l.primitive_value, u64(r).primitive_value));
-  } else {
-    return u16(
-        __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value)
-            .value);
-  }
-}
-/// #[doc.overloads=unsignedint.<<]
-template <class U>
-  requires(!std::convertible_to<U, u64>)
-constexpr inline u16 operator<<(u16 l, U r) noexcept = delete;
-/// #[doc.overloads=unsignedint.>>]
-[[nodiscard]] __sus_pure_const constexpr inline u16 operator>>(
-    u16 l, std::convertible_to<u64> auto r) noexcept {
-  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    sus_check_with_message(r < u16::BITS,
-                              "attempt to shift right with overflow");
-    return u16(
-        __private::unchecked_shr(l.primitive_value, u64(r).primitive_value));
-  } else {
-    return u16(
-        __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value)
-            .value);
-  }
-}
-/// #[doc.overloads=unsignedint.>>]
-template <class U>
-  requires(!std::convertible_to<U, u64>)
-constexpr inline u16 operator>>(u16 l, U r) noexcept = delete;
-/// #[doc.overloads=unsignedint.<<]
-[[nodiscard]] __sus_pure_const constexpr inline u32 operator<<(
-    u32 l, std::convertible_to<u64> auto r) noexcept {
-  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    sus_check_with_message(r < u32::BITS, "attempt to shift left with overflow");
-    return u32(
-        __private::unchecked_shl(l.primitive_value, u64(r).primitive_value));
-  } else {
-    return u32(
-        __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value)
-            .value);
-  }
-}
-/// #[doc.overloads=unsignedint.<<]
-template <class U>
-  requires(!std::convertible_to<U, u64>)
-constexpr inline u32 operator<<(u32 l, U r) noexcept = delete;
-/// #[doc.overloads=unsignedint.>>]
-[[nodiscard]] __sus_pure_const constexpr inline u32 operator>>(
-    u32 l, std::convertible_to<u64> auto r) noexcept {
-  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    sus_check_with_message(r < u32::BITS,
-                              "attempt to shift right with overflow");
-    return u32(
-        __private::unchecked_shr(l.primitive_value, u64(r).primitive_value));
-  } else {
-    return u32(
-        __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value)
-            .value);
-  }
-}
-/// #[doc.overloads=unsignedint.>>]
-template <class U>
-  requires(!std::convertible_to<U, u64>)
-constexpr inline u32 operator>>(u32 l, U r) noexcept = delete;
-/// #[doc.overloads=unsignedint.<<]
-[[nodiscard]] __sus_pure_const constexpr inline u64 operator<<(
-    u64 l, std::convertible_to<u64> auto r) noexcept {
-  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    sus_check_with_message(r < u64::BITS, "attempt to shift left with overflow");
-    return u64(
-        __private::unchecked_shl(l.primitive_value, u64(r).primitive_value));
-  } else {
-    return u64(
-        __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value)
-            .value);
-  }
-}
-/// #[doc.overloads=unsignedint.<<]
-template <class U>
-  requires(!std::convertible_to<U, u64>)
-constexpr inline u64 operator<<(u64 l, U r) noexcept = delete;
-/// #[doc.overloads=unsignedint.>>]
-[[nodiscard]] __sus_pure_const constexpr inline u64 operator>>(
-    u64 l, std::convertible_to<u64> auto r) noexcept {
-  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    sus_check_with_message(r < u64::BITS,
-                              "attempt to shift right with overflow");
-    return u64(
-        __private::unchecked_shr(l.primitive_value, u64(r).primitive_value));
-  } else {
-    return u64(
-        __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value)
-            .value);
-  }
-}
-/// #[doc.overloads=unsignedint.>>]
-template <class U>
-  requires(!std::convertible_to<U, u64>)
-constexpr inline u64 operator>>(u64 l, U r) noexcept = delete;
-/// #[doc.overloads=unsignedint.<<]
-[[nodiscard]] __sus_pure_const constexpr inline usize operator<<(
-    usize l, std::convertible_to<u64> auto r) noexcept {
-  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    sus_check_with_message(r < usize::BITS, "attempt to shift left with overflow");
-    return usize(
-        __private::unchecked_shl(l.primitive_value, u64(r).primitive_value));
-  } else {
-    return usize(
-        __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value)
-            .value);
-  }
-}
-/// #[doc.overloads=unsignedint.<<]
-template <class U>
-  requires(!std::convertible_to<U, u64>)
-constexpr inline usize operator<<(usize l, U r) noexcept = delete;
-/// #[doc.overloads=unsignedint.>>]
-[[nodiscard]] __sus_pure_const constexpr inline usize operator>>(
-    usize l, std::convertible_to<u64> auto r) noexcept {
-  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    sus_check_with_message(r < usize::BITS, "attempt to shift right with overflow");
-    return usize(
-        __private::unchecked_shr(l.primitive_value, u64(r).primitive_value));
-  } else {
-    return usize(
-        __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value)
-            .value);
-  }
-}
-/// #[doc.overloads=unsignedint.>>]
-template <class U>
-  requires(!std::convertible_to<U, u64>)
-constexpr inline usize operator>>(usize l, U r) noexcept = delete;
-/// #[doc.overloads=unsignedint.<<]
-[[nodiscard]] __sus_pure_const constexpr inline uptr operator<<(
-    uptr l, std::convertible_to<u64> auto r) noexcept {
-  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    sus_check_with_message(r < uptr::BITS, "attempt to shift left with overflow");
-    return uptr(
-        __private::unchecked_shl(l.primitive_value, u64(r).primitive_value));
-  } else {
-    return uptr(
-        __private::shl_with_overflow(l.primitive_value, u64(r).primitive_value)
-            .value);
-  }
-}
-/// #[doc.overloads=unsignedint.<<]
-template <class U>
-  requires(!std::convertible_to<U, u64>)
-constexpr inline uptr operator<<(uptr l, U r) noexcept = delete;
-/// #[doc.overloads=unsignedint.>>]
-[[nodiscard]] __sus_pure_const constexpr inline uptr operator>>(
-    uptr l, std::convertible_to<u64> auto r) noexcept {
-  if constexpr (SUS_CHECK_INTEGER_OVERFLOW) {
-    sus_check_with_message(r < uptr::BITS, "attempt to shift right with overflow");
-    return uptr(
-        __private::unchecked_shr(l.primitive_value, u64(r).primitive_value));
-  } else {
-    return uptr(
-        __private::shr_with_overflow(l.primitive_value, u64(r).primitive_value)
-            .value);
-  }
-}
-/// #[doc.overloads=unsignedint.>>]
-template <class U>
-  requires(!std::convertible_to<U, u64>)
-constexpr inline uptr operator>>(uptr l, U r) noexcept = delete;
 
 }  // namespace sus::num
 

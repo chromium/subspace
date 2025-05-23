@@ -31,8 +31,9 @@ class [[nodiscard]] IteratorLoop final {
   constexpr IteratorLoop(Iter&& iter) noexcept
       : iter_(::sus::forward<Iter>(iter)), item_(iter_.next()) {}
 
-  constexpr inline bool operator==(__private::IteratorEnd) const noexcept {
-    return item_.is_none();
+  friend constexpr bool operator==(const IteratorLoop& loop,
+                                   __private::IteratorEnd) noexcept {
+    return loop.item_.is_none();
   }
   constexpr inline void operator++() & noexcept { item_ = iter_.next(); }
   constexpr inline Item operator*() & noexcept {
