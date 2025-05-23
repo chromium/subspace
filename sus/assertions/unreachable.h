@@ -40,7 +40,8 @@ namespace sus::assertions {
 /// and security bugs when working across languages. Use
 /// [`sus::unreachable_unchecked`]($sus::unreachable_unchecked) to
 /// indicate to the compiler the code is not reachable.
-[[noreturn]] _sus_always_inline _sus_nodebug inline void unreachable(PanicLocation loc = PanicLocation::current()) {
+[[noreturn]] _sus_always_inline _sus_nodebug void unreachable(
+    PanicLocation loc = PanicLocation::current()) {
   ::sus::panic("entered unreachable code", loc);
 }
 
@@ -53,7 +54,8 @@ namespace sus::assertions {
 ///
 /// # Safety
 /// This function must never actually be reached, or Undefined Behaviour occurs.
-[[noreturn]] _sus_always_inline _sus_nodebug inline void unreachable_unchecked(::sus::marker::UnsafeFnMarker) {
+[[noreturn]] _sus_always_inline _sus_nodebug void unreachable_unchecked(
+    ::sus::marker::UnsafeFnMarker) {
 #if __has_builtin(__builtin_unreachable)
   __builtin_unreachable();
 #else

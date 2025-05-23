@@ -92,10 +92,9 @@ void print_panic_message(std::string_view msg,
 /// Undefined Behaviour will result.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wattributes"
-[[noreturn]] _sus_always_inline _sus_nodebug
-inline void panic(std::string_view message = "",
-                  PanicLocation loc = PanicLocation::current()) noexcept
-{
+[[noreturn]] _sus_always_inline _sus_nodebug void panic(
+    std::string_view message = "",
+    PanicLocation loc = PanicLocation::current()) noexcept {
 #if !defined(SUS_PANIC_ELIDE_MESSAGE)
 #  if defined(SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER)
     SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER(message, loc);
