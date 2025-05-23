@@ -123,7 +123,7 @@ class [[nodiscard]] [[_sus_trivial_abi]] GeneratorLoop {
       : generator_(generator) {}
 
   friend constexpr bool operator==(
-      const GeneratorLoop& l,
+      const GeneratorLoop& loop,
       const ::sus::iter::__private::IteratorEnd&) noexcept {
     return l.generator_.co_handle_.done();
   }
