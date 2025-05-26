@@ -330,6 +330,10 @@ if(${SUBSPACE_BUILD_TESTS})
         "tuple/tuple_unittest.cc"
     )
 
+    add_executable(subspace_panic_elide_message_unittest
+        "assertions/panic_unittest.cc"
+    )
+
     add_executable(subspace_overflow_unittests
         "num/i8_overflow_unittest.cc"
         "num/i16_overflow_unittest.cc"
@@ -356,6 +360,18 @@ if(${SUBSPACE_BUILD_TESTS})
         gtest_main
     )
     gtest_discover_tests(subspace_unittests)
+
+    # Subspace panic unittests
+    subspace_test_default_compile_options(subspace_panic_elide_message_unittest)
+    target_compile_options(subspace_panic_elide_message_unittest PUBLIC
+        -DSUS_PANIC_ELIDE_MESSAGE
+    )
+    target_link_libraries(subspace_panic_elide_message_unittest
+        subspace::lib
+        subspace::test_support
+        gtest_main
+    )
+    gtest_discover_tests(subspace_panic_elide_message_unittest)
 
     # Subspace overflow unittests
     subspace_test_default_compile_options(subspace_overflow_unittests)

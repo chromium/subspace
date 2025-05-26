@@ -7,7 +7,7 @@ footguns, crashes, bugs, and UB.
 1. All methods are `constexpr` unless they must call a non-`constexpr` function,
    or they expose floating point NaNs (since constexpr NaNs change their bit
    values).
-    * Consider `sus_panic()`/`sus_check()` as constexpr for these purposes, they will
+    * Consider `sus::panic()`/`sus_check()` as constexpr for these purposes, they will
       correctly prevent compiling if the condition fails.
 1. If you override on `const&`, then explicitly provide or delete the `&&`
    override.
@@ -71,7 +71,7 @@ footguns, crashes, bugs, and UB.
    `operator==(Option, Option)` and `operator==(Option<T>, Option<U>)` look redundant
    but they are not, as the former allows conversions to Option for the rhs to happen
    while the latter does not (it would have to deduce `U` and fails).
-  
+
 ## Containers that hold references
 
 Container types that hold references require extra care in a number of ways. To
@@ -87,13 +87,13 @@ properly build such a container type (e.g. `Option` and `Tuple`):
     from an rvalue is okay, but when holding a value, giving a reference to it from an
     rvalue is not.
   * Use `static_assert(SafelyConstructibleFromReference<ToType, FromReferenceType&&>)`
-    in places that store the reference to ensure a reference to a temporary does not 
+    in places that store the reference to ensure a reference to a temporary does not
     get created due to an implicit conversion. The `FromReferenceType&&` here is should
     be the input type as it's written in the function parameters.
   * If a ctor type deduction guide is provided, the deduction should strip qualifiers
     and references with `std::remove_cvref_t` on the deduced type arguments.
   * Consider providing a construction marker type such as `some() -> SomeMarker` which
-    captures the parameters as references and lazily constructs the final type. This 
+    captures the parameters as references and lazily constructs the final type. This
     allows reference types to be preserved through to the construction of the
     container without requiring the full type defn to be written every time.
     * Notably, this is omitted for `Choice`, which needs to be reasonably used behind

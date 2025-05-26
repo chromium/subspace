@@ -42,9 +42,9 @@ namespace sus {
 /// The following are the primary interfaces of the panic system and the
 /// responsibilities they cover:
 ///
-/// * [`sus_panic`]($sus_panic) (Constructing, Propagating)
-/// * [`SUS_PROVIDE_PRINT_PANIC_LOCATION_HANDLER`]($sus_panic) (Reporting)
-/// * [`SUS_PROVIDE_PANIC_HANDLER`]($sus_panic) (Reacting)
+/// * [`sus::panic`]($sus::panic) (Constructing, Propagating)
+/// * [`SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER`]($sus::panic) (Reporting)
+/// * [`SUS_PROVIDE_PANIC_HANDLER`]($sus::panic) (Reacting)
 ///
 /// The following are the primary interfaces of the error system and the
 /// responsibilities they cover:
@@ -293,7 +293,7 @@ concept HasErrorSource = requires(const T& t) {
 ///     switch (self) {
 ///       case ErrorReason::SomeReason: return "we saw SomeReason happen";
 ///     }
-///     sus_unreachable();
+///     sus::unreachable();
 ///   }
 /// };
 ///

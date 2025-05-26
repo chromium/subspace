@@ -47,7 +47,7 @@ struct sus::error::ErrorImpl<ErrorReason> {
     switch (self) {
       case ErrorReason::SomeReason: return "we saw SomeReason happen";
     }
-    sus_unreachable();
+    sus::unreachable();
   }
 };
 static_assert(sus::error::error_display(ErrorReason::SomeReason) ==

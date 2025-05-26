@@ -20,12 +20,13 @@
 
 #include "sus/macros/builtin.h"
 #include "sus/macros/inline.h"
+#include "sus/macros/nodebug.h"
 
 namespace sus {
 
 /// Checking for (e.g. [`sus_check`]($sus_check)) and handling
-/// (e.g. [`sus_panic`]($sus_panic),
-/// [`sus_unreachable`]($sus_unreachable)) unexpected runtime
+/// (e.g. [`sus::panic`]($sus::panic),
+/// [`sus::unreachable`]($sus::unreachable)) unexpected runtime
 /// conditions.
 namespace assertions {}
 }  // namespace sus
@@ -56,81 +57,64 @@ struct PanicLocation {
 };
 
 namespace __private {
-void print_panic_message(const char& msg,
-                         const PanicLocation& location) noexcept;
 void print_panic_message(std::string_view msg,
                          const PanicLocation& location) noexcept;
-void print_panic_location(const PanicLocation& location) noexcept;
 }  // namespace __private
 
-}  // namespace sus::assertions
-
-#if defined(SUS_PROVIDE_PRINT_PANIC_LOCATION_HANDLER)
-#  define _sus_panic_location_handler(loc) \
-    SUS_PROVIDE_PRINT_PANIC_LOCATION_HANDLER(loc)
-#else
-#  define _sus_panic_location_handler(loc) \
-    ::sus::assertions::__private::print_panic_location(loc)
-#endif
-
-#if defined(SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER)
-#  define _sus_panic_message_handler(msg, loc) \
-    SUS_PROVIDE_PRINT_PANIC_LOCATION_HANDLER(msg, loc)
-#else
-#  define _sus_panic_message_handler(msg, loc) \
-    ::sus::assertions::__private::print_panic_message(msg, loc)
-#endif
-
-#if defined(SUS_PROVIDE_PANIC_HANDLER)
-#  define _sus_panic_handler() SUS_PROVIDE_PANIC_HANDLER()
-#elif __has_builtin(__builtin_trap)
-#  define _sus_panic_handler() __builtin_trap()
-#else
-#  define _sus_panic_handler() std::abort()
-#endif
-
-/// Terminate the program.
+/// Terminate the program, after printing a message.
 ///
 /// The default behaviour of this function is to `__builtin_trap()` when
 /// possible and [`std::abort()`](
-/// https://en.cppreference.com/w/cpp/utility/program/abort) otherwise.
-/// The behaviour of this function can be overridden by defining a
-/// `SUS_PROVIDE_PANIC_HANDLER()` macro when compiling the library.
+/// https://en.cppreference.com/w/cpp/utility/program/abort) otherwise. The
+/// behaviour of this function can be overridden by defining a
+/// `SUS_PROVIDE_PANIC_HANDLER()` macro when compiling. The panic
+/// message will be printed to stderr before aborting. This behaviour can be
+/// overridden by defining a `SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER()` macro
+/// when compiling. Message handling can be suppressed entirely by
+/// defining a `SUS_PANIC_ELIDE_MESSAGE` macro. This can be advantageous for
+/// optimised builds, as it turns `panic` into just calling the panic handler.
+/// `SUS_PROVIDE_PANIC_HANDLER`, `SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER`, and
+/// `SUS_PANIC_ELIDE_MESSAGE` must all have a consistent definition when
+/// building Subspace and any binaries that link against it. This means you can
+/// change them for different build configurations, but cannot change them for
+/// different targets within the same build configuration. If used as a shared
+/// library, the compilation of calling code must match how the Subspace library
+/// was built.
 ///
-/// The panic message will be printed to stderr before aborting. This behaviour
-/// can be overridden by defining a `SUS_PROVIDE_PRINT_PANIC_LOCATION_HANDLER()`
-/// macro when compiling. The same handler must be used as when building the
-/// library itself. So if used as a shared library, it can not be modified by
-/// the calling code. The `SUS_PROVIDE_PRINT_PANIC_LOCATION_HANDLER()` macro
-/// receives a single argument which is a [`PanicLocation`](
-/// $sus::assertions::PanicLocation).
+/// The `SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER()` macro receives two arguments:
+/// * A message, which is a `const char*`, a `std::string_view` or a
+///   `std::string`. Overloads should be used to handle each case.
+/// * A [`PanicLocation`]($sus::assertions::PanicLocation).
 ///
 /// # Safety
 ///
 /// If `SUS_PROVIDE_PANIC_HANDLER()` is defined, the macro _must_ not return or
 /// Undefined Behaviour will result.
-#define sus_panic()                                                         \
-  _sus_panic_location_handler(::sus::assertions::PanicLocation::current()); \
-  _sus_panic_handler();                                                     \
-  static_assert(true)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+[[noreturn]] _sus_always_inline _sus_nodebug void panic(
+    std::string_view message = "",
+    PanicLocation loc = PanicLocation::current()) noexcept {
+#if !defined(SUS_PANIC_ELIDE_MESSAGE)
+#  if defined(SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER)
+    SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER(message, loc);
+#  else
+    ::sus::assertions::__private::print_panic_message(message, loc);
+#  endif // SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER
+#endif // SUS_PANIC_ELIDE_MESSAGE
 
-/// Terminate the program, after printing a message.
-///
-/// The default behaviour of this function is to abort(). The behaviour of this
-/// function can be overridden by defining a `SUS_PROVIDE_PANIC_HANDLER()` macro
-/// when compiling the library.
-///
-/// The panic message will be printed to stderr before aborting. This behaviour
-/// can be overridden by defining a `SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER()`
-/// macro when compiling the library. The
-/// `SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER()` macro receives two arguments:
-/// * A message, which is a `const char*`, a `std::string_view` or a
-///   `std::string`. Overloads should be used to handle each case.
-/// * A [`PanicLocation`]($sus::assertions::PanicLocation).
-/// If the `SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER` macro does not consume the
-/// `msg`, this macro will avoid instantiating it at all.
-#define sus_panic_with_message(msg)                                        \
-  _sus_panic_message_handler((msg),                                        \
-                             ::sus::assertions::PanicLocation::current()); \
-  _sus_panic_handler();                                                    \
-  static_assert(true)
+#if defined(SUS_PROVIDE_PANIC_HANDLER)
+  SUS_PROVIDE_PANIC_HANDLER();
+#elif __has_builtin(__builtin_trap)
+  __builtin_trap();
+#else
+  std::abort();
+#endif // SUS_PROVIDE_PANIC_HANDLER
+}
+#pragma GCC diagnostic pop
+
+}  // namespace sus::assertions
+
+namespace sus {
+  using ::sus::assertions::panic;
+}

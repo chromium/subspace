@@ -20,24 +20,22 @@
 
 namespace sus::assertions::__private {
 
-// Defined outside the header to avoid fprintf in the header.
-void print_panic_message(const char* msg,
-                         const PanicLocation& location) noexcept {
-  fprintf(stderr, "PANIC! at '%s', %s:%u:%u\n", msg, location.file_name,
-          location.line, location.column);
-}
-
-void print_panic_message(std::string_view msg,
-                         const PanicLocation& location) noexcept {
-  fprintf(stderr, "PANIC! at '");
-  for (char c : msg) fprintf(stderr, "%c", c);
-  fprintf(stderr, "', %s:%u:%u\n", location.file_name, location.line,
-          location.column);
-}
-
-void print_panic_location(const PanicLocation& location) noexcept {
+static void print_panic_location(const PanicLocation& location) noexcept {
   fprintf(stderr, "PANIC! at %s:%u:%u\n", location.file_name, location.line,
           location.column);
+}
+
+// Defined outside the header to avoid fprintf in the header.
+void print_panic_message(std::string_view msg,
+                         const PanicLocation& location) noexcept {
+  if (msg.empty()) {
+    print_panic_location(location);
+  } else {
+    fprintf(stderr, "PANIC! at '");
+    for (char c : msg) fprintf(stderr, "%c", c);
+    fprintf(stderr, "', %s:%u:%u\n", location.file_name, location.line,
+            location.column);
+  }
 }
 
 }  // namespace sus::assertions::__private

@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC
+// Copyright 2025 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,21 +14,9 @@
 
 #pragma once
 
-#include <string_view>
+#include "sus/macros/compiler.h"
 
-#include "sus/assertions/unreachable.h"
-
-namespace subdoc::tests {
-
-enum class SubDocCppVersion {
-  Cpp20,
-};
-
-inline std::string_view cpp_version_flag(SubDocCppVersion v) noexcept {
-  switch (v) {
-    case SubDocCppVersion::Cpp20: return "-std=c++20";
-  }
-  sus::unreachable();
-}
-
-}  // namespace subdoc::tests
+/// Add `_sus_nodebug` to the start of a function declaration to prevent the
+/// compiler from adding debug info.
+#define _sus_nodebug \
+  sus_if_clang(__attribute__((nodebug)))
