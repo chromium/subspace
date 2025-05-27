@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifdef TEST_MODULE
+import sus;
+#else
 #include "sus/collections/array.h"
 
-#include <sstream>
-#include <type_traits>
-
-#include "googletest/include/gtest/gtest.h"
 #include "sus/cmp/eq.h"
 #include "sus/cmp/ord.h"
 #include "sus/construct/into.h"
@@ -27,6 +26,13 @@
 #include "sus/mem/relocate.h"
 #include "sus/num/types.h"
 #include "sus/prelude.h"
+#endif // TEST_MODULE
+
+#include <sstream>
+#include <type_traits>
+
+#include "googletest/include/gtest/gtest.h"
+#include "fmt/format.h"
 #include "sus/test/ensure_use.h"
 
 using sus::collections::Array;

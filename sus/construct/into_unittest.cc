@@ -12,17 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifdef TEST_MODULE
+import sus;
+
+#include "sus/assertions/check.h"
+#else
 #include "sus/construct/into.h"
+
+#include "sus/mem/forward.h"
+#include "sus/prelude.h"
+#endif
 
 #include "googletest/include/gtest/gtest.h"
 #include "sus/macros/__private/compiler_bugs.h"
-#include "sus/mem/forward.h"
-#include "sus/prelude.h"
 #include "sus/test/behaviour_types.h"
 
 using sus::construct::From;
 using sus::construct::Into;
-using sus::construct::__private::IntoRef;
 using namespace sus::test;
 
 namespace {

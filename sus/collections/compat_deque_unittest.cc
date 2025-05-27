@@ -12,11 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#if TEST_MODULE
+import sus;
+
+#include "sus/assertions/check.h"
+#else
 #include "sus/collections/compat_deque.h"
 
-#include "googletest/include/gtest/gtest.h"
 #include "sus/iter/compat_ranges.h"
 #include "sus/prelude.h"
+#endif // TEST_MODULE
+
+#include <deque>
+
+#include "googletest/include/gtest/gtest.h"
 
 namespace {
 

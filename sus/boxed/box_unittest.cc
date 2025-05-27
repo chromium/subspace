@@ -12,14 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "sus/boxed/box.h"
+#ifdef TEST_MODULE
+import sus;
+
+#  include "fmt/format.h"
+#  include "sus/assertions/check.h"
+#else
+#  include "sus/boxed/box.h"
+#  include "sus/error/error.h"
+#  include "sus/iter/iterator.h"
+#  include "sus/iter/once.h"
+#  include "sus/ops/range.h"
+#  include "sus/prelude.h"
+#endif
 
 #include "googletest/include/gtest/gtest.h"
-#include "sus/error/error.h"
-#include "sus/iter/iterator.h"
-#include "sus/iter/once.h"
-#include "sus/ops/range.h"
-#include "sus/prelude.h"
 
 namespace test::box {
 struct MyError {};

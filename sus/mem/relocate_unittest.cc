@@ -12,10 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifdef TEST_MODULE
+import sus;
+
+#include "sus/mem/relocate_macros.h"
+#else
 #include "sus/mem/relocate.h"
 
 #include "sus/num/types.h"
 #include "sus/prelude.h"
+#endif
+
+#include <type_traits>
 
 namespace {
 

@@ -12,13 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifdef TEST_MODULE
+import sus;
+#else
 #include "sus/ptr/nonnull.h"
 
-#include <sstream>
-
-#include "googletest/include/gtest/gtest.h"
 #include "sus/construct/into.h"
-#include "sus/macros/__private/compiler_bugs.h"
 #include "sus/mem/forward.h"
 #include "sus/mem/never_value.h"
 #include "sus/mem/relocate.h"
@@ -27,6 +26,13 @@
 #include "sus/cmp/ord.h"
 #include "sus/option/option.h"
 #include "sus/prelude.h"
+#endif
+
+#include <sstream>
+
+#include "fmt/format.h"
+#include "googletest/include/gtest/gtest.h"
+#include "sus/macros/__private/compiler_bugs.h"
 
 using sus::ptr::NonNull;
 

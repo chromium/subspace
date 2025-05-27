@@ -12,11 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifdef TEST_MODULE
+import sus;
+
+#include "sus/assertions/check.h"
+#include "sus/macros/lifetimebound.h"
+#else
 #include "sus/collections/slice.h"
 
-#include <sstream>
-
-#include "googletest/include/gtest/gtest.h"
 #include "sus/collections/array.h"
 #include "sus/collections/vec.h"
 #include "sus/construct/into.h"
@@ -27,6 +30,12 @@
 #include "sus/num/types.h"
 #include "sus/prelude.h"
 #include "sus/result/result.h"
+#endif
+
+#include <sstream>
+
+#include "fmt/format.h"
+#include "googletest/include/gtest/gtest.h"
 #include "sus/test/ensure_use.h"
 #include "sus/test/no_copy_move.h"
 

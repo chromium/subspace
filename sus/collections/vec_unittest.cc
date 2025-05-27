@@ -12,16 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifdef TEST_MODULE
+import sus;
+
+#include "sus/assertions/check.h"
+#include "sus/mem/relocate_macros.h"
+#else
 #include "sus/collections/vec.h"
 
-#include <concepts>
-#include <sstream>
 
-#include "googletest/include/gtest/gtest.h"
 #include "sus/iter/extend.h"
 #include "sus/iter/iterator.h"
 #include "sus/mem/move.h"
 #include "sus/prelude.h"
+#endif
+
+#include <concepts>
+#include <sstream>
+
+#include "fmt/format.h"
+#include "googletest/include/gtest/gtest.h"
 #include "sus/test/ensure_use.h"
 
 namespace {

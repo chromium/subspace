@@ -12,11 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifdef TEST_MODULE
+import sus;
+
+#include "sus/boxed/macros.h"
+#else
 #include "sus/boxed/dyn.h"
 
-#include "googletest/include/gtest/gtest.h"
 #include "sus/boxed/box.h"
 #include "sus/prelude.h"
+#endif
+
+#include "fmt/format.h"
+#include "googletest/include/gtest/gtest.h"
 
 namespace {
 using namespace sus::boxed;

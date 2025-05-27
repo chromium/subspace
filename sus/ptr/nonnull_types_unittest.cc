@@ -12,10 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifdef TEST_MODULE
+import sus;
+#else
 #include "sus/construct/default.h"
 #include "sus/macros/compiler.h"
 #include "sus/ptr/nonnull.h"
 #include "sus/mem/relocate.h"
+#endif
+
+#include <type_traits>
+
 #include "sus/test/behaviour_types.h"
 
 using sus::construct::Default;

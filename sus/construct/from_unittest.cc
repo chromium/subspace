@@ -12,10 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifdef TEST_MODULE
+import sus;
+#else
 #include "sus/construct/from.h"
 
 #include "sus/construct/into.h"
 #include "sus/result/result.h"
+#endif // TEST_MODULE
 
 using sus::construct::From;
 using sus::construct::TryFrom;

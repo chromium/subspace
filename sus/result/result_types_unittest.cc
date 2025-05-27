@@ -12,9 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifdef TEST_MODULE
+import sus;
+#else
 #include "sus/construct/default.h"
 #include "sus/mem/relocate.h"
 #include "sus/result/result.h"
+#endif
+
+#include <type_traits>
+
 #include "sus/test/behaviour_types.h"
 #include "sus/test/no_copy_move.h"
 

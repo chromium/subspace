@@ -12,12 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifdef TEST_MODULE
+import sus;
+#else
 #include "sus/ptr/swap.h"
 
-#include "googletest/include/gtest/gtest.h"
 #include "sus/collections/array.h"
 #include "sus/mem/replace.h"
 #include "sus/prelude.h"
+#endif
+
+
+#include "googletest/include/gtest/gtest.h"
 
 namespace {
 

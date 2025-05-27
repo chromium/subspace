@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifdef TEST_MODULE
+import sus;
+
+#include "sus/assertions/check.h"
+#include "sus/mem/relocate_macros.h"
+#else
 #include "sus/iter/iterator.h"
 
-#include <ranges>
-
-#include "googletest/include/gtest/gtest.h"
-#include "sus/assertions/unreachable.h"
 #include "sus/cmp/eq.h"
 #include "sus/collections/array.h"
 #include "sus/collections/vec.h"
@@ -28,11 +30,17 @@
 #include "sus/iter/empty.h"
 #include "sus/iter/into_iterator.h"
 #include "sus/iter/zip.h"
-#include "sus/macros/__private/compiler_bugs.h"
 #include "sus/mem/never_value.h"
 #include "sus/mem/replace.h"
 #include "sus/num/overflow_integer.h"
 #include "sus/prelude.h"
+#endif
+
+#include <ranges>
+
+#include "googletest/include/gtest/gtest.h"
+#include "sus/assertions/unreachable.h"
+#include "sus/macros/__private/compiler_bugs.h"
 #include "sus/test/no_copy_move.h"
 
 using sus::collections::Array;
