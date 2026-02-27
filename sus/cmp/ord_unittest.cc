@@ -14,10 +14,10 @@
 
 #include "sus/cmp/ord.h"
 
+#include "gtest/gtest.h"
 #include "sus/macros/__private/compiler_bugs.h"
 #include "sus/num/types.h"
 #include "sus/prelude.h"
-#include "googletest/include/gtest/gtest.h"
 
 namespace {
 

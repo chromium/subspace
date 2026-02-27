@@ -16,7 +16,7 @@
 #include <sstream>
 #include <type_traits>
 
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 #include "sus/cmp/eq.h"
 #include "sus/cmp/ord.h"
 #include "sus/collections/array.h"

@@ -16,7 +16,7 @@
 
 #include <concepts>
 
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 #include "sus/boxed/box.h"
 #include "sus/env/var.h"
 #include "sus/mem/clone.h"

@@ -16,7 +16,7 @@
 
 #include <tuple>
 
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 #include "sus/iter/compat_ranges.h"
 #include "sus/prelude.h"
 

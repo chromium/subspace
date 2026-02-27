@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 #include "nanobench.h"
 #include "sus/iter/iterator.h"
 #include "sus/iter/zip.h"

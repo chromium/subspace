@@ -14,7 +14,7 @@
 
 #include "sus/assertions/check.h"
 
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 
 // Incredibly, on Posix we can use [0-9] but on Windows we can't. Yet on Windows
 // we can use `\d` and on Posix we can't (or it doesn't match).

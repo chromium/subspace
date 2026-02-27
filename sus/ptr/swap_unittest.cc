@@ -14,7 +14,7 @@
 
 #include "sus/ptr/swap.h"
 
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 #include "sus/collections/array.h"
 #include "sus/mem/replace.h"
 #include "sus/prelude.h"

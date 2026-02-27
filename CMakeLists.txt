@@ -39,6 +39,8 @@ message(STATUS "Build tests: ${SUBSPACE_BUILD_TESTS}")
 message(STATUS "Build subdoc: ${SUBSPACE_BUILD_SUBDOC}")
 message(STATUS "Build benchmarks: ${SUBSPACE_BUILD_BENCHMARKS}")
 
+add_subdirectory(third_party)
+
 function(subspace_default_compile_options TARGET)
     if(MSVC)
         target_compile_options(${TARGET} PUBLIC /Zc:preprocessor /wd5105)
@@ -69,10 +71,6 @@ endfunction()
 
 function(subspace_test_default_compile_options TARGET)
     subspace_binary_default_compile_options(${TARGET})
-
-    target_include_directories(${TARGET} PRIVATE
-        ${PROJECT_SOURCE_DIR}/third_party/googletest
-    )
 endfunction()
 
 if(${SUBSPACE_BUILD_TESTS} OR ${SUBSPACE_BUILD_BENCHMARKS})
@@ -84,22 +82,16 @@ if(${SUBSPACE_BUILD_TESTS} OR ${SUBSPACE_BUILD_BENCHMARKS})
     # add detection here to keep it when using libc++abi but we currently
     # don't. See https://github.com/llvm/llvm-project/issues/121300
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGTEST_HAS_CXXABI_H_=0")
-    add_subdirectory(third_party/googletest)
     include(GoogleTest)
     enable_testing()
 endif()
 
 if(${SUBSPACE_BUILD_BENCHMARKS})
-    add_subdirectory(third_party/nanobench)
-    set_property(TARGET nanobench PROPERTY CXX_STANDARD 20)
     add_subdirectory(bench)
 endif()
-
-add_subdirectory(third_party/fmt)
 
 add_subdirectory(sus)
 
 if (${SUBSPACE_BUILD_SUBDOC})
-    add_subdirectory(third_party/md4c)
     add_subdirectory(subdoc)
 endif()

@@ -14,7 +14,7 @@
 
 #include "sus/boxed/box.h"
 
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 #include "sus/error/error.h"
 #include "sus/iter/iterator.h"
 #include "sus/iter/once.h"
