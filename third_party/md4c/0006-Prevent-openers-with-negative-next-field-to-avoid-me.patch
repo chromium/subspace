@@ -1,0 +1,72 @@
+From 1a0c4b0b02a782192971ce433aa031ba2609bd5b Mon Sep 17 00:00:00 2001
+From: Dana Jansens <danakj@orodu.net>
+Date: Sun, 20 Aug 2023 16:18:27 -0400
+Subject: [PATCH 06/13] Prevent openers with negative `next` field to avoid
+ memory bugs
+
+This bug is reported at https://github.com/mity/md4c/pull/185
+
+I can't repro most of the problems, but they are consistently caused by
+openers without a next. The timeout issue can be reproduced with
+subdoc's flags though, using `s` as defined below as the markdown input
+in `markdown_to_html_full()`:
+
+```cpp
+  const unsigned char sdata[] = {124, 91, 42, 95, 42, 93, 40, 41, 10, 45, 124, };
+  auto s = std::string();
+  for (char c: sdata) {
+    s.push_back(c);
+  }
+  (void)comment;
+```
+---
+ src/md4c.c | 22 ++++++++++++++++++----
+ 1 file changed, 18 insertions(+), 4 deletions(-)
+
+diff --git a/src/md4c.c b/src/md4c.c
+index 2fc2211..d4727ca 100644
+--- a/src/md4c.c
++++ b/src/md4c.c
+@@ -2660,10 +2660,17 @@ md_rollback(MD_CTX* ctx, int opener_index, int closer_index, int how)
+             if (same) break;
+         }
+ 
+-        if(chain->tail >= 0)
++        if(chain->tail >= 0) {
+             ctx->marks[chain->tail].next = -1;
+-        else
++            // Malicious code can cause openers without a next, which then does bad
++            // things indexing into the marks array.
++            if (ctx->marks[chain->tail].flags & MD_MARK_OPENER) {
++                ctx->marks[chain->tail].flags &= ~(MD_MARK_OPENER);
++                ctx->marks[chain->tail].flags |= (MD_MARK_POTENTIAL_OPENER);
++            }
++        } else {
+             chain->head = -1;
++        }
+     }
+ 
+     /* Go backwards so that unresolved openers are re-added into their
+@@ -3395,10 +3402,17 @@ md_analyze_bracket(MD_CTX* ctx, int mark_index)
+         /* Pop the opener from the chain. */
+         int opener_index = BRACKET_OPENERS.tail;
+         MD_MARK* opener = &ctx->marks[opener_index];
+-        if(opener->prev >= 0)
++        if(opener->prev >= 0) {
+             ctx->marks[opener->prev].next = -1;
+-        else
++            // Malicious code can cause openers without a next, which then does bad
++            // things indexing into the marks array.
++            if (ctx->marks[opener->prev].flags & MD_MARK_OPENER) {
++                ctx->marks[opener->prev].flags &= ~(MD_MARK_OPENER);
++                ctx->marks[opener->prev].flags |= (MD_MARK_POTENTIAL_OPENER);
++            }
++        } else{
+             BRACKET_OPENERS.head = -1;
++        }
+         BRACKET_OPENERS.tail = opener->prev;
+ 
+         /* Interconnect the opener and closer. */
+-- 
+2.53.0
+

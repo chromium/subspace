@@ -16,15 +16,15 @@
 
 #include <sstream>
 
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
+#include "sus/cmp/eq.h"
+#include "sus/cmp/ord.h"
 #include "sus/construct/into.h"
 #include "sus/macros/__private/compiler_bugs.h"
 #include "sus/mem/forward.h"
 #include "sus/mem/never_value.h"
 #include "sus/mem/relocate.h"
 #include "sus/num/types.h"
-#include "sus/cmp/eq.h"
-#include "sus/cmp/ord.h"
 #include "sus/option/option.h"
 #include "sus/prelude.h"
 

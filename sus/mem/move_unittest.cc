@@ -14,7 +14,7 @@
 
 #include "sus/mem/move.h"
 
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 
 namespace {
 

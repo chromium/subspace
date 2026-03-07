@@ -14,7 +14,7 @@
 
 #include "subdoc/tests/test_main.h"
 
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 #include "sus/iter/iterator.h"
 #include "sus/prelude.h"
 

@@ -16,7 +16,7 @@
 
 #include <concepts>
 
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 #include "sus/collections/array.h"
 #include "sus/iter/iterator.h"
 #include "sus/num/signed_integer.h"

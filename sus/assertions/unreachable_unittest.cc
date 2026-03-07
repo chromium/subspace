@@ -14,7 +14,7 @@
 
 #include "sus/assertions/unreachable.h"
 
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 #include "sus/prelude.h"
 
 // Incredibly, on Posix we can use [0-9] but on Windows we can't. Yet on Windows

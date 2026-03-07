@@ -14,7 +14,7 @@
 
 #include <vector>
 
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 #include "nanobench.h"
 #include "sus/collections/compat_vector.h"
 #include "sus/iter/compat_ranges.h"
@@ -195,4 +195,3 @@ TEST(BenchVecMap, MoreExpensiveIntTransformation_10_000_000) {
   auto b = ankerl::nanobench::Bench();
   more_expensive_int_transformation(b, data, 10'000'000u);
 }
-

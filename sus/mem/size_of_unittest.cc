@@ -16,7 +16,7 @@
 
 #include <type_traits>
 
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 #include "sus/macros/compiler.h"
 #include "sus/macros/no_unique_address.h"
 #include "sus/num/types.h"

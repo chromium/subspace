@@ -20,7 +20,7 @@
 #include <tuple>
 #include <utility>  // std::tuple_size.
 
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 #include "sus/mem/clone.h"
 #include "sus/mem/copy.h"
 #include "sus/mem/move.h"

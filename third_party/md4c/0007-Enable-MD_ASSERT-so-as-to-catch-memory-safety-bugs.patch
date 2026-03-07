@@ -1,0 +1,40 @@
+From 4b68d10d9be535c7d9b2becd3b2b3eaa666ed345 Mon Sep 17 00:00:00 2001
+From: Dana Jansens <danakj@orodu.net>
+Date: Sun, 20 Aug 2023 16:52:02 -0400
+Subject: [PATCH 07/13] Enable MD_ASSERT() so as to catch memory safety bugs
+
+There are multiple bugs reported upstream which are not being
+fixed. So far they don't appear to reproduce with the flags
+Subdoc uses.
+
+Nonetheless, harden md4c so that malicious markdown comments
+can not run arbitrary code in CI jobs (with access to secrets)
+so easily.
+---
+ src/md4c.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/src/md4c.c b/src/md4c.c
+index d4727ca..acd6275 100644
+--- a/src/md4c.c
++++ b/src/md4c.c
+@@ -78,11 +78,14 @@
+             ctx->parser.debug_log((msg), ctx->userdata);                \
+     } while(0)
+ 
+-#ifdef DEBUG
++/* MD_ASSERT() would catch memory safety bugs which have been reported upstream,
++   so we enable it unconditionally.
++ */
++#if defined(DEBUG) || 1
+     #define MD_ASSERT(cond)                                             \
+             do {                                                        \
+                 if(!(cond)) {                                           \
+-                    MD_LOG(__FILE__ ":" STRINGIZE(__LINE__) ": "        \
++                    MD_LOG("md4c/src/md4c.c" ":" STRINGIZE(__LINE__) ": "        \
+                            "Assertion '" STRINGIZE(cond) "' failed.");  \
+                     exit(1);                                            \
+                 }                                                       \
+-- 
+2.53.0
+

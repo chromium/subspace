@@ -20,7 +20,7 @@
 #include <string>
 #include <string_view>
 
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 #include "subdoc/lib/database.h"
 #include "subdoc/lib/gen/generate.h"
 #include "subdoc/lib/run.h"

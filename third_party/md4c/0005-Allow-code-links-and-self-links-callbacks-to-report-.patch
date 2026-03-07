@@ -1,0 +1,688 @@
+From a507635935e0229419ac905dbaa186679968c861 Mon Sep 17 00:00:00 2001
+From: Dana Jansens <danakj@orodu.net>
+Date: Sun, 20 Aug 2023 14:46:23 -0400
+Subject: [PATCH 05/13] Allow code links and self links callbacks to report
+ errors
+
+And pass those errors back up to the md4c parser.
+---
+ README.md       |   2 +
+ src/md4c-html.c | 234 ++++++++++++++++++++++++++++++------------------
+ src/md4c-html.h |  40 +++++++--
+ 3 files changed, 181 insertions(+), 95 deletions(-)
+
+diff --git a/README.md b/README.md
+index e50ba19..acf75bd 100644
+--- a/README.md
++++ b/README.md
+@@ -15,6 +15,8 @@ This is a fork of [md4c](https://github.com/mity/md4c) for use in
+   application to turn into URLs. This allows `[foo]($namespace::ClassName)` to be turned into
+   a link to `namespace-classname.html` or whatever suits the application.
+ * Moves the callbacks for md4c-html into a structure as we've added a bunch of new callbacks.
++* Allows those callbacks to report errors that flow back up into the md4c parser and terminate
++  parsing.
+ 
+ # MD4C Readme
+ 
+diff --git a/src/md4c-html.c b/src/md4c-html.c
+index 9793b6b..f0ee0af 100644
+--- a/src/md4c-html.c
++++ b/src/md4c-html.c
+@@ -47,6 +47,12 @@
+ 
+ #define SELF_LINK_MAX_CHARS 1024
+ 
++#define MD_HTML_TRY(lvalue, expr) \
++    do { \
++        lvalue = expr; \
++        if (lvalue != 0) return lvalue; \
++    } while(0)
++
+ typedef struct MD_SELF_LINK_tag MD_SELF_LINK;
+ struct MD_SELF_LINK_tag {
+     char text[SELF_LINK_MAX_CHARS];
+@@ -57,11 +63,11 @@ struct MD_SELF_LINK_tag {
+ 
+ struct MD_HTML_tag {
+     void (*process_output)(const MD_CHAR*, MD_SIZE, void*);
+-    void (*render_self_link)(const MD_CHAR*, MD_SIZE, void*, MD_HTML* html,
+-            void (*render)(MD_HTML* html, const MD_CHAR* data, MD_SIZE size));
+-    void (*record_self_link)(const MD_CHAR*, MD_SIZE, void*);
+-    void (*render_code_link)(const MD_CHAR*, MD_SIZE, void*, MD_HTML* html,
+-            void (*render)(MD_HTML* html, const MD_CHAR* data, MD_SIZE size));
++    int (*render_self_link)(const MD_CHAR*, MD_SIZE, void*, MD_HTML* html,
++            int (*render)(MD_HTML* html, const MD_CHAR* data, MD_SIZE size));
++    int (*record_self_link)(const MD_CHAR*, MD_SIZE, void*);
++    int (*render_code_link)(const MD_CHAR*, MD_SIZE, void*, MD_HTML* html,
++            int (*render)(MD_HTML* html, const MD_CHAR* data, MD_SIZE size));
+     void* userdata;
+     unsigned flags;
+     int image_nesting_level;
+@@ -82,10 +88,11 @@ struct MD_HTML_tag {
+ #define ISALNUM(ch)     (ISLOWER(ch) || ISUPPER(ch) || ISDIGIT(ch))
+ 
+ 
+-static inline void
++static inline int
+ render_verbatim(MD_HTML* r, const MD_CHAR* text, MD_SIZE size)
+ {
+     r->process_output(text, size, r->userdata);
++    return 0;
+ }
+ 
+ /* Keep this as a macro. Most compiler should then be smart enough to replace
+@@ -94,11 +101,12 @@ render_verbatim(MD_HTML* r, const MD_CHAR* text, MD_SIZE size)
+         render_verbatim((r), (verbatim), (MD_SIZE) (strlen(verbatim)))
+ 
+ 
+-static void
++static int
+ render_html_escaped(MD_HTML* r, const MD_CHAR* data, MD_SIZE size)
+ {
+     MD_OFFSET beg = 0;
+     MD_OFFSET off = 0;
++    int ret = 0;
+ 
+     /* Some characters need to be escaped in normal HTML text. */
+     #define NEED_HTML_ESC(ch)   (r->escape_map[(unsigned char)(ch)] & NEED_HTML_ESC_FLAG)
+@@ -112,7 +120,7 @@ render_html_escaped(MD_HTML* r, const MD_CHAR* data, MD_SIZE size)
+             off++;
+ 
+         if(off > beg)
+-            render_verbatim(r, data + beg, off - beg);
++            MD_HTML_TRY(ret, render_verbatim(r, data + beg, off - beg));
+ 
+         if(off < size) {
+             switch(data[off]) {
+@@ -127,14 +135,17 @@ render_html_escaped(MD_HTML* r, const MD_CHAR* data, MD_SIZE size)
+         }
+         beg = off;
+     }
++
++    return ret;
+ }
+ 
+-static void
++static int
+ render_url_escaped(MD_HTML* r, const MD_CHAR* data, MD_SIZE size)
+ {
+     static const MD_CHAR hex_chars[] = "0123456789ABCDEF";
+     MD_OFFSET beg = 0;
+     MD_OFFSET off = 0;
++    int ret = 0;
+ 
+     /* Some characters need to be escaped in URL attributes. */
+     #define NEED_URL_ESC(ch)    (r->escape_map[(unsigned char)(ch)] & NEED_URL_ESC_FLAG)
+@@ -143,7 +154,7 @@ render_url_escaped(MD_HTML* r, const MD_CHAR* data, MD_SIZE size)
+         while(off < size  &&  !NEED_URL_ESC(data[off]))
+             off++;
+         if(off > beg)
+-            render_verbatim(r, data + beg, off - beg);
++            MD_HTML_TRY(ret, render_verbatim(r, data + beg, off - beg));
+ 
+         if(off < size) {
+             char hex[3];
+@@ -154,7 +165,7 @@ render_url_escaped(MD_HTML* r, const MD_CHAR* data, MD_SIZE size)
+                     hex[0] = '%';
+                     hex[1] = hex_chars[((unsigned)data[off] >> 4) & 0xf];
+                     hex[2] = hex_chars[((unsigned)data[off] >> 0) & 0xf];
+-                    render_verbatim(r, hex, 3);
++                    MD_HTML_TRY(ret, render_verbatim(r, hex, 3));
+                     break;
+             }
+             off++;
+@@ -164,31 +175,39 @@ render_url_escaped(MD_HTML* r, const MD_CHAR* data, MD_SIZE size)
+ 
+         beg = off;
+     }
++
++    return ret;
+ }
+ 
+-static void
++static int
+ render_codelink_url_escaped(MD_HTML* r, const MD_CHAR* data, MD_SIZE size)
+ {
+-    if (r->render_code_link)
+-        r->render_code_link(data, size, r->userdata, r, render_url_escaped);
+-    else
++    if (r->render_code_link) {
++        return r->render_code_link(data, size, r->userdata, r, render_url_escaped);
++    } else {
+         render_url_escaped(r, data, size);
++        return 0;
++    }
+ }
+ 
+-static void
++static int
+ render_self_url_escaped(MD_HTML* r, const MD_CHAR* data, MD_SIZE size)
+ {
+-    if (r->render_self_link)
+-        r->render_self_link(data, size, r->userdata, r, render_url_escaped);
+-    else
++    if (r->render_self_link) {
++        return r->render_self_link(data, size, r->userdata, r, render_url_escaped);
++    } else {
+         render_url_escaped(r, data, size);
++        return 0;
++    }
+ }
+ 
+-static void
++static int
+ record_self_url(MD_HTML* r, const MD_CHAR* data, MD_SIZE size)
+ {
+     if (r->render_self_link)
+-        r->record_self_link(data, size, r->userdata);
++        return r->record_self_link(data, size, r->userdata);
++    else
++        return 0;
+ }
+ 
+ static unsigned
+@@ -202,11 +221,12 @@ hex_val(char ch)
+         return ch - 'a' + 10;
+ }
+ 
+-static void
++static int
+ render_utf8_codepoint(MD_HTML* r, unsigned codepoint,
+-                      void (*fn_append)(MD_HTML*, const MD_CHAR*, MD_SIZE))
++                      int (*fn_append)(MD_HTML*, const MD_CHAR*, MD_SIZE))
+ {
+     static const MD_CHAR utf8_replacement_char[] = { 0xef, 0xbf, 0xbd };
++    int ret = 0;
+ 
+     unsigned char utf8[4];
+     size_t n;
+@@ -232,20 +252,23 @@ render_utf8_codepoint(MD_HTML* r, unsigned codepoint,
+     }
+ 
+     if(0 < codepoint  &&  codepoint <= 0x10ffff)
+-        fn_append(r, (char*)utf8, (MD_SIZE)n);
++        MD_HTML_TRY(ret, fn_append(r, (char*)utf8, (MD_SIZE)n));
+     else
+-        fn_append(r, utf8_replacement_char, 3);
++        MD_HTML_TRY(ret, fn_append(r, utf8_replacement_char, 3));
++    return ret;
+ }
+ 
+ /* Translate entity to its UTF-8 equivalent, or output the verbatim one
+  * if such entity is unknown (or if the translation is disabled). */
+-static void
++static int
+ render_entity(MD_HTML* r, const MD_CHAR* text, MD_SIZE size,
+-              void (*fn_append)(MD_HTML*, const MD_CHAR*, MD_SIZE))
++              int (*fn_append)(MD_HTML*, const MD_CHAR*, MD_SIZE))
+ {
++    int ret = 0;
++
+     if(r->flags & MD_HTML_FLAG_VERBATIM_ENTITIES) {
+-        render_verbatim(r, text, size);
+-        return;
++        MD_HTML_TRY(ret, render_verbatim(r, text, size));
++        return ret;
+     }
+ 
+     /* We assume UTF-8 output is what is desired. */
+@@ -264,29 +287,31 @@ render_entity(MD_HTML* r, const MD_CHAR* text, MD_SIZE size,
+                 codepoint = 10 * codepoint + (text[i] - '0');
+         }
+ 
+-        render_utf8_codepoint(r, codepoint, fn_append);
+-        return;
++        MD_HTML_TRY(ret, render_utf8_codepoint(r, codepoint, fn_append));
++        return ret;
+     } else {
+         /* Named entity (e.g. "&nbsp;"). */
+         const struct entity* ent;
+ 
+         ent = entity_lookup(text, size);
+         if(ent != NULL) {
+-            render_utf8_codepoint(r, ent->codepoints[0], fn_append);
++            MD_HTML_TRY(ret, render_utf8_codepoint(r, ent->codepoints[0], fn_append));
+             if(ent->codepoints[1])
+-                render_utf8_codepoint(r, ent->codepoints[1], fn_append);
+-            return;
++                MD_HTML_TRY(ret, render_utf8_codepoint(r, ent->codepoints[1], fn_append));
++            return ret;
+         }
+     }
+ 
+-    fn_append(r, text, size);
++    MD_HTML_TRY(ret, fn_append(r, text, size));
++    return ret;
+ }
+ 
+-static void
++static int
+ render_attribute(MD_HTML* r, const MD_ATTRIBUTE* attr,
+-                 void (*fn_append)(MD_HTML*, const MD_CHAR*, MD_SIZE))
++                 int (*fn_append)(MD_HTML*, const MD_CHAR*, MD_SIZE))
+ {
+     int i;
++    int ret = 0;
+ 
+     for(i = 0; attr->substr_offsets[i] < attr->size; i++) {
+         MD_TEXTTYPE type = attr->substr_types[i];
+@@ -295,31 +320,37 @@ render_attribute(MD_HTML* r, const MD_ATTRIBUTE* attr,
+         const MD_CHAR* text = attr->text + off;
+ 
+         switch(type) {
+-            case MD_TEXT_NULLCHAR:  render_utf8_codepoint(r, 0x0000, render_verbatim); break;
+-            case MD_TEXT_ENTITY:    render_entity(r, text, size, fn_append); break;
+-            default:                fn_append(r, text, size); break;
++            case MD_TEXT_NULLCHAR: MD_HTML_TRY(ret, render_utf8_codepoint(r, 0x0000, render_verbatim)); break;
++            case MD_TEXT_ENTITY:   MD_HTML_TRY(ret, render_entity(r, text, size, fn_append)); break;
++            default:               MD_HTML_TRY(ret, fn_append(r, text, size)); break;
+         }
+     }
++
++    return ret;
+ }
+ 
+ 
+-static void
++static int
+ render_open_ol_block(MD_HTML* r, const MD_BLOCK_OL_DETAIL* det)
+ {
+     char buf[64];
++    int ret = 0;
+ 
+     if(det->start == 1) {
+         RENDER_VERBATIM(r, "<ol>\n");
+-        return;
++        return ret;
+     }
+ 
+     snprintf(buf, sizeof(buf), "<ol start=\"%u\">\n", det->start);
+     RENDER_VERBATIM(r, buf);
++    return ret;
+ }
+ 
+-static void
++static int
+ render_open_li_block(MD_HTML* r, const MD_BLOCK_LI_DETAIL* det)
+ {
++    int ret = 0;
++
+     if(det->is_task) {
+         RENDER_VERBATIM(r, "<li class=\"task-list-item\">"
+                           "<input type=\"checkbox\" class=\"task-list-item-checkbox\" disabled");
+@@ -329,26 +360,32 @@ render_open_li_block(MD_HTML* r, const MD_BLOCK_LI_DETAIL* det)
+     } else {
+         RENDER_VERBATIM(r, "<li>");
+     }
++    return ret;
+ }
+ 
+-static void
++static int
+ render_open_code_block(MD_HTML* r, const MD_BLOCK_CODE_DETAIL* det)
+ {
++    int ret = 0;
++
+     RENDER_VERBATIM(r, "<pre><code");
+ 
+     /* If known, output the HTML 5 attribute class="language-LANGNAME". */
+     if(det->lang.text != NULL) {
+         RENDER_VERBATIM(r, " class=\"language-");
+-        render_attribute(r, &det->lang, render_html_escaped);
++        MD_HTML_TRY(ret, render_attribute(r, &det->lang, render_html_escaped));
+         RENDER_VERBATIM(r, "\"");
+     }
+ 
+     RENDER_VERBATIM(r, ">");
++    return ret;
+ }
+ 
+-static void
++static int
+ render_open_td_block(MD_HTML* r, const MD_CHAR* cell_type, const MD_BLOCK_TD_DETAIL* det)
+ {
++    int ret = 0;
++
+     RENDER_VERBATIM(r, "<");
+     RENDER_VERBATIM(r, cell_type);
+ 
+@@ -358,85 +395,104 @@ render_open_td_block(MD_HTML* r, const MD_CHAR* cell_type, const MD_BLOCK_TD_DET
+         case MD_ALIGN_RIGHT:    RENDER_VERBATIM(r, " align=\"right\">"); break;
+         default:                RENDER_VERBATIM(r, ">"); break;
+     }
++    return ret;
+ }
+ 
+-static void
++static int
+ render_open_a_span(MD_HTML* r, const MD_SPAN_A_DETAIL* det)
+ {
++    int ret = 0;
++
+     RENDER_VERBATIM(r, "<a href=\"");
+-    render_attribute(r, &det->href, render_url_escaped);
++    MD_HTML_TRY(ret, render_attribute(r, &det->href, render_url_escaped));
+ 
+     if(det->title.text != NULL) {
+         RENDER_VERBATIM(r, "\" title=\"");
+-        render_attribute(r, &det->title, render_html_escaped);
++        MD_HTML_TRY(ret, render_attribute(r, &det->title, render_html_escaped));
+     }
+ 
+     RENDER_VERBATIM(r, "\">");
++    return ret;
+ }
+ 
+-static void
++static int
+ render_open_a_codelink_span(MD_HTML* r, const MD_SPAN_A_DETAIL* det)
+ {
++    int ret = 0;
++
+     RENDER_VERBATIM(r, "<a href=\"");
+-    render_attribute(r, &det->href, render_codelink_url_escaped);
++    MD_HTML_TRY(ret, render_attribute(r, &det->href, render_codelink_url_escaped));
+ 
+     if(det->title.text != NULL) {
+         RENDER_VERBATIM(r, "\" title=\"");
+-        render_attribute(r, &det->title, render_html_escaped);
++        MD_HTML_TRY(ret, render_attribute(r, &det->title, render_html_escaped));
+     }
+ 
+     RENDER_VERBATIM(r, "\">");
++    return ret;
+ }
+ 
+-static void
++static int
+ render_open_a_self_span(MD_HTML* r, const MD_SPAN_A_DETAIL* det)
+ {
++    int ret = 0;
++
+     RENDER_VERBATIM(r, "<a name=\"");
+-    render_attribute(r, &det->href, render_self_url_escaped);
++    MD_HTML_TRY(ret, render_attribute(r, &det->href, render_self_url_escaped));
+     RENDER_VERBATIM(r, "\" href=\"#");
+-    render_attribute(r, &det->href, render_self_url_escaped);
++    MD_HTML_TRY(ret, render_attribute(r, &det->href, render_self_url_escaped));
+ 
+-    render_attribute(r, &det->href, record_self_url);
++    MD_HTML_TRY(ret, render_attribute(r, &det->href, record_self_url));
+ 
+     if(det->title.text != NULL) {
+         RENDER_VERBATIM(r, "\" title=\"");
+-        render_attribute(r, &det->title, render_html_escaped);
++        MD_HTML_TRY(ret, render_attribute(r, &det->title, render_html_escaped));
+     }
+ 
+     RENDER_VERBATIM(r, "\">");
++    return ret;
+ }
+ 
+-static void
++static int
+ render_open_img_span(MD_HTML* r, const MD_SPAN_IMG_DETAIL* det)
+ {
++    int ret = 0;
++
+     RENDER_VERBATIM(r, "<img src=\"");
+-    render_attribute(r, &det->src, render_url_escaped);
++    MD_HTML_TRY(ret, render_attribute(r, &det->src, render_url_escaped));
+ 
+     RENDER_VERBATIM(r, "\" alt=\"");
+ 
+     r->image_nesting_level++;
++    return ret;
+ }
+ 
+-static void
++static int
+ render_close_img_span(MD_HTML* r, const MD_SPAN_IMG_DETAIL* det)
+ {
++    int ret = 0;
++
+     if(det->title.text != NULL) {
+         RENDER_VERBATIM(r, "\" title=\"");
+-        render_attribute(r, &det->title, render_html_escaped);
++        MD_HTML_TRY(ret, render_attribute(r, &det->title, render_html_escaped));
+     }
+ 
+     RENDER_VERBATIM(r, (r->flags & MD_HTML_FLAG_XHTML) ? "\" />" : "\">");
+ 
+     r->image_nesting_level--;
++    return ret;
+ }
+ 
+-static void
++static int
+ render_open_wikilink_span(MD_HTML* r, const MD_SPAN_WIKILINK_DETAIL* det)
+ {
++    int ret = 0;
++
+     RENDER_VERBATIM(r, "<x-wikilink data-target=\"");
+-    render_attribute(r, &det->target, render_html_escaped);
++    MD_HTML_TRY(ret, render_attribute(r, &det->target, render_html_escaped));
+ 
+     RENDER_VERBATIM(r, "\">");
++    return ret;
+ }
+ 
+ 
+@@ -449,27 +505,28 @@ enter_block_callback(MD_BLOCKTYPE type, void* detail, void* userdata)
+ {
+     static const MD_CHAR* head[6] = { "<h1>", "<h2>", "<h3>", "<h4>", "<h5>", "<h6>" };
+     MD_HTML* r = (MD_HTML*) userdata;
++    int ret = 0;
+ 
+     switch(type) {
+         case MD_BLOCK_DOC:      /* noop */ break;
+         case MD_BLOCK_QUOTE:    RENDER_VERBATIM(r, "<blockquote>\n"); break;
+         case MD_BLOCK_UL:       RENDER_VERBATIM(r, "<ul>\n"); break;
+-        case MD_BLOCK_OL:       render_open_ol_block(r, (const MD_BLOCK_OL_DETAIL*)detail); break;
+-        case MD_BLOCK_LI:       render_open_li_block(r, (const MD_BLOCK_LI_DETAIL*)detail); break;
++        case MD_BLOCK_OL:       ret = render_open_ol_block(r, (const MD_BLOCK_OL_DETAIL*)detail); break;
++        case MD_BLOCK_LI:       ret = render_open_li_block(r, (const MD_BLOCK_LI_DETAIL*)detail); break;
+         case MD_BLOCK_HR:       RENDER_VERBATIM(r, (r->flags & MD_HTML_FLAG_XHTML) ? "<hr />\n" : "<hr>\n"); break;
+         case MD_BLOCK_H:        RENDER_VERBATIM(r, head[((MD_BLOCK_H_DETAIL*)detail)->level - 1]); break;
+-        case MD_BLOCK_CODE:     render_open_code_block(r, (const MD_BLOCK_CODE_DETAIL*) detail); break;
++        case MD_BLOCK_CODE:     ret = render_open_code_block(r, (const MD_BLOCK_CODE_DETAIL*) detail); break;
+         case MD_BLOCK_HTML:     /* noop */ break;
+         case MD_BLOCK_P:        RENDER_VERBATIM(r, "<p>"); break;
+         case MD_BLOCK_TABLE:    RENDER_VERBATIM(r, "<table>\n"); break;
+         case MD_BLOCK_THEAD:    RENDER_VERBATIM(r, "<thead>\n"); break;
+         case MD_BLOCK_TBODY:    RENDER_VERBATIM(r, "<tbody>\n"); break;
+         case MD_BLOCK_TR:       RENDER_VERBATIM(r, "<tr>\n"); break;
+-        case MD_BLOCK_TH:       render_open_td_block(r, "th", (MD_BLOCK_TD_DETAIL*)detail); break;
+-        case MD_BLOCK_TD:       render_open_td_block(r, "td", (MD_BLOCK_TD_DETAIL*)detail); break;
++        case MD_BLOCK_TH:       ret = render_open_td_block(r, "th", (MD_BLOCK_TD_DETAIL*)detail); break;
++        case MD_BLOCK_TD:       ret = render_open_td_block(r, "td", (MD_BLOCK_TD_DETAIL*)detail); break;
+     }
+ 
+-    return 0;
++    return ret;
+ }
+ 
+ static int
+@@ -477,6 +534,7 @@ leave_block_callback(MD_BLOCKTYPE type, void* detail, void* userdata)
+ {
+     static const MD_CHAR* head[6] = { "</h1>\n", "</h2>\n", "</h3>\n", "</h4>\n", "</h5>\n", "</h6>\n" };
+     MD_HTML* r = (MD_HTML*) userdata;
++    int ret = 0;
+ 
+     switch(type) {
+         case MD_BLOCK_DOC:      /*noop*/ break;
+@@ -497,13 +555,14 @@ leave_block_callback(MD_BLOCKTYPE type, void* detail, void* userdata)
+         case MD_BLOCK_TD:       RENDER_VERBATIM(r, "</td>\n"); break;
+     }
+ 
+-    return 0;
++    return ret;
+ }
+ 
+ static int
+ enter_span_callback(MD_SPANTYPE type, void* detail, void* userdata)
+ {
+     MD_HTML* r = (MD_HTML*) userdata;
++    int ret = 0;
+ 
+     if(r->image_nesting_level > 0) {
+         /* We are inside a Markdown image label. Markdown allows to use any
+@@ -521,38 +580,40 @@ enter_span_callback(MD_SPANTYPE type, void* detail, void* userdata)
+          * This make-it-a-plain-text approach is the recommended practice by
+          * CommonMark specification (for HTML output).
+          */
+-        return 0;
++        return ret;
+     }
+ 
+     switch(type) {
+         case MD_SPAN_EM:                RENDER_VERBATIM(r, "<em>"); break;
+         case MD_SPAN_STRONG:            RENDER_VERBATIM(r, "<strong>"); break;
+         case MD_SPAN_U:                 RENDER_VERBATIM(r, "<u>"); break;
+-        case MD_SPAN_A:                 render_open_a_span(r, (MD_SPAN_A_DETAIL*) detail); break;
+-        case MD_SPAN_A_CODELINK:        render_open_a_codelink_span(r, (MD_SPAN_A_DETAIL*) detail); break;
+-        case MD_SPAN_A_SELF:            render_open_a_self_span(r, (MD_SPAN_A_DETAIL*) detail); break;
+-        case MD_SPAN_IMG:               render_open_img_span(r, (MD_SPAN_IMG_DETAIL*) detail); break;
++        case MD_SPAN_A:                 ret = render_open_a_span(r, (MD_SPAN_A_DETAIL*) detail); break;
++        case MD_SPAN_A_CODELINK:        ret = render_open_a_codelink_span(r, (MD_SPAN_A_DETAIL*) detail); break;
++        case MD_SPAN_A_SELF:            ret = render_open_a_self_span(r, (MD_SPAN_A_DETAIL*) detail); break;
++        case MD_SPAN_IMG:               ret = render_open_img_span(r, (MD_SPAN_IMG_DETAIL*) detail); break;
+         case MD_SPAN_CODE:              RENDER_VERBATIM(r, "<code>"); break;
+         case MD_SPAN_DEL:               RENDER_VERBATIM(r, "<del>"); break;
+         case MD_SPAN_LATEXMATH:         RENDER_VERBATIM(r, "<x-equation>"); break;
+         case MD_SPAN_LATEXMATH_DISPLAY: RENDER_VERBATIM(r, "<x-equation type=\"display\">"); break;
+-        case MD_SPAN_WIKILINK:          render_open_wikilink_span(r, (MD_SPAN_WIKILINK_DETAIL*) detail); break;
++        case MD_SPAN_WIKILINK:          ret = render_open_wikilink_span(r, (MD_SPAN_WIKILINK_DETAIL*) detail); break;
+     }
+ 
+-    return 0;
++    return ret;
+ }
+ 
+ static int
+ leave_span_callback(MD_SPANTYPE type, void* detail, void* userdata)
+ {
+     MD_HTML* r = (MD_HTML*) userdata;
++    int ret = 0;
+ 
+     if(r->image_nesting_level > 0) {
+         /* Ditto as in enter_span_callback(), except we have to allow the
+          * end of the <img> tag. */
+-        if(r->image_nesting_level == 1  &&  type == MD_SPAN_IMG)
+-            render_close_img_span(r, (MD_SPAN_IMG_DETAIL*) detail);
+-        return 0;
++        if(r->image_nesting_level == 1  &&  type == MD_SPAN_IMG) {
++            MD_HTML_TRY(ret, render_close_img_span(r, (MD_SPAN_IMG_DETAIL*) detail));
++        }
++        return ret;
+     }
+ 
+     switch(type) {
+@@ -570,27 +631,28 @@ leave_span_callback(MD_SPANTYPE type, void* detail, void* userdata)
+         case MD_SPAN_WIKILINK:          RENDER_VERBATIM(r, "</x-wikilink>"); break;
+     }
+ 
+-    return 0;
++    return ret;
+ }
+ 
+ static int
+ text_callback(MD_TEXTTYPE type, const MD_CHAR* text, MD_SIZE size, void* userdata)
+ {
+     MD_HTML* r = (MD_HTML*) userdata;
++    int ret = 0;
+ 
+     switch(type) {
+-        case MD_TEXT_NULLCHAR:  render_utf8_codepoint(r, 0x0000, render_verbatim); break;
++        case MD_TEXT_NULLCHAR:  ret = render_utf8_codepoint(r, 0x0000, render_verbatim); break;
+         case MD_TEXT_BR:        RENDER_VERBATIM(r, (r->image_nesting_level == 0
+                                         ? ((r->flags & MD_HTML_FLAG_XHTML) ? "<br />\n" : "<br>\n")
+                                         : " "));
+                                 break;
+         case MD_TEXT_SOFTBR:    RENDER_VERBATIM(r, (r->image_nesting_level == 0 ? "\n" : " ")); break;
+-        case MD_TEXT_HTML:      render_verbatim(r, text, size); break;
+-        case MD_TEXT_ENTITY:    render_entity(r, text, size, render_html_escaped); break;
+-        default:                render_html_escaped(r, text, size); break;
++        case MD_TEXT_HTML:      ret = render_verbatim(r, text, size); break;
++        case MD_TEXT_ENTITY:    ret = render_entity(r, text, size, render_html_escaped); break;
++        default:                ret = render_html_escaped(r, text, size); break;
+     }
+ 
+-    return 0;
++    return ret;
+ }
+ 
+ static void
+diff --git a/src/md4c-html.h b/src/md4c-html.h
+index e57ebe5..2c58898 100644
+--- a/src/md4c-html.h
++++ b/src/md4c-html.h
+@@ -46,24 +46,47 @@ struct MD_HTML_tag;
+ 
+ typedef struct MD_HTML_CALLBACKS_tag MD_HTML_CALLBACKS;
+ struct MD_HTML_CALLBACKS_tag {
+-    void (*process_output)(const MD_CHAR*, MD_SIZE, void*);
++    /*
++     * The callback is called with chunks of HTML output.
++     *
++     * Typical implementation may just output the bytes to a file or append to
++     * some buffer.
++     *
++     * This callback is required.
++     */
++     void (*process_output)(const MD_CHAR*, MD_SIZE, void*);
+     /* The callback receives the text in the self link and can adjust the text to what the
+      * anchor name and link should be. It should pass that text to the render function pointer.
+      *
+      * This will be called twice, once for the name and once for the href. It should do the
+      * same thing both times.
++     *
++     * If it returns non-0 to report an error, that error will be passed back to the parser and
++     * terminate parsing.
++     *
++     * This callback is optional, and may be NULL.
+      */
+-    void (*render_self_link)(const MD_CHAR* /*chars*/, MD_SIZE /*size*/, void* /*userdata*/, MD_HTML* /*html*/,
+-            void (*render)(MD_HTML* /*html*/, const MD_CHAR* /*chars*/, MD_SIZE /*size*/));
++    int (*render_self_link)(const MD_CHAR* /*chars*/, MD_SIZE /*size*/, void* /*userdata*/, MD_HTML* /*html*/,
++            int (*render)(MD_HTML* /*html*/, const MD_CHAR* /*chars*/, MD_SIZE /*size*/));
+     /* Called after render_self_link was called, in order to mutate any state recording the link
+      * that was generated, if needed. Allows each link to be unique.
++     *
++     * If it returns non-0 to report an error, that error will be passed back to the parser and
++     * terminate parsing.
++     *
++     * This callback is optional, and may be NULL.
+      */
+-    void (*record_self_link)(const MD_CHAR* /*chars*/, MD_SIZE /*size*/, void* /*userdata*/);
++    int (*record_self_link)(const MD_CHAR* /*chars*/, MD_SIZE /*size*/, void* /*userdata*/);
+     /* The callbacks receives the link text for a code link: `$[display](the link text)`. It
+      * should turn the link text into a URL and pass it to the render function pointer.
++     *
++     * If it returns non-0 to report an error, that error will be passed back to the parser and
++     * terminate parsing.
++     *
++     * This callback is optional, and may be NULL.
+      */
+-    void (*render_code_link)(const MD_CHAR* /*chars*/, MD_SIZE /*size*/, void* /*userdata*/, MD_HTML* /*html*/,
+-            void (*render)(MD_HTML* /*html*/, const MD_CHAR* /*chars*/, MD_SIZE /*size*/));
++    int (*render_code_link)(const MD_CHAR* /*chars*/, MD_SIZE /*size*/, void* /*userdata*/, MD_HTML* /*html*/,
++            int (*render)(MD_HTML* /*html*/, const MD_CHAR* /*chars*/, MD_SIZE /*size*/));
+ };
+ 
+ /* Render Markdown into HTML.
+@@ -72,9 +95,8 @@ struct MD_HTML_CALLBACKS_tag {
+  * HTML header/footer manually before/after calling md_html().
+  *
+  * Params input and input_size specify the Markdown input.
+- * Callback process_output() gets called with chunks of HTML output.
+- * (Typical implementation may just output the bytes to a file or append to
+- * some buffer).
++ * Callbacks is a set of callbacks to be provided by the application which
++ * handle events during parsing and html generation.
+  * Param userdata is just propagated back to process_output() callback.
+  * Param parser_flags are flags from md4c.h propagated to md_parse().
+  * Param render_flags is bitmask of MD_HTML_FLAG_xxxx.
+-- 
+2.53.0
+
