@@ -1,5 +1,8 @@
 include(FetchContent)
 
+# Thirds-party projects should be built with warnings disabled to limit noise and build breaks.
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w -Wno-error")
+
 # This directory handles third-party dependency package management.
 #
 # Packages that use CMake are handled using `FetchContent`. `FetchContent` is split into two

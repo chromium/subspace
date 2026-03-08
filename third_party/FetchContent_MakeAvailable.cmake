@@ -13,3 +13,5 @@ if(SUBSPACE_BUILD_BENCHMARKS)
   FetchContent_MakeAvailable(nanobench)
   set_property(TARGET nanobench PROPERTY CXX_STANDARD 20)
 endif()
+
+FetchContent_MakeAvailable(llvm-project)
