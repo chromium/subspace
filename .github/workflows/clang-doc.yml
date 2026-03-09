@@ -52,6 +52,10 @@ jobs:
             libclang-cpp${{env.installed_clang_version}}-dev \
             libunwind-${{env.installed_clang_version}}-dev
 
+      - name: Set up user details in Git
+        run: |
+          git config --global user.email "clang-doc.subspace.workflows@github.com" # This email doesn't exist
+          git config --global user.name "Subspace GitHub clang-doc workflow"
       - name: Configure
         run: |
           # Path to LLVM+Clang nightly that we have installed.
