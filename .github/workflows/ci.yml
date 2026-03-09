@@ -211,8 +211,8 @@ jobs:
 
       - name: Set up user details in Git
         run: |
-          git config --global user.email "ci.subspace.workflows@github.com" # This email doesn't exist
-          git config --global user.name "Subspace GitHub CI workflow"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Configure
         shell: cmake -P {0}
