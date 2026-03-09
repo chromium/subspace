@@ -15,7 +15,7 @@
 #include "sus/assertions/panic.h"
 
 #include "fmt/format.h"
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 #include "panic.h"
 
 // Incredibly, on Posix we can use [0-9] but on Windows we can't. Yet on Windows

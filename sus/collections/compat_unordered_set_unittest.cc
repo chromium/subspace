@@ -14,7 +14,7 @@
 
 #include "sus/collections/compat_unordered_set.h"
 
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 #include "sus/iter/compat_ranges.h"
 #include "sus/option/option.h"
 #include "sus/prelude.h"

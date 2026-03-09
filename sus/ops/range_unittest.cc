@@ -16,7 +16,7 @@
 
 #include <sstream>
 
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 #include "sus/construct/default.h"
 #include "sus/macros/compiler.h"
 #include "sus/prelude.h"

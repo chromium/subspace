@@ -16,7 +16,7 @@
 
 #include <type_traits>
 
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 #include "sus/num/types.h"
 #include "sus/prelude.h"
 

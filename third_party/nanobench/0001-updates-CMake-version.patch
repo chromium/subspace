@@ -1,0 +1,21 @@
+From 48fdf738a2a0c2a6606359cc2ca064a58c09fb6f Mon Sep 17 00:00:00 2001
+From: Christopher Di Bella <rich.soup1923@fastmail.com>
+Date: Thu, 26 Feb 2026 21:23:36 -0800
+Subject: [PATCH] updates CMake version
+
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index b2f6089..a615e25 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 3.8)
++cmake_minimum_required(VERSION 3.16..4.2.3)
+ project(nanobench LANGUAGES CXX)
+
+ # determine whether this is a standalone project or included by other projects
+--
+2.53.0

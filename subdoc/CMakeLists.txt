@@ -83,16 +83,23 @@ add_executable(subdoc
 # subdoc_lib
 subspace_default_compile_options(subdoc_lib)
 
-find_package(LLVM REQUIRED)
-find_package(Clang REQUIRED)
 llvm_config(subdoc_lib)
-target_include_directories(subdoc_lib PUBLIC ${LLVM_INCLUDE_DIRS})
-target_link_directories(subdoc_lib PUBLIC ${LLVM_LIBRARY_DIRS})
+include(FetchContent)
+FetchContent_GetProperties(llvm-project)
+target_include_directories(subdoc_lib PUBLIC
+    "${llvm-project_SOURCE_DIR}/clang/include"
+    "${llvm-project_SOURCE_DIR}/llvm/include"
+    "${llvm-project_BINARY_DIR}/include"
+    "${llvm-project_BINARY_DIR}/tools/clang/include"
+)
+target_link_directories(subdoc_lib PUBLIC
+    "${llvm-project_BINARY_DIR}/clang/lib"
+)
 
-target_link_libraries(subdoc_lib
-    subspace::lib
-    md4c
-    md4c-html
+set(SUBDOC_LLVM_DEPS
+    Support
+)
+set(SUBDOC_CLANG_DEPS
     clangAnalysis
     clangAnalysisFlowSensitive
     clangAnalysisFlowSensitiveModels
@@ -135,6 +142,14 @@ target_link_libraries(subdoc_lib
     clangToolingRefactoring
     clangToolingSyntax
     clangTransformer
+)
+llvm_map_components_to_libnames(llvm_libs "${SUBDOC_LLVM_DEPS};${SUBDOC_CLANG_DEPS}")
+
+target_link_libraries(subdoc_lib
+    subspace::lib
+    md4c
+    md4c-html
+    ${llvm_libs}
 )
 
 # subdoc binary

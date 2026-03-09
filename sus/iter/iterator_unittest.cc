@@ -16,7 +16,7 @@
 
 #include <ranges>
 
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 #include "sus/assertions/unreachable.h"
 #include "sus/cmp/eq.h"
 #include "sus/collections/array.h"

@@ -1,0 +1,6 @@
+add_subdirectory(buildtools)
+add_subdirectory(fmt)
+add_subdirectory(googletest)
+add_subdirectory(md4c)
+add_subdirectory(nanobench)
+add_subdirectory(llvm-project)

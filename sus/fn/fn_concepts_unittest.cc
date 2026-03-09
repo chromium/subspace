@@ -16,7 +16,7 @@
 
 #include <concepts>
 
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 #include "sus/mem/move.h"
 #include "sus/prelude.h"
 #include "sus/tuple/tuple.h"

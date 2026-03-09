@@ -14,7 +14,7 @@
 
 #include "sus/fn/fn_dyn.h"
 
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 #include "sus/boxed/box.h"
 #include "sus/prelude.h"
 

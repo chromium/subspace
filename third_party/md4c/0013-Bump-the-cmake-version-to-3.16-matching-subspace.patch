@@ -1,0 +1,36 @@
+From f0a8a162a001c2f702656aa4071ea35912dc3f7e Mon Sep 17 00:00:00 2001
+From: Dana Jansens <danakj@orodu.net>
+Date: Sat, 23 Sep 2023 12:31:13 -0400
+Subject: [PATCH 13/13] Bump the cmake version to 3.16 matching subspace
+
+---
+ CMakeLists.txt | 2 +-
+ README.md      | 1 +
+ 2 files changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index cab797e..b926a8d 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,5 +1,5 @@
+ 
+-cmake_minimum_required(VERSION 3.4)
++cmake_minimum_required(VERSION 3.16)
+ project(MD4C C)
+ 
+ set(MD_VERSION_MAJOR 0)
+diff --git a/README.md b/README.md
+index e01a307..96bdb6e 100644
+--- a/README.md
++++ b/README.md
+@@ -22,6 +22,7 @@ This is a fork of [md4c](https://github.com/mity/md4c) for use in
+   all subtractions looking for negative values, which then overflow into large unsigned values.
+ * Remove integer narrowing and sign conversion warnings by asserting the conversions
+   do not lose data and then casting.
++* Bump the minimum CMake version to 3.16. Version 3.4 support is going away soon.
+ 
+ # MD4C Readme
+ 
+-- 
+2.53.0
+

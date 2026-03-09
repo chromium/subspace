@@ -1,0 +1,42 @@
+From bd771dc3f83073dcf5faec54db333455abb6ce03 Mon Sep 17 00:00:00 2001
+From: Dana Jansens <danakj@orodu.net>
+Date: Sun, 20 Aug 2023 17:23:15 -0400
+Subject: [PATCH 08/13] Assert that dest_size is not negative
+
+https://github.com/mity/md4c/issues/195 reports an issue where it can
+be negative which produces an OOB memcpy. To prevent malicious markdown
+from gaining arbitrary code execution, verify that the value is not
+negative.
+---
+ README.md  | 2 ++
+ src/md4c.c | 1 +
+ 2 files changed, 3 insertions(+)
+
+diff --git a/README.md b/README.md
+index acf75bd..aa1112a 100644
+--- a/README.md
++++ b/README.md
+@@ -17,6 +17,8 @@ This is a fork of [md4c](https://github.com/mity/md4c) for use in
+ * Moves the callbacks for md4c-html into a structure as we've added a bunch of new callbacks.
+ * Allows those callbacks to report errors that flow back up into the md4c parser and terminate
+   parsing.
++* Enable MD_ASSERT() unconditionally and add assertions to catch some known memory safety bugs
++  reported upstream that have not been resolved.
+ 
+ # MD4C Readme
+ 
+diff --git a/src/md4c.c b/src/md4c.c
+index acd6275..fa29d63 100644
+--- a/src/md4c.c
++++ b/src/md4c.c
+@@ -4355,6 +4355,7 @@ md_process_inlines(MD_CTX* ctx, const MD_LINE* lines, int n_lines)
+                     MD_MARK* closer = &ctx->marks[opener->next];
+                     const CHAR* dest = STR(opener->end);
+                     SZ dest_size = closer->beg - opener->end;
++                    MD_ASSERT(dest_size >= 0);
+ 
+                     /* For permissive auto-links we do not know closer mark
+                      * position at the time of md_collect_marks(), therefore
+-- 
+2.53.0
+

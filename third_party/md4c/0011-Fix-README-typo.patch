@@ -1,0 +1,25 @@
+From d09ffd6c35fc608505ea659d557e446782271012 Mon Sep 17 00:00:00 2001
+From: Dana Jansens <danakj@orodu.net>
+Date: Mon, 21 Aug 2023 20:58:49 -0400
+Subject: [PATCH 11/13] Fix README typo
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index bdc64ed..34333ae 100644
+--- a/README.md
++++ b/README.md
+@@ -17,7 +17,7 @@ This is a fork of [md4c](https://github.com/mity/md4c) for use in
+ * Moves the callbacks for md4c-html into a structure as we've added a bunch of new callbacks.
+ * Allows those callbacks to report errors that flow back up into the md4c parser and terminate
+   parsing.
+-* Enable `MD_ASSERT()`` unconditionally and add assertions to catch some known memory safety
++* Enable `MD_ASSERT()` unconditionally and add assertions to catch some known memory safety
+   bugs reported upstream that have not been resolved. Primarily these are assertions on almost
+   all subtractions looking for negative values, which then overflow into large unsigned values.
+ 
+-- 
+2.53.0
+

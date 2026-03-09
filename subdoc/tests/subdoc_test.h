@@ -17,7 +17,7 @@
 #include <string>
 #include <string_view>
 
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 #include "subdoc/lib/database.h"
 #include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/gen/options.h"

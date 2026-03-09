@@ -1,0 +1,269 @@
+From 199aedf35acf705dd834d01857ecc574ef29eeb7 Mon Sep 17 00:00:00 2001
+From: Dana Jansens <danakj@orodu.net>
+Date: Sun, 20 Aug 2023 17:37:06 -0400
+Subject: [PATCH 09/13] Add assertions on subtractions that become unsigned
+
+Subtractions should never make a negative value which then becomes
+a huge unsigned value.
+---
+ README.md  |  4 ++--
+ src/md4c.c | 38 ++++++++++++++++++++++++++++++++++----
+ 2 files changed, 36 insertions(+), 6 deletions(-)
+
+diff --git a/README.md b/README.md
+index aa1112a..9bcfa8c 100644
+--- a/README.md
++++ b/README.md
+@@ -17,8 +17,8 @@ This is a fork of [md4c](https://github.com/mity/md4c) for use in
+ * Moves the callbacks for md4c-html into a structure as we've added a bunch of new callbacks.
+ * Allows those callbacks to report errors that flow back up into the md4c parser and terminate
+   parsing.
+-* Enable MD_ASSERT() unconditionally and add assertions to catch some known memory safety bugs
+-  reported upstream that have not been resolved.
++* Enable `MD_ASSERT()`` unconditionally and add assertions to catch some known memory safety
++  bugs reported upstream that have not been resolved.
+ 
+ # MD4C Readme
+ 
+diff --git a/src/md4c.c b/src/md4c.c
+index fa29d63..6af4add 100644
+--- a/src/md4c.c
++++ b/src/md4c.c
+@@ -948,6 +948,7 @@ md_merge_lines(MD_CTX* ctx, OFF beg, OFF end, const MD_LINE* lines, int n_lines,
+         }
+ 
+         if(off >= end) {
++            MD_ASSERT(ptr >= buffer);
+             *p_size = (MD_SIZE)(ptr - buffer);
+             return;
+         }
+@@ -968,6 +969,7 @@ md_merge_lines_alloc(MD_CTX* ctx, OFF beg, OFF end, const MD_LINE* lines, int n_
+ {
+     CHAR* buffer;
+ 
++    MD_ASSERT(end >= beg);
+     buffer = (CHAR*) malloc(sizeof(CHAR) * (end - beg));
+     if(buffer == NULL) {
+         MD_LOG("malloc() failed.");
+@@ -1281,6 +1283,7 @@ md_is_hex_entity_contents(MD_CTX* ctx, const CHAR* text, OFF beg, OFF max_end, O
+     while(off < max_end  &&  ISXDIGIT_(text[off])  &&  off - beg <= 8)
+         off++;
+ 
++    MD_ASSERT(off >= beg);
+     if(1 <= off - beg  &&  off - beg <= 6) {
+         *p_end = off;
+         return TRUE;
+@@ -1298,6 +1301,7 @@ md_is_dec_entity_contents(MD_CTX* ctx, const CHAR* text, OFF beg, OFF max_end, O
+     while(off < max_end  &&  ISDIGIT_(text[off])  &&  off - beg <= 8)
+         off++;
+ 
++    MD_ASSERT(off >= beg);
+     if(1 <= off - beg  &&  off - beg <= 7) {
+         *p_end = off;
+         return TRUE;
+@@ -1320,6 +1324,7 @@ md_is_named_entity_contents(MD_CTX* ctx, const CHAR* text, OFF beg, OFF max_end,
+     while(off < max_end  &&  ISALNUM_(text[off])  &&  off - beg <= 48)
+         off++;
+ 
++    MD_ASSERT(off >= beg);
+     if(2 <= off - beg  &&  off - beg <= 48) {
+         *p_end = off;
+         return TRUE;
+@@ -1479,6 +1484,7 @@ md_build_attribute(MD_CTX* ctx, const CHAR* raw_text, SZ raw_size,
+ 
+                 if(md_is_entity_str(ctx, raw_text, raw_off, raw_size, &ent_end)) {
+                     MD_CHECK(md_build_attr_append_substr(ctx, build, MD_TEXT_ENTITY, off));
++                    MD_ASSERT(ent_end >= raw_off);
+                     memcpy(build->text + off, raw_text + raw_off, ent_end - raw_off);
+                     off += ent_end - raw_off;
+                     raw_off = ent_end;
+@@ -2257,6 +2263,7 @@ md_is_link_reference(MD_CTX* ctx, const MD_LINE* lines, int n_lines,
+                  (int)(n_lines - (beg_line - lines)), _T(' '), &label, &label_size));
+     } else {
+         label = (CHAR*) STR(beg);
++        MD_ASSERT(end >= beg);
+         label_size = end - beg;
+     }
+ 
+@@ -2359,6 +2366,7 @@ md_is_inline_link_spec(MD_CTX* ctx, const MD_LINE* lines, int n_lines,
+         attr->title_needs_free = FALSE;
+     } else if(!title_is_multiline) {
+         attr->title = (CHAR*) STR(title_contents_beg);
++        MD_ASSERT(title_contents_end >= title_contents_beg);
+         attr->title_size = title_contents_end - title_contents_beg;
+         attr->title_needs_free = FALSE;
+     } else {
+@@ -2808,6 +2816,7 @@ md_is_code_span(MD_CTX* ctx, const MD_LINE* lines, int n_lines, OFF beg,
+     /* The caller needs to know end of the opening mark even if we fail. */
+     *p_opener_end = opener_end;
+ 
++    MD_ASSERT(opener_end >= opener_beg);
+     mark_len = opener_end - opener_beg;
+     if(mark_len > CODESPAN_MARK_MAXLEN)
+         return FALSE;
+@@ -3810,7 +3819,9 @@ md_analyze_emph(MD_CTX* ctx, int mark_index)
+ 
+         /* Resolve, if we have found matching opener. */
+         if(opener != NULL) {
++            MD_ASSERT(opener->end >= opener->beg);
+             SZ opener_size = opener->end - opener->beg;
++            MD_ASSERT(mark->end >= mark->beg);
+             SZ closer_size = mark->end - mark->beg;
+             MD_MARKCHAIN* opener_chain = md_mark_chain(ctx, opener_index);
+ 
+@@ -3818,6 +3829,7 @@ md_analyze_emph(MD_CTX* ctx, int mark_index)
+                 opener_index = md_split_emph_mark(ctx, opener_index, closer_size);
+                 md_mark_chain_append(ctx, opener_chain, opener_index);
+             } else if(opener_size < closer_size) {
++                MD_ASSERT(closer_size >= opener_size);
+                 md_split_emph_mark(ctx, mark_index, closer_size - opener_size);
+             }
+ 
+@@ -4293,10 +4305,13 @@ md_process_inlines(MD_CTX* ctx, const MD_LINE* lines, int n_lines)
+                         int has_label = (opener->end - opener->beg > 2);
+                         SZ target_sz;
+ 
+-                        if(has_label)
++                        if(has_label) {
++                            MD_ASSERT(opener->end >= (opener->beg+2));
+                             target_sz = opener->end - (opener->beg+2);
+-                        else
++                        } else {
++                            MD_ASSERT(closer->beg >= opener->end);
+                             target_sz = closer->beg - opener->end;
++                        }
+ 
+                         MD_CHECK(md_enter_leave_span_wikilink(ctx, (mark->ch != ']'),
+                                  has_label ? STR(opener->beg+2) : STR(opener->end),
+@@ -4312,12 +4327,14 @@ md_process_inlines(MD_CTX* ctx, const MD_LINE* lines, int n_lines)
+ 
+                     if ((ctx->parser.flags & MD_FLAG_CODELINKS)  &&  *STR(dest_mark->beg) == '$')
+                     {
++                        MD_ASSERT(dest_mark->end >= dest_mark->beg + 1);
+                         MD_CHECK(md_enter_leave_span_a(ctx, (mark->ch != ']'),
+                                 MD_SPAN_A_CODELINK,
+-                                STR(dest_mark->beg + 1), dest_mark->end - dest_mark->beg - 1, FALSE,
++                                STR(dest_mark->beg + 1), dest_mark->end - (dest_mark->beg + 1), FALSE,
+                                 md_mark_get_ptr(ctx, (int)(title_mark - ctx->marks)),
+ 								title_mark->prev));
+                     } else {
++                        MD_ASSERT(dest_mark->end >= dest_mark->beg);
+                         MD_CHECK(md_enter_leave_span_a(ctx, (mark->ch != ']'),
+                                     (opener->ch == '!' ? MD_SPAN_IMG : MD_SPAN_A),
+                                     STR(dest_mark->beg), dest_mark->end - dest_mark->beg, FALSE,
+@@ -4354,8 +4371,8 @@ md_process_inlines(MD_CTX* ctx, const MD_LINE* lines, int n_lines)
+                     MD_MARK* opener = ((mark->flags & MD_MARK_OPENER) ? mark : &ctx->marks[mark->prev]);
+                     MD_MARK* closer = &ctx->marks[opener->next];
+                     const CHAR* dest = STR(opener->end);
++                    MD_ASSERT(closer->beg >= opener->end);
+                     SZ dest_size = closer->beg - opener->end;
+-                    MD_ASSERT(dest_size >= 0);
+ 
+                     /* For permissive auto-links we do not know closer mark
+                      * position at the time of md_collect_marks(), therefore
+@@ -4383,6 +4400,7 @@ md_process_inlines(MD_CTX* ctx, const MD_LINE* lines, int n_lines)
+                 }
+ 
+                 case '&':       /* Entity. */
++                    MD_ASSERT(mark->end >= mark->beg);
+                     MD_TEXT(MD_TEXT_ENTITY, STR(mark->beg), mark->end - mark->beg);
+                     break;
+ 
+@@ -4701,6 +4719,7 @@ md_process_verbatim_block_contents(MD_CTX* ctx, MD_TEXTTYPE text_type, const MD_
+             MD_TEXT(text_type, indent_chunk_str, indent);
+ 
+         /* Output the code line itself. */
++        MD_ASSERT(line->end >= line->beg);
+         MD_TEXT_INSECURE(text_type, STR(line->beg), line->end - line->beg);
+ 
+         /* Enforce end-of-line. */
+@@ -4759,12 +4778,14 @@ md_setup_fenced_code_detail(MD_CTX* ctx, const MD_BLOCK* block, MD_BLOCK_CODE_DE
+         end--;
+ 
+     /* Build info string attribute. */
++    MD_ASSERT(end >= beg);
+     MD_CHECK(md_build_attribute(ctx, STR(beg), end - beg, 0, &det->info, info_build));
+ 
+     /* Build info string attribute. */
+     lang_end = beg;
+     while(lang_end < end  &&  !ISWHITESPACE(lang_end))
+         lang_end++;
++    MD_ASSERT(lang_end >= beg);
+     MD_CHECK(md_build_attribute(ctx, STR(beg), lang_end - beg, 0, &det->lang, lang_build));
+ 
+     det->fence_char = fence_ch;
+@@ -4847,6 +4868,7 @@ md_process_leaf_block(MD_CTX* ctx, const MD_BLOCK* block)
+             OFF beg = ((const MD_LINE*)(block + 1))->beg;
+             OFF end = ((const MD_LINE*)(block + 1))->end;
+             if (ctx->parser.flags & MD_FLAG_HEADERSELFLINKS) {
++                MD_ASSERT(end >= beg);
+                 MD_CHECK(md_enter_leave_span_a(
+                     ctx, /*enter*/1, MD_SPAN_A_SELF,
+                     STR(beg), end - beg, FALSE, "", 0u));
+@@ -4854,6 +4876,7 @@ md_process_leaf_block(MD_CTX* ctx, const MD_BLOCK* block)
+             MD_CHECK(md_process_normal_block_contents(ctx,
+                             (const MD_LINE*)(block + 1), block->n_lines));
+             if (ctx->parser.flags & MD_FLAG_HEADERSELFLINKS) {
++                MD_ASSERT(end >= beg);
+                 MD_CHECK(md_enter_leave_span_a(
+                     ctx, /*enter*/0, MD_SPAN_A_SELF,
+                     STR(beg), end - beg, FALSE, "", 0u));
+@@ -5235,6 +5258,7 @@ md_is_atxheader_line(MD_CTX* ctx, OFF beg, OFF* p_beg, OFF* p_end, unsigned* p_l
+ 
+     while(off < ctx->size  &&  CH(off) == _T('#')  &&  off - beg < 7)
+         off++;
++    MD_ASSERT(off >= beg);
+     n = off - beg;
+ 
+     if(n > 6)
+@@ -5341,6 +5365,7 @@ md_is_opening_code_fence(MD_CTX* ctx, OFF beg, OFF* p_end)
+     if(off - beg < 3)
+         return FALSE;
+ 
++    MD_ASSERT(off >= beg);
+     ctx->code_fence_length = off - beg;
+ 
+     /* Optionally, space(s) can follow. */
+@@ -5369,6 +5394,7 @@ md_is_closing_code_fence(MD_CTX* ctx, CHAR ch, OFF beg, OFF* p_end)
+      * opening one. */
+     while(off < ctx->size  &&  CH(off) == ch)
+         off++;
++    MD_ASSERT(off >= beg);
+     if(off - beg < ctx->code_fence_length)
+         goto out;
+ 
+@@ -5763,6 +5789,7 @@ md_is_container_mark(MD_CTX* ctx, unsigned indent, OFF beg, OFF* p_end, MD_CONTA
+         p_container->is_loose = FALSE;
+         p_container->is_task = FALSE;
+         p_container->mark_indent = indent;
++        MD_ASSERT(indent + off + 1 >= beg);
+         p_container->contents_indent = indent + off - beg + 1;
+         *p_end = off+1;
+         return TRUE;
+@@ -5786,6 +5813,7 @@ md_line_indentation(MD_CTX* ctx, unsigned total_indent, OFF beg, OFF* p_end)
+     }
+ 
+     *p_end = off;
++    MD_ASSERT(indent >= total_indent);
+     return indent - total_indent;
+ }
+ 
+@@ -6004,6 +6032,7 @@ md_analyze_line(MD_CTX* ctx, OFF beg, OFF* p_end,
+ 
+                 off = tmp;
+ 
++                MD_ASSERT(container.contents_indent >= container.mark_indent);
+                 total_indent += container.contents_indent - container.mark_indent;
+                 line->indent = md_line_indentation(ctx, total_indent, off, &off);
+                 total_indent += line->indent;
+@@ -6053,6 +6082,7 @@ md_analyze_line(MD_CTX* ctx, OFF beg, OFF* p_end,
+             {
+                 /* Noop. Ordered list cannot interrupt a paragraph unless the start index is 1. */
+             } else {
++                MD_ASSERT(container.contents_indent >= container.mark_indent);
+                 total_indent += container.contents_indent - container.mark_indent;
+                 line->indent = md_line_indentation(ctx, total_indent, off, &off);
+                 total_indent += line->indent;
+-- 
+2.53.0
+

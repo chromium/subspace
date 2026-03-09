@@ -1,0 +1,247 @@
+From bc9d1198c0093b753a81593e3bf4c1e6ca0013c8 Mon Sep 17 00:00:00 2001
+From: Dana Jansens <danakj@orodu.net>
+Date: Thu, 17 Aug 2023 18:45:47 -0400
+Subject: [PATCH 01/13] Add same-document links from headers to themselves
+
+Callbacks are provided to allow control over how the links are
+formatted.
+
+The behaviour is guarded behind the MD_FLAG_HEADERSELFLINKS
+parser flag.
+
+We need to expose the MD_HTML type as an opaque type. The render self
+link callback needs to know it to have the right type signatures.
+---
+ md2html/md2html.c |  2 +-
+ src/md4c-html.c   | 59 +++++++++++++++++++++++++++++++++++++++++++----
+ src/md4c-html.h   |  7 ++++++
+ src/md4c.c        | 19 +++++++++++++++
+ src/md4c.h        |  7 +++++-
+ 5 files changed, 88 insertions(+), 6 deletions(-)
+
+diff --git a/md2html/md2html.c b/md2html/md2html.c
+index 06b2b74..a13da66 100644
+--- a/md2html/md2html.c
++++ b/md2html/md2html.c
+@@ -141,7 +141,7 @@ process_file(FILE* in, FILE* out)
+      * md_renderer_t structure. */
+     t0 = clock();
+ 
+-    ret = md_html(buf_in.data, (MD_SIZE)buf_in.size, process_output, (void*) &buf_out,
++    ret = md_html(buf_in.data, (MD_SIZE)buf_in.size, process_output, NULL, NULL, (void*) &buf_out,
+                     parser_flags, renderer_flags);
+ 
+     t1 = clock();
+diff --git a/src/md4c-html.c b/src/md4c-html.c
+index d604aec..a2df1f1 100644
+--- a/src/md4c-html.c
++++ b/src/md4c-html.c
+@@ -45,11 +45,21 @@
+     #define snprintf _snprintf
+ #endif
+ 
++#define SELF_LINK_MAX_CHARS 1024
++
++typedef struct MD_SELF_LINK_tag MD_SELF_LINK;
++struct MD_SELF_LINK_tag {
++    char text[SELF_LINK_MAX_CHARS];
++    unsigned text_size;
++    unsigned count;
++    MD_SELF_LINK* next;
++};
+ 
+-
+-typedef struct MD_HTML_tag MD_HTML;
+ struct MD_HTML_tag {
+     void (*process_output)(const MD_CHAR*, MD_SIZE, void*);
++    void (*render_self_link)(const MD_CHAR*, MD_SIZE, void*, MD_HTML* html,
++            void (*render)(MD_HTML* html, const MD_CHAR* data, MD_SIZE size));
++    void (*record_self_link)(const MD_CHAR*, MD_SIZE, void*);
+     void* userdata;
+     unsigned flags;
+     int image_nesting_level;
+@@ -154,6 +164,22 @@ render_url_escaped(MD_HTML* r, const MD_CHAR* data, MD_SIZE size)
+     }
+ }
+ 
++static void
++render_self_url_escaped(MD_HTML* r, const MD_CHAR* data, MD_SIZE size)
++{
++    if (r->render_self_link)
++        r->render_self_link(data, size, r->userdata, r, render_url_escaped);
++    else
++        render_url_escaped(r, data, size);
++}
++
++static void
++record_self_url(MD_HTML* r, const MD_CHAR* data, MD_SIZE size)
++{
++    if (r->render_self_link)
++        r->record_self_link(data, size, r->userdata);
++}
++
+ static unsigned
+ hex_val(char ch)
+ {
+@@ -337,6 +363,24 @@ render_open_a_span(MD_HTML* r, const MD_SPAN_A_DETAIL* det)
+     RENDER_VERBATIM(r, "\">");
+ }
+ 
++static void
++render_open_a_self_span(MD_HTML* r, const MD_SPAN_A_DETAIL* det)
++{
++    RENDER_VERBATIM(r, "<a name=\"");
++    render_attribute(r, &det->href, render_self_url_escaped);
++    RENDER_VERBATIM(r, "\" href=\"#");
++    render_attribute(r, &det->href, render_self_url_escaped);
++
++    render_attribute(r, &det->href, record_self_url);
++
++    if(det->title.text != NULL) {
++        RENDER_VERBATIM(r, "\" title=\"");
++        render_attribute(r, &det->title, render_html_escaped);
++    }
++
++    RENDER_VERBATIM(r, "\">");
++}
++
+ static void
+ render_open_img_span(MD_HTML* r, const MD_SPAN_IMG_DETAIL* det)
+ {
+@@ -460,6 +504,7 @@ enter_span_callback(MD_SPANTYPE type, void* detail, void* userdata)
+         case MD_SPAN_STRONG:            RENDER_VERBATIM(r, "<strong>"); break;
+         case MD_SPAN_U:                 RENDER_VERBATIM(r, "<u>"); break;
+         case MD_SPAN_A:                 render_open_a_span(r, (MD_SPAN_A_DETAIL*) detail); break;
++        case MD_SPAN_A_SELF:            render_open_a_self_span(r, (MD_SPAN_A_DETAIL*) detail); break;
+         case MD_SPAN_IMG:               render_open_img_span(r, (MD_SPAN_IMG_DETAIL*) detail); break;
+         case MD_SPAN_CODE:              RENDER_VERBATIM(r, "<code>"); break;
+         case MD_SPAN_DEL:               RENDER_VERBATIM(r, "<del>"); break;
+@@ -489,6 +534,7 @@ leave_span_callback(MD_SPANTYPE type, void* detail, void* userdata)
+         case MD_SPAN_STRONG:            RENDER_VERBATIM(r, "</strong>"); break;
+         case MD_SPAN_U:                 RENDER_VERBATIM(r, "</u>"); break;
+         case MD_SPAN_A:                 RENDER_VERBATIM(r, "</a>"); break;
++        case MD_SPAN_A_SELF:            RENDER_VERBATIM(r, "</a>"); break;
+         case MD_SPAN_IMG:               /*noop, handled above*/ break;
+         case MD_SPAN_CODE:              RENDER_VERBATIM(r, "</code>"); break;
+         case MD_SPAN_DEL:               RENDER_VERBATIM(r, "</del>"); break;
+@@ -531,9 +577,12 @@ debug_log_callback(const char* msg, void* userdata)
+ int
+ md_html(const MD_CHAR* input, MD_SIZE input_size,
+         void (*process_output)(const MD_CHAR*, MD_SIZE, void*),
++        void (*render_self_link)(const MD_CHAR*, MD_SIZE, void*, MD_HTML* html,
++                void (*render)(MD_HTML* html, const MD_CHAR* data, MD_SIZE size)),
++        void (*record_self_link)(const MD_CHAR*, MD_SIZE, void*),
+         void* userdata, unsigned parser_flags, unsigned renderer_flags)
+ {
+-    MD_HTML render = { process_output, userdata, renderer_flags, 0, { 0 } };
++    MD_HTML render = { process_output, render_self_link, record_self_link, userdata, renderer_flags, 0, { 0 } };
+     int i;
+ 
+     MD_PARSER parser = {
+@@ -568,6 +617,8 @@ md_html(const MD_CHAR* input, MD_SIZE input_size,
+         }
+     }
+ 
+-    return md_parse(input, input_size, &parser, (void*) &render);
++    int ret = md_parse(input, input_size, &parser, (void*) &render);
++
++    return ret;
+ }
+ 
+diff --git a/src/md4c-html.h b/src/md4c-html.h
+index 23d3f73..199fc71 100644
+--- a/src/md4c-html.h
++++ b/src/md4c-html.h
+@@ -40,6 +40,10 @@
+ #define MD_HTML_FLAG_XHTML                  0x0008
+ 
+ 
++typedef struct MD_HTML_tag MD_HTML;
++struct MD_HTML_tag;
++
++
+ /* Render Markdown into HTML.
+  *
+  * Note only contents of <body> tag is generated. Caller must generate
+@@ -58,6 +62,9 @@
+  */
+ int md_html(const MD_CHAR* input, MD_SIZE input_size,
+             void (*process_output)(const MD_CHAR*, MD_SIZE, void*),
++            void (*render_self_link)(const MD_CHAR* /*chars*/, MD_SIZE /*size*/, void* /*userdata*/, MD_HTML* /*html*/,
++                  void (*render)(MD_HTML* /*html*/, const MD_CHAR* /*chars*/, MD_SIZE /*size*/)),
++            void (*record_self_link)(const MD_CHAR* /*chars*/, MD_SIZE /*size*/, void* /*userdata*/),
+             void* userdata, unsigned parser_flags, unsigned renderer_flags);
+ 
+ 
+diff --git a/src/md4c.c b/src/md4c.c
+index 3677c0e..7c78904 100644
+--- a/src/md4c.c
++++ b/src/md4c.c
+@@ -4816,6 +4816,24 @@ md_process_leaf_block(MD_CTX* ctx, const MD_BLOCK* block)
+                             (const MD_LINE*)(block + 1), block->n_lines));
+             break;
+ 
++        case MD_BLOCK_H: {
++            OFF beg = ((const MD_LINE*)(block + 1))->beg;
++            OFF end = ((const MD_LINE*)(block + 1))->end;
++            if (ctx->parser.flags & MD_FLAG_HEADERSELFLINKS) {
++                MD_CHECK(md_enter_leave_span_a(
++                    ctx, /*enter*/1, MD_SPAN_A_SELF,
++                    STR(beg), end - beg, FALSE, "", 0u));
++            }
++            MD_CHECK(md_process_normal_block_contents(ctx,
++                            (const MD_LINE*)(block + 1), block->n_lines));
++            if (ctx->parser.flags & MD_FLAG_HEADERSELFLINKS) {
++                MD_CHECK(md_enter_leave_span_a(
++                    ctx, /*enter*/0, MD_SPAN_A_SELF,
++                    STR(beg), end - beg, FALSE, "", 0u));
++            }
++            break;
++        }
++
+         default:
+             MD_CHECK(md_process_normal_block_contents(ctx,
+                             (const MD_LINE*)(block + 1), block->n_lines));
+@@ -6251,6 +6269,7 @@ md_process_line(MD_CTX* ctx, const MD_LINE_ANALYSIS** p_pivot_line, MD_LINE_ANAL
+         MD_CHECK(md_start_new_block(ctx, line));
+         MD_CHECK(md_add_line_into_current_block(ctx, line));
+         MD_CHECK(md_end_current_block(ctx));
++
+         *p_pivot_line = &md_dummy_blank_line;
+         return 0;
+     }
+diff --git a/src/md4c.h b/src/md4c.h
+index 95f78f9..ca03d47 100644
+--- a/src/md4c.h
++++ b/src/md4c.h
+@@ -116,6 +116,10 @@ typedef enum MD_SPANTYPE {
+      * Detail: Structure MD_SPAN_A_DETAIL. */
+     MD_SPAN_A,
+ 
++    /* <a name="xxx" href="#xxx">...</a>
++     * Detail: Structure MD_SPAN_A_DETAIL. */
++    MD_SPAN_A_SELF,
++
+     /* <img src="xxx">...</a>
+      * Detail: Structure MD_SPAN_IMG_DETAIL.
+      * Note: Image text can contain nested spans and even nested images.
+@@ -316,6 +320,7 @@ typedef struct MD_SPAN_WIKILINK {
+ #define MD_FLAG_LATEXMATHSPANS              0x1000  /* Enable $ and $$ containing LaTeX equations. */
+ #define MD_FLAG_WIKILINKS                   0x2000  /* Enable wiki links extension. */
+ #define MD_FLAG_UNDERLINE                   0x4000  /* Enable underline extension (and disables '_' for normal emphasis). */
++#define MD_FLAG_HEADERSELFLINKS             0x8000  /* Have ATX headers generate into a link to themselves. */
+ 
+ #define MD_FLAG_PERMISSIVEAUTOLINKS         (MD_FLAG_PERMISSIVEEMAILAUTOLINKS | MD_FLAG_PERMISSIVEURLAUTOLINKS | MD_FLAG_PERMISSIVEWWWAUTOLINKS)
+ #define MD_FLAG_NOHTML                      (MD_FLAG_NOHTMLBLOCKS | MD_FLAG_NOHTMLSPANS)
+@@ -330,7 +335,7 @@ typedef struct MD_SPAN_WIKILINK {
+  * extensions, bringing the dialect closer to the original, are implemented.
+  */
+ #define MD_DIALECT_COMMONMARK               0
+-#define MD_DIALECT_GITHUB                   (MD_FLAG_PERMISSIVEAUTOLINKS | MD_FLAG_TABLES | MD_FLAG_STRIKETHROUGH | MD_FLAG_TASKLISTS)
++#define MD_DIALECT_GITHUB                   (MD_FLAG_PERMISSIVEAUTOLINKS | MD_FLAG_TABLES | MD_FLAG_STRIKETHROUGH | MD_FLAG_TASKLISTS | MD_FLAG_HEADERSELFLINKS)
+ 
+ /* Parser structure.
+  */
+-- 
+2.53.0
+

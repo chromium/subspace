@@ -17,7 +17,7 @@
 #include <sstream>
 
 #include "fmt/std.h"
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 #include "sus/collections/array.h"
 #include "sus/iter/iterator.h"
 #include "sus/iter/once.h"

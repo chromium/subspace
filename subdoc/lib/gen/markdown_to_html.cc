@@ -22,8 +22,8 @@
 
 #pragma warning(push)
 #pragma warning(disable : 4244)
-#include "third_party/md4c/src/md4c-html.h"
-#include "third_party/md4c/src/md4c.h"
+#include "md4c-html.h"
+#include "md4c.h"
 #pragma warning(pop)
 
 namespace subdoc::gen {

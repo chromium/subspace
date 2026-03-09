@@ -14,7 +14,7 @@
 
 #include "sus/iter/once_with.h"
 
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 #include "sus/prelude.h"
 
 namespace {

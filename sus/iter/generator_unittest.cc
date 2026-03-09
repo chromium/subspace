@@ -14,7 +14,7 @@
 
 #include "sus/iter/generator.h"
 
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 #include "sus/iter/iterator.h"
 #include "sus/prelude.h"
 #include "sus/test/no_copy_move.h"

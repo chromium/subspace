@@ -16,7 +16,7 @@
 
 #include <sstream>
 
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 #include "sus/collections/array.h"
 #include "sus/collections/vec.h"
 #include "sus/construct/into.h"

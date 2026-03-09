@@ -17,7 +17,7 @@
 #include <concepts>
 #include <sstream>
 
-#include "googletest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 #include "sus/iter/extend.h"
 #include "sus/iter/iterator.h"
 #include "sus/mem/move.h"
