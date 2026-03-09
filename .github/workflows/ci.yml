@@ -209,6 +209,11 @@ jobs:
             )
           endif()
 
+      - name: Set up user details in Git
+        run: |
+          git config --global user.email "ci.subspace.workflows@github.com" # This email doesn't exist
+          git config --global user.name "Subspace GitHub CI"
+
       - name: Configure
         shell: cmake -P {0}
         run: |
