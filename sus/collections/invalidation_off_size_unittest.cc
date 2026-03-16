@@ -14,10 +14,15 @@
 
 #define SUS_ITERATOR_INVALIDATION 0
 
+#ifdef TEST_MODULE
+// This test isn't supported in modules yet (DO NOT SUBMIT)
+#else
 #include "sus/collections/array.h"
 #include "sus/collections/slice.h"
-#include "sus/macros/compiler.h"
 #include "sus/prelude.h"
+
+#include "sus/macros/compiler.h"
+#include "sus/macros/__private/compiler_bugs.h"
 
 using sus::Array;
 using sus::Slice;
@@ -36,3 +41,4 @@ constexpr usize slice_padding = 0u
 static_assert(alignof(Slice<i32>) == alignof(i32*));
 static_assert(sizeof(Slice<i32*>) ==
               sizeof(i32*) + sizeof(usize) + slice_padding);
+#endif

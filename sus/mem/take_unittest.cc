@@ -12,13 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifdef TEST_MODULE
+import sus;
+#else
 #include "sus/mem/take.h"
+
+#include "sus/num/types.h"
+#include "sus/prelude.h"
+#endif
 
 #include <type_traits>
 
 #include "googletest/include/gtest/gtest.h"
-#include "sus/num/types.h"
-#include "sus/prelude.h"
 
 namespace sus::mem {
 namespace {

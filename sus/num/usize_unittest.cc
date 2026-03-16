@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <type_traits>
-
-#include "googletest/include/gtest/gtest.h"
+#ifdef TEST_MODULE
+import sus;
+#else
 #include "sus/collections/array.h"
 #include "sus/construct/into.h"
 #include "sus/iter/__private/step.h"
@@ -25,6 +25,12 @@
 #include "sus/cmp/ord.h"
 #include "sus/prelude.h"
 #include "sus/tuple/tuple.h"
+#endif
+
+#include <type_traits>
+
+#include "fmt/format.h"
+#include "googletest/include/gtest/gtest.h"
 
 namespace {
 

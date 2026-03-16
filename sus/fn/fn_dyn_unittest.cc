@@ -12,11 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#if TEST_MODULE
+import sus;
+#else
 #include "sus/fn/fn_dyn.h"
 
-#include "googletest/include/gtest/gtest.h"
 #include "sus/boxed/box.h"
 #include "sus/prelude.h"
+#endif
+
+#include "googletest/include/gtest/gtest.h"
 
 namespace {
 using namespace sus::fn;

@@ -12,18 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifdef TEST_MODULE
+import sus;
+
+#include "sus/choice/macros.h"
+#include "sus/macros/__private/compiler_bugs.h"
+#else
 #include "sus/choice/choice.h"
 
-#include <sstream>
-
-#include "googletest/include/gtest/gtest.h"
-#include "sus/assertions/unreachable.h"
 #include "sus/mem/forward.h"
 #include "sus/num/types.h"
 #include "sus/option/option.h"
 #include "sus/prelude.h"
-#include "sus/test/no_copy_move.h"
 #include "sus/tuple/tuple.h"
+#endif
+
+#include <math.h>
+#include <sstream>
+#include "fmt/format.h"
+#include "googletest/include/gtest/gtest.h"
+#include "sus/assertions/unreachable.h"
+#include "sus/test/no_copy_move.h"
+
 
 namespace {
 enum class Order {

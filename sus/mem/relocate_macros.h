@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include "sus/macros/compiler.h"
+
 /// An attribute to allow a class to be passed in registers.
 ///
 /// This should only be used when the class is also marked as unconditionally

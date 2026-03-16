@@ -12,17 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <bit>
-#include <cfenv>
-#include <cmath>
-#include <limits>
-
-#include "googletest/include/gtest/gtest.h"
+#ifdef TEST_MODULE
+import sus;
+#else
 #include "sus/cmp/eq.h"
 #include "sus/cmp/ord.h"
 #include "sus/collections/array.h"
 #include "sus/num/types.h"
 #include "sus/prelude.h"
+#endif
+
+#include <math.h>
+
+#include <bit>
+#include <cfenv>
+#include <cmath>
+#include <limits>
+
+#include "fmt/format.h"
+#include "googletest/include/gtest/gtest.h"
 
 #define F64_NEAR(a, b, c) \
   EXPECT_NEAR((a).primitive_value, (b).primitive_value, (c).primitive_value);

@@ -14,6 +14,9 @@
 
 #define SUS_ITERATOR_INVALIDATION 1
 
+#ifdef TEST_MODULE
+// This test isn't supported in modules yet (DO NOT SUBMIT)
+#else
 #include "sus/collections/array.h"
 #include "sus/collections/slice.h"
 #include "sus/prelude.h"
@@ -41,3 +44,4 @@ static_assert(alignof(Slice<i32>) == alignof(usize*));
 static_assert(sizeof(Slice<i32>) ==
               round_up(sizeof(i32*) + sizeof(usize) + sizeof(usize*),
                        alignof(usize*)));
+#endif

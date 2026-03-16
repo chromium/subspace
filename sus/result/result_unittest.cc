@@ -12,19 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifdef TEST_MODULE
+import sus;
+
+#include "sus/assertions/check.h"
+#else
 #include "sus/result/result.h"
+
+#include "sus/collections/array.h"
+#include "sus/iter/iterator.h"
+#include "sus/iter/once.h"
+#include "sus/mem/move.h"
+#include "sus/num/types.h"
+#include "sus/prelude.h"
+#endif
 
 #include <sstream>
 
 #include "fmt/std.h"
 #include "googletest/include/gtest/gtest.h"
-#include "sus/collections/array.h"
-#include "sus/iter/iterator.h"
-#include "sus/iter/once.h"
 #include "sus/macros/__private/compiler_bugs.h"
-#include "sus/mem/move.h"
-#include "sus/num/types.h"
-#include "sus/prelude.h"
 #include "sus/test/behaviour_types.h"
 #include "sus/test/no_copy_move.h"
 

@@ -12,10 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifdef TEST_MODULE
+import sus;
+#else
 #include "sus/num/cast.h"
+#include "sus/prelude.h"
+#endif
 
 #include "googletest/include/gtest/gtest.h"
-#include "sus/prelude.h"
 
 namespace {
 

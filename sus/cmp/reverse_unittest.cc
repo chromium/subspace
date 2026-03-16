@@ -12,10 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifdef TEST_MODULE
+import sus;
+
+#include "sus/assertions/check.h"
+#else
 #include "sus/cmp/reverse.h"
 
-#include "googletest/include/gtest/gtest.h"
 #include "sus/prelude.h"
+#endif
+
+#include "googletest/include/gtest/gtest.h"
 
 namespace {
 using namespace sus::cmp;
